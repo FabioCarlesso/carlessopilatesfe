@@ -1,59 +1,101 @@
-# Carlessopilatesfe
+# Carlesso Pilates — Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.24.
+Interface web para gestão administrativa de um estúdio de pilates, desenvolvida em **Angular 19**.
 
-## Development server
+## Visão Geral
 
-To start a local development server, run:
+A aplicação oferece um CRUD completo de pacientes com listagem paginada, formulário de cadastro/edição e visualização detalhada. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
 
-```bash
-ng serve
-```
+**Documentação detalhada:** [`docs/documentacao.md`](docs/documentacao.md)  
+**Contexto e decisões técnicas:** [`docs/context.md`](docs/context.md)
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## Pré-requisitos
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- Node.js 18+
+- Angular CLI: `npm install -g @angular/cli`
+- Backend rodando em `http://localhost:8080`
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Instalação
 
 ```bash
-ng build
+npm install
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## Scripts
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+| Comando         | Descrição                                          |
+|-----------------|----------------------------------------------------|
+| `npm start`     | Servidor de desenvolvimento em http://localhost:4200 |
+| `npm test`      | Executa testes unitários (Karma + Jasmine)         |
+| `npm run build` | Build de produção em `dist/carlessopilatesfe`      |
+| `npm run watch` | Build contínuo em modo desenvolvimento             |
+
+---
+
+## Stack
+
+| Camada     | Tecnologia                    |
+|------------|-------------------------------|
+| Framework  | Angular 19.2 (standalone)     |
+| Linguagem  | TypeScript 5.7                |
+| Estilos    | SCSS                          |
+| Forms      | Reactive Forms                |
+| HTTP       | HttpClient + proxy `/api/*`   |
+| Testes     | Karma + Jasmine               |
+
+---
+
+## Estrutura
+
+```
+src/app/
+├── core/
+│   ├── models/paciente.ts          # DTOs e interfaces
+│   └── services/paciente.service.ts # Integração com a API REST
+├── pages/pacientes/
+│   ├── paciente-list/              # Listagem paginada
+│   ├── paciente-form/              # Cadastro e edição
+│   └── paciente-detail/            # Visualização detalhada
+└── shared/components/              # Componentes reutilizáveis
+```
+
+---
+
+## Testes
+
+Os testes unitários cobrem o serviço e todos os componentes de página:
 
 ```bash
-ng test
+npm test
 ```
 
-## Running end-to-end tests
+Arquivos de teste:
+- `src/app/app.component.spec.ts`
+- `src/app/core/services/paciente.service.spec.ts`
+- `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
+- `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
+- `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
+## Rotas
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+| Caminho                 | Função                         |
+|-------------------------|--------------------------------|
+| `/`                     | Redireciona para `/pacientes`  |
+| `/pacientes`            | Lista de pacientes             |
+| `/pacientes/novo`       | Formulário de cadastro         |
+| `/pacientes/:id`        | Detalhes do paciente           |
+| `/pacientes/:id/editar` | Formulário de edição           |
 
-## Additional Resources
+---
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Proxy de desenvolvimento
+
+O Angular CLI redireciona `/api/*` → `http://localhost:8080/*` via `proxy.conf.json`, eliminando problemas de CORS em ambiente local.
