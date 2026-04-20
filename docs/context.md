@@ -4,16 +4,18 @@
 
 O **Carlesso Pilates Frontend** é uma aplicação web Angular desenvolvida para apoiar a gestão administrativa de um estúdio de pilates. O sistema centraliza o cadastro e controle de pacientes, servindo como ponto de partida para um sistema mais amplo de gestão do estúdio.
 
-A aplicação consome uma API REST que roda localmente em `http://localhost:8080`, construída separadamente (backend Spring Boot, presumidamente).
+A aplicação consome uma API REST que roda localmente em `http://localhost:8080`, construída separadamente (backend Spring Boot, presumidamente). Durante o desenvolvimento, todas as chamadas passam por um proxy do Angular CLI (`/api/*` → `localhost:8080/*`) para contornar restrições de CORS.
 
 ---
 
 ## Estado Atual (Abril 2026)
 
-O projeto está em fase inicial de desenvolvimento (**MVP**). Foram realizados dois commits:
+O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados:
 
 1. Setup inicial do projeto Angular 19
 2. Implementação do módulo de pacientes (listagem, formulário, detalhe)
+3. Adição da pasta `/docs` com documentação do projeto
+4. Correção de CORS via proxy do Angular CLI
 
 A funcionalidade central de **gestão de pacientes** está operacional. Ainda não há autenticação, outros módulos ou configuração de ambiente.
 
@@ -36,8 +38,10 @@ O backend não remove pacientes fisicamente. A operação de "exclusão" chama `
 ### E-mail e CPF imutáveis após cadastro
 Por regra de negócio, e-mail e CPF não podem ser alterados após a criação do paciente. O formulário de edição desabilita esses campos e usa `PacienteUpdateDTO` (sem esses campos) no PUT.
 
-### URL da API hardcoded
-Atualmente a URL `http://localhost:8080` está definida diretamente no `PacienteService`. A separação por `environment.ts` é um próximo passo planejado.
+### Proxy de desenvolvimento para CORS
+O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
+
+A configuração por `environment.ts` (para separar dev/prod) ainda é um próximo passo planejado.
 
 ---
 
@@ -56,10 +60,15 @@ Atualmente a URL `http://localhost:8080` está definida diretamente no `Paciente
 │                     │                       │
 │           ┌─────────▼──────────┐            │
 │           │  PacienteService   │            │
-│           │  (HttpClient/RxJS) │            │
+│           │  GET /api/pacientes │            │
 │           └─────────┬──────────┘            │
+│                     │                       │
+│        ┌────────────▼───────────┐           │
+│        │  Angular CLI Proxy     │           │
+│        │  /api/* → :8080/*      │           │
+│        └────────────┬───────────┘           │
 └─────────────────────┼───────────────────────┘
-                      │ HTTP REST
+                      │ HTTP (sem CORS)
               ┌───────▼────────┐
               │  Backend API   │
               │ localhost:8080  │
