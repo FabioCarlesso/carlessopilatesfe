@@ -246,6 +246,30 @@ npm test         # Execução dos testes unitários (Karma/Jasmine)
 
 ---
 
+## Testes Unitários
+
+Framework: **Karma + Jasmine**  
+Comando: `npm test`
+
+### Arquivos de teste
+
+| Arquivo | Cobertura |
+|---------|-----------|
+| `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
+| `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP (listar, buscar, cadastrar, atualizar, inativar) |
+| `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, paginação, inativação, estados de erro |
+| `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
+| `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
+
+### Estratégia de mocking
+
+- **Serviço HTTP:** `HttpClientTestingModule` + `HttpTestingController` nos testes de serviço
+- **PacienteService nos componentes:** `jasmine.createSpyObj` com retorno via `of()` ou `throwError()`
+- **Router:** `RouterTestingModule` + `spyOn(router, 'navigate')`
+- **ActivatedRoute:** objeto literal com `snapshot.paramMap.get()`
+
+---
+
 ## Status do Projeto
 
 ### Implementado
@@ -255,12 +279,13 @@ npm test         # Execução dos testes unitários (Karma/Jasmine)
 - Feedback de erros e loading
 - Integração com API REST
 - Design responsivo
+- Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos
 - Autenticação e autorização
 - Módulos adicionais: aulas, agendamentos, financeiro
-- Variável de ambiente para URL da API (atualmente hardcoded)
+- Variável de ambiente para URL da API (atualmente hardcoded via proxy)
 - Componente `ConfirmarDialog` integrado
-- Testes unitários e E2E completos
+- Testes E2E
 - Busca e filtros na listagem
 - Animações e transições

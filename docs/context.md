@@ -16,8 +16,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 2. Implementação do módulo de pacientes (listagem, formulário, detalhe)
 3. Adição da pasta `/docs` com documentação do projeto
 4. Correção de CORS via proxy do Angular CLI
+5. Implementação de testes unitários e atualização da documentação
 
-A funcionalidade central de **gestão de pacientes** está operacional. Ainda não há autenticação, outros módulos ou configuração de ambiente.
+A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. Ainda não há autenticação, outros módulos ou configuração de ambiente.
 
 ---
 
