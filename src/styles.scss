@@ -1,1 +1,282 @@
-/* You can add global styles to this file, and also import other style files */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #6c63ff;
+  --primary-dark: #574fd6;
+  --secondary: #4caf50;
+  --danger: #e53935;
+  --text: #333;
+  --text-light: #666;
+  --border: #ddd;
+  --bg: #f5f5f5;
+  --white: #fff;
+  --radius: 6px;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 15px;
+}
+
+/* Layout */
+.navbar {
+  background: var(--primary);
+  color: var(--white);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.15);
+
+  &-brand a {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  &-menu {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+
+    a {
+      color: rgba(255,255,255,.85);
+      text-decoration: none;
+      &:hover { color: var(--white); }
+    }
+  }
+}
+
+.container {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  h1 { font-size: 1.5rem; }
+
+  .acoes { display: flex; gap: .5rem; }
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: .45rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: .9rem;
+  text-decoration: none;
+  transition: opacity .15s;
+
+  &:disabled { opacity: .6; cursor: not-allowed; }
+  &:hover:not(:disabled) { opacity: .85; }
+
+  &-primary  { background: var(--primary); color: var(--white); }
+  &-secondary { background: var(--secondary); color: var(--white); }
+  &-danger   { background: var(--danger); color: var(--white); }
+  &-outline  { border-color: var(--border); background: var(--white); color: var(--text); }
+
+  &-sm { padding: .3rem .7rem; font-size: .82rem; }
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+
+  th, td {
+    padding: .75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th { background: #f0f0f0; font-weight: 600; font-size: .85rem; color: var(--text-light); }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  .acoes { display: flex; gap: .4rem; }
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  gap: .4rem;
+
+  button {
+    padding: .35rem .8rem;
+    border: 1px solid var(--border);
+    background: var(--white);
+    border-radius: var(--radius);
+    cursor: pointer;
+
+    &.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
+  }
+}
+
+/* Alerts */
+.alert {
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+
+  &-danger { background: #fdecea; color: #c62828; border: 1px solid #f5c6c6; }
+}
+
+/* Loading / empty */
+.loading, .empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+/* Dialog */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.dialog {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  min-width: 320px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+
+  p { margin-bottom: 1rem; }
+
+  &-actions { display: flex; gap: .5rem; justify-content: flex-end; }
+}
+
+/* Form */
+.form-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.form-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 1.25rem 0 .75rem;
+  padding-bottom: .4rem;
+  border-bottom: 2px solid var(--primary);
+
+  &:first-child { margin-top: 0; }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  flex: 1;
+
+  label { font-size: .85rem; font-weight: 600; color: var(--text-light); }
+
+  &.flex-1 { flex: 1; }
+  &.flex-3 { flex: 3; }
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+
+.form-control {
+  padding: .45rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  width: 100%;
+  transition: border-color .15s;
+
+  &:focus { outline: none; border-color: var(--primary); }
+  &.is-invalid { border-color: var(--danger); }
+  &:disabled { background: #f5f5f5; color: var(--text-light); }
+}
+
+.invalid-feedback {
+  font-size: .78rem;
+  color: var(--danger);
+}
+
+.form-actions {
+  display: flex;
+  gap: .75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Detail */
+.detail-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.badge-status {
+  display: inline-block;
+  padding: .25rem .75rem;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+  margin-bottom: 1.25rem;
+
+  &.inativo { background: #fdecea; color: var(--danger); }
+}
+
+.detail-section {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: .75rem;
+    padding-bottom: .4rem;
+    border-bottom: 2px solid var(--primary);
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+
+  .label { font-size: .78rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
+}

@@ -1,1 +1,93 @@
-<p>paciente-form works!</p>
+<div class="page-header">
+  <h1>{{ isEdit ? 'Editar Paciente' : 'Novo Paciente' }}</h1>
+  <a routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Dados Pessoais</h2>
+
+  <div class="form-group">
+    <label for="nome">Nome *</label>
+    <input id="nome" formControlName="nome" type="text" class="form-control"
+      [class.is-invalid]="campo('nome')?.invalid && campo('nome')?.touched" />
+    <div class="invalid-feedback" *ngIf="campo('nome')?.errors?.['required'] && campo('nome')?.touched">
+      Nome é obrigatório.
+    </div>
+    <div class="invalid-feedback" *ngIf="campo('nome')?.errors?.['minlength'] && campo('nome')?.touched">
+      Nome deve ter ao menos 3 caracteres.
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="email">E-mail *</label>
+      <input id="email" formControlName="email" type="email" class="form-control"
+        [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
+      <div class="invalid-feedback" *ngIf="campo('email')?.touched && campo('email')?.invalid">
+        E-mail inválido.
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="cpf">CPF *</label>
+      <input id="cpf" formControlName="cpf" type="text" class="form-control"
+        [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
+      <div class="invalid-feedback" *ngIf="campo('cpf')?.touched && campo('cpf')?.invalid">
+        CPF é obrigatório.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="telefone">Telefone</label>
+      <input id="telefone" formControlName="telefone" type="text" class="form-control" />
+    </div>
+    <div class="form-group">
+      <label for="dataNascimento">Data de Nascimento</label>
+      <input id="dataNascimento" formControlName="dataNascimento" type="date" class="form-control" />
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Endereço</h2>
+
+  <div formGroupName="endereco">
+    <div class="form-row">
+      <div class="form-group flex-3">
+        <label for="logradouro">Logradouro</label>
+        <input id="logradouro" formControlName="logradouro" type="text" class="form-control" />
+      </div>
+      <div class="form-group flex-1">
+        <label for="numero">Número</label>
+        <input id="numero" formControlName="numero" type="text" class="form-control" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="bairro">Bairro</label>
+        <input id="bairro" formControlName="bairro" type="text" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="cidade">Cidade</label>
+        <input id="cidade" formControlName="cidade" type="text" class="form-control" />
+      </div>
+      <div class="form-group flex-1">
+        <label for="uf">UF</label>
+        <input id="uf" formControlName="uf" type="text" maxlength="2" class="form-control" />
+      </div>
+      <div class="form-group flex-1">
+        <label for="cep">CEP</label>
+        <input id="cep" formControlName="cep" type="text" class="form-control" />
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : 'Salvar' }}
+    </button>
+    <a routerLink="/pacientes" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

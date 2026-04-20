@@ -1,1 +1,75 @@
-<p>paciente-detail works!</p>
+<div class="page-header" *ngIf="paciente">
+  <h1>{{ paciente.nome }}</h1>
+  <div class="acoes">
+    <a [routerLink]="['/pacientes', paciente.id, 'editar']" class="btn btn-secondary">Editar</a>
+    <button class="btn btn-danger" (click)="confirmarInativar = true" *ngIf="paciente.ativo">Inativar</button>
+    <a routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="paciente" class="detail-card">
+  <div class="badge-status" [class.inativo]="!paciente.ativo">
+    {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
+  </div>
+
+  <section class="detail-section">
+    <h2>Dados Pessoais</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="label">Nome</span>
+        <span>{{ paciente.nome }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">E-mail</span>
+        <span>{{ paciente.email }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">CPF</span>
+        <span>{{ paciente.cpf }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Telefone</span>
+        <span>{{ paciente.telefone || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Data de Nascimento</span>
+        <span>{{ paciente.dataNascimento ? (paciente.dataNascimento | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="detail-section" *ngIf="paciente.endereco">
+    <h2>Endereço</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="label">Logradouro</span>
+        <span>{{ paciente.endereco.logradouro }}, {{ paciente.endereco.numero }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Bairro</span>
+        <span>{{ paciente.endereco.bairro }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Cidade / UF</span>
+        <span>{{ paciente.endereco.cidade }} - {{ paciente.endereco.uf }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">CEP</span>
+        <span>{{ paciente.endereco.cep }}</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarInativar">
+  <div class="dialog">
+    <p>Confirma a inativação de <strong>{{ paciente?.nome }}</strong>?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="confirmarInativar = false">Cancelar</button>
+    </div>
+  </div>
+</div>
