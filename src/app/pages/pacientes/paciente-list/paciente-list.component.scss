@@ -1,0 +1,73 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  h1 { margin: 0; font-size: 1.6rem; color: #4a0080; }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+
+  th {
+    background: #6a0dad;
+    color: #fff;
+    padding: .75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td { padding: .75rem 1rem; border-bottom: 1px solid #f0e0ff; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #faf4ff; }
+}
+
+.acoes { display: flex; gap: .5rem; }
+
+.loading, .empty-state { text-align: center; color: #888; margin: 3rem 0; }
+
+.pagination {
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+
+  button {
+    padding: .4rem .8rem;
+    border: 1px solid #6a0dad;
+    background: #fff;
+    color: #6a0dad;
+    border-radius: 4px;
+    cursor: pointer;
+    &.active { background: #6a0dad; color: #fff; }
+    &:hover:not(.active) { background: #f5e8ff; }
+  }
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  min-width: 300px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  text-align: center;
+
+  p { margin: 0 0 1.5rem; font-size: 1.1rem; }
+
+  .dialog-actions { display: flex; gap: 1rem; justify-content: center; }
+}

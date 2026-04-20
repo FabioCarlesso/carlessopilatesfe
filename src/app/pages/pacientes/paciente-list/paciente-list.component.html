@@ -1,0 +1,53 @@
+<div class="page-header">
+  <h1>Pacientes</h1>
+  <a routerLink="/pacientes/novo" class="btn btn-primary">+ Novo Paciente</a>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && pacientes.length === 0 && !erro" class="empty-state">
+  Nenhum paciente ativo cadastrado.
+</div>
+
+<table *ngIf="pacientes.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>E-mail</th>
+      <th>CPF</th>
+      <th>Telefone</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let p of pacientes">
+      <td>{{ p.nome }}</td>
+      <td>{{ p.email }}</td>
+      <td>{{ p.cpf }}</td>
+      <td>{{ p.telefone || '-' }}</td>
+      <td class="acoes">
+        <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
+        <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+        <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="pagination" *ngIf="totalPages > 1">
+  <button *ngFor="let p of pages()" [class.active]="p === currentPage" (click)="pagina(p)">
+    {{ p + 1 }}
+  </button>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarInativarId !== null">
+  <div class="dialog">
+    <p>Confirma a inativação do paciente?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarInativar()">Cancelar</button>
+    </div>
+  </div>
+</div>

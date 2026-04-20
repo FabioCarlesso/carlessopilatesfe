@@ -1,0 +1,36 @@
+.navbar {
+  background-color: #6a0dad;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  .navbar-brand a {
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .navbar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1.5rem;
+
+    li a {
+      color: #f0d0ff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      &:hover { color: #fff; }
+    }
+  }
+}
+
+.container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
