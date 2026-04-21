@@ -142,17 +142,20 @@ describe('PacienteFormComponent', () => {
       expect(component.form.get('nome')?.value).toBe('Ana Silva');
     });
 
-    it('should disable email and cpf fields in edit mode', () => {
-      expect(component.form.get('email')?.disabled).toBeTrue();
+    it('should keep email enabled in edit mode (email is mutable)', () => {
+      expect(component.form.get('email')?.disabled).toBeFalse();
+    });
+
+    it('should disable only cpf field in edit mode (cpf is immutable)', () => {
       expect(component.form.get('cpf')?.disabled).toBeTrue();
     });
 
-    it('should call atualizar and navigate to /pacientes on valid submit', () => {
+    it('should include email in atualizar payload', () => {
       serviceSpy.atualizar.and.returnValue(of(mockPaciente));
       component.salvar();
       expect(serviceSpy.atualizar).toHaveBeenCalledWith(
         1,
-        jasmine.objectContaining({ nome: 'Ana Silva' })
+        jasmine.objectContaining({ nome: 'Ana Silva', email: 'ana@email.com' })
       );
       expect(router.navigate).toHaveBeenCalledWith(['/pacientes']);
     });

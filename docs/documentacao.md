@@ -104,10 +104,11 @@ interface PacienteRequestDTO {
 ```
 
 ### `PacienteUpdateDTO`
-Payload para atualização (email e CPF são imutáveis).
+Payload para atualização (somente CPF é imutável; e-mail pode ser alterado).
 ```typescript
 interface PacienteUpdateDTO {
   nome?: string;
+  email?: string;
   telefone?: string;
   dataNascimento?: string;
   endereco?: EnderecoDTO;
@@ -138,11 +139,12 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 
 | Método            | Endpoint HTTP               | Descrição                        |
 |-------------------|-----------------------------|----------------------------------|
-| `listar(page, size)` | `GET /pacientes?page&size&sort=nome` | Lista pacientes paginados  |
+| `listar(page, size)` | `GET /pacientes?page&size&sort=nome` | Lista pacientes ativos paginados |
 | `buscar(id)`      | `GET /pacientes/{id}`       | Busca paciente por ID            |
 | `cadastrar(dto)`  | `POST /pacientes`           | Cria novo paciente               |
-| `atualizar(id, dto)` | `PUT /pacientes/{id}`    | Atualiza dados do paciente       |
-| `inativar(id)`    | `DELETE /pacientes/{id}`    | Inativa paciente (soft delete)   |
+| `atualizar(id, dto)` | `PUT /pacientes/{id}`    | Atualiza dados do paciente (e-mail incluso, CPF é imutável) |
+| `ativar(id)`      | `PATCH /pacientes/{id}/ativar` | Reativa paciente inativo      |
+| `inativar(id)`    | `PATCH /pacientes/{id}/inativar` | Inativa paciente (soft delete) |
 
 ---
 
@@ -178,14 +180,14 @@ Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 - Modo duplo: cadastro e edição
 - Reactive Form com seções: Dados Pessoais e Endereço
 - Validações: campos obrigatórios, formato de e-mail, mínimo de 3 caracteres no nome
-- Em modo edição: e-mail e CPF desabilitados (read-only)
+- Em modo edição: apenas CPF é desabilitado (e-mail pode ser atualizado)
 - Feedback de erros em tempo real
 
 ### `PacienteDetailComponent`
 - Exibição completa dos dados do paciente
 - Badge de status: Ativo (verde) / Inativo (vermelho)
-- Ações: Editar, Inativar, Voltar
-- Diálogo de confirmação para inativação
+- Ações: Editar, Voltar; **Inativar** (se ativo) ou **Ativar** (se inativo)
+- Diálogos de confirmação para ativação e inativação
 
 ### `ConfirmarDialogComponent` _(shared)_
 - Componente gerado, ainda não integrado (diálogos implementados inline nos componentes)
@@ -277,8 +279,10 @@ Comando: `npm test`
 - Paginação server-side
 - Validação de formulários
 - Feedback de erros e loading
-- Integração com API REST
+- Integração com API REST (contratos alinhados com backend v2)
 - Design responsivo
+- Ativação e inativação de pacientes via PATCH
+- E-mail mutável na edição (somente CPF é imutável)
 - Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos

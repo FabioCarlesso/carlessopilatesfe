@@ -17,6 +17,7 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 3. Adição da pasta `/docs` com documentação do projeto
 4. Correção de CORS via proxy do Angular CLI
 5. Implementação de testes unitários e atualização da documentação
+6. Alinhamento com API v2: PATCH ativar/inativar, e-mail mutável no PUT
 
 A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. Ainda não há autenticação, outros módulos ou configuração de ambiente.
 
@@ -33,11 +34,11 @@ Cada componente de página é carregado sob demanda via `loadComponent()`, otimi
 ### Reactive Forms
 Formulários construídos com `FormBuilder` e `FormGroup` para controle granular de validação e estado.
 
-### Soft Delete (Inativação)
-O backend não remove pacientes fisicamente. A operação de "exclusão" chama `DELETE /pacientes/{id}` que inativa o registro. A listagem exibe apenas pacientes ativos.
+### Soft Delete (Inativação e Reativação)
+O backend não remove pacientes fisicamente. Inativação usa `PATCH /pacientes/{id}/inativar` e reativação usa `PATCH /pacientes/{id}/ativar`. A listagem exibe apenas pacientes ativos; o detalhe exibe qualquer status e oferece o botão correto (Ativar ou Inativar) conforme o estado atual do paciente.
 
-### E-mail e CPF imutáveis após cadastro
-Por regra de negócio, e-mail e CPF não podem ser alterados após a criação do paciente. O formulário de edição desabilita esses campos e usa `PacienteUpdateDTO` (sem esses campos) no PUT.
+### CPF imutável após cadastro
+Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulário de edição desabilita apenas o campo CPF. O e-mail pode ser atualizado via `PUT /pacientes/{id}` e é incluído no `PacienteUpdateDTO`.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.

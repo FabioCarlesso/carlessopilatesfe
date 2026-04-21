@@ -86,13 +86,15 @@ Arquivos de teste:
 
 ## Rotas
 
-| Caminho                 | Função                         |
-|-------------------------|--------------------------------|
-| `/`                     | Redireciona para `/pacientes`  |
-| `/pacientes`            | Lista de pacientes             |
-| `/pacientes/novo`       | Formulário de cadastro         |
-| `/pacientes/:id`        | Detalhes do paciente           |
-| `/pacientes/:id/editar` | Formulário de edição           |
+| Caminho                 | Função                                      |
+|-------------------------|---------------------------------------------|
+| `/`                     | Redireciona para `/pacientes`               |
+| `/pacientes`            | Lista de pacientes ativos (paginada)        |
+| `/pacientes/novo`       | Formulário de cadastro                      |
+| `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
+| `/pacientes/:id/editar` | Formulário de edição                        |
+
+Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos.
 
 ---
 

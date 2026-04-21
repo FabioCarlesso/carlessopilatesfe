@@ -29,6 +29,7 @@ export interface PacienteRequestDTO {
 
 export interface PacienteUpdateDTO {
   nome?: string;
+  email?: string;
   telefone?: string;
   dataNascimento?: string;
   endereco?: EnderecoDTO;

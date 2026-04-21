@@ -15,6 +15,7 @@ export class PacienteDetailComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmarInativar = false;
+  confirmarAtivar = false;
 
   constructor(
     private service: PacienteService,
@@ -35,6 +36,14 @@ export class PacienteDetailComponent implements OnInit {
         this.erro = 'Paciente não encontrado.';
         this.loading = false;
       }
+    });
+  }
+
+  ativar(): void {
+    if (!this.paciente) return;
+    this.service.ativar(this.paciente.id).subscribe({
+      next: () => this.router.navigate(['/pacientes']),
+      error: () => (this.erro = 'Erro ao ativar paciente.')
     });
   }
 
