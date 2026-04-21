@@ -1,0 +1,61 @@
+<div class="page-header">
+  <h1>Pagamentos do Paciente</h1>
+  <div class="acoes">
+    <a [routerLink]="['/pacientes', pacienteId, 'pagamentos', 'novo']" class="btn btn-primary">Novo Pagamento</a>
+    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && pagamentos.length === 0 && !erro" class="empty-state">
+  Nenhum pagamento registrado.
+</div>
+
+<table *ngIf="pagamentos.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Valor</th>
+      <th>Período</th>
+      <th>Vencimento</th>
+      <th>Pago em</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let p of pagamentos">
+      <td>
+        <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
+          {{ statusLabel[p.status] }}
+        </span>
+      </td>
+      <td>{{ p.valor | currency:'BRL' }}</td>
+      <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
+      <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
+      <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" *ngIf="p.status === 'PENDENTE'" (click)="abrirPagar(p.id)">
+          Confirmar Pagamento
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="dialog-overlay" *ngIf="pagarId !== null">
+  <div class="dialog">
+    <h3>Confirmar Pagamento</h3>
+    <form [formGroup]="pagarForm">
+      <div class="form-group">
+        <label for="dataPagamento">Data do Pagamento *</label>
+        <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
+      </div>
+    </form>
+    <div class="dialog-actions">
+      <button class="btn btn-primary" (click)="confirmarPagar()" [disabled]="pagarForm.invalid">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarPagar()">Cancelar</button>
+    </div>
+  </div>
+</div>

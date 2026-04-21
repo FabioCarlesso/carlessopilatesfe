@@ -1,0 +1,72 @@
+<div class="page-header">
+  <h1>Novo Plano</h1>
+  <a [routerLink]="['/pacientes', pacienteId, 'planos']" class="btn btn-outline">Voltar</a>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+
+<form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Dados do Plano</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="tipo">Tipo *</label>
+      <select id="tipo" formControlName="tipo" class="form-control"
+        [class.is-invalid]="campo('tipo')?.invalid && campo('tipo')?.touched">
+        <option value="">Selecione...</option>
+        <option *ngFor="let t of tipos" [value]="t">{{ tipoLabel[t] }}</option>
+      </select>
+      <div class="invalid-feedback" *ngIf="campo('tipo')?.invalid && campo('tipo')?.touched">Tipo é obrigatório.</div>
+    </div>
+    <div class="form-group">
+      <label for="valor">Valor (R$) *</label>
+      <input id="valor" formControlName="valor" type="number" min="0" step="0.01" class="form-control"
+        [class.is-invalid]="campo('valor')?.invalid && campo('valor')?.touched" />
+      <div class="invalid-feedback" *ngIf="campo('valor')?.invalid && campo('valor')?.touched">Valor inválido.</div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="frequenciaSemanal">Frequência *</label>
+      <select id="frequenciaSemanal" formControlName="frequenciaSemanal" class="form-control"
+        [class.is-invalid]="campo('frequenciaSemanal')?.invalid && campo('frequenciaSemanal')?.touched">
+        <option value="">Selecione...</option>
+        <option *ngFor="let f of frequencias" [value]="f">{{ frequenciaLabel[f] }}</option>
+      </select>
+      <div class="invalid-feedback" *ngIf="campo('frequenciaSemanal')?.invalid && campo('frequenciaSemanal')?.touched">Frequência é obrigatória.</div>
+    </div>
+    <div class="form-group">
+      <label for="dataInicio">Data de Início *</label>
+      <input id="dataInicio" formControlName="dataInicio" type="date" class="form-control"
+        [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
+      <div class="invalid-feedback" *ngIf="campo('dataInicio')?.invalid && campo('dataInicio')?.touched">Data é obrigatória.</div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Dias da Semana *
+      <span *ngIf="diasEsperados() > 0" class="hint">(selecione {{ diasEsperados() }} dia{{ diasEsperados() > 1 ? 's' : '' }})</span>
+    </label>
+    <div class="dias-grid">
+      <button type="button" *ngFor="let dia of diasDisponiveis"
+        class="dia-btn" [class.selected]="diaSelecionado(dia)"
+        (click)="toggleDia(dia)">
+        {{ diasLabel[dia] }}
+      </button>
+    </div>
+    <div class="invalid-feedback" *ngIf="campo('diasSemana')?.errors?.['diasInvalidos'] && campo('diasSemana')?.touched">
+      Selecione exatamente {{ campo('diasSemana')?.errors?.['diasInvalidos']?.esperado }} dia(s) para a frequência escolhida.
+    </div>
+    <div class="invalid-feedback" *ngIf="campo('diasSemana')?.errors?.['required'] && campo('diasSemana')?.touched">
+      Selecione ao menos um dia.
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : 'Salvar' }}
+    </button>
+    <a [routerLink]="['/pacientes', pacienteId, 'planos']" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

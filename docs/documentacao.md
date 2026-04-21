@@ -26,6 +26,17 @@
 
 ---
 
+## Módulos
+
+| Módulo | Rotas | Funcionalidades |
+|--------|-------|-----------------|
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, ativar/inativar |
+| Planos | `/pacientes/:id/planos`, `/pacientes/:id/planos/novo` | Listar, criar (com seleção de dias e validação de frequência), inativar |
+| Pagamentos | `/pacientes/:id/pagamentos`, `/pacientes/:id/pagamentos/novo` | Listar, criar, confirmar pagamento |
+| Aulas | `/pacientes/:id/aulas` | Listar, confirmar presença |
+
+---
+
 ## Estrutura de Pastas
 
 ```
@@ -283,13 +294,16 @@ Comando: `npm test`
 - Design responsivo
 - Ativação e inativação de pacientes via PATCH
 - E-mail mutável na edição (somente CPF é imutável)
+- Módulo Planos: listagem, criação com seleção de dias e validação de frequência
+- Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
+- Módulo Aulas: listagem e confirmação de presença
+- Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
 - Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos
 - Autenticação e autorização
-- Módulos adicionais: aulas, agendamentos, financeiro
 - Variável de ambiente para URL da API (atualmente hardcoded via proxy)
 - Componente `ConfirmarDialog` integrado
 - Testes E2E
-- Busca e filtros na listagem
+- Busca e filtros nas listagens
 - Animações e transições

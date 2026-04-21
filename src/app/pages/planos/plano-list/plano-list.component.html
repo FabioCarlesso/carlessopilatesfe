@@ -1,0 +1,56 @@
+<div class="page-header">
+  <h1>Planos do Paciente</h1>
+  <div class="acoes">
+    <a [routerLink]="['/pacientes', pacienteId, 'planos', 'novo']" class="btn btn-primary">Novo Plano</a>
+    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && planos.length === 0 && !erro" class="empty-state">
+  Nenhum plano cadastrado.
+</div>
+
+<table *ngIf="planos.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Valor</th>
+      <th>Frequência</th>
+      <th>Dias</th>
+      <th>Início</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let plano of planos">
+      <td>{{ tipoLabel[plano.tipo] }}</td>
+      <td>{{ plano.valor | currency:'BRL' }}</td>
+      <td>{{ frequenciaLabel[plano.frequenciaSemanal] }}</td>
+      <td>{{ diasFormatados(plano) }}</td>
+      <td>{{ plano.dataInicio | date:'dd/MM/yyyy' }}</td>
+      <td>
+        <span class="badge" [class.badge-ativo]="plano.ativo" [class.badge-inativo]="!plano.ativo">
+          {{ plano.ativo ? 'Ativo' : 'Inativo' }}
+        </span>
+      </td>
+      <td class="acoes-col">
+        <a [routerLink]="['/pacientes', pacienteId, 'pagamentos']" class="btn btn-secondary btn-sm">Pagamentos</a>
+        <button class="btn btn-danger btn-sm" *ngIf="plano.ativo" (click)="confirmarInativar(plano.id)">Inativar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="dialog-overlay" *ngIf="confirmarInativarId !== null">
+  <div class="dialog">
+    <p>Confirma a inativação deste plano?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarInativar()">Cancelar</button>
+    </div>
+  </div>
+</div>

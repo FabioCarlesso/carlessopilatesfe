@@ -1,0 +1,11 @@
+.badge {
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.badge-ativo { background: #e8f5e9; color: var(--secondary); }
+.badge-inativo { background: #fce4ec; color: var(--danger); }
+.btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+.acoes-col { display: flex; gap: 6px; }
+.empty-state { color: var(--text-light); margin-top: 2rem; text-align: center; }

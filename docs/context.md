@@ -18,6 +18,7 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 4. Correção de CORS via proxy do Angular CLI
 5. Implementação de testes unitários e atualização da documentação
 6. Alinhamento com API v2: PATCH ativar/inativar, e-mail mutável no PUT
+7. Implementação dos módulos de Planos, Pagamentos e Aulas
 
 A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. Ainda não há autenticação, outros módulos ou configuração de ambiente.
 

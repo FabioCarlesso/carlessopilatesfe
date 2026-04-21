@@ -1,0 +1,36 @@
+<div class="page-header">
+  <h1>Aulas do Paciente</h1>
+  <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && aulas.length === 0 && !erro" class="empty-state">
+  Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
+</div>
+
+<table *ngIf="aulas.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let aula of aulas">
+      <td>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
+      <td>
+        <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
+          {{ aula.realizada ? 'Realizada' : 'Pendente' }}
+        </span>
+      </td>
+      <td>
+        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="confirmar(aula.id)">
+          Confirmar Presença
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
