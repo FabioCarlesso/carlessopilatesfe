@@ -84,6 +84,17 @@ Arquivos de teste:
 
 ---
 
+## Módulos implementados
+
+| Módulo | Descrição |
+|--------|-----------|
+| **Pacientes** | CRUD completo com ativação/inativação |
+| **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
+| **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
+| **Aulas** | Visualização das aulas geradas e confirmação de presença |
+
+---
+
 ## Rotas
 
 | Caminho                 | Função                                      |
@@ -94,7 +105,15 @@ Arquivos de teste:
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/pacientes/:id/editar` | Formulário de edição                        |
 
-Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos.
+Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+
+| Caminho | Função |
+|---------|--------|
+| `/pacientes/:id/planos` | Lista de planos do paciente |
+| `/pacientes/:id/planos/novo` | Criar novo plano |
+| `/pacientes/:id/pagamentos` | Lista de pagamentos |
+| `/pacientes/:id/pagamentos/novo` | Registrar novo pagamento |
+| `/pacientes/:id/aulas` | Lista de aulas geradas |
 
 ---
 

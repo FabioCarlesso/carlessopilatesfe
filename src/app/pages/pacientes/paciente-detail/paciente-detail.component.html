@@ -63,6 +63,24 @@
       </div>
     </div>
   </section>
+
+  <section class="detail-section links-section">
+    <h2>Gestão</h2>
+    <div class="links-grid">
+      <a [routerLink]="['/pacientes', paciente.id, 'planos']" class="link-card">
+        <span class="link-icon">📋</span>
+        <span>Planos</span>
+      </a>
+      <a [routerLink]="['/pacientes', paciente.id, 'pagamentos']" class="link-card">
+        <span class="link-icon">💳</span>
+        <span>Pagamentos</span>
+      </a>
+      <a [routerLink]="['/pacientes', paciente.id, 'aulas']" class="link-card">
+        <span class="link-icon">🗓</span>
+        <span>Aulas</span>
+      </a>
+    </div>
+  </section>
 </div>
 
 <div class="dialog-overlay" *ngIf="confirmarAtivar">

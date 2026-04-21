@@ -1,0 +1,30 @@
+.links-section { margin-top: 1.5rem; }
+
+.links-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 28px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  transition: all 0.15s;
+
+  .link-icon { font-size: 1.5rem; }
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #f3f2ff;
+  }
+}

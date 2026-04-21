@@ -1,0 +1,60 @@
+<div class="page-header">
+  <h1>Novo Pagamento</h1>
+  <a [routerLink]="['/pacientes', pacienteId, 'pagamentos']" class="btn btn-outline">Voltar</a>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="carregando" class="loading">Carregando planos...</div>
+
+<div *ngIf="!carregando && planos.length === 0 && !erro" class="alert alert-warning">
+  Este paciente não possui planos ativos. <a [routerLink]="['/pacientes', pacienteId, 'planos', 'novo']">Criar um plano</a>.
+</div>
+
+<form *ngIf="!carregando && planos.length > 0" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Dados do Pagamento</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="planoId">Plano *</label>
+      <select id="planoId" formControlName="planoId" class="form-control"
+        [class.is-invalid]="campo('planoId')?.invalid && campo('planoId')?.touched">
+        <option [value]="null">Selecione...</option>
+        <option *ngFor="let plano of planos" [value]="plano.id">
+          {{ tipoLabel[plano.tipo] }} — {{ plano.valor | currency:'BRL' }}
+        </option>
+      </select>
+      <div class="invalid-feedback" *ngIf="campo('planoId')?.invalid && campo('planoId')?.touched">Plano é obrigatório.</div>
+    </div>
+    <div class="form-group">
+      <label for="valor">Valor (R$) *</label>
+      <input id="valor" formControlName="valor" type="number" min="0" step="0.01" class="form-control"
+        [class.is-invalid]="campo('valor')?.invalid && campo('valor')?.touched" />
+      <div class="invalid-feedback" *ngIf="campo('valor')?.invalid && campo('valor')?.touched">Valor inválido.</div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="periodoInicio">Início do Período *</label>
+      <input id="periodoInicio" formControlName="periodoInicio" type="date" class="form-control"
+        [class.is-invalid]="campo('periodoInicio')?.invalid && campo('periodoInicio')?.touched" />
+    </div>
+    <div class="form-group">
+      <label for="periodoFim">Fim do Período *</label>
+      <input id="periodoFim" formControlName="periodoFim" type="date" class="form-control"
+        [class.is-invalid]="campo('periodoFim')?.invalid && campo('periodoFim')?.touched" />
+    </div>
+    <div class="form-group">
+      <label for="dataVencimento">Vencimento *</label>
+      <input id="dataVencimento" formControlName="dataVencimento" type="date" class="form-control"
+        [class.is-invalid]="campo('dataVencimento')?.invalid && campo('dataVencimento')?.touched" />
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : 'Salvar' }}
+    </button>
+    <a [routerLink]="['/pacientes', pacienteId, 'pagamentos']" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>
