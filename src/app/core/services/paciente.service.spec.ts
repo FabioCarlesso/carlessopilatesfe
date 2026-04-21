@@ -95,7 +95,7 @@ describe('PacienteService', () => {
 
   describe('atualizar', () => {
     it('should PUT to /api/pacientes/:id with request body and return updated patient', () => {
-      const dto: PacienteUpdateDTO = { nome: 'Ana Updated', telefone: '(11) 88888-8888' };
+      const dto: PacienteUpdateDTO = { nome: 'Ana Updated', email: 'nova@email.com' };
 
       service.atualizar(1, dto).subscribe(p => expect(p).toEqual(mockPaciente));
 
@@ -106,12 +106,22 @@ describe('PacienteService', () => {
     });
   });
 
+  describe('ativar', () => {
+    it('should PATCH /api/pacientes/:id/ativar', () => {
+      service.ativar(1).subscribe();
+
+      const req = httpMock.expectOne('/api/pacientes/1/ativar');
+      expect(req.request.method).toBe('PATCH');
+      req.flush(null);
+    });
+  });
+
   describe('inativar', () => {
-    it('should DELETE /api/pacientes/:id', () => {
+    it('should PATCH /api/pacientes/:id/inativar', () => {
       service.inativar(1).subscribe();
 
-      const req = httpMock.expectOne('/api/pacientes/1');
-      expect(req.request.method).toBe('DELETE');
+      const req = httpMock.expectOne('/api/pacientes/1/inativar');
+      expect(req.request.method).toBe('PATCH');
       req.flush(null);
     });
   });

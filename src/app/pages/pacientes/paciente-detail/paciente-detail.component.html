@@ -2,6 +2,7 @@
   <h1>{{ paciente.nome }}</h1>
   <div class="acoes">
     <a [routerLink]="['/pacientes', paciente.id, 'editar']" class="btn btn-secondary">Editar</a>
+    <button class="btn btn-secondary" (click)="confirmarAtivar = true" *ngIf="!paciente.ativo">Ativar</button>
     <button class="btn btn-danger" (click)="confirmarInativar = true" *ngIf="paciente.ativo">Inativar</button>
     <a routerLink="/pacientes" class="btn btn-outline">Voltar</a>
   </div>
@@ -62,6 +63,16 @@
       </div>
     </div>
   </section>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarAtivar">
+  <div class="dialog">
+    <p>Confirma a reativação de <strong>{{ paciente?.nome }}</strong>?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" (click)="ativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="confirmarAtivar = false">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <div class="dialog-overlay" *ngIf="confirmarInativar">

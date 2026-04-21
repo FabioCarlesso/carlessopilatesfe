@@ -50,7 +50,6 @@ export class PacienteFormComponent implements OnInit {
       this.service.buscar(this.pacienteId).subscribe({
         next: p => {
           this.form.patchValue(p);
-          this.form.get('email')?.disable();
           this.form.get('cpf')?.disable();
           this.loading = false;
         },
@@ -74,6 +73,7 @@ export class PacienteFormComponent implements OnInit {
     const obs = this.isEdit && this.pacienteId !== null
       ? this.service.atualizar(this.pacienteId, {
           nome: valor.nome,
+          email: valor.email,
           telefone: valor.telefone,
           dataNascimento: valor.dataNascimento,
           endereco: valor.endereco

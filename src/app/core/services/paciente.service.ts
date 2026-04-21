@@ -33,7 +33,11 @@ export class PacienteService {
     return this.http.put<PacienteResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
+  ativar(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/ativar`, {});
+  }
+
   inativar(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
   }
 }
