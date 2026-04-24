@@ -7,4 +7,9 @@ dist
 coverage
 *.log
 docs/*.docx
-
+.env
+.env.*
+Dockerfile
+docker-compose.yml
+.github
+*.md
