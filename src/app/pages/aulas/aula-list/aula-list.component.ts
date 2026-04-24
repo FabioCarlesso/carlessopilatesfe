@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AulaService } from '../../../core/services/aula.service';
+import { PagamentoService } from '../../../core/services/pagamento.service';
 import { AulaResponseDTO } from '../../../core/models/plano';
 
 @Component({
@@ -18,7 +19,11 @@ export class AulaListComponent implements OnInit {
   erro: string | null = null;
   titulo = 'Aulas';
 
-  constructor(private service: AulaService, private route: ActivatedRoute) {}
+  constructor(
+    private service: AulaService,
+    private pagamentoService: PagamentoService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     const pacienteId = this.route.snapshot.paramMap.get('pacienteId');
@@ -27,7 +32,20 @@ export class AulaListComponent implements OnInit {
     this.pacienteId = pacienteId ? +pacienteId : null;
     this.pagamentoId = pagamentoId ? +pagamentoId : null;
     this.titulo = this.pagamentoId !== null ? 'Aulas do Pagamento' : 'Aulas do Paciente';
-    this.carregar();
+
+    if (this.pagamentoId !== null) {
+      this.pagamentoService.buscar(this.pagamentoId).subscribe({
+        next: pagamento => {
+          this.pacienteId = pagamento.pacienteId;
+          this.carregar();
+        },
+        error: () => {
+          this.erro = 'Erro ao carregar dados do pagamento.';
+        }
+      });
+    } else {
+      this.carregar();
+    }
   }
 
   carregar(): void {
@@ -40,9 +58,6 @@ export class AulaListComponent implements OnInit {
     request$.subscribe({
       next: aulas => {
         this.aulas = aulas;
-        if (this.pacienteId === null && aulas.length > 0) {
-          this.pacienteId = aulas[0].pacienteId;
-        }
         this.loading = false;
       },
       error: () => {

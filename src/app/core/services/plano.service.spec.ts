@@ -60,6 +60,21 @@ describe('PlanoService', () => {
     });
   });
 
+  describe('buscarAtivo', () => {
+    it('should GET /api/planos/paciente/:id/ativo', () => {
+      service.buscarAtivo(10).subscribe(p => expect(p).toEqual(mockPlano));
+      const req = httpMock.expectOne('/api/planos/paciente/10/ativo');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockPlano);
+    });
+
+    it('should return null when no active plan exists', () => {
+      service.buscarAtivo(10).subscribe(p => expect(p).toBeNull());
+      const req = httpMock.expectOne('/api/planos/paciente/10/ativo');
+      req.flush(null);
+    });
+  });
+
   describe('inativar', () => {
     it('should DELETE /api/planos/:id', () => {
       service.inativar(1).subscribe();

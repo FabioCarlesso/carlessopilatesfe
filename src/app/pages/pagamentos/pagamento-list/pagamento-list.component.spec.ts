@@ -22,12 +22,12 @@ describe('PagamentoListComponent', () => {
     serviceSpy.listar.and.returnValue(of([mockPagamento]));
 
     await TestBed.configureTestingModule({
-        imports: [PagamentoListComponent, RouterTestingModule],
-        providers: [
-          { provide: PagamentoService, useValue: serviceSpy },
-          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
-        ]
-      }).compileComponents();
+      imports: [PagamentoListComponent, RouterTestingModule],
+      providers: [
+        { provide: PagamentoService, useValue: serviceSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(PagamentoListComponent);
     component = fixture.componentInstance;

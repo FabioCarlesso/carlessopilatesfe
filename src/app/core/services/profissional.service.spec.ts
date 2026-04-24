@@ -85,13 +85,13 @@ describe('ProfissionalService', () => {
     req.flush(mockProfissional);
   });
 
-  it('should PUT /api/profissionais/:id', () => {
+  it('should PATCH /api/profissionais/:id', () => {
     const dto: ProfissionalUpdateDTO = { nome: 'Paula Atualizada', percentualPagamentoAula: 50 };
 
     service.atualizar(1, dto).subscribe(item => expect(item).toEqual(mockProfissional));
 
     const req = httpMock.expectOne('/api/profissionais/1');
-    expect(req.request.method).toBe('PUT');
+    expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual(dto);
     req.flush(mockProfissional);
   });

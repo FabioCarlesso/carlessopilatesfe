@@ -22,12 +22,12 @@ describe('PlanoFormComponent', () => {
     serviceSpy = jasmine.createSpyObj('PlanoService', ['criar']);
 
     await TestBed.configureTestingModule({
-        imports: [PlanoFormComponent, RouterTestingModule],
-        providers: [
-          { provide: PlanoService, useValue: serviceSpy },
-          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
-        ]
-      }).compileComponents();
+      imports: [PlanoFormComponent, RouterTestingModule],
+      providers: [
+        { provide: PlanoService, useValue: serviceSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
+      ]
+    }).compileComponents();
 
     router = TestBed.inject(Router);
     spyOn(router, 'navigate');
