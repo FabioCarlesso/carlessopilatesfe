@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+    image: carlessopilatesfe:latest
+    ports:
+      - "4200:80"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://host.docker.internal:8080}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+

@@ -19,8 +19,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 5. Implementação de testes unitários e atualização da documentação
 6. Alinhamento com API v2: PATCH ativar/inativar, e-mail mutável no PUT
 7. Implementação dos módulos de Planos, Pagamentos e Aulas
+8. Dockerização do frontend com build Angular multi-stage e Nginx
 
-A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. Ainda não há autenticação, outros módulos ou configuração de ambiente.
+A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 
@@ -44,7 +45,17 @@ Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulá
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
 
-A configuração por `environment.ts` (para separar dev/prod) ainda é um próximo passo planejado.
+### Docker com Nginx
+A imagem Docker usa build multi-stage: `node:22-alpine` instala dependências e executa `npm run build`; `nginx:1.27-alpine` serve o conteúdo de `dist/carlessopilatesfe/browser`.
+
+O Nginx mantém o mesmo contrato de URL relativa do frontend:
+
+- `/` serve a SPA com fallback para `index.html`
+- `/api/*` é redirecionado para `${BACKEND_URL}/*`
+
+O valor padrão de `BACKEND_URL` é `http://host.docker.internal:8080`, adequado para backend rodando na máquina host durante desenvolvimento local com Docker Compose. Em ambientes integrados, a variável deve apontar para o serviço real da API.
+
+A configuração por `environment.ts` ainda não é necessária porque o frontend continua usando URLs relativas e o alvo da API é resolvido no proxy.
 
 ---
 
@@ -127,6 +138,7 @@ Erros são tratados no subscribe via callback de erro, exibindo mensagem genéri
 - Node.js 18+
 - Angular CLI (`npm install -g @angular/cli`)
 - Backend rodando em `http://localhost:8080`
+- Docker e Docker Compose, para execução em container
 
 ### Passos
 ```bash
@@ -137,6 +149,19 @@ npm install
 npm start
 
 # Acessar em http://localhost:4200
+```
+
+### Docker
+```bash
+# Backend local em http://localhost:8080
+docker compose up --build
+
+# Acessar em http://localhost:4200
+```
+
+Para outro backend:
+```bash
+BACKEND_URL=http://api:8080 docker compose up --build
 ```
 
 ---
