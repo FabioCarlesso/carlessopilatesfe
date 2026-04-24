@@ -1,6 +1,6 @@
 <div class="page-header">
   <h1>Novo Plano</h1>
-  <a [routerLink]="['/pacientes', pacienteId, 'planos']" class="btn btn-outline">Voltar</a>
+  <a [routerLink]="['/planos/paciente', pacienteId]" class="btn btn-outline">Voltar</a>
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
@@ -67,6 +67,6 @@
     <button type="submit" class="btn btn-primary" [disabled]="salvando">
       {{ salvando ? 'Salvando...' : 'Salvar' }}
     </button>
-    <a [routerLink]="['/pacientes', pacienteId, 'planos']" class="btn btn-outline">Cancelar</a>
+    <a [routerLink]="['/planos/paciente', pacienteId]" class="btn btn-outline">Cancelar</a>
   </div>
 </form>

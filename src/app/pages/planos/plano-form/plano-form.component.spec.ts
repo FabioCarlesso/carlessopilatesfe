@@ -25,7 +25,7 @@ describe('PlanoFormComponent', () => {
       imports: [PlanoFormComponent, RouterTestingModule],
       providers: [
         { provide: PlanoService, useValue: serviceSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '10' } } } }
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
       ]
     }).compileComponents();
 
@@ -82,8 +82,8 @@ describe('PlanoFormComponent', () => {
       diasSemana: ['MONDAY', 'WEDNESDAY']
     });
     component.salvar();
-    expect(serviceSpy.criar).toHaveBeenCalledWith(10, component.form.value);
-    expect(router.navigate).toHaveBeenCalledWith(['/pacientes', 10, 'planos']);
+    expect(serviceSpy.criar).toHaveBeenCalledWith({ ...component.form.value, pacienteId: 10 });
+    expect(router.navigate).toHaveBeenCalledWith(['/planos/paciente', 10]);
   });
 
   it('should set erro on criar failure', () => {

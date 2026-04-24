@@ -31,13 +31,12 @@ export class PagamentoFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('id')!;
+    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
     this.form = this.fb.group({
       planoId: [null, Validators.required],
       valor: [null, [Validators.required, Validators.min(0.01)]],
       dataVencimento: ['', Validators.required],
-      periodoInicio: ['', Validators.required],
-      periodoFim: ['', Validators.required]
+      periodoInicio: ['', Validators.required]
     });
     this.carregarPlanos();
   }
@@ -67,8 +66,12 @@ export class PagamentoFormComponent implements OnInit {
     }
     this.salvando = true;
     this.erro = null;
-    this.pagamentoService.criar({ ...this.form.value, planoId: +this.form.value.planoId }).subscribe({
-      next: () => this.router.navigate(['/pacientes', this.pacienteId, 'pagamentos']),
+    this.pagamentoService.criar({
+      ...this.form.value,
+      pacienteId: this.pacienteId,
+      planoId: +this.form.value.planoId
+    }).subscribe({
+      next: () => this.router.navigate(['/pagamentos/paciente', this.pacienteId]),
       error: () => {
         this.erro = 'Erro ao registrar pagamento.';
         this.salvando = false;

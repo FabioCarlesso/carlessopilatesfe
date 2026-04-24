@@ -10,7 +10,11 @@ export class PagamentoService {
   constructor(private http: HttpClient) {}
 
   listar(pacienteId: number): Observable<PagamentoResponseDTO[]> {
-    return this.http.get<PagamentoResponseDTO[]>(`${this.apiUrl}/pacientes/${pacienteId}/pagamentos`);
+    return this.http.get<PagamentoResponseDTO[]>(`${this.apiUrl}/pagamentos/paciente/${pacienteId}`);
+  }
+
+  buscar(pagamentoId: number): Observable<PagamentoResponseDTO> {
+    return this.http.get<PagamentoResponseDTO>(`${this.apiUrl}/pagamentos/${pagamentoId}`);
   }
 
   criar(dto: PagamentoRequestDTO): Observable<PagamentoResponseDTO> {
@@ -20,7 +24,8 @@ export class PagamentoService {
   pagar(pagamentoId: number, dataPagamento: string): Observable<PagamentoResponseDTO> {
     return this.http.patch<PagamentoResponseDTO>(
       `${this.apiUrl}/pagamentos/${pagamentoId}/pagar`,
-      { dataPagamento }
+      {},
+      { params: { dataPagamento } }
     );
   }
 }

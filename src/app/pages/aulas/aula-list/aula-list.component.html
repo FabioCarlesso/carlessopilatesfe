@@ -1,6 +1,7 @@
 <div class="page-header">
-  <h1>Aulas do Paciente</h1>
-  <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  <h1>{{ titulo }}</h1>
+  <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  <a *ngIf="pagamentoId !== null && pacienteId !== null" [routerLink]="['/pagamentos/paciente', pacienteId]" class="btn btn-outline">Voltar aos Pagamentos</a>
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
@@ -27,8 +28,8 @@
         </span>
       </td>
       <td>
-        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="confirmar(aula.id)">
-          Confirmar Presença
+        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="realizar(aula.id)">
+          Marcar como Realizada
         </button>
       </td>
     </tr>

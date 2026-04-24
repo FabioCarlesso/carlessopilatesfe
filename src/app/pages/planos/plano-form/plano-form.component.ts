@@ -40,7 +40,7 @@ export class PlanoFormComponent implements OnInit {
   constructor(private fb: FormBuilder, private service: PlanoService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('id')!;
+    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
     this.form = this.fb.group({
       tipo: ['', Validators.required],
       valor: [null, [Validators.required, Validators.min(0.01)]],
@@ -79,8 +79,8 @@ export class PlanoFormComponent implements OnInit {
     }
     this.salvando = true;
     this.erro = null;
-    this.service.criar(this.pacienteId, this.form.value).subscribe({
-      next: () => this.router.navigate(['/pacientes', this.pacienteId, 'planos']),
+    this.service.criar({ ...this.form.value, pacienteId: this.pacienteId }).subscribe({
+      next: () => this.router.navigate(['/planos/paciente', this.pacienteId]),
       error: () => {
         this.erro = 'Erro ao salvar plano.';
         this.salvando = false;

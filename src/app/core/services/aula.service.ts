@@ -9,11 +9,15 @@ export class AulaService {
 
   constructor(private http: HttpClient) {}
 
-  listar(pacienteId: number): Observable<AulaResponseDTO[]> {
-    return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/pacientes/${pacienteId}/aulas`);
+  listarPorPaciente(pacienteId: number): Observable<AulaResponseDTO[]> {
+    return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/paciente/${pacienteId}`);
   }
 
-  confirmar(aulaId: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/aulas/${aulaId}/confirmar`, {});
+  listarPorPagamento(pagamentoId: number): Observable<AulaResponseDTO[]> {
+    return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/pagamento/${pagamentoId}`);
+  }
+
+  realizar(aulaId: number): Observable<AulaResponseDTO> {
+    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/realizar`, {});
   }
 }

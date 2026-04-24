@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AulaService } from '../../../core/services/aula.service';
+import { PagamentoService } from '../../../core/services/pagamento.service';
 import { AulaResponseDTO } from '../../../core/models/plano';
 
 @Component({
@@ -11,22 +12,50 @@ import { AulaResponseDTO } from '../../../core/models/plano';
   styleUrl: './aula-list.component.scss'
 })
 export class AulaListComponent implements OnInit {
-  pacienteId!: number;
+  pacienteId: number | null = null;
+  pagamentoId: number | null = null;
   aulas: AulaResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
+  titulo = 'Aulas';
 
-  constructor(private service: AulaService, private route: ActivatedRoute) {}
+  constructor(
+    private service: AulaService,
+    private pagamentoService: PagamentoService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('id')!;
-    this.carregar();
+    const pacienteId = this.route.snapshot.paramMap.get('pacienteId');
+    const pagamentoId = this.route.snapshot.paramMap.get('pagamentoId');
+
+    this.pacienteId = pacienteId ? +pacienteId : null;
+    this.pagamentoId = pagamentoId ? +pagamentoId : null;
+    this.titulo = this.pagamentoId !== null ? 'Aulas do Pagamento' : 'Aulas do Paciente';
+
+    if (this.pagamentoId !== null) {
+      this.pagamentoService.buscar(this.pagamentoId).subscribe({
+        next: pagamento => {
+          this.pacienteId = pagamento.pacienteId;
+          this.carregar();
+        },
+        error: () => {
+          this.erro = 'Erro ao carregar dados do pagamento.';
+        }
+      });
+    } else {
+      this.carregar();
+    }
   }
 
   carregar(): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.pacienteId).subscribe({
+    const request$ = this.pagamentoId !== null
+      ? this.service.listarPorPagamento(this.pagamentoId)
+      : this.service.listarPorPaciente(this.pacienteId!);
+
+    request$.subscribe({
       next: aulas => {
         this.aulas = aulas;
         this.loading = false;
@@ -38,10 +67,10 @@ export class AulaListComponent implements OnInit {
     });
   }
 
-  confirmar(id: number): void {
-    this.service.confirmar(id).subscribe({
+  realizar(id: number): void {
+    this.service.realizar(id).subscribe({
       next: () => this.carregar(),
-      error: () => (this.erro = 'Erro ao confirmar presença.')
+      error: () => (this.erro = 'Erro ao marcar aula como realizada.')
     });
   }
 }

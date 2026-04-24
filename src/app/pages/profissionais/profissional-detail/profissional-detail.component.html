@@ -1,0 +1,72 @@
+<div class="page-header" *ngIf="profissional">
+  <h1>{{ profissional.nome }}</h1>
+  <div class="acoes">
+    <a [routerLink]="['/profissionais', profissional.id, 'editar']" class="btn btn-secondary">Editar</a>
+    <button class="btn btn-secondary" (click)="confirmarAtivar = true" *ngIf="!profissional.ativo">Ativar</button>
+    <button class="btn btn-danger" (click)="confirmarInativar = true" *ngIf="profissional.ativo">Inativar</button>
+    <a routerLink="/profissionais" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="profissional" class="detail-card">
+  <div class="badge-status" [class.inativo]="!profissional.ativo">
+    {{ profissional.ativo ? 'Ativo' : 'Inativo' }}
+  </div>
+
+  <section class="detail-section">
+    <h2>Dados do Profissional</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="label">Nome</span>
+        <span>{{ profissional.nome }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">E-mail</span>
+        <span>{{ profissional.email }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">CPF</span>
+        <span>{{ profissional.cpf }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Telefone</span>
+        <span>{{ profissional.telefone || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Contrato</span>
+        <span>{{ tipoContratoLabel[profissional.tipoContrato] }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">% por Aula</span>
+        <span>{{ profissional.percentualPagamentoAula }}%</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Data de Início</span>
+        <span>{{ profissional.dataInicio | date:'dd/MM/yyyy' }}</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarAtivar">
+  <div class="dialog">
+    <p>Confirma a reativação de <strong>{{ profissional?.nome }}</strong>?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" (click)="ativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="confirmarAtivar = false">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarInativar">
+  <div class="dialog">
+    <p>Confirma a inativação de <strong>{{ profissional?.nome }}</strong>?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="confirmarInativar = false">Cancelar</button>
+    </div>
+  </div>
+</div>

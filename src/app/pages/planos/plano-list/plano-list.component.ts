@@ -24,7 +24,7 @@ export class PlanoListComponent implements OnInit {
   constructor(private service: PlanoService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('id')!;
+    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
     this.carregar();
   }
 

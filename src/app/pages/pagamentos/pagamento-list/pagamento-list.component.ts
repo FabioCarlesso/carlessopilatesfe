@@ -32,7 +32,7 @@ export class PagamentoListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('id')!;
+    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
     this.pagarForm = this.fb.group({ dataPagamento: ['', Validators.required] });
     this.carregar();
   }

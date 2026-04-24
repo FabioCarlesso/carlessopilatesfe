@@ -6,6 +6,7 @@ import { AulaResponseDTO } from '../models/plano';
 const mockAula: AulaResponseDTO = {
   id: 1,
   pacienteId: 10,
+  pacienteNome: 'Ana Silva',
   pagamentoId: 1,
   data: '2026-05-05',
   realizada: false
@@ -30,21 +31,30 @@ describe('AulaService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('listar', () => {
-    it('should GET /api/pacientes/:id/aulas', () => {
-      service.listar(10).subscribe(aulas => expect(aulas).toEqual([mockAula]));
-      const req = httpMock.expectOne('/api/pacientes/10/aulas');
+  describe('listarPorPaciente', () => {
+    it('should GET /api/aulas/paciente/:id', () => {
+      service.listarPorPaciente(10).subscribe(aulas => expect(aulas).toEqual([mockAula]));
+      const req = httpMock.expectOne('/api/aulas/paciente/10');
       expect(req.request.method).toBe('GET');
       req.flush([mockAula]);
     });
   });
 
-  describe('confirmar', () => {
-    it('should PATCH /api/aulas/:id/confirmar', () => {
-      service.confirmar(1).subscribe();
-      const req = httpMock.expectOne('/api/aulas/1/confirmar');
+  describe('listarPorPagamento', () => {
+    it('should GET /api/aulas/pagamento/:id', () => {
+      service.listarPorPagamento(1).subscribe(aulas => expect(aulas).toEqual([mockAula]));
+      const req = httpMock.expectOne('/api/aulas/pagamento/1');
+      expect(req.request.method).toBe('GET');
+      req.flush([mockAula]);
+    });
+  });
+
+  describe('realizar', () => {
+    it('should PATCH /api/aulas/:id/realizar', () => {
+      service.realizar(1).subscribe(aula => expect(aula).toEqual(mockAula));
+      const req = httpMock.expectOne('/api/aulas/1/realizar');
       expect(req.request.method).toBe('PATCH');
-      req.flush(null);
+      req.flush(mockAula);
     });
   });
 });
