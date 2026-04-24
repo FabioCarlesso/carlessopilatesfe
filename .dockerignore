@@ -1,0 +1,15 @@
+node_modules
+dist
+.angular
+.git
+.gitignore
+.codex
+coverage
+*.log
+docs/*.docx
+.env
+.env.*
+Dockerfile
+docker-compose.yml
+.github
+*.md

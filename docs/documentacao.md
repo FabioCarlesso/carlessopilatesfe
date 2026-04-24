@@ -23,6 +23,7 @@
 | Reatividade    | RxJS 7.8                                |
 | Testes         | Karma + Jasmine                         |
 | Build          | Angular CLI 19.2 / @angular-devkit      |
+| Container      | Docker + Nginx                          |
 
 ---
 
@@ -63,7 +64,11 @@ carlessopilatesfe/
 │   ├── main.ts                          # Ponto de entrada (bootstrap)
 │   └── index.html                       # HTML principal
 ├── docs/                                # Documentação do projeto
+├── nginx/
+│   └── default.conf.template            # Proxy /api e fallback da SPA em Docker
 ├── angular.json                         # Configuração do Angular CLI
+├── Dockerfile                           # Build multi-stage e imagem Nginx
+├── docker-compose.yml                   # Execução local em container
 ├── package.json                         # Dependências e scripts
 └── tsconfig.json                        # Configuração do TypeScript
 ```
@@ -146,7 +151,9 @@ interface Page<T> {
 Arquivo: `src/app/core/services/paciente.service.ts`  
 Injetável em toda a aplicação (`providedIn: 'root'`).
 
-**URL base:** `http://localhost:8080/pacientes`
+**URL base no frontend:** `/api/pacientes`
+
+Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhost:8080` via `proxy.conf.json`. Em Docker, o Nginx redireciona `/api` para o valor de `BACKEND_URL`.
 
 | Método            | Endpoint HTTP               | Descrição                        |
 |-------------------|-----------------------------|----------------------------------|
@@ -259,6 +266,41 @@ npm test         # Execução dos testes unitários (Karma/Jasmine)
 
 ---
 
+## Docker
+
+O Dockerfile usa duas etapas:
+
+| Etapa | Imagem | Responsabilidade |
+|-------|--------|------------------|
+| `build` | `node:22-alpine` | Instalar dependências com `npm ci` e gerar `dist/carlessopilatesfe/browser` |
+| runtime | `nginx:1.27-alpine` | Servir a SPA e redirecionar `/api/*` para o backend |
+
+### Execução com Compose
+
+```bash
+docker compose up --build
+```
+
+A aplicação fica disponível em `http://localhost:4200`. Por padrão, `BACKEND_URL` aponta para `http://host.docker.internal:8080`.
+
+### Configurar backend
+
+```bash
+BACKEND_URL=http://api:8080 docker compose up --build
+```
+
+### Execução com Docker
+
+```bash
+docker build -t carlessopilatesfe .
+docker run --rm -p 4200:80 \
+  -e BACKEND_URL=http://host.docker.internal:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  carlessopilatesfe
+```
+
+---
+
 ## Testes Unitários
 
 Framework: **Karma + Jasmine**  
@@ -298,11 +340,12 @@ Comando: `npm test`
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
+- Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos
 - Autenticação e autorização
-- Variável de ambiente para URL da API (atualmente hardcoded via proxy)
+- Configuração avançada de ambientes Angular, caso seja necessária no futuro
 - Componente `ConfirmarDialog` integrado
 - Testes E2E
 - Busca e filtros nas listagens

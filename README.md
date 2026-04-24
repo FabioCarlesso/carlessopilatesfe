@@ -16,6 +16,7 @@ A aplicação oferece um CRUD completo de pacientes com listagem paginada, formu
 - Node.js 18+
 - Angular CLI: `npm install -g @angular/cli`
 - Backend rodando em `http://localhost:8080`
+- Docker e Docker Compose, para execução em container
 
 ---
 
@@ -38,6 +39,35 @@ npm install
 
 ---
 
+## Docker
+
+A imagem Docker compila a aplicação Angular e serve os arquivos estáticos com Nginx. O Nginx também redireciona `/api/*` para o backend configurado por `BACKEND_URL`.
+
+```bash
+# Backend local em http://localhost:8080
+docker compose up --build
+```
+
+A aplicação fica disponível em `http://localhost:4200`.
+
+Para apontar para outro backend:
+
+```bash
+BACKEND_URL=http://api:8080 docker compose up --build
+```
+
+Também é possível construir e executar sem Compose:
+
+```bash
+docker build -t carlessopilatesfe .
+docker run --rm -p 4200:80 \
+  -e BACKEND_URL=http://host.docker.internal:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  carlessopilatesfe
+```
+
+---
+
 ## Stack
 
 | Camada     | Tecnologia                    |
@@ -48,6 +78,7 @@ npm install
 | Forms      | Reactive Forms                |
 | HTTP       | HttpClient + proxy `/api/*`   |
 | Testes     | Karma + Jasmine               |
+| Container  | Docker + Nginx                |
 
 ---
 
@@ -120,3 +151,5 @@ Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para
 ## Proxy de desenvolvimento
 
 O Angular CLI redireciona `/api/*` → `http://localhost:8080/*` via `proxy.conf.json`, eliminando problemas de CORS em ambiente local.
+
+Em Docker, o proxy equivalente é feito pelo Nginx em `nginx/default.conf.template`, usando a variável `BACKEND_URL`.
