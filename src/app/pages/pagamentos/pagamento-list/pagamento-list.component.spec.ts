@@ -7,7 +7,7 @@ import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO } from '../../../core/models/plano';
 
 const mockPagamento: PagamentoResponseDTO = {
-  id: 1, pacienteId: 10, planoId: 1, valor: 250, status: 'PENDENTE',
+  id: 1, pacienteId: 10, pacienteNome: 'Ana Silva', planoId: 1, valor: 250, status: 'PENDENTE',
   dataPagamento: null, dataVencimento: '2026-05-10',
   periodoInicio: '2026-05-01', periodoFim: '2026-05-31'
 };
@@ -22,12 +22,12 @@ describe('PagamentoListComponent', () => {
     serviceSpy.listar.and.returnValue(of([mockPagamento]));
 
     await TestBed.configureTestingModule({
-      imports: [PagamentoListComponent, RouterTestingModule],
-      providers: [
-        { provide: PagamentoService, useValue: serviceSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '10' } } } }
-      ]
-    }).compileComponents();
+        imports: [PagamentoListComponent, RouterTestingModule],
+        providers: [
+          { provide: PagamentoService, useValue: serviceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
+        ]
+      }).compileComponents();
 
     fixture = TestBed.createComponent(PagamentoListComponent);
     component = fixture.componentInstance;

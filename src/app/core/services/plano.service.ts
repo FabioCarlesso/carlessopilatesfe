@@ -10,14 +10,18 @@ export class PlanoService {
   constructor(private http: HttpClient) {}
 
   listar(pacienteId: number): Observable<PlanoResponseDTO[]> {
-    return this.http.get<PlanoResponseDTO[]>(`${this.apiUrl}/pacientes/${pacienteId}/planos`);
+    return this.http.get<PlanoResponseDTO[]>(`${this.apiUrl}/planos/paciente/${pacienteId}`);
   }
 
-  criar(pacienteId: number, dto: PlanoRequestDTO): Observable<PlanoResponseDTO> {
-    return this.http.post<PlanoResponseDTO>(`${this.apiUrl}/pacientes/${pacienteId}/planos`, dto);
+  buscarAtivo(pacienteId: number): Observable<PlanoResponseDTO | null> {
+    return this.http.get<PlanoResponseDTO | null>(`${this.apiUrl}/planos/paciente/${pacienteId}/ativo`);
+  }
+
+  criar(dto: PlanoRequestDTO): Observable<PlanoResponseDTO> {
+    return this.http.post<PlanoResponseDTO>(`${this.apiUrl}/planos`, dto);
   }
 
   inativar(planoId: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/planos/${planoId}/inativar`, {});
+    return this.http.delete<void>(`${this.apiUrl}/planos/${planoId}`);
   }
 }

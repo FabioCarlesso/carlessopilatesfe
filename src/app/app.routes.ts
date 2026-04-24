@@ -18,29 +18,54 @@ export const routes: Routes = [
       import('./pages/pacientes/paciente-form/paciente-form.component').then(m => m.PacienteFormComponent)
   },
   {
-    path: 'pacientes/:id/planos/novo',
+    path: 'planos/novo/:pacienteId',
     loadComponent: () =>
       import('./pages/planos/plano-form/plano-form.component').then(m => m.PlanoFormComponent)
   },
   {
-    path: 'pacientes/:id/planos',
+    path: 'planos/paciente/:pacienteId',
     loadComponent: () =>
       import('./pages/planos/plano-list/plano-list.component').then(m => m.PlanoListComponent)
   },
   {
-    path: 'pacientes/:id/pagamentos/novo',
+    path: 'pagamentos/novo/:pacienteId',
     loadComponent: () =>
       import('./pages/pagamentos/pagamento-form/pagamento-form.component').then(m => m.PagamentoFormComponent)
   },
   {
-    path: 'pacientes/:id/pagamentos',
+    path: 'pagamentos/paciente/:pacienteId',
     loadComponent: () =>
       import('./pages/pagamentos/pagamento-list/pagamento-list.component').then(m => m.PagamentoListComponent)
   },
   {
-    path: 'pacientes/:id/aulas',
+    path: 'aulas/paciente/:pacienteId',
     loadComponent: () =>
       import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
+  },
+  {
+    path: 'aulas/pagamento/:pagamentoId',
+    loadComponent: () =>
+      import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
+  },
+  {
+    path: 'profissionais',
+    loadComponent: () =>
+      import('./pages/profissionais/profissional-list/profissional-list.component').then(m => m.ProfissionalListComponent)
+  },
+  {
+    path: 'profissionais/novo',
+    loadComponent: () =>
+      import('./pages/profissionais/profissional-form/profissional-form.component').then(m => m.ProfissionalFormComponent)
+  },
+  {
+    path: 'profissionais/:id/editar',
+    loadComponent: () =>
+      import('./pages/profissionais/profissional-form/profissional-form.component').then(m => m.ProfissionalFormComponent)
+  },
+  {
+    path: 'profissionais/:id',
+    loadComponent: () =>
+      import('./pages/profissionais/profissional-detail/profissional-detail.component').then(m => m.ProfissionalDetailComponent)
   },
   {
     path: 'pacientes/:id',

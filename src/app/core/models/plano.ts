@@ -15,6 +15,7 @@ export interface PlanoResponseDTO {
 }
 
 export interface PlanoRequestDTO {
+  pacienteId: number;
   tipo: TipoPagamento;
   valor: number;
   frequenciaSemanal: FrequenciaSemanal;
@@ -25,6 +26,7 @@ export interface PlanoRequestDTO {
 export interface PagamentoResponseDTO {
   id: number;
   pacienteId: number;
+  pacienteNome: string;
   planoId: number;
   valor: number;
   status: StatusPagamento;
@@ -35,16 +37,17 @@ export interface PagamentoResponseDTO {
 }
 
 export interface PagamentoRequestDTO {
+  pacienteId: number;
   planoId: number;
   valor: number;
   dataVencimento: string;
   periodoInicio: string;
-  periodoFim: string;
 }
 
 export interface AulaResponseDTO {
   id: number;
   pacienteId: number;
+  pacienteNome: string;
   pagamentoId: number;
   data: string;
   realizada: boolean;

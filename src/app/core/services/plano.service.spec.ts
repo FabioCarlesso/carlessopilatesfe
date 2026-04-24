@@ -34,25 +34,26 @@ describe('PlanoService', () => {
   });
 
   describe('listar', () => {
-    it('should GET /api/pacientes/:id/planos', () => {
+    it('should GET /api/planos/paciente/:id', () => {
       service.listar(10).subscribe(planos => expect(planos).toEqual([mockPlano]));
-      const req = httpMock.expectOne('/api/pacientes/10/planos');
+      const req = httpMock.expectOne('/api/planos/paciente/10');
       expect(req.request.method).toBe('GET');
       req.flush([mockPlano]);
     });
   });
 
   describe('criar', () => {
-    it('should POST to /api/pacientes/:id/planos with body', () => {
+    it('should POST to /api/planos with body', () => {
       const dto: PlanoRequestDTO = {
+        pacienteId: 10,
         tipo: 'MENSAL',
         valor: 250,
         frequenciaSemanal: 'DUAS_VEZES',
         dataInicio: '2026-05-01',
         diasSemana: ['MONDAY', 'WEDNESDAY']
       };
-      service.criar(10, dto).subscribe(p => expect(p).toEqual(mockPlano));
-      const req = httpMock.expectOne('/api/pacientes/10/planos');
+      service.criar(dto).subscribe(p => expect(p).toEqual(mockPlano));
+      const req = httpMock.expectOne('/api/planos');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(dto);
       req.flush(mockPlano);
@@ -60,10 +61,10 @@ describe('PlanoService', () => {
   });
 
   describe('inativar', () => {
-    it('should PATCH /api/planos/:id/inativar', () => {
+    it('should DELETE /api/planos/:id', () => {
       service.inativar(1).subscribe();
-      const req = httpMock.expectOne('/api/planos/1/inativar');
-      expect(req.request.method).toBe('PATCH');
+      const req = httpMock.expectOne('/api/planos/1');
+      expect(req.request.method).toBe('DELETE');
       req.flush(null);
     });
   });

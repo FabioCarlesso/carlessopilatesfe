@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1>Pagamentos do Paciente</h1>
   <div class="acoes">
-    <a [routerLink]="['/pacientes', pacienteId, 'pagamentos', 'novo']" class="btn btn-primary">Novo Pagamento</a>
+    <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
     <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
   </div>
 </div>
@@ -39,6 +39,7 @@
         <button class="btn btn-secondary btn-sm" *ngIf="p.status === 'PENDENTE'" (click)="abrirPagar(p.id)">
           Confirmar Pagamento
         </button>
+        <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
       </td>
     </tr>
   </tbody>
