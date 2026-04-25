@@ -5,6 +5,14 @@ import { RouterLink } from '@angular/router';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 
+interface FiltroUI {
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string;
+  status: 'ativos' | 'inativos' | 'todos';
+}
+
 @Component({
   selector: 'app-paciente-list',
   imports: [CommonModule, FormsModule, RouterLink],
@@ -20,7 +28,7 @@ export class PacienteListComponent implements OnInit {
   erro: string | null = null;
   confirmarInativarId: number | null = null;
   confirmarAtivarId: number | null = null;
-  filtro = {
+  filtro: FiltroUI = {
     nome: '',
     email: '',
     cpf: '',
@@ -67,13 +75,16 @@ export class PacienteListComponent implements OnInit {
   }
 
   private montarFiltro(): PacienteFiltro {
-    return {
+    const filtro: PacienteFiltro = {
       nome: this.filtro.nome.trim(),
       email: this.filtro.email.trim(),
       cpf: this.filtro.cpf.trim(),
       telefone: this.filtro.telefone.trim(),
-      ativo: this.filtro.status === 'ativos'
     };
+    if (this.filtro.status !== 'todos') {
+      filtro.ativo = this.filtro.status === 'ativos';
+    }
+    return filtro;
   }
 
   confirmarInativar(id: number): void {

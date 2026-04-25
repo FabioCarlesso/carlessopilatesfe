@@ -173,6 +173,21 @@ describe('PacienteListComponent', () => {
     });
   });
 
+  it('should omit ativo param when status is todos', () => {
+    component.filtro = {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      status: 'todos'
+    };
+
+    component.buscar();
+
+    const call = serviceSpy.listar.calls.mostRecent().args[2]!;
+    expect(call.ativo).toBeUndefined();
+  });
+
   it('should restore default filters and reload when limparFiltros is called', () => {
     component.filtro = {
       nome: 'Ana',
