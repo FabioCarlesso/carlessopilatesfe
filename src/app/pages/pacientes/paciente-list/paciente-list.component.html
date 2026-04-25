@@ -5,10 +5,45 @@
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
 
+<form class="filters" (ngSubmit)="buscar()">
+  <label>
+    Nome
+    <input type="text" name="nome" [(ngModel)]="filtro.nome" placeholder="Nome do paciente">
+  </label>
+
+  <label>
+    E-mail
+    <input type="email" name="email" [(ngModel)]="filtro.email" placeholder="email@exemplo.com">
+  </label>
+
+  <label>
+    CPF
+    <input type="text" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
+  </label>
+
+  <label>
+    Telefone
+    <input type="text" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
+  </label>
+
+  <label>
+    Status
+    <select name="status" [(ngModel)]="filtro.status">
+      <option value="ativos">Ativos</option>
+      <option value="inativos">Inativos</option>
+    </select>
+  </label>
+
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-primary">Buscar</button>
+    <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar</button>
+  </div>
+</form>
+
 <div *ngIf="loading" class="loading">Carregando...</div>
 
 <div *ngIf="!loading && pacientes.length === 0 && !erro" class="empty-state">
-  Nenhum paciente ativo cadastrado.
+  Nenhum paciente encontrado.
 </div>
 
 <table *ngIf="pacientes.length > 0" class="table">
@@ -18,6 +53,7 @@
       <th>E-mail</th>
       <th>CPF</th>
       <th>Telefone</th>
+      <th>Status</th>
       <th>Ações</th>
     </tr>
   </thead>
@@ -27,10 +63,16 @@
       <td>{{ p.email }}</td>
       <td>{{ p.cpf }}</td>
       <td>{{ p.telefone || '-' }}</td>
+      <td>
+        <span class="status-badge" [class.inactive]="!p.ativo">
+          {{ p.ativo ? 'Ativo' : 'Inativo' }}
+        </span>
+      </td>
       <td class="acoes">
         <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
         <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-        <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+        <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+        <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
       </td>
     </tr>
   </tbody>
@@ -40,6 +82,16 @@
   <button *ngFor="let p of pages()" [class.active]="p === currentPage" (click)="pagina(p)">
     {{ p + 1 }}
   </button>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarAtivarId !== null">
+  <div class="dialog">
+    <p>Confirma a ativação do paciente?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-primary" (click)="ativar()">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarAtivar()">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <div class="dialog-overlay" *ngIf="confirmarInativarId !== null">

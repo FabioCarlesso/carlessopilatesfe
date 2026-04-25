@@ -90,7 +90,7 @@ src/app/
 │   ├── models/                     # DTOs e interfaces
 │   └── services/                   # Integração com a API REST
 ├── pages/pacientes/
-│   ├── paciente-list/              # Listagem paginada
+│   ├── paciente-list/              # Listagem paginada com filtros
 │   ├── paciente-form/              # Cadastro e edição
 │   └── paciente-detail/            # Visualização detalhada
 ├── pages/profissionais/            # CRUD de profissionais
@@ -124,7 +124,7 @@ Arquivos de teste:
 
 | Módulo | Descrição |
 |--------|-----------|
-| **Pacientes** | CRUD completo com ativação/inativação |
+| **Pacientes** | CRUD completo com ativação/inativação e filtros por nome, e-mail, CPF, telefone e status |
 | **Profissionais** | CRUD completo com ativação/inativação e atualização via PUT |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -137,7 +137,7 @@ Arquivos de teste:
 | Caminho                 | Função                                      |
 |-------------------------|---------------------------------------------|
 | `/`                     | Redireciona para `/pacientes`               |
-| `/pacientes`            | Lista de pacientes ativos (paginada)        |
+| `/pacientes`            | Lista de pacientes com filtros e paginação  |
 | `/pacientes/novo`       | Formulário de cadastro                      |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/pacientes/:id/editar` | Formulário de edição                        |
@@ -146,7 +146,7 @@ Arquivos de teste:
 | `/profissionais/:id`    | Detalhes do profissional                    |
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
 
-Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API. O status padrão é **Ativos**, e a ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
 
 | Caminho | Função |
 |---------|--------|

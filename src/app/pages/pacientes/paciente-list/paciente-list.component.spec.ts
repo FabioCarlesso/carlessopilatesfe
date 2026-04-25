@@ -30,7 +30,7 @@ describe('PacienteListComponent', () => {
   let serviceSpy: jasmine.SpyObj<PacienteService>;
 
   beforeEach(async () => {
-    serviceSpy = jasmine.createSpyObj('PacienteService', ['listar', 'inativar']);
+    serviceSpy = jasmine.createSpyObj('PacienteService', ['listar', 'inativar', 'ativar']);
     serviceSpy.listar.and.returnValue(of(mockPage));
 
     await TestBed.configureTestingModule({
@@ -47,8 +47,14 @@ describe('PacienteListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call listar on init with default page and size', () => {
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
+  it('should call listar on init with default page, size and active filter', () => {
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
   });
 
   it('should populate pacientes and totalPages on success', () => {
@@ -76,6 +82,17 @@ describe('PacienteListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
   });
 
+  it('should set confirmarAtivarId when confirmarAtivar is called', () => {
+    component.confirmarAtivar(5);
+    expect(component.confirmarAtivarId).toBe(5);
+  });
+
+  it('should clear confirmarAtivarId when cancelarAtivar is called', () => {
+    component.confirmarAtivarId = 5;
+    component.cancelarAtivar();
+    expect(component.confirmarAtivarId).toBeNull();
+  });
+
   it('should not call service.inativar when confirmarInativarId is null', () => {
     component.confirmarInativarId = null;
     component.inativar();
@@ -99,10 +116,90 @@ describe('PacienteListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
   });
 
+  it('should not call service.ativar when confirmarAtivarId is null', () => {
+    component.confirmarAtivarId = null;
+    component.ativar();
+    expect(serviceSpy.ativar).not.toHaveBeenCalled();
+  });
+
+  it('should call ativar, clear id, and reload list on success', () => {
+    serviceSpy.ativar.and.returnValue(of(undefined));
+    component.confirmarAtivarId = 1;
+    component.ativar();
+    expect(serviceSpy.ativar).toHaveBeenCalledWith(1);
+    expect(component.confirmarAtivarId).toBeNull();
+    expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('should set erro and clear id when ativar fails', () => {
+    serviceSpy.ativar.and.returnValue(throwError(() => new Error('fail')));
+    component.confirmarAtivarId = 1;
+    component.ativar();
+    expect(component.erro).toBe('Erro ao ativar paciente.');
+    expect(component.confirmarAtivarId).toBeNull();
+  });
+
   it('should change currentPage and reload when pagina is called', () => {
     component.pagina(2);
     expect(component.currentPage).toBe(2);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(2, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(2, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+  });
+
+  it('should reset page and reload with trimmed filters when buscar is called', () => {
+    component.currentPage = 2;
+    component.filtro = {
+      nome: ' Ana ',
+      email: ' ana@email.com ',
+      cpf: ' 12345678900 ',
+      telefone: ' 11999999999 ',
+      status: 'inativos'
+    };
+
+    component.buscar();
+
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: 'Ana',
+      email: 'ana@email.com',
+      cpf: '12345678900',
+      telefone: '11999999999',
+      ativo: false
+    });
+  });
+
+  it('should restore default filters and reload when limparFiltros is called', () => {
+    component.filtro = {
+      nome: 'Ana',
+      email: 'ana@email.com',
+      cpf: '12345678900',
+      telefone: '11999999999',
+      status: 'inativos'
+    };
+    component.currentPage = 1;
+
+    component.limparFiltros();
+
+    expect(component.filtro).toEqual({
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      status: 'ativos'
+    });
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
   });
 
   it('should return array of page indices from pages()', () => {

@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { PacienteService } from '../../../core/services/paciente.service';
+import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss'
 })
@@ -18,6 +19,14 @@ export class PacienteListComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
+  confirmarAtivarId: number | null = null;
+  filtro = {
+    nome: '',
+    email: '',
+    cpf: '',
+    telefone: '',
+    status: 'ativos'
+  };
 
   constructor(private service: PacienteService) {}
 
@@ -28,7 +37,7 @@ export class PacienteListComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
       next: page => {
         this.pacientes = page.content;
         this.totalPages = page.totalPages;
@@ -41,8 +50,38 @@ export class PacienteListComponent implements OnInit {
     });
   }
 
+  buscar(): void {
+    this.currentPage = 0;
+    this.carregar();
+  }
+
+  limparFiltros(): void {
+    this.filtro = {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      status: 'ativos'
+    };
+    this.buscar();
+  }
+
+  private montarFiltro(): PacienteFiltro {
+    return {
+      nome: this.filtro.nome.trim(),
+      email: this.filtro.email.trim(),
+      cpf: this.filtro.cpf.trim(),
+      telefone: this.filtro.telefone.trim(),
+      ativo: this.filtro.status === 'ativos'
+    };
+  }
+
   confirmarInativar(id: number): void {
     this.confirmarInativarId = id;
+  }
+
+  confirmarAtivar(id: number): void {
+    this.confirmarAtivarId = id;
   }
 
   inativar(): void {
@@ -59,8 +98,26 @@ export class PacienteListComponent implements OnInit {
     });
   }
 
+  ativar(): void {
+    if (this.confirmarAtivarId === null) return;
+    this.service.ativar(this.confirmarAtivarId).subscribe({
+      next: () => {
+        this.confirmarAtivarId = null;
+        this.carregar();
+      },
+      error: () => {
+        this.erro = 'Erro ao ativar paciente.';
+        this.confirmarAtivarId = null;
+      }
+    });
+  }
+
   cancelarInativar(): void {
     this.confirmarInativarId = null;
+  }
+
+  cancelarAtivar(): void {
+    this.confirmarAtivarId = null;
   }
 
   pagina(p: number): void {

@@ -21,8 +21,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 7. Implementação dos módulos de Planos, Pagamentos e Aulas
 8. Dockerização do frontend com build Angular multi-stage e Nginx
 9. Correção da atualização de profissionais para `PUT /profissionais/{id}`
+10. Implementação de filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
 
-A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 
@@ -127,6 +128,7 @@ A configuração por `environment.ts` ainda não é necessária porque o fronten
 A API segue o padrão REST. O frontend espera os seguintes contratos:
 
 - `GET /pacientes?page=0&size=10&sort=nome` → `Page<PacienteResponseDTO>`
+- `GET /pacientes?page=0&size=10&sort=nome&nome=&email=&cpf=&telefone=&ativo=true` → `Page<PacienteResponseDTO>`
 - `GET /pacientes/{id}` → `PacienteResponseDTO`
 - `POST /pacientes` (body: `PacienteRequestDTO`) → `PacienteResponseDTO`
 - `PUT /pacientes/{id}` (body: `PacienteUpdateDTO`) → `PacienteResponseDTO`

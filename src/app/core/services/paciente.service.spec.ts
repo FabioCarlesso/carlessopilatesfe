@@ -64,6 +64,38 @@ describe('PacienteService', () => {
       expect(req.request.params.get('size')).toBe('5');
       req.flush({ ...mockPage, size: 5, number: 2 });
     });
+
+    it('should pass filter params when provided', () => {
+      service.listar(0, 10, {
+        nome: 'Ana',
+        email: 'ana@email.com',
+        cpf: '12345678900',
+        telefone: '11999999999',
+        ativo: false
+      }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/pacientes');
+      expect(req.request.params.get('nome')).toBe('Ana');
+      expect(req.request.params.get('email')).toBe('ana@email.com');
+      expect(req.request.params.get('cpf')).toBe('12345678900');
+      expect(req.request.params.get('telefone')).toBe('11999999999');
+      expect(req.request.params.get('ativo')).toBe('false');
+      req.flush(mockPage);
+    });
+
+    it('should ignore empty filter params', () => {
+      service.listar(0, 10, {
+        nome: '',
+        email: undefined,
+        ativo: true
+      }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/pacientes');
+      expect(req.request.params.has('nome')).toBeFalse();
+      expect(req.request.params.has('email')).toBeFalse();
+      expect(req.request.params.get('ativo')).toBe('true');
+      req.flush(mockPage);
+    });
   });
 
   describe('buscar', () => {
