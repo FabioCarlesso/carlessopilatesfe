@@ -31,7 +31,7 @@
 
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
-| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, ativar/inativar |
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, ativar/inativar |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
@@ -206,7 +206,7 @@ Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhos
 
 | Método            | Endpoint HTTP               | Descrição                        |
 |-------------------|-----------------------------|----------------------------------|
-| `listar(page, size)` | `GET /pacientes?page&size&sort=nome` | Lista pacientes ativos paginados |
+| `listar(page, size, filtro)` | `GET /pacientes?page&size&sort=nome&nome&email&cpf&telefone&ativo` | Lista pacientes paginados com filtros opcionais |
 | `buscar(id)`      | `GET /pacientes/{id}`       | Busca paciente por ID            |
 | `cadastrar(dto)`  | `POST /pacientes`           | Cria novo paciente               |
 | `atualizar(id, dto)` | `PUT /pacientes/{id}`    | Atualiza dados do paciente (e-mail incluso, CPF é imutável) |
@@ -256,10 +256,11 @@ Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 - `<router-outlet>` para renderização das páginas
 
 ### `PacienteListComponent`
-- Tabela paginada de pacientes ativos
-- Colunas: Nome, E-mail, CPF, Telefone, Ações
-- Ações: Ver, Editar, Inativar
-- Diálogo de confirmação inline para inativação
+- Tabela paginada de pacientes
+- Filtros por nome, e-mail, CPF, telefone e status (ativos/inativos)
+- Colunas: Nome, E-mail, CPF, Telefone, Status, Ações
+- Ações: Ver, Editar, Inativar para ativos e Ativar para inativos
+- Diálogo de confirmação inline para ativação e inativação
 - Tratamento de erros e estado de carregamento
 
 ### `PacienteFormComponent`
@@ -379,9 +380,9 @@ Comando: `npm test`
 | Arquivo | Cobertura |
 |---------|-----------|
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
-| `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP (listar, buscar, cadastrar, atualizar, inativar) |
+| `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
-| `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, paginação, inativação, estados de erro |
+| `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, inativação, estados de erro |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
 
@@ -398,6 +399,7 @@ Comando: `npm test`
 
 ### Implementado
 - CRUD completo de pacientes
+- Filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
 - CRUD completo de profissionais com atualização via PUT
 - Paginação server-side
 - Validação de formulários
@@ -418,5 +420,5 @@ Comando: `npm test`
 - Configuração avançada de ambientes Angular, caso seja necessária no futuro
 - Componente `ConfirmarDialog` integrado
 - Testes E2E
-- Busca e filtros nas listagens
+- Busca e filtros nas demais listagens
 - Animações e transições

@@ -8,6 +8,14 @@ import {
   PacienteUpdateDTO
 } from '../models/paciente';
 
+export interface PacienteFiltro {
+  nome?: string;
+  email?: string;
+  cpf?: string;
+  telefone?: string;
+  ativo?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -16,8 +24,15 @@ export class PacienteService {
 
   constructor(private http: HttpClient) {}
 
-  listar(page = 0, size = 10): Observable<Page<PacienteResponseDTO>> {
-    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+  listar(page = 0, size = 10, filtro: PacienteFiltro = {}): Observable<Page<PacienteResponseDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+
+    Object.entries(filtro).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+
     return this.http.get<Page<PacienteResponseDTO>>(this.apiUrl, { params });
   }
 
