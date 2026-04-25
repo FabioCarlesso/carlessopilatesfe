@@ -4,7 +4,7 @@ Interface web para gestão administrativa de um estúdio de pilates, desenvolvid
 
 ## Visão Geral
 
-A aplicação oferece um CRUD completo de pacientes com listagem paginada, formulário de cadastro/edição e visualização detalhada. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
+A aplicação oferece CRUDs administrativos para pacientes e profissionais, além de fluxos de planos, pagamentos e aulas. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
 
 **Documentação detalhada:** [`docs/documentacao.md`](docs/documentacao.md)  
 **Contexto e decisões técnicas:** [`docs/context.md`](docs/context.md)
@@ -87,12 +87,13 @@ docker run --rm -p 4200:80 \
 ```
 src/app/
 ├── core/
-│   ├── models/paciente.ts          # DTOs e interfaces
-│   └── services/paciente.service.ts # Integração com a API REST
+│   ├── models/                     # DTOs e interfaces
+│   └── services/                   # Integração com a API REST
 ├── pages/pacientes/
 │   ├── paciente-list/              # Listagem paginada
 │   ├── paciente-form/              # Cadastro e edição
 │   └── paciente-detail/            # Visualização detalhada
+├── pages/profissionais/            # CRUD de profissionais
 └── shared/components/              # Componentes reutilizáveis
 ```
 
@@ -109,9 +110,13 @@ npm test
 Arquivos de teste:
 - `src/app/app.component.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
+- `src/app/core/services/profissional.service.spec.ts`
 - `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
+- `src/app/pages/profissionais/profissional-list/profissional-list.component.spec.ts`
+- `src/app/pages/profissionais/profissional-form/profissional-form.component.spec.ts`
+- `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
 
 ---
 
@@ -120,6 +125,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Pacientes** | CRUD completo com ativação/inativação |
+| **Profissionais** | CRUD completo com ativação/inativação e atualização via PUT |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença |
@@ -135,16 +141,21 @@ Arquivos de teste:
 | `/pacientes/novo`       | Formulário de cadastro                      |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/pacientes/:id/editar` | Formulário de edição                        |
+| `/profissionais`        | Lista de profissionais ativos (paginada)    |
+| `/profissionais/novo`   | Formulário de cadastro de profissional      |
+| `/profissionais/:id`    | Detalhes do profissional                    |
+| `/profissionais/:id/editar` | Formulário de edição de profissional    |
 
 Na tela de detalhe, o botão de ação muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
 
 | Caminho | Função |
 |---------|--------|
-| `/pacientes/:id/planos` | Lista de planos do paciente |
-| `/pacientes/:id/planos/novo` | Criar novo plano |
-| `/pacientes/:id/pagamentos` | Lista de pagamentos |
-| `/pacientes/:id/pagamentos/novo` | Registrar novo pagamento |
-| `/pacientes/:id/aulas` | Lista de aulas geradas |
+| `/planos/paciente/:pacienteId` | Lista de planos do paciente |
+| `/planos/novo/:pacienteId` | Criar novo plano |
+| `/pagamentos/paciente/:pacienteId` | Lista de pagamentos |
+| `/pagamentos/novo/:pacienteId` | Registrar novo pagamento |
+| `/aulas/paciente/:pacienteId` | Lista de aulas geradas |
+| `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento |
 
 ---
 

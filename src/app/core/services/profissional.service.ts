@@ -30,7 +30,7 @@ export class ProfissionalService {
   }
 
   atualizar(id: number, dto: ProfissionalUpdateDTO): Observable<ProfissionalResponseDTO> {
-    return this.http.patch<ProfissionalResponseDTO>(`${this.apiUrl}/${id}`, dto);
+    return this.http.put<ProfissionalResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
   ativar(id: number): Observable<void> {
