@@ -149,6 +149,36 @@ interface Page<T> {
 
 Arquivo: `src/app/core/models/profissional.ts`
 
+### `ProfissionalResponseDTO`
+Retorno da API ao listar/buscar profissionais.
+```typescript
+interface ProfissionalResponseDTO {
+  id: number;
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string | null;
+  tipoContrato: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula: number;
+  dataInicio: string;
+  ativo: boolean;
+}
+```
+
+### `ProfissionalRequestDTO`
+Payload para criação de profissional.
+```typescript
+interface ProfissionalRequestDTO {
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone?: string;
+  tipoContrato: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula: number;
+  dataInicio: string;
+}
+```
+
 ### `ProfissionalUpdateDTO`
 Payload para atualização de profissionais via `PUT /profissionais/{id}`.
 ```typescript

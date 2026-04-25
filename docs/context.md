@@ -130,7 +130,8 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /pacientes/{id}` → `PacienteResponseDTO`
 - `POST /pacientes` (body: `PacienteRequestDTO`) → `PacienteResponseDTO`
 - `PUT /pacientes/{id}` (body: `PacienteUpdateDTO`) → `PacienteResponseDTO`
-- `DELETE /pacientes/{id}` → `204 No Content`
+- `PATCH /pacientes/{id}/inativar` → `204 No Content`
+- `PATCH /pacientes/{id}/ativar` → `204 No Content`
 - `GET /profissionais?page=0&size=10&sort=nome` → `Page<ProfissionalResponseDTO>`
 - `GET /profissionais/{id}` → `ProfissionalResponseDTO`
 - `POST /profissionais` (body: `ProfissionalRequestDTO`) → `ProfissionalResponseDTO`
