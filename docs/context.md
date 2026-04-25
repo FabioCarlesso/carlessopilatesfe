@@ -20,6 +20,7 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 6. Alinhamento com API v2: PATCH ativar/inativar, e-mail mutável no PUT
 7. Implementação dos módulos de Planos, Pagamentos e Aulas
 8. Dockerização do frontend com build Angular multi-stage e Nginx
+9. Correção da atualização de profissionais para `PUT /profissionais/{id}`
 
 A funcionalidade central de **gestão de pacientes** está operacional, com cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
@@ -41,6 +42,9 @@ O backend não remove pacientes fisicamente. Inativação usa `PATCH /pacientes/
 
 ### CPF imutável após cadastro
 Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulário de edição desabilita apenas o campo CPF. O e-mail pode ser atualizado via `PUT /pacientes/{id}` e é incluído no `PacienteUpdateDTO`.
+
+### Atualização de profissionais via PUT
+O cadastro de profissionais segue o contrato do backend para atualização via `PUT /profissionais/{id}` com `ProfissionalUpdateDTO`. Ativação e inativação continuam usando endpoints específicos com `PATCH`.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
@@ -126,7 +130,14 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /pacientes/{id}` → `PacienteResponseDTO`
 - `POST /pacientes` (body: `PacienteRequestDTO`) → `PacienteResponseDTO`
 - `PUT /pacientes/{id}` (body: `PacienteUpdateDTO`) → `PacienteResponseDTO`
-- `DELETE /pacientes/{id}` → `204 No Content`
+- `PATCH /pacientes/{id}/inativar` → `204 No Content`
+- `PATCH /pacientes/{id}/ativar` → `204 No Content`
+- `GET /profissionais?page=0&size=10&sort=nome` → `Page<ProfissionalResponseDTO>`
+- `GET /profissionais/{id}` → `ProfissionalResponseDTO`
+- `POST /profissionais` (body: `ProfissionalRequestDTO`) → `ProfissionalResponseDTO`
+- `PUT /profissionais/{id}` (body: `ProfissionalUpdateDTO`) → `ProfissionalResponseDTO`
+- `PATCH /profissionais/{id}/ativar` → `204 No Content`
+- `PATCH /profissionais/{id}/inativar` → `204 No Content`
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
 

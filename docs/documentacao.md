@@ -5,7 +5,7 @@
 **Projeto:** Carlesso Pilates Frontend  
 **Versão:** 0.0.0  
 **Tecnologia:** Angular 19 (SPA)  
-**Propósito:** Interface web para gestão de pacientes de um estúdio de pilates.  
+**Propósito:** Interface web para gestão administrativa de um estúdio de pilates.
 **Backend esperado:** API REST em `http://localhost:8080`
 
 ---
@@ -32,9 +32,10 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, ativar/inativar |
-| Planos | `/pacientes/:id/planos`, `/pacientes/:id/planos/novo` | Listar, criar (com seleção de dias e validação de frequência), inativar |
-| Pagamentos | `/pacientes/:id/pagamentos`, `/pacientes/:id/pagamentos/novo` | Listar, criar, confirmar pagamento |
-| Aulas | `/pacientes/:id/aulas` | Listar, confirmar presença |
+| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT |
+| Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
+| Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
+| Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença |
 
 ---
 
@@ -46,14 +47,17 @@ carlessopilatesfe/
 │   ├── app/
 │   │   ├── core/
 │   │   │   ├── models/
-│   │   │   │   └── paciente.ts          # DTOs e interfaces de dados
+│   │   │   │   ├── paciente.ts          # DTOs e interfaces de pacientes
+│   │   │   │   └── profissional.ts      # DTOs e interfaces de profissionais
 │   │   │   └── services/
-│   │   │       └── paciente.service.ts  # Serviço de integração com a API
+│   │   │       ├── paciente.service.ts  # Serviço de integração com a API de pacientes
+│   │   │       └── profissional.service.ts # Serviço de integração com a API de profissionais
 │   │   ├── pages/
-│   │   │   └── pacientes/
-│   │   │       ├── paciente-list/       # Listagem paginada de pacientes
-│   │   │       ├── paciente-form/       # Formulário de cadastro e edição
-│   │   │       └── paciente-detail/     # Visualização detalhada
+│   │   │   ├── pacientes/
+│   │   │   │   ├── paciente-list/       # Listagem paginada de pacientes
+│   │   │   │   ├── paciente-form/       # Formulário de cadastro e edição
+│   │   │   │   └── paciente-detail/     # Visualização detalhada
+│   │   │   └── profissionais/           # CRUD de profissionais
 │   │   ├── shared/
 │   │   │   └── components/
 │   │   │       └── confirmar-dialog/    # Componente de diálogo reutilizável
@@ -143,6 +147,51 @@ interface Page<T> {
 }
 ```
 
+Arquivo: `src/app/core/models/profissional.ts`
+
+### `ProfissionalResponseDTO`
+Retorno da API ao listar/buscar profissionais.
+```typescript
+interface ProfissionalResponseDTO {
+  id: number;
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string | null;
+  tipoContrato: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula: number;
+  dataInicio: string;
+  ativo: boolean;
+}
+```
+
+### `ProfissionalRequestDTO`
+Payload para criação de profissional.
+```typescript
+interface ProfissionalRequestDTO {
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone?: string;
+  tipoContrato: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula: number;
+  dataInicio: string;
+}
+```
+
+### `ProfissionalUpdateDTO`
+Payload para atualização de profissionais via `PUT /profissionais/{id}`.
+```typescript
+interface ProfissionalUpdateDTO {
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  tipoContrato?: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula?: number;
+  dataInicio?: string;
+}
+```
+
 ---
 
 ## Serviços
@@ -164,6 +213,21 @@ Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhos
 | `ativar(id)`      | `PATCH /pacientes/{id}/ativar` | Reativa paciente inativo      |
 | `inativar(id)`    | `PATCH /pacientes/{id}/inativar` | Inativa paciente (soft delete) |
 
+### `ProfissionalService`
+Arquivo: `src/app/core/services/profissional.service.ts`
+Injetável em toda a aplicação (`providedIn: 'root'`).
+
+**URL base no frontend:** `/api/profissionais`
+
+| Método            | Endpoint HTTP               | Descrição                        |
+|-------------------|-----------------------------|----------------------------------|
+| `listar(page, size)` | `GET /profissionais?page&size&sort=nome` | Lista profissionais ativos paginados |
+| `buscar(id)`      | `GET /profissionais/{id}`       | Busca profissional por ID        |
+| `cadastrar(dto)`  | `POST /profissionais`           | Cria novo profissional           |
+| `atualizar(id, dto)` | `PUT /profissionais/{id}`    | Atualiza dados do profissional   |
+| `ativar(id)`      | `PATCH /profissionais/{id}/ativar` | Reativa profissional inativo  |
+| `inativar(id)`    | `PATCH /profissionais/{id}/inativar` | Inativa profissional          |
+
 ---
 
 ## Rotas
@@ -178,6 +242,10 @@ Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 | `/pacientes/novo`        | `PacienteFormComponent` | Formulário de cadastro         |
 | `/pacientes/:id`         | `PacienteDetailComponent` | Detalhes do paciente         |
 | `/pacientes/:id/editar`  | `PacienteFormComponent` | Formulário de edição           |
+| `/profissionais`         | `ProfissionalListComponent` | Lista de profissionais      |
+| `/profissionais/novo`    | `ProfissionalFormComponent` | Formulário de cadastro      |
+| `/profissionais/:id`     | `ProfissionalDetailComponent` | Detalhes do profissional  |
+| `/profissionais/:id/editar` | `ProfissionalFormComponent` | Formulário de edição     |
 
 ---
 
@@ -312,6 +380,7 @@ Comando: `npm test`
 |---------|-----------|
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP (listar, buscar, cadastrar, atualizar, inativar) |
+| `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, paginação, inativação, estados de erro |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
@@ -329,6 +398,7 @@ Comando: `npm test`
 
 ### Implementado
 - CRUD completo de pacientes
+- CRUD completo de profissionais com atualização via PUT
 - Paginação server-side
 - Validação de formulários
 - Feedback de erros e loading
