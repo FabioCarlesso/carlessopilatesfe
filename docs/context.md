@@ -24,6 +24,7 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 10. Implementação de filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
 11. Implementação de paginação completa na consulta de pacientes, com resumo de registros, tamanho de página configurável e navegação anterior/próxima
 12. Correção da paginação de profissionais para renderizar uma janela máxima de 5 botões de página
+13. Validação de parâmetros numéricos de rota para evitar chamadas à API com `NaN`
 
 A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side e limita os botões visíveis a uma janela de 5 páginas para evitar excesso de elementos no DOM. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
@@ -144,6 +145,8 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `PATCH /profissionais/{id}/inativar` → `204 No Content`
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
+
+Rotas com parâmetros numéricos, como `pacienteId` e `pagamentoId`, usam validação explícita antes de acionar serviços. Quando o parâmetro está ausente ou não pode ser convertido para número, a tela exibe **Identificador inválido.** e interrompe o carregamento para não gerar URLs de API contendo `NaN`.
 
 ---
 

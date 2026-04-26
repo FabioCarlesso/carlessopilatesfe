@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { PlanoFormComponent } from './plano-form.component';
 import { PlanoService } from '../../../core/services/plano.service';
@@ -100,5 +101,30 @@ describe('PlanoFormComponent', () => {
   it('should not call service when form is invalid', () => {
     component.salvar();
     expect(serviceSpy.criar).not.toHaveBeenCalled();
+  });
+
+  it('should not call criar when pacienteId route param is invalid', () => {
+    const invalidServiceSpy = jasmine.createSpyObj('PlanoService', ['criar']);
+    const invalidRouterSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
+    const invalidComponent = new PlanoFormComponent(
+      TestBed.inject(FormBuilder),
+      invalidServiceSpy,
+      invalidRoute,
+      invalidRouterSpy
+    );
+
+    invalidComponent.ngOnInit();
+    invalidComponent.form.setValue({
+      tipo: 'MENSAL',
+      valor: 250,
+      frequenciaSemanal: 'UMA_VEZ',
+      dataInicio: '2026-05-01',
+      diasSemana: ['MONDAY']
+    });
+    invalidComponent.salvar();
+
+    expect(invalidComponent.erro).toBe('Identificador inválido.');
+    expect(invalidServiceSpy.criar).not.toHaveBeenCalled();
   });
 });

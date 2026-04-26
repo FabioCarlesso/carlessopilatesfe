@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractContro
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlanoService } from '../../../core/services/plano.service';
 import { DiaSemana, FREQUENCIA_DIAS, FrequenciaSemanal } from '../../../core/models/plano';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 function diasSemanaValidator(control: AbstractControl): ValidationErrors | null {
   const group = control.parent;
@@ -23,7 +24,7 @@ function diasSemanaValidator(control: AbstractControl): ValidationErrors | null 
 })
 export class PlanoFormComponent implements OnInit {
   form!: FormGroup;
-  pacienteId!: number;
+  pacienteId: number | null = null;
   salvando = false;
   erro: string | null = null;
 
@@ -40,7 +41,7 @@ export class PlanoFormComponent implements OnInit {
   constructor(private fb: FormBuilder, private service: PlanoService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.form = this.fb.group({
       tipo: ['', Validators.required],
       valor: [null, [Validators.required, Validators.min(0.01)]],
@@ -51,6 +52,9 @@ export class PlanoFormComponent implements OnInit {
     this.form.get('frequenciaSemanal')?.valueChanges.subscribe(() => {
       this.form.get('diasSemana')?.updateValueAndValidity();
     });
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+    }
   }
 
   toggleDia(dia: DiaSemana): void {
@@ -73,6 +77,10 @@ export class PlanoFormComponent implements OnInit {
   }
 
   salvar(): void {
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

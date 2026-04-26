@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { AulaResponseDTO } from '../../../core/models/plano';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-aula-list',
@@ -26,12 +27,22 @@ export class AulaListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const pacienteId = this.route.snapshot.paramMap.get('pacienteId');
-    const pagamentoId = this.route.snapshot.paramMap.get('pagamentoId');
+    const rawPacienteId = this.route.snapshot.paramMap.get('pacienteId');
+    const rawPagamentoId = this.route.snapshot.paramMap.get('pagamentoId');
 
-    this.pacienteId = pacienteId ? +pacienteId : null;
-    this.pagamentoId = pagamentoId ? +pagamentoId : null;
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
+    this.pagamentoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pagamentoId');
     this.titulo = this.pagamentoId !== null ? 'Aulas do Pagamento' : 'Aulas do Paciente';
+
+    if ((rawPacienteId !== null && this.pacienteId === null) || (rawPagamentoId !== null && this.pagamentoId === null)) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
+
+    if (this.pacienteId === null && this.pagamentoId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
 
     if (this.pagamentoId !== null) {
       this.pagamentoService.buscar(this.pagamentoId).subscribe({
@@ -49,6 +60,10 @@ export class AulaListComponent implements OnInit {
   }
 
   carregar(): void {
+    if (this.pacienteId === null && this.pagamentoId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.loading = true;
     this.erro = null;
     const request$ = this.pagamentoId !== null

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -82,5 +83,16 @@ describe('PagamentoListComponent', () => {
     component.pagarForm.setValue({ dataPagamento: '2026-05-05' });
     component.confirmarPagar();
     expect(component.erro).toBe('Erro ao confirmar pagamento.');
+  });
+
+  it('should not load pagamentos when pacienteId route param is invalid', () => {
+    const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
+    const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder));
+
+    invalidComponent.ngOnInit();
+
+    expect(invalidComponent.erro).toBe('Identificador inválido.');
+    expect(invalidServiceSpy.listar).not.toHaveBeenCalled();
   });
 });

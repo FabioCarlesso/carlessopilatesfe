@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-plano-list',
@@ -11,7 +12,7 @@ import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } fro
   styleUrl: './plano-list.component.scss'
 })
 export class PlanoListComponent implements OnInit {
-  pacienteId!: number;
+  pacienteId: number | null = null;
   planos: PlanoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
@@ -24,11 +25,19 @@ export class PlanoListComponent implements OnInit {
   constructor(private service: PlanoService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.carregar();
   }
 
   carregar(): void {
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.loading = true;
     this.erro = null;
     this.service.listar(this.pacienteId).subscribe({

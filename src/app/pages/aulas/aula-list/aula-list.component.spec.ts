@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AulaListComponent } from './aula-list.component';
 import { AulaService } from '../../../core/services/aula.service';
@@ -113,5 +113,19 @@ describe('AulaListComponent', () => {
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar dados do pagamento.');
     });
+  });
+
+  it('should not load aulas when route param is invalid', () => {
+    const serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar']);
+    const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
+    const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
+    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, invalidRoute);
+
+    component.ngOnInit();
+
+    expect(component.erro).toBe('Identificador inválido.');
+    expect(serviceSpy.listarPorPaciente).not.toHaveBeenCalled();
+    expect(serviceSpy.listarPorPagamento).not.toHaveBeenCalled();
+    expect(pagamentoServiceSpy.buscar).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-pagamento-form',
@@ -14,7 +15,7 @@ import { PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
 })
 export class PagamentoFormComponent implements OnInit {
   form!: FormGroup;
-  pacienteId!: number;
+  pacienteId: number | null = null;
   planos: PlanoResponseDTO[] = [];
   salvando = false;
   carregando = false;
@@ -31,17 +32,25 @@ export class PagamentoFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.form = this.fb.group({
       planoId: [null, Validators.required],
       valor: [null, [Validators.required, Validators.min(0.01)]],
       dataVencimento: ['', Validators.required],
       periodoInicio: ['', Validators.required]
     });
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.carregarPlanos();
   }
 
   carregarPlanos(): void {
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.carregando = true;
     this.planoService.listar(this.pacienteId).subscribe({
       next: planos => {
@@ -60,6 +69,10 @@ export class PagamentoFormComponent implements OnInit {
   }
 
   salvar(): void {
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
