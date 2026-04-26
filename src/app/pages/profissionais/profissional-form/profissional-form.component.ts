@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissional';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-profissional-form',
@@ -40,11 +41,16 @@ export class ProfissionalFormComponent implements OnInit {
       dataInicio: ['', Validators.required]
     });
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
+    const rawId = this.route.snapshot.paramMap.get('id');
+    if (rawId === null) return;
+
+    this.profissionalId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    if (this.profissionalId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
 
     this.isEdit = true;
-    this.profissionalId = +id;
     this.loading = true;
     this.service.buscar(this.profissionalId).subscribe({
       next: profissional => {

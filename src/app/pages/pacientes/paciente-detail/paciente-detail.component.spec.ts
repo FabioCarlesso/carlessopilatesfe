@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PacienteDetailComponent } from './paciente-detail.component';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -120,5 +120,24 @@ describe('PacienteDetailComponent', () => {
       expect(component.erro).toBe('Paciente não encontrado.');
       expect(component.loading).toBeFalse();
     });
+  });
+
+  it('should not call buscar when id route param is invalid', () => {
+    serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar']);
+
+    TestBed.configureTestingModule({
+      imports: [PacienteDetailComponent, RouterTestingModule],
+      providers: [
+        { provide: PacienteService, useValue: serviceSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
+      ]
+    });
+
+    fixture = TestBed.createComponent(PacienteDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.erro).toBe('Identificador inválido.');
+    expect(serviceSpy.buscar).not.toHaveBeenCalled();
   });
 });

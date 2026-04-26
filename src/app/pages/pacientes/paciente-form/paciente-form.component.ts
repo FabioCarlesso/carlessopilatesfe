@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-form',
@@ -42,23 +43,28 @@ export class PacienteFormComponent implements OnInit {
       })
     });
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.isEdit = true;
-      this.pacienteId = +id;
-      this.loading = true;
-      this.service.buscar(this.pacienteId).subscribe({
-        next: p => {
-          this.form.patchValue(p);
-          this.form.get('cpf')?.disable();
-          this.loading = false;
-        },
-        error: () => {
-          this.erro = 'Erro ao carregar paciente.';
-          this.loading = false;
-        }
-      });
+    const rawId = this.route.snapshot.paramMap.get('id');
+    if (rawId === null) return;
+
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
     }
+
+    this.isEdit = true;
+    this.loading = true;
+    this.service.buscar(this.pacienteId).subscribe({
+      next: p => {
+        this.form.patchValue(p);
+        this.form.get('cpf')?.disable();
+        this.loading = false;
+      },
+      error: () => {
+        this.erro = 'Erro ao carregar paciente.';
+        this.loading = false;
+      }
+    });
   }
 
   salvar(): void {

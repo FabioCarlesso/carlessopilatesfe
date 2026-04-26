@@ -146,7 +146,7 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
 
-Rotas com parâmetros numéricos, como `pacienteId` e `pagamentoId`, usam validação explícita antes de acionar serviços. Quando o parâmetro está ausente ou não pode ser convertido para número, a tela exibe **Identificador inválido.** e interrompe o carregamento para não gerar URLs de API contendo `NaN`.
+Rotas com parâmetros numéricos, como `id`, `pacienteId` e `pagamentoId`, usam validação explícita antes de acionar serviços. Apenas inteiros positivos seguros são aceitos. Quando o parâmetro está ausente ou em formato inválido, a tela exibe **Identificador inválido.** e interrompe o carregamento para não gerar URLs de API contendo `NaN`.
 
 ---
 

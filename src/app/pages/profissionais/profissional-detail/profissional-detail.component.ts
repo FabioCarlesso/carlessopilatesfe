@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-profissional-detail',
@@ -26,11 +27,14 @@ export class ProfissionalDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
+    const id = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    if (id === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
 
     this.loading = true;
-    this.service.buscar(+id).subscribe({
+    this.service.buscar(id).subscribe({
       next: profissional => {
         this.profissional = profissional;
         this.loading = false;
