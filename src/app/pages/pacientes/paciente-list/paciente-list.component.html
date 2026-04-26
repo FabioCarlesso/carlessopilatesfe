@@ -90,20 +90,20 @@
       </tr>
     </tbody>
   </table>
-</ng-container>
 
-<div class="pagination" *ngIf="totalPages > 1">
-  <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
-  <button
-    type="button"
-    *ngFor="let p of pages()"
-    [class.active]="p === currentPage"
-    [attr.aria-current]="p === currentPage ? 'page' : null"
-    (click)="pagina(p)">
-    {{ p + 1 }}
-  </button>
-  <button type="button" [disabled]="!canGoNext()" (click)="proximaPagina()">Próxima</button>
-</div>
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
+    <button
+      type="button"
+      *ngFor="let p of pages()"
+      [class.active]="p === currentPage"
+      [attr.aria-current]="p === currentPage ? 'page' : null"
+      (click)="pagina(p)">
+      {{ p + 1 }}
+    </button>
+    <button type="button" [disabled]="!canGoNext()" (click)="proximaPagina()">Próxima</button>
+  </div>
+</ng-container>
 
 <div class="dialog-overlay" *ngIf="confirmarAtivarId !== null">
   <div class="dialog">

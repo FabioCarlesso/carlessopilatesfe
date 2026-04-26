@@ -26,6 +26,7 @@ export class PacienteListComponent implements OnInit {
   currentPage = 0;
   pageSize = 10;
   readonly pageSizeOptions = [5, 10, 20, 50];
+  readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
@@ -50,7 +51,7 @@ export class PacienteListComponent implements OnInit {
     this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
       next: page => {
         if (page.totalPages > 0 && this.currentPage >= page.totalPages) {
-          this.currentPage = page.totalPages - 1;
+          this.currentPage = Math.max(0, page.totalPages - 1);
           this.carregar();
           return;
         }
@@ -166,13 +167,12 @@ export class PacienteListComponent implements OnInit {
   }
 
   pages(): number[] {
-    const visiblePages = 5;
-    if (this.totalPages <= visiblePages) {
+    if (this.totalPages <= this.maxVisiblePages) {
       return Array.from({ length: this.totalPages }, (_, i) => i);
     }
 
-    const start = Math.max(0, Math.min(this.currentPage - 2, this.totalPages - visiblePages));
-    return Array.from({ length: visiblePages }, (_, i) => start + i);
+    const start = Math.max(0, Math.min(this.currentPage - 2, this.totalPages - this.maxVisiblePages));
+    return Array.from({ length: this.maxVisiblePages }, (_, i) => start + i);
   }
 
   canGoPrevious(): boolean {
@@ -189,6 +189,7 @@ export class PacienteListComponent implements OnInit {
   }
 
   pageEnd(): number {
+    if (this.totalElements === 0) return 0;
     return Math.min((this.currentPage + 1) * this.pageSize, this.totalElements);
   }
 }

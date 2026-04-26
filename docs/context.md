@@ -184,5 +184,4 @@ BACKEND_URL=http://api:8080 docker compose up --build
 
 - **Repositório:** `carlessopilatesfe`
 - **Branch principal:** `master`
-- **Branch atual de desenvolvimento:** `feat/issue-11-paginacao-pacientes`
 - **Autor:** Fabio Carlesso
