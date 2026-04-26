@@ -26,8 +26,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 12. Correção da paginação de profissionais para renderizar uma janela máxima de 5 botões de página
 13. Validação de parâmetros numéricos de rota para evitar chamadas à API com `NaN`
 14. Correção da paginação de pacientes contra resposta aninhada do Spring Boot 3.x (`page.page.*`), com fallback nos metadados para evitar `NaN` no resumo e seletor de tamanho de página em branco
+15. Correção da navegação de páginas na listagem de profissionais para ignorar páginas negativas, fora do total retornado ou iguais à página atual
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side e limita os botões visíveis a uma janela de 5 páginas para evitar excesso de elementos no DOM. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 

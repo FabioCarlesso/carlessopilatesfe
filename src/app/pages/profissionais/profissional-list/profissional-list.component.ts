@@ -70,6 +70,7 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   pagina(p: number): void {
+    if (p < 0 || p >= this.totalPages || p === this.currentPage) return;
     this.currentPage = p;
     this.carregar();
   }
