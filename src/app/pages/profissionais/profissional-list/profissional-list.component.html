@@ -37,7 +37,7 @@
 </table>
 
 <div class="pagination" *ngIf="totalPages > 1">
-  <button *ngFor="let p of pages()" [class.active]="p === currentPage" (click)="pagina(p)">
+  <button *ngFor="let p of visiblePages" [class.active]="p === currentPage" (click)="pagina(p)">
     {{ p + 1 }}
   </button>
 </div>

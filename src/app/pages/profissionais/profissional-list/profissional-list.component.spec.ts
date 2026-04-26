@@ -52,6 +52,7 @@ describe('ProfissionalListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.totalPages).toBe(2);
+    expect(component.visiblePages).toEqual([0, 1]);
   });
 
   it('should set erro when listar fails', () => {
@@ -84,5 +85,41 @@ describe('ProfissionalListComponent', () => {
     component.confirmarInativarId = 1;
     component.inativar();
     expect(component.erro).toBe('Erro ao inativar profissional.');
+  });
+
+  it('should return all page indices when total pages fit in visible window', () => {
+    component.totalPages = 3;
+
+    expect(component.pages()).toEqual([0, 1, 2]);
+  });
+
+  it('should return a sliding window of up to five page indices', () => {
+    component.totalPages = 10;
+
+    component.currentPage = 0;
+    expect(component.pages()).toEqual([0, 1, 2, 3, 4]);
+
+    component.currentPage = 4;
+    expect(component.pages()).toEqual([2, 3, 4, 5, 6]);
+
+    component.currentPage = 9;
+    expect(component.pages()).toEqual([5, 6, 7, 8, 9]);
+  });
+
+  it('should return empty page indices when there are no pages', () => {
+    component.totalPages = 0;
+
+    expect(component.pages()).toEqual([]);
+  });
+
+  it('should render only visible page buttons in the DOM', () => {
+    component.totalPages = 500;
+    component.currentPage = 250;
+    component.visiblePages = component.pages();
+
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
+    expect(buttons.length).toBe(5);
   });
 });
