@@ -54,7 +54,7 @@ Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulá
 O cadastro de profissionais segue o contrato do backend para atualização via `PUT /profissionais/{id}` com `ProfissionalUpdateDTO`. Ativação e inativação continuam usando endpoints específicos com `PATCH`.
 
 ### Confirmação de aulas com profissional
-A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar` com payload `{ profissionalId }`. O frontend carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige seleção antes de confirmar e exibe o profissional retornado em aulas já realizadas.
+A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar?profissionalId={id}`. O frontend carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige seleção antes de confirmar e exibe o profissional retornado em aulas já realizadas.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.

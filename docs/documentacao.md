@@ -217,14 +217,6 @@ interface AulaResponseDTO {
 }
 ```
 
-### `AulaRealizarRequestDTO`
-Payload para marcar uma aula como realizada vinculando o profissional responsável.
-```typescript
-interface AulaRealizarRequestDTO {
-  profissionalId: number;
-}
-```
-
 ---
 
 ## Serviços
@@ -271,7 +263,7 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 |-------------------|-----------------------------|----------------------------------|
 | `listarPorPaciente(pacienteId)` | `GET /aulas/paciente/{id}` | Lista aulas do paciente |
 | `listarPorPagamento(pagamentoId)` | `GET /aulas/pagamento/{id}` | Lista aulas do pagamento |
-| `realizar(aulaId, profissionalId)` | `PATCH /aulas/{id}/realizar` com `{ profissionalId }` | Marca aula como realizada e vincula o profissional responsável |
+| `realizar(aulaId, profissionalId)` | `PATCH /aulas/{id}/realizar?profissionalId={id}` | Marca aula como realizada e vincula o profissional responsável |
 
 ---
 
@@ -339,7 +331,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Lista aulas por paciente ou pagamento
 - Carrega profissionais ativos para seleção em aulas pendentes
 - Exige profissional selecionado antes de marcar uma aula como realizada
-- Envia `profissionalId` no `PATCH /aulas/{id}/realizar`
+- Envia `profissionalId` como query param no `PATCH /aulas/{id}/realizar`
 - Exibe o nome do profissional vinculado em aulas realizadas quando retornado pela API
 
 ### `ConfirmarDialogComponent` _(shared)_

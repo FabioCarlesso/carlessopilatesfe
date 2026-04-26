@@ -50,11 +50,13 @@ describe('AulaService', () => {
   });
 
   describe('realizar', () => {
-    it('should PATCH /api/aulas/:id/realizar', () => {
+    it('should PATCH /api/aulas/:id/realizar with profissionalId query param', () => {
       service.realizar(1, 5).subscribe(aula => expect(aula).toEqual(mockAula));
-      const req = httpMock.expectOne('/api/aulas/1/realizar');
+      const req = httpMock.expectOne(request =>
+        request.url === '/api/aulas/1/realizar' && request.params.get('profissionalId') === '5'
+      );
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ profissionalId: 5 });
+      expect(req.request.body).toEqual({});
       req.flush(mockAula);
     });
   });

@@ -55,10 +55,6 @@ export interface AulaResponseDTO {
   profissionalNome?: string | null;
 }
 
-export interface AulaRealizarRequestDTO {
-  profissionalId: number;
-}
-
 export const DIAS_SEMANA_LABEL: Record<DiaSemana, string> = {
   MONDAY: 'Segunda',
   TUESDAY: 'Terça',

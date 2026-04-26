@@ -161,7 +161,7 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento |
 
-A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar` com o corpo `{ "profissionalId": id }`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
+A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
 
 ---
 
