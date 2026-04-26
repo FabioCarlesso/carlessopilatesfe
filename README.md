@@ -128,7 +128,7 @@ Arquivos de teste:
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada de páginas e guarda de limites |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
-| **Aulas** | Visualização das aulas geradas e confirmação de presença |
+| **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
 
 ---
 
@@ -160,6 +160,8 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 | `/pagamentos/novo/:pacienteId` | Registrar novo pagamento |
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento |
+
+A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar` com o corpo `{ "profissionalId": id }`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
 
 ---
 

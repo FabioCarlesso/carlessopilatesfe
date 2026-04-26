@@ -27,8 +27,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 13. Validação de parâmetros numéricos de rota para evitar chamadas à API com `NaN`
 14. Correção da paginação de pacientes contra resposta aninhada do Spring Boot 3.x (`page.page.*`), com fallback nos metadados para evitar `NaN` no resumo e seletor de tamanho de página em branco
 15. Correção da navegação de páginas na listagem de profissionais para ignorar páginas negativas, fora do total retornado ou iguais à página atual
+16. Implementação da confirmação de aula realizada com seleção e vínculo do profissional responsável
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 
@@ -51,6 +52,9 @@ Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulá
 
 ### Atualização de profissionais via PUT
 O cadastro de profissionais segue o contrato do backend para atualização via `PUT /profissionais/{id}` com `ProfissionalUpdateDTO`. Ativação e inativação continuam usando endpoints específicos com `PATCH`.
+
+### Confirmação de aulas com profissional
+A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar` com payload `{ profissionalId }`. O frontend carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige seleção antes de confirmar e exibe o profissional retornado em aulas já realizadas.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.

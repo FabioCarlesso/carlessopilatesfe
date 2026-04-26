@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AulaResponseDTO } from '../models/plano';
+import { AulaRealizarRequestDTO, AulaResponseDTO } from '../models/plano';
 
 @Injectable({ providedIn: 'root' })
 export class AulaService {
@@ -17,7 +17,8 @@ export class AulaService {
     return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/pagamento/${pagamentoId}`);
   }
 
-  realizar(aulaId: number): Observable<AulaResponseDTO> {
-    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/realizar`, {});
+  realizar(aulaId: number, profissionalId: number): Observable<AulaResponseDTO> {
+    const dto: AulaRealizarRequestDTO = { profissionalId };
+    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/realizar`, dto);
   }
 }
