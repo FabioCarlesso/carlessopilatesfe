@@ -15,6 +15,7 @@ export class ProfissionalListComponent implements OnInit {
   totalPages = 0;
   currentPage = 0;
   pageSize = 10;
+  readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
@@ -72,6 +73,11 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i);
+    if (this.totalPages <= this.maxVisiblePages) {
+      return Array.from({ length: this.totalPages }, (_, i) => i);
+    }
+
+    const start = Math.max(0, Math.min(this.currentPage - 2, this.totalPages - this.maxVisiblePages));
+    return Array.from({ length: this.maxVisiblePages }, (_, i) => start + i);
   }
 }

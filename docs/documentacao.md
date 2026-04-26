@@ -32,7 +32,7 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
-| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT |
+| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença |
@@ -279,6 +279,14 @@ Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 - Ações: Editar, Voltar; **Inativar** (se ativo) ou **Ativar** (se inativo)
 - Diálogos de confirmação para ativação e inativação
 
+### `ProfissionalListComponent`
+- Tabela paginada de profissionais ativos
+- Navegação por página com janela de até 5 páginas visíveis para evitar excesso de botões no DOM
+- Colunas: Nome, E-mail, Contrato, % por Aula, Ações
+- Ações: Ver, Editar e Inativar
+- Diálogo de confirmação inline para inativação
+- Tratamento de erros e estado de carregamento
+
 ### `ConfirmarDialogComponent` _(shared)_
 - Componente gerado, ainda não integrado (diálogos implementados inline nos componentes)
 
@@ -386,6 +394,7 @@ Comando: `npm test`
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, troca de tamanho de página, inativação, estados de erro |
+| `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
 
@@ -405,7 +414,7 @@ Comando: `npm test`
 - Filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
 - Paginação da consulta de pacientes com resumo, navegação anterior/próxima, janela de páginas e tamanho de página configurável
 - CRUD completo de profissionais com atualização via PUT
-- Paginação server-side
+- Paginação server-side em pacientes e profissionais, com janela limitada de páginas visíveis
 - Validação de formulários
 - Feedback de erros e loading
 - Integração com API REST (contratos alinhados com backend v2)

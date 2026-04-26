@@ -125,7 +125,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
-| **Profissionais** | CRUD completo com ativação/inativação e atualização via PUT |
+| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada de páginas |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença |
@@ -147,6 +147,8 @@ Arquivos de teste:
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
 
 Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+
+Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes.
 
 | Caminho | Função |
 |---------|--------|

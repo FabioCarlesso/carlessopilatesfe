@@ -85,4 +85,29 @@ describe('ProfissionalListComponent', () => {
     component.inativar();
     expect(component.erro).toBe('Erro ao inativar profissional.');
   });
+
+  it('should return all page indices when total pages fit in visible window', () => {
+    component.totalPages = 3;
+
+    expect(component.pages()).toEqual([0, 1, 2]);
+  });
+
+  it('should return a sliding window of up to five page indices', () => {
+    component.totalPages = 10;
+
+    component.currentPage = 0;
+    expect(component.pages()).toEqual([0, 1, 2, 3, 4]);
+
+    component.currentPage = 4;
+    expect(component.pages()).toEqual([2, 3, 4, 5, 6]);
+
+    component.currentPage = 9;
+    expect(component.pages()).toEqual([5, 6, 7, 8, 9]);
+  });
+
+  it('should return empty page indices when there are no pages', () => {
+    component.totalPages = 0;
+
+    expect(component.pages()).toEqual([]);
+  });
 });
