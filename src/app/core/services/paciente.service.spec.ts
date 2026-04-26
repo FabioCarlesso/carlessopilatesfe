@@ -16,10 +16,7 @@ const mockPaciente: PacienteResponseDTO = {
 
 const mockPage: Page<PacienteResponseDTO> = {
   content: [mockPaciente],
-  totalElements: 1,
-  totalPages: 1,
-  size: 10,
-  number: 0
+  page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
 };
 
 describe('PacienteService', () => {
@@ -45,7 +42,7 @@ describe('PacienteService', () => {
     it('should GET /api/pacientes with default params (page=0, size=10, sort=nome)', () => {
       service.listar().subscribe(page => {
         expect(page.content).toEqual([mockPaciente]);
-        expect(page.totalPages).toBe(1);
+        expect(page.page.totalPages).toBe(1);
       });
 
       const req = httpMock.expectOne(r => r.url === '/api/pacientes');
@@ -62,7 +59,7 @@ describe('PacienteService', () => {
       const req = httpMock.expectOne(r => r.url === '/api/pacientes');
       expect(req.request.params.get('page')).toBe('2');
       expect(req.request.params.get('size')).toBe('5');
-      req.flush({ ...mockPage, size: 5, number: 2 });
+      req.flush({ ...mockPage, page: { ...mockPage.page, size: 5, number: 2 } });
     });
 
     it('should pass filter params when provided', () => {

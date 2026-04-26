@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
-import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
 
 interface FiltroUI {
   nome: string;
@@ -50,17 +50,18 @@ export class PacienteListComponent implements OnInit {
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
       next: page => {
-        if (page.totalPages > 0 && this.currentPage >= page.totalPages) {
-          this.currentPage = Math.max(0, page.totalPages - 1);
+        const meta = page.page ?? ({} as Partial<PageMetadata>);
+        if ((meta.totalPages ?? 0) > 0 && this.currentPage >= (meta.totalPages ?? 0)) {
+          this.currentPage = Math.max(0, (meta.totalPages ?? 1) - 1);
           this.carregar();
           return;
         }
 
         this.pacientes = page.content;
-        this.totalElements = page.totalElements;
-        this.totalPages = page.totalPages;
-        this.currentPage = page.number;
-        this.pageSize = page.size;
+        this.totalElements = meta.totalElements ?? this.totalElements;
+        this.totalPages = meta.totalPages ?? this.totalPages;
+        this.currentPage = meta.number ?? this.currentPage;
+        this.pageSize = this.pageSizeOptions.includes(meta.size as number) ? (meta.size as number) : this.pageSize;
         this.loading = false;
       },
       error: () => {

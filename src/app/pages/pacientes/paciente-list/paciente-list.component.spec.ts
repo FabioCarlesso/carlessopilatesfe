@@ -18,10 +18,7 @@ const mockPaciente: PacienteResponseDTO = {
 
 const mockPage: Page<PacienteResponseDTO> = {
   content: [mockPaciente],
-  totalElements: 21,
-  totalPages: 3,
-  size: 10,
-  number: 0
+  page: { totalElements: 21, totalPages: 3, size: 10, number: 0 }
 };
 
 describe('PacienteListComponent', () => {
@@ -32,9 +29,8 @@ describe('PacienteListComponent', () => {
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('PacienteService', ['listar', 'inativar', 'ativar']);
     serviceSpy.listar.and.callFake((page = 0, size = 10) => of({
-      ...mockPage,
-      number: page,
-      size
+      content: mockPage.content,
+      page: { ...mockPage.page, number: page, size }
     }));
 
     await TestBed.configureTestingModule({
@@ -227,17 +223,11 @@ describe('PacienteListComponent', () => {
     serviceSpy.listar.and.returnValues(
       of({
         content: [],
-        totalElements: 20,
-        totalPages: 2,
-        size: 10,
-        number: 2
+        page: { totalElements: 20, totalPages: 2, size: 10, number: 2 }
       }),
       of({
         content: [mockPaciente],
-        totalElements: 20,
-        totalPages: 2,
-        size: 10,
-        number: 1
+        page: { totalElements: 20, totalPages: 2, size: 10, number: 1 }
       })
     );
     component.currentPage = 2;
@@ -371,5 +361,64 @@ describe('PacienteListComponent', () => {
   it('should return zero as pageStart when there are no elements', () => {
     component.totalElements = 0;
     expect(component.pageStart()).toBe(0);
+  });
+
+  it('should fall back to current values when API returns metadata with undefined number/size', () => {
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockPaciente],
+      page: {
+        totalElements: 1,
+        totalPages: 1,
+        size: undefined as unknown as number,
+        number: undefined as unknown as number
+      }
+    }));
+    component.currentPage = 0;
+    component.pageSize = 10;
+
+    component.carregar();
+
+    expect(component.currentPage).toBe(0);
+    expect(component.pageSize).toBe(10);
+    expect(Number.isNaN(component.pageStart())).toBeFalse();
+    expect(Number.isNaN(component.pageEnd())).toBeFalse();
+  });
+
+  it('should fall back to current values when API returns no page metadata at all', () => {
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockPaciente]
+    } as Page<PacienteResponseDTO>));
+    component.currentPage = 0;
+    component.pageSize = 10;
+
+    component.carregar();
+
+    expect(component.pacientes).toEqual([mockPaciente]);
+    expect(component.currentPage).toBe(0);
+    expect(component.pageSize).toBe(10);
+    expect(Number.isNaN(component.pageStart())).toBeFalse();
+    expect(Number.isNaN(component.pageEnd())).toBeFalse();
+  });
+
+  it('should ignore unsupported page sizes returned by the API', () => {
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockPaciente],
+      page: { totalElements: 1, totalPages: 1, size: 17, number: 0 }
+    }));
+    component.pageSize = 10;
+
+    component.carregar();
+
+    expect(component.pageSize).toBe(10);
+    expect(component.pageSizeOptions).toContain(component.pageSize);
+  });
+
+  it('should mark the current page size as selected in the dropdown', () => {
+    component.pageSize = 20;
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('.pagination-summary select') as HTMLSelectElement;
+    expect(select).withContext('page size select must be present').toBeTruthy();
+    expect(select.value).toBe('20');
   });
 });
