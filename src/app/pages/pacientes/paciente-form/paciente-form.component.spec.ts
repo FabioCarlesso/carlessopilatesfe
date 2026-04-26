@@ -198,8 +198,27 @@ describe('PacienteFormComponent', () => {
 
     it('should not load patient or enter edit mode', () => {
       expect(component.erro).toBe('Identificador inválido.');
+      expect(component.parametroInvalido).toBeTrue();
       expect(component.isEdit).toBeFalse();
       expect(serviceSpy.buscar).not.toHaveBeenCalled();
+    });
+
+    it('should hide form when id route param is invalid', () => {
+      expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    });
+
+    it('should not call cadastrar when saving with invalid route param', () => {
+      component.form.patchValue({
+        nome: 'Ana Silva',
+        email: 'ana@email.com',
+        cpf: '123.456.789-00'
+      });
+
+      component.salvar();
+
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
   });
 });

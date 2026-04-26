@@ -18,6 +18,7 @@ export class PacienteFormComponent implements OnInit {
   loading = false;
   salvando = false;
   erro: string | null = null;
+  parametroInvalido = false;
 
   constructor(
     private fb: FormBuilder,
@@ -48,6 +49,7 @@ export class PacienteFormComponent implements OnInit {
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
     if (this.pacienteId === null) {
+      this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
     }
@@ -68,6 +70,10 @@ export class PacienteFormComponent implements OnInit {
   }
 
   salvar(): void {
+    if (this.parametroInvalido) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

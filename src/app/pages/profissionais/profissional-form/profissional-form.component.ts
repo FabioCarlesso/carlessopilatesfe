@@ -19,6 +19,7 @@ export class ProfissionalFormComponent implements OnInit {
   loading = false;
   salvando = false;
   erro: string | null = null;
+  parametroInvalido = false;
 
   readonly tiposContrato: TipoContrato[] = ['CLT', 'PJ', 'AUTONOMO'];
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
@@ -46,6 +47,7 @@ export class ProfissionalFormComponent implements OnInit {
 
     this.profissionalId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
     if (this.profissionalId === null) {
+      this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
     }
@@ -66,6 +68,10 @@ export class ProfissionalFormComponent implements OnInit {
   }
 
   salvar(): void {
+    if (this.parametroInvalido) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

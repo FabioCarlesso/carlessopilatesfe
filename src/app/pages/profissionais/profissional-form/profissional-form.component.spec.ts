@@ -174,8 +174,30 @@ describe('ProfissionalFormComponent', () => {
 
     it('should not load profissional or enter edit mode', () => {
       expect(component.erro).toBe('Identificador inválido.');
+      expect(component.parametroInvalido).toBeTrue();
       expect(component.isEdit).toBeFalse();
       expect(serviceSpy.buscar).not.toHaveBeenCalled();
+    });
+
+    it('should hide form when id route param is invalid', () => {
+      expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    });
+
+    it('should not call cadastrar when saving with invalid route param', () => {
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-00',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+
+      component.salvar();
+
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
   });
 });

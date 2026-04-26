@@ -6,7 +6,7 @@
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 
-<form *ngIf="!loading" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
   <h2 class="form-section-title">Dados Pessoais</h2>
 
   <div class="form-group">
