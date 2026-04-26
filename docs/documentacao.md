@@ -31,7 +31,7 @@
 
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
-| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, ativar/inativar |
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
@@ -258,6 +258,9 @@ Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 ### `PacienteListComponent`
 - Tabela paginada de pacientes
 - Filtros por nome, e-mail, CPF, telefone e status (ativos/inativos)
+- Resumo do intervalo exibido e total de pacientes retornados pela API
+- Seletor de itens por página com opções 5, 10, 20 e 50
+- Navegação por página com botões anterior/próxima e janela de até 5 páginas visíveis
 - Colunas: Nome, E-mail, CPF, Telefone, Status, Ações
 - Ações: Ver, Editar, Inativar para ativos e Ativar para inativos
 - Diálogo de confirmação inline para ativação e inativação
@@ -382,7 +385,7 @@ Comando: `npm test`
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
-| `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, inativação, estados de erro |
+| `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, troca de tamanho de página, inativação, estados de erro |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
 
@@ -400,6 +403,7 @@ Comando: `npm test`
 ### Implementado
 - CRUD completo de pacientes
 - Filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
+- Paginação da consulta de pacientes com resumo, navegação anterior/próxima, janela de páginas e tamanho de página configurável
 - CRUD completo de profissionais com atualização via PUT
 - Paginação server-side
 - Validação de formulários
