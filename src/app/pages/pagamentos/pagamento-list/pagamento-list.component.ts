@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
+import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-pagamento-list',
@@ -12,7 +13,7 @@ import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plan
   styleUrl: './pagamento-list.component.scss'
 })
 export class PagamentoListComponent implements OnInit {
-  pacienteId!: number;
+  pacienteId: number | null = null;
   pagamentos: PagamentoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
@@ -32,12 +33,20 @@ export class PagamentoListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pacienteId = +this.route.snapshot.paramMap.get('pacienteId')!;
+    this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.pagarForm = this.fb.group({ dataPagamento: ['', Validators.required] });
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.carregar();
   }
 
   carregar(): void {
+    if (this.pacienteId === null) {
+      this.erro = 'Identificador inválido.';
+      return;
+    }
     this.loading = true;
     this.erro = null;
     this.service.listar(this.pacienteId).subscribe({

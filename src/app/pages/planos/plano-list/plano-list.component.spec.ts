@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PlanoListComponent } from './plano-list.component';
 import { PlanoService } from '../../../core/services/plano.service';
@@ -78,5 +78,16 @@ describe('PlanoListComponent', () => {
   it('diasFormatados should join day labels', () => {
     const result = component.diasFormatados(mockPlano);
     expect(result).toBe('Segunda, Quarta');
+  });
+
+  it('should not load planos when pacienteId route param is invalid', () => {
+    const invalidServiceSpy = jasmine.createSpyObj('PlanoService', ['listar', 'inativar']);
+    const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
+    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidRoute);
+
+    invalidComponent.ngOnInit();
+
+    expect(invalidComponent.erro).toBe('Identificador inválido.');
+    expect(invalidServiceSpy.listar).not.toHaveBeenCalled();
   });
 });

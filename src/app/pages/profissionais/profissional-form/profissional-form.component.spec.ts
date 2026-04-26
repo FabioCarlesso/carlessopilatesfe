@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProfissionalFormComponent } from './profissional-form.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -148,6 +148,56 @@ describe('ProfissionalFormComponent', () => {
       serviceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar profissional.');
+    });
+  });
+
+  describe('with invalid id in route', () => {
+    let component: ProfissionalFormComponent;
+    let fixture: ComponentFixture<ProfissionalFormComponent>;
+    let serviceSpy: jasmine.SpyObj<ProfissionalService>;
+
+    beforeEach(async () => {
+      serviceSpy = jasmine.createSpyObj('ProfissionalService', ['buscar', 'cadastrar', 'atualizar']);
+
+      await TestBed.configureTestingModule({
+        imports: [ProfissionalFormComponent, RouterTestingModule],
+        providers: [
+          { provide: ProfissionalService, useValue: serviceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
+        ]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(ProfissionalFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('should not load profissional or enter edit mode', () => {
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(component.parametroInvalido).toBeTrue();
+      expect(component.isEdit).toBeFalse();
+      expect(serviceSpy.buscar).not.toHaveBeenCalled();
+    });
+
+    it('should hide form when id route param is invalid', () => {
+      expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    });
+
+    it('should not call cadastrar when saving with invalid route param', () => {
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-00',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+
+      component.salvar();
+
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
   });
 });

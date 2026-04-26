@@ -235,6 +235,8 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 Arquivo: `src/app/app.routes.ts`  
 Todos os componentes são carregados com **lazy loading** via `loadComponent()`.
 
+Os parâmetros numéricos das rotas são validados antes de qualquer chamada à API. Apenas inteiros positivos seguros são aceitos; identificadores ausentes, não numéricos ou em formato inválido exibem **Identificador inválido.** e interrompem o carregamento da tela.
+
 | Caminho                  | Componente              | Função                         |
 |--------------------------|-------------------------|--------------------------------|
 | `/`                      | —                       | Redireciona para `/pacientes`  |

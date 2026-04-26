@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProfissionalDetailComponent } from './profissional-detail.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -81,5 +81,25 @@ describe('ProfissionalDetailComponent', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));
     component.inativar();
     expect(component.erro).toBe('Erro ao inativar profissional.');
+  });
+
+  it('should not call buscar when id route param is invalid', async () => {
+    const invalidServiceSpy = jasmine.createSpyObj('ProfissionalService', ['buscar', 'ativar', 'inativar']);
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [ProfissionalDetailComponent, RouterTestingModule],
+      providers: [
+        { provide: ProfissionalService, useValue: invalidServiceSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
+      ]
+    }).compileComponents();
+
+    const invalidFixture = TestBed.createComponent(ProfissionalDetailComponent);
+    const invalidComponent = invalidFixture.componentInstance;
+    invalidFixture.detectChanges();
+
+    expect(invalidComponent.erro).toBe('Identificador inválido.');
+    expect(invalidServiceSpy.buscar).not.toHaveBeenCalled();
   });
 });

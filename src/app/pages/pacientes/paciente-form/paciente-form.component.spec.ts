@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PacienteFormComponent } from './paciente-form.component';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -172,6 +172,53 @@ describe('PacienteFormComponent', () => {
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar paciente.');
       expect(component.loading).toBeFalse();
+    });
+  });
+
+  describe('with invalid id in route', () => {
+    let component: PacienteFormComponent;
+    let fixture: ComponentFixture<PacienteFormComponent>;
+    let serviceSpy: jasmine.SpyObj<PacienteService>;
+
+    beforeEach(async () => {
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+
+      await TestBed.configureTestingModule({
+        imports: [PacienteFormComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: serviceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
+        ]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(PacienteFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('should not load patient or enter edit mode', () => {
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(component.parametroInvalido).toBeTrue();
+      expect(component.isEdit).toBeFalse();
+      expect(serviceSpy.buscar).not.toHaveBeenCalled();
+    });
+
+    it('should hide form when id route param is invalid', () => {
+      expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    });
+
+    it('should not call cadastrar when saving with invalid route param', () => {
+      component.form.patchValue({
+        nome: 'Ana Silva',
+        email: 'ana@email.com',
+        cpf: '123.456.789-00'
+      });
+
+      component.salvar();
+
+      expect(component.erro).toBe('Identificador inválido.');
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
   });
 });

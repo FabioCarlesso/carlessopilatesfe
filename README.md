@@ -150,6 +150,8 @@ Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf
 
 Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes.
 
+As rotas que recebem identificadores numéricos validam os parâmetros antes de chamar a API. Apenas inteiros positivos seguros são aceitos; URLs com identificadores ausentes, não numéricos ou em formato inválido exibem a mensagem **Identificador inválido.** e não disparam requisições com `NaN` no caminho.
+
 | Caminho | Função |
 |---------|--------|
 | `/planos/paciente/:pacienteId` | Lista de planos do paciente |
