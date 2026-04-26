@@ -35,7 +35,7 @@
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada e guarda de limites |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
-| Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença |
+| Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
 
 ---
 
@@ -200,6 +200,23 @@ interface ProfissionalUpdateDTO {
 }
 ```
 
+Arquivo: `src/app/core/models/plano.ts`
+
+### `AulaResponseDTO`
+Retorno da API ao listar/buscar aulas.
+```typescript
+interface AulaResponseDTO {
+  id: number;
+  pacienteId: number;
+  pacienteNome: string;
+  pagamentoId: number;
+  data: string;
+  realizada: boolean;
+  profissionalId?: number | null;
+  profissionalNome?: string | null;
+}
+```
+
 ---
 
 ## Serviços
@@ -235,6 +252,18 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `atualizar(id, dto)` | `PUT /profissionais/{id}`    | Atualiza dados do profissional   |
 | `ativar(id)`      | `PATCH /profissionais/{id}/ativar` | Reativa profissional inativo  |
 | `inativar(id)`    | `PATCH /profissionais/{id}/inativar` | Inativa profissional          |
+
+### `AulaService`
+Arquivo: `src/app/core/services/aula.service.ts`
+Injetável em toda a aplicação (`providedIn: 'root'`).
+
+**URL base no frontend:** `/api`
+
+| Método            | Endpoint HTTP               | Descrição                        |
+|-------------------|-----------------------------|----------------------------------|
+| `listarPorPaciente(pacienteId)` | `GET /aulas/paciente/{id}` | Lista aulas do paciente |
+| `listarPorPagamento(pagamentoId)` | `GET /aulas/pagamento/{id}` | Lista aulas do pagamento |
+| `realizar(aulaId, profissionalId)` | `PATCH /aulas/{id}/realizar?profissionalId={id}` | Marca aula como realizada e vincula o profissional responsável |
 
 ---
 
@@ -297,6 +326,13 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Ações: Ver, Editar e Inativar
 - Diálogo de confirmação inline para inativação
 - Tratamento de erros e estado de carregamento
+
+### `AulaListComponent`
+- Lista aulas por paciente ou pagamento
+- Carrega profissionais ativos para seleção em aulas pendentes
+- Exige profissional selecionado antes de marcar uma aula como realizada
+- Envia `profissionalId` como query param no `PATCH /aulas/{id}/realizar`
+- Exibe o nome do profissional vinculado em aulas realizadas quando retornado pela API
 
 ### `ConfirmarDialogComponent` _(shared)_
 - Componente gerado, ainda não integrado (diálogos implementados inline nos componentes)
@@ -434,7 +470,7 @@ Comando: `npm test`
 - E-mail mutável na edição (somente CPF é imutável)
 - Módulo Planos: listagem, criação com seleção de dias e validação de frequência
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
-- Módulo Aulas: listagem e confirmação de presença
+- Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)

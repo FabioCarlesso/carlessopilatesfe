@@ -51,6 +51,8 @@ export interface AulaResponseDTO {
   pagamentoId: number;
   data: string;
   realizada: boolean;
+  profissionalId?: number | null;
+  profissionalNome?: string | null;
 }
 
 export const DIAS_SEMANA_LABEL: Record<DiaSemana, string> = {

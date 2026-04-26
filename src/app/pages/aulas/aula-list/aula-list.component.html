@@ -16,6 +16,7 @@
     <tr>
       <th>Data</th>
       <th>Status</th>
+      <th>Profissional</th>
       <th>Ações</th>
     </tr>
   </thead>
@@ -28,7 +29,18 @@
         </span>
       </td>
       <td>
-        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="realizar(aula.id)">
+        <span *ngIf="aula.realizada">{{ aula.profissionalNome || '-' }}</span>
+        <select *ngIf="!aula.realizada" class="form-control form-control-sm"
+          [(ngModel)]="profissionalSelecionadoPorAula[aula.id]">
+          <option [ngValue]="null">Selecione</option>
+          <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
+            {{ profissional.nome }}
+          </option>
+        </select>
+      </td>
+      <td>
+        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="realizar(aula.id)"
+          [disabled]="profissionais.length === 0">
           Marcar como Realizada
         </button>
       </td>
