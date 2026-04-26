@@ -1,0 +1,47 @@
+.relatorio-form {
+  margin-bottom: 1.25rem;
+}
+
+.relatorio-resultado {
+  margin-top: 1.25rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  padding: 1rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+
+  .label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--text);
+  }
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 760px) {
+  .form-row {
+    flex-direction: column;
+  }
+}

@@ -28,8 +28,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 14. Correção da paginação de pacientes contra resposta aninhada do Spring Boot 3.x (`page.page.*`), com fallback nos metadados para evitar `NaN` no resumo e seletor de tamanho de página em branco
 15. Correção da navegação de páginas na listagem de profissionais para ignorar páginas negativas, fora do total retornado ou iguais à página atual
 16. Implementação da confirmação de aula realizada com seleção e vínculo do profissional responsável
+17. Criação da seção de relatórios e do relatório de pagamento de profissional por período
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas e detalhamento por aula realizada. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 
@@ -55,6 +56,9 @@ O cadastro de profissionais segue o contrato do backend para atualização via `
 
 ### Confirmação de aulas com profissional
 A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar?profissionalId={id}`. O frontend carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige seleção antes de confirmar e exibe o profissional retornado em aulas já realizadas.
+
+### Relatório de pagamento de profissional
+O relatório usa `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. A tela valida seleção de profissional, datas obrigatórias e impede consulta quando a data inicial é posterior à final. O retorno consolida total de aulas, total devido e detalhamento por aula, incluindo paciente, pagamento, valor base por aula, percentual do profissional e valor devido.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
@@ -114,7 +118,7 @@ A configuração por `environment.ts` ainda não é necessária porque o fronten
 | Agendamentos   | Vínculo paciente ↔ aula ↔ data/hora           |
 | Frequência     | Controle de presença por sessão               |
 | Financeiro     | Planos, pagamentos e cobranças                |
-| Relatórios     | Dashboard com métricas do estúdio             |
+| Relatórios     | Relatório de pagamento de profissional por período; futuros dashboards e métricas do estúdio |
 
 ---
 
@@ -149,6 +153,7 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `PUT /profissionais/{id}` (body: `ProfissionalUpdateDTO`) → `ProfissionalResponseDTO`
 - `PATCH /profissionais/{id}/ativar` → `204 No Content`
 - `PATCH /profissionais/{id}/inativar` → `204 No Content`
+- `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `ProfissionalPagamentoRelatorioDTO`
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
 

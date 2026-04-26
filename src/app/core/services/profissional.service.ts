@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ProfissionalPage,
+  ProfissionalPagamentoRelatorioDTO,
   ProfissionalRequestDTO,
   ProfissionalResponseDTO,
   ProfissionalUpdateDTO
@@ -39,5 +40,10 @@ export class ProfissionalService {
 
   inativar(id: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
+  }
+
+  relatorioPagamento(id: number, inicio: string, fim: string): Observable<ProfissionalPagamentoRelatorioDTO> {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    return this.http.get<ProfissionalPagamentoRelatorioDTO>(`${this.apiUrl}/${id}/relatorio-pagamento`, { params });
   }
 }

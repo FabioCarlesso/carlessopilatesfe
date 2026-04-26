@@ -28,6 +28,13 @@ describe('AppComponent', () => {
     expect(el.querySelector('.navbar-brand')?.textContent).toContain('Carlesso Pilates');
   });
 
+  it('should render relatorios navigation link', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
+  });
+
   it('should contain a router-outlet', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
