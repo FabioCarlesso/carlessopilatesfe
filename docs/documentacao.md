@@ -135,15 +135,23 @@ interface PacienteUpdateDTO {
 }
 ```
 
-### `Page<T>`
-Wrapper de resposta paginada da API.
+### `PageMetadata`
+Metadados de paginação retornados aninhados pelo Spring Boot 3.x.
 ```typescript
-interface Page<T> {
-  content: T[];
+interface PageMetadata {
   totalElements: number;
   totalPages: number;
   size: number;
   number: number;
+}
+```
+
+### `Page<T>`
+Wrapper de resposta paginada da API. Os metadados ficam em `page.page` (estrutura aninhada do Spring Boot 3.x). O componente que consome essa resposta aplica fallback para os campos `number`, `size`, `totalPages` e `totalElements` para preservar o estado anterior caso o backend omita algum atributo, evitando exibição de `NaN` no resumo e seletor vazio na listagem de pacientes.
+```typescript
+interface Page<T> {
+  content: T[];
+  page: PageMetadata;
 }
 ```
 

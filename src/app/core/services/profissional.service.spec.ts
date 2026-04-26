@@ -22,10 +22,7 @@ const mockProfissional: ProfissionalResponseDTO = {
 
 const mockPage: ProfissionalPage = {
   content: [mockProfissional],
-  totalElements: 1,
-  totalPages: 1,
-  size: 10,
-  number: 0
+  page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
 };
 
 describe('ProfissionalService', () => {
