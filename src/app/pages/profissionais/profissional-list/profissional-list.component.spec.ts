@@ -52,6 +52,7 @@ describe('ProfissionalListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.totalPages).toBe(2);
+    expect(component.visiblePages).toEqual([0, 1]);
   });
 
   it('should set erro when listar fails', () => {
@@ -109,5 +110,16 @@ describe('ProfissionalListComponent', () => {
     component.totalPages = 0;
 
     expect(component.pages()).toEqual([]);
+  });
+
+  it('should render only visible page buttons in the DOM', () => {
+    component.totalPages = 500;
+    component.currentPage = 250;
+    component.visiblePages = component.pages();
+
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
+    expect(buttons.length).toBe(5);
   });
 });

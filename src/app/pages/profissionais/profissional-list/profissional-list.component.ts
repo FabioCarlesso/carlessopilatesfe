@@ -15,6 +15,7 @@ export class ProfissionalListComponent implements OnInit {
   totalPages = 0;
   currentPage = 0;
   pageSize = 10;
+  visiblePages: number[] = [];
   readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
@@ -35,6 +36,7 @@ export class ProfissionalListComponent implements OnInit {
       next: page => {
         this.profissionais = page.content;
         this.totalPages = page.totalPages;
+        this.visiblePages = this.pages();
         this.loading = false;
       },
       error: () => {
