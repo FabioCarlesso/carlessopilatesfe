@@ -84,6 +84,27 @@ describe('ProfissionalListComponent', () => {
     expect(component.erro).toBe('Erro ao inativar profissional.');
   });
 
+  it('should change currentPage and reload when pagina is called with a valid page', () => {
+    component.totalPages = 3;
+    component.pagina(1);
+
+    expect(component.currentPage).toBe(1);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+  });
+
+  it('should ignore invalid or current page when pagina is called', () => {
+    serviceSpy.listar.calls.reset();
+    component.totalPages = 3;
+    component.currentPage = 1;
+
+    component.pagina(-1);
+    component.pagina(1);
+    component.pagina(3);
+
+    expect(component.currentPage).toBe(1);
+    expect(serviceSpy.listar).not.toHaveBeenCalled();
+  });
+
   it('should return all page indices when total pages fit in visible window', () => {
     component.totalPages = 3;
 
