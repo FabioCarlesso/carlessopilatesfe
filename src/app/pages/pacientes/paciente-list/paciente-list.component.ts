@@ -21,9 +21,11 @@ interface FiltroUI {
 })
 export class PacienteListComponent implements OnInit {
   pacientes: PacienteResponseDTO[] = [];
+  totalElements = 0;
   totalPages = 0;
   currentPage = 0;
   pageSize = 10;
+  readonly pageSizeOptions = [5, 10, 20, 50];
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
@@ -47,8 +49,17 @@ export class PacienteListComponent implements OnInit {
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
       next: page => {
+        if (page.totalPages > 0 && this.currentPage >= page.totalPages) {
+          this.currentPage = page.totalPages - 1;
+          this.carregar();
+          return;
+        }
+
         this.pacientes = page.content;
+        this.totalElements = page.totalElements;
         this.totalPages = page.totalPages;
+        this.currentPage = page.number;
+        this.pageSize = page.size;
         this.loading = false;
       },
       error: () => {
@@ -132,11 +143,52 @@ export class PacienteListComponent implements OnInit {
   }
 
   pagina(p: number): void {
+    if (p < 0 || p >= this.totalPages || p === this.currentPage) return;
     this.currentPage = p;
     this.carregar();
   }
 
+  paginaAnterior(): void {
+    this.pagina(this.currentPage - 1);
+  }
+
+  proximaPagina(): void {
+    this.pagina(this.currentPage + 1);
+  }
+
+  alterarTamanhoPagina(size: string): void {
+    const novoTamanho = Number(size);
+    if (!this.pageSizeOptions.includes(novoTamanho) || novoTamanho === this.pageSize) return;
+
+    this.pageSize = novoTamanho;
+    this.currentPage = 0;
+    this.carregar();
+  }
+
   pages(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i);
+    const visiblePages = 5;
+    if (this.totalPages <= visiblePages) {
+      return Array.from({ length: this.totalPages }, (_, i) => i);
+    }
+
+    const start = Math.max(0, Math.min(this.currentPage - 2, this.totalPages - visiblePages));
+    return Array.from({ length: visiblePages }, (_, i) => start + i);
+  }
+
+  canGoPrevious(): boolean {
+    return this.currentPage > 0;
+  }
+
+  canGoNext(): boolean {
+    return this.currentPage < this.totalPages - 1;
+  }
+
+  pageStart(): number {
+    if (this.totalElements === 0) return 0;
+    return this.currentPage * this.pageSize + 1;
+  }
+
+  pageEnd(): number {
+    return Math.min((this.currentPage + 1) * this.pageSize, this.totalElements);
   }
 }

@@ -47,42 +47,62 @@
   Nenhum paciente encontrado.
 </div>
 
-<table *ngIf="pacientes.length > 0" class="table">
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>E-mail</th>
-      <th>CPF</th>
-      <th>Telefone</th>
-      <th>Status</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let p of pacientes">
-      <td>{{ p.nome }}</td>
-      <td>{{ p.email }}</td>
-      <td>{{ p.cpf }}</td>
-      <td>{{ p.telefone || '-' }}</td>
-      <td>
-        <span class="status-badge" [class.inactive]="!p.ativo">
-          {{ p.ativo ? 'Ativo' : 'Inativo' }}
-        </span>
-      </td>
-      <td class="acoes">
-        <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
-        <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-        <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
-        <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<ng-container *ngIf="pacientes.length > 0">
+  <div class="pagination-summary">
+    <span>Exibindo {{ pageStart() }}-{{ pageEnd() }} de {{ totalElements }} pacientes</span>
+
+    <label>
+      Itens por página
+      <select #pageSizeSelect [value]="pageSize" (change)="alterarTamanhoPagina(pageSizeSelect.value)">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </label>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>CPF</th>
+        <th>Telefone</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of pacientes">
+        <td>{{ p.nome }}</td>
+        <td>{{ p.email }}</td>
+        <td>{{ p.cpf }}</td>
+        <td>{{ p.telefone || '-' }}</td>
+        <td>
+          <span class="status-badge" [class.inactive]="!p.ativo">
+            {{ p.ativo ? 'Ativo' : 'Inativo' }}
+          </span>
+        </td>
+        <td class="acoes">
+          <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
+          <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+          <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+          <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</ng-container>
 
 <div class="pagination" *ngIf="totalPages > 1">
-  <button *ngFor="let p of pages()" [class.active]="p === currentPage" (click)="pagina(p)">
+  <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
+  <button
+    type="button"
+    *ngFor="let p of pages()"
+    [class.active]="p === currentPage"
+    [attr.aria-current]="p === currentPage ? 'page' : null"
+    (click)="pagina(p)">
     {{ p + 1 }}
   </button>
+  <button type="button" [disabled]="!canGoNext()" (click)="proximaPagina()">Próxima</button>
 </div>
 
 <div class="dialog-overlay" *ngIf="confirmarAtivarId !== null">

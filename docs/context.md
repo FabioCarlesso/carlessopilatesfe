@@ -22,8 +22,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 8. Dockerização do frontend com build Angular multi-stage e Nginx
 9. Correção da atualização de profissionais para `PUT /profissionais/{id}`
 10. Implementação de filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
+11. Implementação de paginação completa na consulta de pacientes, com resumo de registros, tamanho de página configurável e navegação anterior/próxima
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A aplicação agora pode ser executada em container Docker. Ainda não há autenticação.
 
 ---
 
@@ -182,6 +183,6 @@ BACKEND_URL=http://api:8080 docker compose up --build
 ## Informações do Repositório
 
 - **Repositório:** `carlessopilatesfe`
-- **Branch principal:** `main`
-- **Branch atual de desenvolvimento:** `master`
+- **Branch principal:** `master`
+- **Branch atual de desenvolvimento:** `feat/issue-11-paginacao-pacientes`
 - **Autor:** Fabio Carlesso

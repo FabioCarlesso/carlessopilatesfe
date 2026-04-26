@@ -124,7 +124,7 @@ Arquivos de teste:
 
 | Módulo | Descrição |
 |--------|-----------|
-| **Pacientes** | CRUD completo com ativação/inativação e filtros por nome, e-mail, CPF, telefone e status |
+| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
 | **Profissionais** | CRUD completo com ativação/inativação e atualização via PUT |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -146,7 +146,7 @@ Arquivos de teste:
 | `/profissionais/:id`    | Detalhes do profissional                    |
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
 
-Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API. O status padrão é **Ativos**, e a ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
 
 | Caminho | Função |
 |---------|--------|

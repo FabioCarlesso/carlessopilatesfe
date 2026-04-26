@@ -18,7 +18,7 @@ const mockPaciente: PacienteResponseDTO = {
 
 const mockPage: Page<PacienteResponseDTO> = {
   content: [mockPaciente],
-  totalElements: 1,
+  totalElements: 21,
   totalPages: 3,
   size: 10,
   number: 0
@@ -31,7 +31,11 @@ describe('PacienteListComponent', () => {
 
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('PacienteService', ['listar', 'inativar', 'ativar']);
-    serviceSpy.listar.and.returnValue(of(mockPage));
+    serviceSpy.listar.and.callFake((page = 0, size = 10) => of({
+      ...mockPage,
+      number: page,
+      size
+    }));
 
     await TestBed.configureTestingModule({
       imports: [PacienteListComponent, RouterTestingModule],
@@ -59,7 +63,10 @@ describe('PacienteListComponent', () => {
 
   it('should populate pacientes and totalPages on success', () => {
     expect(component.pacientes).toEqual([mockPaciente]);
+    expect(component.totalElements).toBe(21);
     expect(component.totalPages).toBe(3);
+    expect(component.currentPage).toBe(0);
+    expect(component.pageSize).toBe(10);
     expect(component.loading).toBeFalse();
     expect(component.erro).toBeNull();
   });
@@ -151,6 +158,109 @@ describe('PacienteListComponent', () => {
     });
   });
 
+  it('should ignore invalid or current page when pagina is called', () => {
+    serviceSpy.listar.calls.reset();
+    component.totalPages = 3;
+    component.currentPage = 1;
+
+    component.pagina(-1);
+    component.pagina(1);
+    component.pagina(3);
+
+    expect(component.currentPage).toBe(1);
+    expect(serviceSpy.listar).not.toHaveBeenCalled();
+  });
+
+  it('should navigate to previous and next pages', () => {
+    serviceSpy.listar.calls.reset();
+    component.totalPages = 3;
+    component.currentPage = 1;
+
+    component.paginaAnterior();
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+
+    component.proximaPagina();
+    expect(component.currentPage).toBe(1);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+  });
+
+  it('should reset to first page and reload when page size changes', () => {
+    component.currentPage = 2;
+
+    component.alterarTamanhoPagina('20');
+
+    expect(component.pageSize).toBe(20);
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+  });
+
+  it('should ignore unsupported or unchanged page size', () => {
+    serviceSpy.listar.calls.reset();
+
+    component.alterarTamanhoPagina('10');
+    component.alterarTamanhoPagina('15');
+
+    expect(component.pageSize).toBe(10);
+    expect(serviceSpy.listar).not.toHaveBeenCalled();
+  });
+
+  it('should reload previous page when current page is outside API result range', () => {
+    serviceSpy.listar.and.returnValues(
+      of({
+        content: [],
+        totalElements: 20,
+        totalPages: 2,
+        size: 10,
+        number: 2
+      }),
+      of({
+        content: [mockPaciente],
+        totalElements: 20,
+        totalPages: 2,
+        size: 10,
+        number: 1
+      })
+    );
+    component.currentPage = 2;
+
+    component.carregar();
+
+    expect(component.currentPage).toBe(1);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(2, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    });
+  });
+
   it('should reset page and reload with trimmed filters when buscar is called', () => {
     component.currentPage = 2;
     component.filtro = {
@@ -222,8 +332,44 @@ describe('PacienteListComponent', () => {
     expect(component.pages()).toEqual([0, 1, 2]);
   });
 
+  it('should return a sliding window of page indices from pages()', () => {
+    component.totalPages = 10;
+
+    component.currentPage = 0;
+    expect(component.pages()).toEqual([0, 1, 2, 3, 4]);
+
+    component.currentPage = 4;
+    expect(component.pages()).toEqual([2, 3, 4, 5, 6]);
+
+    component.currentPage = 9;
+    expect(component.pages()).toEqual([5, 6, 7, 8, 9]);
+  });
+
   it('should return empty array from pages() when totalPages is 0', () => {
     component.totalPages = 0;
     expect(component.pages()).toEqual([]);
+  });
+
+  it('should expose pagination state helpers', () => {
+    component.totalElements = 21;
+    component.totalPages = 3;
+    component.pageSize = 10;
+    component.currentPage = 0;
+
+    expect(component.canGoPrevious()).toBeFalse();
+    expect(component.canGoNext()).toBeTrue();
+    expect(component.pageStart()).toBe(1);
+    expect(component.pageEnd()).toBe(10);
+
+    component.currentPage = 2;
+    expect(component.canGoPrevious()).toBeTrue();
+    expect(component.canGoNext()).toBeFalse();
+    expect(component.pageStart()).toBe(21);
+    expect(component.pageEnd()).toBe(21);
+  });
+
+  it('should return zero as pageStart when there are no elements', () => {
+    component.totalElements = 0;
+    expect(component.pageStart()).toBe(0);
   });
 });
