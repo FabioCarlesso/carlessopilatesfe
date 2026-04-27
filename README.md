@@ -4,7 +4,7 @@ Interface web para gestão administrativa de um estúdio de pilates, desenvolvid
 
 ## Visão Geral
 
-A aplicação oferece CRUDs administrativos para pacientes e profissionais, além de fluxos de planos, pagamentos e aulas. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
+A aplicação oferece CRUDs administrativos para pacientes e profissionais, fluxos de planos, pagamentos e aulas, além de relatórios administrativos. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
 
 **Documentação detalhada:** [`docs/documentacao.md`](docs/documentacao.md)  
 **Contexto e decisões técnicas:** [`docs/context.md`](docs/context.md)
@@ -94,6 +94,7 @@ src/app/
 │   ├── paciente-form/              # Cadastro e edição
 │   └── paciente-detail/            # Visualização detalhada
 ├── pages/profissionais/            # CRUD de profissionais
+├── pages/relatorios/               # Relatórios administrativos
 └── shared/components/              # Componentes reutilizáveis
 ```
 
@@ -117,6 +118,8 @@ Arquivos de teste:
 - `src/app/pages/profissionais/profissional-list/profissional-list.component.spec.ts`
 - `src/app/pages/profissionais/profissional-form/profissional-form.component.spec.ts`
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
+- `src/app/pages/relatorios/relatorio-list/relatorio-list.component.spec.ts`
+- `src/app/pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component.spec.ts`
 
 ---
 
@@ -129,6 +132,7 @@ Arquivos de teste:
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
+| **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período |
 
 ---
 
@@ -145,6 +149,8 @@ Arquivos de teste:
 | `/profissionais/novo`   | Formulário de cadastro de profissional      |
 | `/profissionais/:id`    | Detalhes do profissional                    |
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
+| `/relatorios`           | Seção de relatórios                         |
+| `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional |
 
 Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
 
@@ -162,6 +168,8 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento |
 
 A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
+
+O relatório de pagamento de profissional carrega os profissionais ativos para seleção, exige período inicial e final, valida que a data inicial não seja posterior à final e consulta `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O resultado exibe totais consolidados e detalhamento por aula realizada.
 
 ---
 

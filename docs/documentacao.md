@@ -36,6 +36,7 @@
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
+| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional` | Acessar relatórios administrativos e consultar pagamento de profissional por período |
 
 ---
 
@@ -57,7 +58,8 @@ carlessopilatesfe/
 │   │   │   │   ├── paciente-list/       # Listagem paginada de pacientes
 │   │   │   │   ├── paciente-form/       # Formulário de cadastro e edição
 │   │   │   │   └── paciente-detail/     # Visualização detalhada
-│   │   │   └── profissionais/           # CRUD de profissionais
+│   │   │   ├── profissionais/           # CRUD de profissionais
+│   │   │   └── relatorios/              # Relatórios administrativos
 │   │   ├── shared/
 │   │   │   └── components/
 │   │   │       └── confirmar-dialog/    # Componente de diálogo reutilizável
@@ -200,6 +202,37 @@ interface ProfissionalUpdateDTO {
 }
 ```
 
+### `ProfissionalPagamentoAulaDTO`
+Detalhamento de cada aula realizada usada no relatório de pagamento.
+```typescript
+interface ProfissionalPagamentoAulaDTO {
+  aulaId: number;
+  data: string;
+  pacienteId: number;
+  pacienteNome: string;
+  pagamentoId: number;
+  valorPagamento: number;
+  quantidadeAulasPagamento: number;
+  valorBaseAula: number;
+  percentualPagamentoAula: number;
+  valorProfissional: number;
+}
+```
+
+### `ProfissionalPagamentoRelatorioDTO`
+Retorno consolidado do relatório de pagamento de profissional.
+```typescript
+interface ProfissionalPagamentoRelatorioDTO {
+  profissionalId: number;
+  profissionalNome: string;
+  periodoInicio: string;
+  periodoFim: string;
+  totalAulas: number;
+  totalPagamento: number;
+  aulas: ProfissionalPagamentoAulaDTO[];
+}
+```
+
 Arquivo: `src/app/core/models/plano.ts`
 
 ### `AulaResponseDTO`
@@ -252,6 +285,21 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `atualizar(id, dto)` | `PUT /profissionais/{id}`    | Atualiza dados do profissional   |
 | `ativar(id)`      | `PATCH /profissionais/{id}/ativar` | Reativa profissional inativo  |
 | `inativar(id)`    | `PATCH /profissionais/{id}/inativar` | Inativa profissional          |
+| `relatorioPagamento(id, inicio, fim)` | `GET /profissionais/{id}/relatorio-pagamento?inicio&fim` | Consulta total devido e aulas realizadas no período |
+
+### Relatórios
+
+#### Pagamento de Profissional
+Rota: `/relatorios/pagamento-profissional`
+
+A tela carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige profissional, data inicial e data final, e valida que `inicio <= fim` antes de consultar a API.
+
+Contrato consumido:
+```http
+GET /profissionais/{id}/relatorio-pagamento?inicio=2025-02-01&fim=2025-02-28
+```
+
+O resultado apresenta profissional, período, total de aulas, total devido e uma tabela com o detalhamento de cada aula realizada.
 
 ### `AulaService`
 Arquivo: `src/app/core/services/aula.service.ts`
@@ -285,6 +333,8 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/profissionais/novo`    | `ProfissionalFormComponent` | Formulário de cadastro      |
 | `/profissionais/:id`     | `ProfissionalDetailComponent` | Detalhes do profissional  |
 | `/profissionais/:id/editar` | `ProfissionalFormComponent` | Formulário de edição     |
+| `/relatorios`            | `RelatorioListComponent` | Seção de relatórios          |
+| `/relatorios/pagamento-profissional` | `ProfissionalPagamentoRelatorioComponent` | Relatório de pagamento de profissional |
 
 ---
 
@@ -292,6 +342,8 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 
 ### `AppComponent`
 - Navbar com link para "Pacientes"
+- Navbar com link para "Profissionais"
+- Navbar com link para "Relatórios"
 - `<router-outlet>` para renderização das páginas
 
 ### `PacienteListComponent`

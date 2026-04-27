@@ -1,0 +1,33 @@
+.relatorio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.relatorio-card {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  min-height: 120px;
+  padding: 1rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  &__title {
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  &__description {
+    color: var(--text-light);
+    line-height: 1.35;
+  }
+}

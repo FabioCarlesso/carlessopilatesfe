@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { ProfissionalService } from './profissional.service';
 import {
   ProfissionalPage,
+  ProfissionalPagamentoRelatorioDTO,
   ProfissionalRequestDTO,
   ProfissionalResponseDTO,
   ProfissionalUpdateDTO
@@ -23,6 +24,29 @@ const mockProfissional: ProfissionalResponseDTO = {
 const mockPage: ProfissionalPage = {
   content: [mockProfissional],
   page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
+};
+
+const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
+  profissionalId: 1,
+  profissionalNome: 'Paula Mendes',
+  periodoInicio: '2026-04-01',
+  periodoFim: '2026-04-30',
+  totalAulas: 1,
+  totalPagamento: 11.25,
+  aulas: [
+    {
+      aulaId: 10,
+      data: '2026-04-03',
+      pacienteId: 2,
+      pacienteNome: 'Ana Silva',
+      pagamentoId: 5,
+      valorPagamento: 200,
+      quantidadeAulasPagamento: 8,
+      valorBaseAula: 25,
+      percentualPagamentoAula: 45,
+      valorProfissional: 11.25
+    }
+  ]
 };
 
 describe('ProfissionalService', () => {
@@ -107,5 +131,16 @@ describe('ProfissionalService', () => {
     const req = httpMock.expectOne('/api/profissionais/1/inativar');
     expect(req.request.method).toBe('PATCH');
     req.flush(null);
+  });
+
+  it('should GET /api/profissionais/:id/relatorio-pagamento with period params', () => {
+    service.relatorioPagamento(1, '2026-04-01', '2026-04-30')
+      .subscribe(relatorio => expect(relatorio).toEqual(mockRelatorio));
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais/1/relatorio-pagamento');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('inicio')).toBe('2026-04-01');
+    expect(req.request.params.get('fim')).toBe('2026-04-30');
+    req.flush(mockRelatorio);
   });
 });

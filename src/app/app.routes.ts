@@ -48,6 +48,17 @@ export const routes: Routes = [
       import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
   },
   {
+    path: 'relatorios',
+    loadComponent: () =>
+      import('./pages/relatorios/relatorio-list/relatorio-list.component').then(m => m.RelatorioListComponent)
+  },
+  {
+    path: 'relatorios/pagamento-profissional',
+    loadComponent: () =>
+      import('./pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component')
+        .then(m => m.ProfissionalPagamentoRelatorioComponent)
+  },
+  {
     path: 'profissionais',
     loadComponent: () =>
       import('./pages/profissionais/profissional-list/profissional-list.component').then(m => m.ProfissionalListComponent)

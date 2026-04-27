@@ -33,6 +33,29 @@ export interface ProfissionalUpdateDTO {
   dataInicio?: string;
 }
 
+export interface ProfissionalPagamentoAulaDTO {
+  aulaId: number;
+  data: string;
+  pacienteId: number;
+  pacienteNome: string;
+  pagamentoId: number;
+  valorPagamento: number;
+  quantidadeAulasPagamento: number;
+  valorBaseAula: number;
+  percentualPagamentoAula: number;
+  valorProfissional: number;
+}
+
+export interface ProfissionalPagamentoRelatorioDTO {
+  profissionalId: number;
+  profissionalNome: string;
+  periodoInicio: string;
+  periodoFim: string;
+  totalAulas: number;
+  totalPagamento: number;
+  aulas: ProfissionalPagamentoAulaDTO[];
+}
+
 export type ProfissionalPage = Page<ProfissionalResponseDTO>;
 
 export const TIPO_CONTRATO_LABEL: Record<TipoContrato, string> = {

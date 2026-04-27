@@ -1,0 +1,80 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { ProfissionalService } from '../../../core/services/profissional.service';
+import {
+  ProfissionalPagamentoRelatorioDTO,
+  ProfissionalResponseDTO
+} from '../../../core/models/profissional';
+
+@Component({
+  selector: 'app-profissional-pagamento-relatorio',
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './profissional-pagamento-relatorio.component.html',
+  styleUrl: './profissional-pagamento-relatorio.component.scss'
+})
+export class ProfissionalPagamentoRelatorioComponent implements OnInit {
+  profissionais: ProfissionalResponseDTO[] = [];
+  form!: FormGroup;
+  relatorio: ProfissionalPagamentoRelatorioDTO | null = null;
+  loadingProfissionais = false;
+  loadingRelatorio = false;
+  erro: string | null = null;
+
+  constructor(
+    private profissionalService: ProfissionalService,
+    private fb: FormBuilder
+  ) {}
+
+  ngOnInit(): void {
+    this.form = this.fb.group({
+      profissionalId: [null, Validators.required],
+      inicio: ['', Validators.required],
+      fim: ['', Validators.required]
+    });
+    this.carregarProfissionais();
+  }
+
+  carregarProfissionais(): void {
+    this.loadingProfissionais = true;
+    this.profissionalService.listar(0, 100).subscribe({
+      next: page => {
+        this.profissionais = page.content;
+        this.loadingProfissionais = false;
+      },
+      error: () => {
+        this.erro = 'Erro ao carregar profissionais.';
+        this.loadingProfissionais = false;
+      }
+    });
+  }
+
+  consultar(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { profissionalId, inicio, fim } = this.form.value;
+    if (inicio > fim) {
+      this.erro = 'A data inicial deve ser menor ou igual à data final.';
+      this.relatorio = null;
+      return;
+    }
+
+    this.loadingRelatorio = true;
+    this.erro = null;
+    this.relatorio = null;
+    this.profissionalService.relatorioPagamento(Number(profissionalId), inicio, fim).subscribe({
+      next: relatorio => {
+        this.relatorio = relatorio;
+        this.loadingRelatorio = false;
+      },
+      error: () => {
+        this.erro = 'Erro ao carregar relatório de pagamento.';
+        this.loadingRelatorio = false;
+      }
+    });
+  }
+}
