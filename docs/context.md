@@ -30,9 +30,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 16. Implementação da confirmação de aula realizada com seleção e vínculo do profissional responsável
 17. Criação da seção de relatórios e do relatório de pagamento de profissional por período
 18. Adição da exportação do relatório de pagamento de profissional em PDF e Excel/XLSX
-19. Implementação de autenticação JWT: tela de login, AuthService, AuthInterceptor, AuthGuard e botão de logout na navbar
+19. Implementação de autenticação JWT: tela de login, AuthService, AuthInterceptor, AuthGuard, logout na navbar e redirecionamento para login em `401` por token expirado
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP e logout.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP, logout e redirecionamento para login quando uma chamada autenticada retorna `401`.
 
 ---
 
@@ -65,7 +65,7 @@ O relatório usa `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&
 A exportação usa os endpoints `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` e `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O frontend solicita a resposta como `Blob`, observa os headers HTTP, usa o nome retornado em `Content-Disposition` quando disponível e bloqueia os botões de exportação durante a geração do arquivo.
 
 ### Autenticação JWT
-O frontend implementa autenticação stateless via JWT consumindo `POST /api/auth/login`. O token é armazenado em `localStorage` pela `AuthService`. O `authInterceptor` (functional interceptor) injeta o header `Authorization: Bearer <token>` em todas as requisições, exceto no próprio endpoint de login. O `authGuard` (functional guard) protege todas as rotas autenticadas e redireciona para `/login` quando não há token. O `AppComponent` exibe a navbar e o botão **Sair** apenas quando o usuário está autenticado. O logout remove o token e redireciona para `/login`.
+O frontend implementa autenticação stateless via JWT consumindo `POST /api/auth/login`. O token é armazenado em `localStorage` pela `AuthService`. O `authInterceptor` (functional interceptor) injeta o header `Authorization: Bearer <token>` em todas as requisições, exceto no próprio endpoint de login. Quando uma requisição autenticada retorna `401`, o interceptor executa logout, remove o token e redireciona para `/login`, cobrindo o fluxo de token expirado retornado pelo Spring Security. O `authGuard` (functional guard) protege todas as rotas autenticadas e redireciona para `/login` quando não há token. O `AppComponent` exibe a navbar e o botão **Sair** apenas quando o usuário está autenticado. O logout remove o token e redireciona para `/login`. Controle de acesso por perfil e tela dedicada para `403` ainda são pendências futuras.
 
 ### Proxy de desenvolvimento para CORS
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
@@ -120,7 +120,7 @@ A configuração por `environment.ts` ainda não é necessária porque o fronten
 
 | Módulo         | Descrição                                     |
 |----------------|-----------------------------------------------|
-| Autenticação   | Login com JWT, controle de acesso por perfil  |
+| Autenticação   | Controle de acesso por perfil e tela dedicada para `403` |
 | Aulas          | Cadastro de modalidades e horários            |
 | Agendamentos   | Vínculo paciente ↔ aula ↔ data/hora           |
 | Frequência     | Controle de presença por sessão               |
