@@ -17,6 +17,24 @@ describe('file-download utils', () => {
     expect(nome).toBe('relatorio pagamento.xlsx');
   });
 
+  it('should extract UTF-8 filename with language tag from Content-Disposition', () => {
+    const nome = extrairNomeArquivo(
+      "attachment; filename*=UTF-8'pt-BR'relatorio%20pagamento.xlsx",
+      'fallback.xlsx'
+    );
+
+    expect(nome).toBe('relatorio pagamento.xlsx');
+  });
+
+  it('should use fallback filename when UTF-8 filename is malformed', () => {
+    const nome = extrairNomeArquivo(
+      "attachment; filename*=UTF-8''relatorio%ZZ.pdf",
+      'fallback.pdf'
+    );
+
+    expect(nome).toBe('fallback.pdf');
+  });
+
   it('should use fallback filename when header is missing', () => {
     expect(extrairNomeArquivo(null, 'fallback.pdf')).toBe('fallback.pdf');
   });

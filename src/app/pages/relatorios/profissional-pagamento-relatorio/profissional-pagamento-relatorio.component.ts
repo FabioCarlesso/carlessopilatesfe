@@ -111,8 +111,13 @@ export class ProfissionalPagamentoRelatorioComponent implements OnInit {
     this.erro = null;
     request$.subscribe({
       next: response => {
-        baixarBlob(response, fallbackNomeArquivo);
-        this.setExportando(formato, false);
+        try {
+          baixarBlob(response, fallbackNomeArquivo);
+        } catch {
+          this.erro = `Erro ao exportar relatório em ${formato === 'pdf' ? 'PDF' : 'Excel'}.`;
+        } finally {
+          this.setExportando(formato, false);
+        }
       },
       error: () => {
         this.erro = `Erro ao exportar relatório em ${formato === 'pdf' ? 'PDF' : 'Excel'}.`;

@@ -5,9 +5,13 @@ export function extrairNomeArquivo(contentDisposition: string | null, fallback: 
     return fallback;
   }
 
-  const utf8Filename = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+  const utf8Filename = /filename\*=UTF-8'[^']*'([^;]+)/i.exec(contentDisposition);
   if (utf8Filename?.[1]) {
-    return decodeURIComponent(utf8Filename[1].trim());
+    try {
+      return decodeURIComponent(utf8Filename[1].trim());
+    } catch {
+      return fallback;
+    }
   }
 
   const filename = /filename="?([^";]+)"?/i.exec(contentDisposition);
