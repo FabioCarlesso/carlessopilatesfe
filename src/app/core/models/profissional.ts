@@ -46,14 +46,42 @@ export interface ProfissionalPagamentoAulaDTO {
   valorProfissional: number;
 }
 
-export interface ProfissionalPagamentoRelatorioDTO {
-  profissionalId: number;
-  profissionalNome: string;
-  periodoInicio: string;
-  periodoFim: string;
+export interface ProfissionalResumoDTO {
+  id: number;
+  nome: string;
+  cpf: string;
+  tipoContrato: TipoContrato;
+  percentualPagamentoAula: number;
+}
+
+export interface ProfissionalPagamentoPeriodoDTO {
+  inicio: string;
+  fim: string;
+}
+
+export interface ProfissionalPagamentoResumoFinanceiroDTO {
   totalAulas: number;
-  totalPagamento: number;
+  quantidadePagamentos: number;
+  totalPagamentosBruto: number;
+  totalProfissional: number;
+}
+
+export interface ProfissionalPagamentoResumoDTO {
+  pagamentoId: number;
+  valorPagamento: number;
+  quantidadeAulasPagamento: number;
+  quantidadeAulasNoPeriodo: number;
+  valorBaseAula: number;
+  totalProfissional: number;
+}
+
+export interface ProfissionalPagamentoRelatorioDTO {
+  profissional: ProfissionalResumoDTO;
+  periodo: ProfissionalPagamentoPeriodoDTO;
+  resumo: ProfissionalPagamentoResumoFinanceiroDTO;
+  pagamentos: ProfissionalPagamentoResumoDTO[];
   aulas: ProfissionalPagamentoAulaDTO[];
+  geradoEm: string;
 }
 
 export type ProfissionalPage = Page<ProfissionalResponseDTO>;

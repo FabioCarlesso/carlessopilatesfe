@@ -36,7 +36,7 @@
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
-| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional` | Acessar relatórios administrativos e consultar pagamento de profissional por período |
+| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional` | Acessar relatórios administrativos, consultar pagamento de profissional por período e exportar PDF/XLSX |
 
 ---
 
@@ -220,16 +220,44 @@ interface ProfissionalPagamentoAulaDTO {
 ```
 
 ### `ProfissionalPagamentoRelatorioDTO`
-Retorno consolidado do relatório de pagamento de profissional.
+Retorno consolidado do relatório de pagamento de profissional, usando o contrato estruturado da API.
 ```typescript
-interface ProfissionalPagamentoRelatorioDTO {
-  profissionalId: number;
-  profissionalNome: string;
-  periodoInicio: string;
-  periodoFim: string;
+interface ProfissionalResumoDTO {
+  id: number;
+  nome: string;
+  cpf: string;
+  tipoContrato: 'CLT' | 'PJ' | 'AUTONOMO';
+  percentualPagamentoAula: number;
+}
+
+interface ProfissionalPagamentoPeriodoDTO {
+  inicio: string;
+  fim: string;
+}
+
+interface ProfissionalPagamentoResumoFinanceiroDTO {
   totalAulas: number;
-  totalPagamento: number;
+  quantidadePagamentos: number;
+  totalPagamentosBruto: number;
+  totalProfissional: number;
+}
+
+interface ProfissionalPagamentoResumoDTO {
+  pagamentoId: number;
+  valorPagamento: number;
+  quantidadeAulasPagamento: number;
+  quantidadeAulasNoPeriodo: number;
+  valorBaseAula: number;
+  totalProfissional: number;
+}
+
+interface ProfissionalPagamentoRelatorioDTO {
+  profissional: ProfissionalResumoDTO;
+  periodo: ProfissionalPagamentoPeriodoDTO;
+  resumo: ProfissionalPagamentoResumoFinanceiroDTO;
+  pagamentos: ProfissionalPagamentoResumoDTO[];
   aulas: ProfissionalPagamentoAulaDTO[];
+  geradoEm: string;
 }
 ```
 
@@ -286,6 +314,8 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `ativar(id)`      | `PATCH /profissionais/{id}/ativar` | Reativa profissional inativo  |
 | `inativar(id)`    | `PATCH /profissionais/{id}/inativar` | Inativa profissional          |
 | `relatorioPagamento(id, inicio, fim)` | `GET /profissionais/{id}/relatorio-pagamento?inicio&fim` | Consulta total devido e aulas realizadas no período |
+| `exportarRelatorioPagamentoProfissionalPdf(id, inicio, fim)` | `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio&fim` | Baixa o relatório em PDF como `Blob` |
+| `exportarRelatorioPagamentoProfissionalExcel(id, inicio, fim)` | `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio&fim` | Baixa o relatório em Excel/XLSX como `Blob` |
 
 ### Relatórios
 
@@ -294,12 +324,20 @@ Rota: `/relatorios/pagamento-profissional`
 
 A tela carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige profissional, data inicial e data final, e valida que `inicio <= fim` antes de consultar a API.
 
-Contrato consumido:
+Contrato JSON consumido:
 ```http
 GET /profissionais/{id}/relatorio-pagamento?inicio=2025-02-01&fim=2025-02-28
 ```
 
-O resultado apresenta profissional, período, total de aulas, total devido e uma tabela com o detalhamento de cada aula realizada.
+O resultado apresenta profissional, período, total de aulas, total devido, total bruto, resumo por pagamento e uma tabela com o detalhamento de cada aula realizada.
+
+Contratos de exportação:
+```http
+GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=2025-02-01&fim=2025-02-28
+GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=2025-02-01&fim=2025-02-28
+```
+
+As exportações são requisitadas com `responseType: 'blob'` e `observe: 'response'`. O frontend usa o header `Content-Disposition` para preservar o nome de arquivo definido pelo backend e aplica fallback local quando o header não está disponível. Os botões de exportação ficam bloqueados durante a geração do arquivo e erros exibem mensagem amigável na tela.
 
 ### `AulaService`
 Arquivo: `src/app/core/services/aula.service.ts`
