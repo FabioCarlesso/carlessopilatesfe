@@ -27,12 +27,30 @@ const mockPage: ProfissionalPage = {
 };
 
 const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
-  profissionalId: 1,
-  profissionalNome: 'Paula Mendes',
-  periodoInicio: '2026-04-01',
-  periodoFim: '2026-04-30',
-  totalAulas: 1,
-  totalPagamento: 11.25,
+  profissional: {
+    id: 1,
+    nome: 'Paula Mendes',
+    cpf: '123.456.111-00',
+    tipoContrato: 'PJ',
+    percentualPagamentoAula: 45
+  },
+  periodo: { inicio: '2026-04-01', fim: '2026-04-30' },
+  resumo: {
+    totalAulas: 1,
+    quantidadePagamentos: 1,
+    totalPagamentosBruto: 200,
+    totalProfissional: 11.25
+  },
+  pagamentos: [
+    {
+      pagamentoId: 5,
+      valorPagamento: 200,
+      quantidadeAulasPagamento: 8,
+      quantidadeAulasNoPeriodo: 1,
+      valorBaseAula: 25,
+      totalProfissional: 11.25
+    }
+  ],
   aulas: [
     {
       aulaId: 10,
@@ -46,7 +64,8 @@ const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
       percentualPagamentoAula: 45,
       valorProfissional: 11.25
     }
-  ]
+  ],
+  geradoEm: '2026-04-27T10:00:00'
 };
 
 describe('ProfissionalService', () => {
@@ -142,5 +161,35 @@ describe('ProfissionalService', () => {
     expect(req.request.params.get('inicio')).toBe('2026-04-01');
     expect(req.request.params.get('fim')).toBe('2026-04-30');
     req.flush(mockRelatorio);
+  });
+
+  it('should GET PDF report export as blob observing response', () => {
+    const blob = new Blob(['pdf'], { type: 'application/pdf' });
+
+    service.exportarRelatorioPagamentoProfissionalPdf(1, '2026-04-01', '2026-04-30')
+      .subscribe(response => expect(response.body).toBe(blob));
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais/1/relatorio-pagamento/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('inicio')).toBe('2026-04-01');
+    expect(req.request.params.get('fim')).toBe('2026-04-30');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(blob);
+  });
+
+  it('should GET XLSX report export as blob observing response', () => {
+    const blob = new Blob(['xlsx'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    service.exportarRelatorioPagamentoProfissionalExcel(1, '2026-04-01', '2026-04-30')
+      .subscribe(response => expect(response.body).toBe(blob));
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais/1/relatorio-pagamento/xlsx');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('inicio')).toBe('2026-04-01');
+    expect(req.request.params.get('fim')).toBe('2026-04-30');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(blob);
   });
 });

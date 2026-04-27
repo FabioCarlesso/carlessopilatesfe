@@ -132,7 +132,7 @@ Arquivos de teste:
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
-| **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período |
+| **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período e exportação em PDF/XLSX |
 
 ---
 
@@ -169,7 +169,7 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 
 A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
 
-O relatório de pagamento de profissional carrega os profissionais ativos para seleção, exige período inicial e final, valida que a data inicial não seja posterior à final e consulta `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O resultado exibe totais consolidados e detalhamento por aula realizada.
+O relatório de pagamento de profissional carrega os profissionais ativos para seleção, exige período inicial e final, valida que a data inicial não seja posterior à final e consulta `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O resultado exibe totais consolidados, resumo por pagamento e detalhamento por aula realizada. A mesma tela exporta o relatório em PDF e Excel/XLSX pelos endpoints `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` e `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`, tratando a resposta como `Blob`, usando o nome retornado em `Content-Disposition` quando disponível e bloqueando novos cliques enquanto o arquivo é gerado.
 
 ---
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ProfissionalPage,
@@ -45,5 +45,27 @@ export class ProfissionalService {
   relatorioPagamento(id: number, inicio: string, fim: string): Observable<ProfissionalPagamentoRelatorioDTO> {
     const params = new HttpParams().set('inicio', inicio).set('fim', fim);
     return this.http.get<ProfissionalPagamentoRelatorioDTO>(`${this.apiUrl}/${id}/relatorio-pagamento`, { params });
+  }
+
+  exportarRelatorioPagamentoProfissionalPdf(id: number, inicio: string, fim: string): Observable<HttpResponse<Blob>> {
+    return this.exportarRelatorioPagamentoProfissional(id, inicio, fim, 'pdf');
+  }
+
+  exportarRelatorioPagamentoProfissionalExcel(id: number, inicio: string, fim: string): Observable<HttpResponse<Blob>> {
+    return this.exportarRelatorioPagamentoProfissional(id, inicio, fim, 'xlsx');
+  }
+
+  private exportarRelatorioPagamentoProfissional(
+    id: number,
+    inicio: string,
+    fim: string,
+    formato: 'pdf' | 'xlsx'
+  ): Observable<HttpResponse<Blob>> {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    return this.http.get(`${this.apiUrl}/${id}/relatorio-pagamento/${formato}`, {
+      params,
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 }

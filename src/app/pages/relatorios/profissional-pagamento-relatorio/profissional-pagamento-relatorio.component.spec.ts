@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { ProfissionalPagamentoRelatorioComponent } from './profissional-pagamento-relatorio.component';
@@ -27,12 +28,30 @@ const mockPage: ProfissionalPage = {
 };
 
 const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
-  profissionalId: 1,
-  profissionalNome: 'Paula Mendes',
-  periodoInicio: '2026-04-01',
-  periodoFim: '2026-04-30',
-  totalAulas: 1,
-  totalPagamento: 11.25,
+  profissional: {
+    id: 1,
+    nome: 'Paula Mendes',
+    cpf: '123.456.111-00',
+    tipoContrato: 'PJ',
+    percentualPagamentoAula: 45
+  },
+  periodo: { inicio: '2026-04-01', fim: '2026-04-30' },
+  resumo: {
+    totalAulas: 1,
+    quantidadePagamentos: 1,
+    totalPagamentosBruto: 200,
+    totalProfissional: 11.25
+  },
+  pagamentos: [
+    {
+      pagamentoId: 5,
+      valorPagamento: 200,
+      quantidadeAulasPagamento: 8,
+      quantidadeAulasNoPeriodo: 1,
+      valorBaseAula: 25,
+      totalProfissional: 11.25
+    }
+  ],
   aulas: [
     {
       aulaId: 10,
@@ -46,8 +65,25 @@ const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
       percentualPagamentoAula: 45,
       valorProfissional: 11.25
     }
-  ]
+  ],
+  geradoEm: '2026-04-27T10:00:00'
 };
+
+const mockPdfResponse = new HttpResponse({
+  body: new Blob(['pdf'], { type: 'application/pdf' }),
+  headers: new HttpHeaders({
+    'Content-Disposition': 'attachment; filename="relatorio.pdf"'
+  })
+});
+
+const mockExcelResponse = new HttpResponse({
+  body: new Blob(['xlsx'], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  }),
+  headers: new HttpHeaders({
+    'Content-Disposition': 'attachment; filename="relatorio.xlsx"'
+  })
+});
 
 describe('ProfissionalPagamentoRelatorioComponent', () => {
   let component: ProfissionalPagamentoRelatorioComponent;
@@ -55,9 +91,16 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
   let serviceSpy: jasmine.SpyObj<ProfissionalService>;
 
   beforeEach(async () => {
-    serviceSpy = jasmine.createSpyObj('ProfissionalService', ['listar', 'relatorioPagamento']);
+    serviceSpy = jasmine.createSpyObj('ProfissionalService', [
+      'listar',
+      'relatorioPagamento',
+      'exportarRelatorioPagamentoProfissionalPdf',
+      'exportarRelatorioPagamentoProfissionalExcel'
+    ]);
     serviceSpy.listar.and.returnValue(of(mockPage));
     serviceSpy.relatorioPagamento.and.returnValue(of(mockRelatorio));
+    serviceSpy.exportarRelatorioPagamentoProfissionalPdf.and.returnValue(of(mockPdfResponse));
+    serviceSpy.exportarRelatorioPagamentoProfissionalExcel.and.returnValue(of(mockExcelResponse));
 
     await TestBed.configureTestingModule({
       imports: [ProfissionalPagamentoRelatorioComponent, RouterTestingModule],
@@ -120,5 +163,60 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar relatório de pagamento.');
     expect(component.loadingRelatorio).toBeFalse();
+  });
+
+  it('should not export when form is invalid', () => {
+    component.form.reset();
+
+    component.exportarPdf();
+    component.exportarExcel();
+
+    expect(serviceSpy.exportarRelatorioPagamentoProfissionalPdf).not.toHaveBeenCalled();
+    expect(serviceSpy.exportarRelatorioPagamentoProfissionalExcel).not.toHaveBeenCalled();
+  });
+
+  it('should validate period order before exporting', () => {
+    component.form.setValue({ profissionalId: 1, inicio: '2026-04-30', fim: '2026-04-01' });
+
+    component.exportarPdf();
+
+    expect(component.erro).toBe('A data inicial deve ser menor ou igual à data final.');
+    expect(serviceSpy.exportarRelatorioPagamentoProfissionalPdf).not.toHaveBeenCalled();
+  });
+
+  it('should export PDF and reset loading state', () => {
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-pdf');
+    spyOn(window.URL, 'revokeObjectURL');
+    component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
+
+    component.exportarPdf();
+
+    expect(serviceSpy.exportarRelatorioPagamentoProfissionalPdf)
+      .toHaveBeenCalledWith(1, '2026-04-01', '2026-04-30');
+    expect(component.exportandoPdf).toBeFalse();
+    expect(component.erro).toBeNull();
+  });
+
+  it('should export Excel and reset loading state', () => {
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-xlsx');
+    spyOn(window.URL, 'revokeObjectURL');
+    component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
+
+    component.exportarExcel();
+
+    expect(serviceSpy.exportarRelatorioPagamentoProfissionalExcel)
+      .toHaveBeenCalledWith(1, '2026-04-01', '2026-04-30');
+    expect(component.exportandoExcel).toBeFalse();
+    expect(component.erro).toBeNull();
+  });
+
+  it('should set friendly error when PDF export fails', () => {
+    serviceSpy.exportarRelatorioPagamentoProfissionalPdf.and.returnValue(throwError(() => new Error('fail')));
+    component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
+
+    component.exportarPdf();
+
+    expect(component.erro).toBe('Erro ao exportar relatório em PDF.');
+    expect(component.exportandoPdf).toBeFalse();
   });
 });

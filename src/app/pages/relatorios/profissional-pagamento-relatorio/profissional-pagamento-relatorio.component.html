@@ -44,29 +44,72 @@
     <button type="submit" class="btn btn-primary" [disabled]="loadingProfissionais || loadingRelatorio">
       Consultar
     </button>
+    <button type="button" class="btn btn-secondary" (click)="exportarPdf()"
+      [disabled]="loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel">
+      {{ exportandoPdf ? 'Gerando PDF...' : 'Exportar PDF' }}
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportarExcel()"
+      [disabled]="loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel">
+      {{ exportandoExcel ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
   </div>
 </form>
 
-<div *ngIf="loadingProfissionais || loadingRelatorio" class="loading">Carregando...</div>
+<div *ngIf="loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel" class="loading">
+  {{ exportandoPdf || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
+</div>
 
 <section *ngIf="relatorio" class="relatorio-resultado">
   <div class="summary-grid">
     <div class="summary-item">
       <span class="label">Profissional</span>
-      <strong>{{ relatorio.profissionalNome }}</strong>
+      <strong>{{ relatorio.profissional.nome }}</strong>
     </div>
     <div class="summary-item">
       <span class="label">Período</span>
-      <strong>{{ relatorio.periodoInicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodoFim | date:'dd/MM/yyyy' }}</strong>
+      <strong>{{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}</strong>
     </div>
     <div class="summary-item">
       <span class="label">Aulas</span>
-      <strong>{{ relatorio.totalAulas }}</strong>
+      <strong>{{ relatorio.resumo.totalAulas }}</strong>
     </div>
     <div class="summary-item">
       <span class="label">Total devido</span>
-      <strong>{{ relatorio.totalPagamento | currency:'BRL' }}</strong>
+      <strong>{{ relatorio.resumo.totalProfissional | currency:'BRL' }}</strong>
     </div>
+    <div class="summary-item">
+      <span class="label">Pagamentos</span>
+      <strong>{{ relatorio.resumo.quantidadePagamentos }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="label">Bruto no período</span>
+      <strong>{{ relatorio.resumo.totalPagamentosBruto | currency:'BRL' }}</strong>
+    </div>
+  </div>
+
+  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Pagamento</th>
+          <th>Valor do Pagamento</th>
+          <th>Aulas do Pagamento</th>
+          <th>Aulas no Período</th>
+          <th>Base por Aula</th>
+          <th>Total Profissional</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pagamento of relatorio.pagamentos">
+          <td>#{{ pagamento.pagamentoId }}</td>
+          <td>{{ pagamento.valorPagamento | currency:'BRL' }}</td>
+          <td>{{ pagamento.quantidadeAulasPagamento }}</td>
+          <td>{{ pagamento.quantidadeAulasNoPeriodo }}</td>
+          <td>{{ pagamento.valorBaseAula | currency:'BRL' }}</td>
+          <td>{{ pagamento.totalProfissional | currency:'BRL' }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <div *ngIf="relatorio.aulas.length === 0" class="empty-state">

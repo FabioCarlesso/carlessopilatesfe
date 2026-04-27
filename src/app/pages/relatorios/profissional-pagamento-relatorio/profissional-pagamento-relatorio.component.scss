@@ -40,8 +40,16 @@
   overflow-x: auto;
 }
 
+.pagamentos-resumo {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 760px) {
   .form-row {
+    flex-direction: column;
+  }
+
+  .form-actions {
     flex-direction: column;
   }
 }
