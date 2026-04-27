@@ -88,7 +88,10 @@ docker run --rm -p 4200:80 \
 src/app/
 ├── core/
 │   ├── models/                     # DTOs e interfaces
-│   └── services/                   # Integração com a API REST
+│   ├── services/                   # Integração com a API REST
+│   ├── interceptors/               # HTTP interceptors (auth)
+│   └── guards/                     # Route guards (auth)
+├── pages/auth/login/               # Tela de login
 ├── pages/pacientes/
 │   ├── paciente-list/              # Listagem paginada com filtros
 │   ├── paciente-form/              # Cadastro e edição
@@ -120,6 +123,10 @@ Arquivos de teste:
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
 - `src/app/pages/relatorios/relatorio-list/relatorio-list.component.spec.ts`
 - `src/app/pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component.spec.ts`
+- `src/app/pages/auth/login/login.component.spec.ts`
+- `src/app/core/services/auth.service.spec.ts`
+- `src/app/core/interceptors/auth.interceptor.spec.ts`
+- `src/app/core/guards/auth.guard.spec.ts`
 
 ---
 
@@ -133,6 +140,7 @@ Arquivos de teste:
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
 | **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período e exportação em PDF/XLSX |
+| **Autenticação** | Login com JWT via `POST /api/auth/login`, guard de rotas, interceptor HTTP, logout e tratamento de `401` por token expirado |
 
 ---
 
@@ -151,8 +159,11 @@ Arquivos de teste:
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
 | `/relatorios`           | Seção de relatórios                         |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional |
+| `/login` | Tela de autenticação (pública) |
 
 Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+
+A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
 
 Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes. A navegação ignora páginas negativas, fora do total retornado pela API ou iguais à página atual, evitando requisições desnecessárias ou fora dos limites.
 

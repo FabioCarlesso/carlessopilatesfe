@@ -29,6 +29,22 @@
   }
 }
 
+.btn-sair {
+  background: transparent;
+  border: 1px solid #f0d0ff;
+  color: #f0d0ff;
+  border-radius: 4px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: #f0d0ff;
+    color: #6a0dad;
+  }
+}
+
 .container {
   max-width: 1100px;
   margin: 2rem auto;
