@@ -82,6 +82,13 @@ export const routes: Routes = [
         .then(m => m.ProfissionalPagamentoRelatorioComponent)
   },
   {
+    path: 'relatorios/nfse',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/relatorios/nfse-relatorio/nfse-relatorio.component')
+        .then(m => m.NfseRelatorioComponent)
+  },
+  {
     path: 'profissionais',
     canActivate: [authGuard],
     loadComponent: () =>

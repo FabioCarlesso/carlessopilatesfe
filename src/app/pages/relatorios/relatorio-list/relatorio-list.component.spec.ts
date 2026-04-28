@@ -25,4 +25,12 @@ describe('RelatorioListComponent', () => {
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Pagamento de Profissional');
   });
+
+  it('should render NFSE report link', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/relatorios/nfse"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Emissão de NFSEs');
+  });
 });

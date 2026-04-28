@@ -36,7 +36,7 @@
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
-| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional` | Acessar relatórios administrativos, consultar pagamento de profissional por período e exportar PDF/XLSX |
+| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional`, `/relatorios/nfse` | Acessar relatórios administrativos, consultar pagamento de profissional por período, emissão de NFSEs por competência e exportar PDF/XLSX/CSV |
 
 ---
 
@@ -339,6 +339,25 @@ GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=2025-02-01&fim=2025-02-2
 
 As exportações são requisitadas com `responseType: 'blob'` e `observe: 'response'`. O frontend usa o header `Content-Disposition` para preservar o nome de arquivo definido pelo backend e aplica fallback local quando o header não está disponível. Os botões de exportação ficam bloqueados durante a geração do arquivo e erros exibem mensagem amigável na tela.
 
+#### Emissão de NFSEs
+Rota: `/relatorios/nfse`
+
+A tela exige competência no formato `MM/AAAA`, valida mês de `01` a `12` e permite filtrar registros com ou sem nota anterior emitida. O backend expõe `GET /api/relatorios/nfse`; por isso o serviço Angular chama `/api/api/relatorios/nfse`, preservando o prefixo `/api` do backend após o proxy local e o Nginx removerem o primeiro `/api`. O resultado mostra total de registros, soma dos valores pagos e a tabela com nome, CPF/CNPJ, valor pago, competência, descrição do serviço, nota anterior emitida, data de pagamento e observações.
+
+Contrato JSON consumido:
+```http
+GET /api/relatorios/nfse?competencia=04/2026
+GET /api/relatorios/nfse?competencia=04/2026&notaAnteriorEmitida=false
+```
+
+Contratos de exportação:
+```http
+GET /api/relatorios/nfse?competencia=04/2026&formato=CSV
+GET /api/relatorios/nfse?competencia=04/2026&formato=XLSX
+```
+
+As exportações são requisitadas como `Blob` e preservam o nome retornado em `Content-Disposition`, com fallback local no padrão `relatorio-nfse-MM-AAAA.csv|xlsx`.
+
 ### `AulaService`
 Arquivo: `src/app/core/services/aula.service.ts`
 Injetável em toda a aplicação (`providedIn: 'root'`).
@@ -373,6 +392,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/profissionais/:id/editar` | `ProfissionalFormComponent` | Formulário de edição     |
 | `/relatorios`            | `RelatorioListComponent` | Seção de relatórios          |
 | `/relatorios/pagamento-profissional` | `ProfissionalPagamentoRelatorioComponent` | Relatório de pagamento de profissional |
+| `/relatorios/nfse`       | `NfseRelatorioComponent` | Relatório de emissão de NFSEs |
 
 ---
 
@@ -530,6 +550,7 @@ Comando: `npm test`
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
+| `app/core/services/relatorio.service.spec.ts` | Contratos HTTP do relatório de NFSE e exportação CSV/XLSX |
 | `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, troca de tamanho de página, inativação, estados de erro |
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
@@ -561,6 +582,7 @@ Comando: `npm test`
 - Módulo Planos: listagem, criação com seleção de dias e validação de frequência
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
+- Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
