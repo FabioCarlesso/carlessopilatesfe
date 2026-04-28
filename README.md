@@ -115,6 +115,7 @@ Arquivos de teste:
 - `src/app/app.component.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
 - `src/app/core/services/profissional.service.spec.ts`
+- `src/app/core/services/relatorio.service.spec.ts`
 - `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
@@ -123,6 +124,7 @@ Arquivos de teste:
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
 - `src/app/pages/relatorios/relatorio-list/relatorio-list.component.spec.ts`
 - `src/app/pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component.spec.ts`
+- `src/app/pages/relatorios/nfse-relatorio/nfse-relatorio.component.spec.ts`
 - `src/app/pages/auth/login/login.component.spec.ts`
 - `src/app/core/services/auth.service.spec.ts`
 - `src/app/core/interceptors/auth.interceptor.spec.ts`
@@ -139,7 +141,7 @@ Arquivos de teste:
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
-| **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período e exportação em PDF/XLSX |
+| **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
 | **Autenticação** | Login com JWT via `POST /api/auth/login`, guard de rotas, interceptor HTTP, logout e tratamento de `401` por token expirado |
 
 ---
@@ -159,6 +161,7 @@ Arquivos de teste:
 | `/profissionais/:id/editar` | Formulário de edição de profissional    |
 | `/relatorios`           | Seção de relatórios                         |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional |
+| `/relatorios/nfse` | Relatório de emissão de NFSEs |
 | `/login` | Tela de autenticação (pública) |
 
 Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
@@ -181,6 +184,8 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
 
 O relatório de pagamento de profissional carrega os profissionais ativos para seleção, exige período inicial e final, valida que a data inicial não seja posterior à final e consulta `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O resultado exibe totais consolidados, resumo por pagamento e detalhamento por aula realizada. A mesma tela exporta o relatório em PDF e Excel/XLSX pelos endpoints `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` e `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`, tratando a resposta como `Blob`, usando o nome retornado em `Content-Disposition` quando disponível e bloqueando novos cliques enquanto o arquivo é gerado.
+
+O relatório de emissão de NFSEs exige competência no formato `MM/AAAA`, permite filtrar por nota anterior emitida e consulta `GET /relatorios/nfse?competencia=MM/AAAA`. O resultado exibe nome, CPF/CNPJ, valor pago, competência, descrição do serviço, nota anterior emitida, data de pagamento e observações. A tela também exporta CSV e Excel/XLSX pelo mesmo endpoint com o parâmetro `formato=CSV` ou `formato=XLSX`.
 
 ---
 

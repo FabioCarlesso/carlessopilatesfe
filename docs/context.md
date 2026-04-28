@@ -31,8 +31,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 17. Criação da seção de relatórios e do relatório de pagamento de profissional por período
 18. Adição da exportação do relatório de pagamento de profissional em PDF e Excel/XLSX
 19. Implementação de autenticação JWT: tela de login, AuthService, AuthInterceptor, AuthGuard, logout na navbar e redirecionamento para login em `401` por token expirado
+20. Implementação do relatório de emissão de NFSEs por competência, com filtro de nota anterior emitida e exportação CSV/XLSX
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP, logout e redirecionamento para login quando uma chamada autenticada retorna `401`.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas e bloqueia navegação para páginas inválidas ou repetidas. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX, além do relatório fiscal de emissão de NFSEs por competência com exportação CSV/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP, logout e redirecionamento para login quando uma chamada autenticada retorna `401`.
 
 ---
 
@@ -63,6 +64,11 @@ A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar?profission
 O relatório usa `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. A tela valida seleção de profissional, datas obrigatórias e impede consulta quando a data inicial é posterior à final. O retorno usa o contrato estruturado da API com `profissional`, `periodo`, `resumo`, `pagamentos`, `aulas` e `geradoEm`, consolidando total de aulas, total devido, agrupamento por pagamento e detalhamento por aula.
 
 A exportação usa os endpoints `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` e `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O frontend solicita a resposta como `Blob`, observa os headers HTTP, usa o nome retornado em `Content-Disposition` quando disponível e bloqueia os botões de exportação durante a geração do arquivo.
+
+### Relatório de emissão de NFSEs
+O relatório usa `GET /relatorios/nfse?competencia=MM/AAAA`, com filtro opcional `notaAnteriorEmitida=true|false`. A tela exige competência no formato `MM/AAAA`, valida mês entre `01` e `12`, exibe total de registros, soma de valores pagos e lista os campos `nome`, `cpfCnpj`, `valorPago`, `competencia`, `descricaoServico`, `notaAnteriorEmitida`, `dataPagamento` e `observacoes`.
+
+A exportação usa o mesmo endpoint com `formato=CSV` ou `formato=XLSX`. O frontend trata a resposta como `Blob`, preserva o nome de arquivo retornado em `Content-Disposition` quando disponível e aplica fallback `relatorio-nfse-MM-AAAA.csv|xlsx`.
 
 ### Autenticação JWT
 O frontend implementa autenticação stateless via JWT consumindo `POST /api/auth/login`. O token é armazenado em `localStorage` pela `AuthService`. O `authInterceptor` (functional interceptor) injeta o header `Authorization: Bearer <token>` em todas as requisições, exceto no próprio endpoint de login. Quando uma requisição autenticada retorna `401`, o interceptor executa logout, remove o token e redireciona para `/login`, cobrindo o fluxo de token expirado retornado pelo Spring Security. O `authGuard` (functional guard) protege todas as rotas autenticadas e redireciona para `/login` quando não há token. O `AppComponent` exibe a navbar e o botão **Sair** apenas quando o usuário está autenticado. O logout remove o token e redireciona para `/login`. Controle de acesso por perfil e tela dedicada para `403` ainda são pendências futuras.
@@ -125,7 +131,7 @@ A configuração por `environment.ts` ainda não é necessária porque o fronten
 | Agendamentos   | Vínculo paciente ↔ aula ↔ data/hora           |
 | Frequência     | Controle de presença por sessão               |
 | Financeiro     | Planos, pagamentos e cobranças                |
-| Relatórios     | Relatório de pagamento de profissional por período com exportação PDF/XLSX; futuros dashboards e métricas do estúdio |
+| Relatórios     | Relatório de pagamento de profissional por período com exportação PDF/XLSX; relatório de emissão de NFSEs por competência com exportação CSV/XLSX; futuros dashboards e métricas do estúdio |
 
 ---
 
@@ -163,6 +169,10 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `ProfissionalPagamentoRelatorioDTO`
 - `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/pdf` com `Content-Disposition: attachment`
 - `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
+- `GET /relatorios/nfse?competencia=MM/AAAA` → `RelatorioNfseResponseDTO[]`
+- `GET /relatorios/nfse?competencia=MM/AAAA&notaAnteriorEmitida=false` → `RelatorioNfseResponseDTO[]`
+- `GET /relatorios/nfse?competencia=MM/AAAA&formato=CSV` → `text/csv` com `Content-Disposition: attachment`
+- `GET /relatorios/nfse?competencia=MM/AAAA&formato=XLSX` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
 
