@@ -10,7 +10,7 @@ import {
   providedIn: 'root'
 })
 export class RelatorioService {
-  private readonly nfseUrl = '/api/relatorios/nfse';
+  private readonly nfseUrl = '/api/api/relatorios/nfse';
 
   constructor(private http: HttpClient) {}
 

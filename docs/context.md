@@ -66,7 +66,7 @@ O relatório usa `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&
 A exportação usa os endpoints `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` e `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD`. O frontend solicita a resposta como `Blob`, observa os headers HTTP, usa o nome retornado em `Content-Disposition` quando disponível e bloqueia os botões de exportação durante a geração do arquivo.
 
 ### Relatório de emissão de NFSEs
-O relatório usa `GET /relatorios/nfse?competencia=MM/AAAA`, com filtro opcional `notaAnteriorEmitida=true|false`. A tela exige competência no formato `MM/AAAA`, valida mês entre `01` e `12`, exibe total de registros, soma de valores pagos e lista os campos `nome`, `cpfCnpj`, `valorPago`, `competencia`, `descricaoServico`, `notaAnteriorEmitida`, `dataPagamento` e `observacoes`.
+O relatório usa o endpoint do backend `GET /api/relatorios/nfse?competencia=MM/AAAA`, com filtro opcional `notaAnteriorEmitida=true|false`. Como o proxy de desenvolvimento e o Nginx removem o primeiro prefixo `/api` das chamadas do frontend, o `RelatorioService` chama `/api/api/relatorios/nfse` para encaminhar ao backend como `/api/relatorios/nfse`. A tela exige competência no formato `MM/AAAA`, valida mês entre `01` e `12`, exibe total de registros, soma de valores pagos e lista os campos `nome`, `cpfCnpj`, `valorPago`, `competencia`, `descricaoServico`, `notaAnteriorEmitida`, `dataPagamento` e `observacoes`.
 
 A exportação usa o mesmo endpoint com `formato=CSV` ou `formato=XLSX`. O frontend trata a resposta como `Blob`, preserva o nome de arquivo retornado em `Content-Disposition` quando disponível e aplica fallback `relatorio-nfse-MM-AAAA.csv|xlsx`.
 
@@ -169,10 +169,10 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `ProfissionalPagamentoRelatorioDTO`
 - `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/pdf` com `Content-Disposition: attachment`
 - `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
-- `GET /relatorios/nfse?competencia=MM/AAAA` → `RelatorioNfseResponseDTO[]`
-- `GET /relatorios/nfse?competencia=MM/AAAA&notaAnteriorEmitida=false` → `RelatorioNfseResponseDTO[]`
-- `GET /relatorios/nfse?competencia=MM/AAAA&formato=CSV` → `text/csv` com `Content-Disposition: attachment`
-- `GET /relatorios/nfse?competencia=MM/AAAA&formato=XLSX` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
+- `GET /api/relatorios/nfse?competencia=MM/AAAA` → `RelatorioNfseResponseDTO[]`
+- `GET /api/relatorios/nfse?competencia=MM/AAAA&notaAnteriorEmitida=false` → `RelatorioNfseResponseDTO[]`
+- `GET /api/relatorios/nfse?competencia=MM/AAAA&formato=CSV` → `text/csv` com `Content-Disposition: attachment`
+- `GET /api/relatorios/nfse?competencia=MM/AAAA&formato=XLSX` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
 
 Erros são tratados no subscribe via callback de erro, exibindo mensagem genérica ao usuário.
 

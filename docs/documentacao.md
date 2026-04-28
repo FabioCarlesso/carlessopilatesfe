@@ -342,18 +342,18 @@ As exportações são requisitadas com `responseType: 'blob'` e `observe: 'respo
 #### Emissão de NFSEs
 Rota: `/relatorios/nfse`
 
-A tela exige competência no formato `MM/AAAA`, valida mês de `01` a `12` e permite filtrar registros com ou sem nota anterior emitida. O resultado mostra total de registros, soma dos valores pagos e a tabela com nome, CPF/CNPJ, valor pago, competência, descrição do serviço, nota anterior emitida, data de pagamento e observações.
+A tela exige competência no formato `MM/AAAA`, valida mês de `01` a `12` e permite filtrar registros com ou sem nota anterior emitida. O backend expõe `GET /api/relatorios/nfse`; por isso o serviço Angular chama `/api/api/relatorios/nfse`, preservando o prefixo `/api` do backend após o proxy local e o Nginx removerem o primeiro `/api`. O resultado mostra total de registros, soma dos valores pagos e a tabela com nome, CPF/CNPJ, valor pago, competência, descrição do serviço, nota anterior emitida, data de pagamento e observações.
 
 Contrato JSON consumido:
 ```http
-GET /relatorios/nfse?competencia=04/2026
-GET /relatorios/nfse?competencia=04/2026&notaAnteriorEmitida=false
+GET /api/relatorios/nfse?competencia=04/2026
+GET /api/relatorios/nfse?competencia=04/2026&notaAnteriorEmitida=false
 ```
 
 Contratos de exportação:
 ```http
-GET /relatorios/nfse?competencia=04/2026&formato=CSV
-GET /relatorios/nfse?competencia=04/2026&formato=XLSX
+GET /api/relatorios/nfse?competencia=04/2026&formato=CSV
+GET /api/relatorios/nfse?competencia=04/2026&formato=XLSX
 ```
 
 As exportações são requisitadas como `Blob` e preservam o nome retornado em `Content-Disposition`, com fallback local no padrão `relatorio-nfse-MM-AAAA.csv|xlsx`.

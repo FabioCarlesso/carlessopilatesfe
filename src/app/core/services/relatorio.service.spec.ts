@@ -35,10 +35,10 @@ describe('RelatorioService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should GET /api/relatorios/nfse with competencia param', () => {
+  it('should GET /api/api/relatorios/nfse with competencia param', () => {
     service.relatorioNfse('04/2026').subscribe(relatorio => expect(relatorio).toEqual(mockRelatorioNfse));
 
-    const req = httpMock.expectOne(r => r.url === '/api/relatorios/nfse');
+    const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.has('notaAnteriorEmitida')).toBeFalse();
@@ -48,7 +48,7 @@ describe('RelatorioService', () => {
   it('should include notaAnteriorEmitida when filter is informed', () => {
     service.relatorioNfse('04/2026', false).subscribe();
 
-    const req = httpMock.expectOne(r => r.url === '/api/relatorios/nfse');
+    const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.get('notaAnteriorEmitida')).toBe('false');
     req.flush(mockRelatorioNfse);
@@ -62,7 +62,7 @@ describe('RelatorioService', () => {
     service.exportarRelatorioNfse('04/2026', 'XLSX', true)
       .subscribe(response => expect(response.body).toBe(blob));
 
-    const req = httpMock.expectOne(r => r.url === '/api/relatorios/nfse');
+    const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.get('notaAnteriorEmitida')).toBe('true');
