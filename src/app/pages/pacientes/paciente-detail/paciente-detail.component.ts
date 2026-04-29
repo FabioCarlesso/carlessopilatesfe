@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, NgIf } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -7,7 +7,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-detail',
-  imports: [CommonModule, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.scss'
 })

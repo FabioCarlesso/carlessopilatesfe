@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -8,7 +8,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-profissional-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
   templateUrl: './profissional-form.component.html',
   styleUrl: './profissional-form.component.scss'
 })

@@ -72,7 +72,7 @@ docker run --rm -p 4200:80 \
 
 | Camada     | Tecnologia                    |
 |------------|-------------------------------|
-| Framework  | Angular 19.2 (standalone)     |
+| Framework  | Angular 19.2 (standalone, imports individuais) |
 | Linguagem  | TypeScript 5.7                |
 | Estilos    | SCSS + Design Tokens          |
 | Forms      | Reactive Forms                |

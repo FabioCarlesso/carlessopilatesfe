@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -11,7 +11,7 @@ import { baixarBlob } from '../../../shared/utils/file-download';
 
 @Component({
   selector: 'app-profissional-pagamento-relatorio',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './profissional-pagamento-relatorio.component.html',
   styleUrl: './profissional-pagamento-relatorio.component.scss'
 })
