@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  h1 { margin: 0; font-size: 1.6rem; color: #4a0080; }
+  h1 { margin: 0; font-size: var(--fs-display-sm); color: var(--text-primary); }
 }
 
 .filters {
@@ -11,18 +11,18 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   align-items: end;
-  background: #fff;
-  border: 1px solid #eadcf4;
-  border-radius: 8px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
   padding: 1rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  box-shadow: var(--shadow-1);
 
   label {
     display: flex;
     flex-direction: column;
     gap: .35rem;
-    color: #4a0080;
+    color: var(--text-secondary);
     font-size: .9rem;
     font-weight: 600;
   }
@@ -30,17 +30,18 @@
   input,
   select {
     min-height: 38px;
-    border: 1px solid #d9c2e8;
-    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
     padding: .45rem .6rem;
-    color: #333;
+    color: var(--text-primary);
     font: inherit;
   }
 
   input:focus,
   select:focus {
-    outline: 2px solid #d7b8ef;
-    border-color: #6a0dad;
+    outline: none;
+    border-color: var(--c-horizonte);
+    box-shadow: var(--shadow-focus);
   }
 }
 
@@ -53,22 +54,22 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 8px;
+  background: var(--bg-elev);
+  border-radius: var(--r-lg);
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  box-shadow: var(--shadow-1);
 
   th {
-    background: #6a0dad;
-    color: #fff;
+    background: var(--bg-sunken);
+    color: var(--text-secondary);
     padding: .75rem 1rem;
     text-align: left;
     font-weight: 600;
   }
 
-  td { padding: .75rem 1rem; border-bottom: 1px solid #f0e0ff; }
+  td { padding: .75rem 1rem; border-bottom: 1px solid var(--border-subtle); }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #faf4ff; }
+  tr:hover td { background: var(--bg-sunken); }
 }
 
 .acoes { display: flex; gap: .5rem; }
@@ -79,18 +80,18 @@
   min-height: 24px;
   padding: .2rem .55rem;
   border-radius: 999px;
-  background: #e7f6ec;
-  color: #207a3c;
+  background: var(--c-success-bg);
+  color: var(--c-success);
   font-size: .85rem;
   font-weight: 600;
 
   &.inactive {
-    background: #fde8e8;
-    color: #b42318;
+    background: var(--c-danger-bg);
+    color: var(--c-danger);
   }
 }
 
-.loading, .empty-state { text-align: center; color: #888; margin: 3rem 0; }
+.loading, .empty-state { text-align: center; color: var(--text-muted); margin: 3rem 0; }
 
 .pagination-summary {
   display: flex;
@@ -98,23 +99,23 @@
   gap: 1rem;
   align-items: center;
   margin-bottom: .75rem;
-  color: #555;
+  color: var(--text-secondary);
   font-size: .9rem;
 
   label {
     display: flex;
     align-items: center;
     gap: .5rem;
-    color: #4a0080;
+    color: var(--text-secondary);
     font-weight: 600;
   }
 
   select {
     min-height: 34px;
-    border: 1px solid #d9c2e8;
-    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
     padding: .35rem .5rem;
-    color: #333;
+    color: var(--text-primary);
     font: inherit;
   }
 }
@@ -127,13 +128,13 @@
 
   button {
     padding: .4rem .8rem;
-    border: 1px solid #6a0dad;
-    background: #fff;
-    color: #6a0dad;
-    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-elev);
+    color: var(--text-secondary);
+    border-radius: var(--r-md);
     cursor: pointer;
-    &.active { background: #6a0dad; color: #fff; }
-    &:hover:not(.active) { background: #f5e8ff; }
+    &.active { background: var(--c-horizonte); color: var(--c-cloud-dancer); }
+    &:hover:not(.active) { background: var(--bg-sunken); }
     &:disabled { opacity: .5; cursor: not-allowed; }
   }
 }
@@ -148,7 +149,7 @@
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.4);
+  background: rgba(10, 17, 25, .56);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,11 +157,11 @@
 }
 
 .dialog {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--bg-elev);
+  border-radius: var(--r-lg);
   padding: 2rem;
   min-width: 300px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  box-shadow: var(--shadow-3);
   text-align: center;
 
   p { margin: 0 0 1.5rem; font-size: 1.1rem; }

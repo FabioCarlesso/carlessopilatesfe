@@ -16,7 +16,7 @@
 |----------------|-----------------------------------------|
 | Framework      | Angular 19.2                            |
 | Linguagem      | TypeScript 5.7                          |
-| Estilos        | SCSS (Sass)                             |
+| Estilos        | SCSS (Sass) + Design Tokens             |
 | Forms          | Reactive Forms (@angular/forms)         |
 | HTTP           | HttpClient (@angular/common/http)       |
 | Roteamento     | Angular Router                          |
@@ -66,9 +66,12 @@ carlessopilatesfe/
 │   │   ├── app.component.*              # Componente raiz com navbar
 │   │   ├── app.config.ts                # Configuração da aplicação
 │   │   └── app.routes.ts                # Definição das rotas
-│   ├── styles.scss                      # Estilos globais e variáveis CSS
+│   ├── styles.scss                      # Estilos globais e classes parametrizadas
+│   ├── styles/
+│   │   └── _tokens.scss                  # Tokens do Design System Carlesso
 │   ├── main.ts                          # Ponto de entrada (bootstrap)
 │   └── index.html                       # HTML principal
+├── assets/                               # Referências do Design System
 ├── docs/                                # Documentação do projeto
 ├── nginx/
 │   └── default.conf.template            # Proxy /api e fallback da SPA em Docker
@@ -451,27 +454,36 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 
 ## Design System
 
-Arquivo: `src/styles.scss`
+Arquivos principais:
 
-### Variáveis CSS (Custom Properties)
+- `assets/`: referências estáticas do Design System, incluindo `Fundacao.html`, `Componentes.html`, `Marca.html`, `tokens.css`, `common.jsx`, `design-canvas.jsx`, `browser-window.jsx` e `tweaks-panel.jsx`
+- `src/styles/_tokens.scss`: tokens consumidos pelo Angular
+- `src/styles.scss`: classes globais parametrizadas para o sistema
 
-```scss
---primary:      #6c63ff   /* Roxo principal */
---primary-dark: #574fd6
---secondary:    #4caf50   /* Verde */
---danger:       #e53935   /* Vermelho */
---text:         #333
---text-light:   #666
---border:       #ddd
---bg:           #f5f5f5
---white:        #fff
---radius:       6px
+As páginas de referência usam `DesignCanvas`, `DCSection`, `DCArtboard`, `BrowserWindow`, `Frame` e painel de tweaks próprios. As URLs fictícias dos artboards seguem o domínio `carlesso.design`.
+
+### Tokens CSS
+
+Os tokens cobrem:
+
+- Cores base, corpo, transição, assinatura, contraste, neutros e funcionais
+- Tipografia display, UI/body e auxiliar
+- Espaçamento, raio, sombra, foco, altura de botões, inputs e linhas de tabela
+- Tema claro/escuro via `data-theme`
+- Densidade `default`, `compact` e `comfortable` via `data-density`
+
+O `StylePreferencesService` aplica os atributos no `documentElement`:
+
+```html
+<html data-theme="light" data-density="default">
 ```
 
 ### Elementos Estilizados Globalmente
 - Navbar
-- Botões: primary, secondary, danger, outline
-- Tabela com cabeçalho roxo e hover
+- Botões: primary, secondary, danger, outline, tamanhos padrão e pequeno
+- Inputs, selects e textareas com altura por token
+- Tabelas com altura de linha por densidade
+- Badges funcionais: sucesso, alerta, perigo, informação e neutro
 - Formulários com seções e validação visual
 - Cards de detalhe em grid
 - Diálogos com overlay
@@ -551,6 +563,7 @@ Comando: `npm test`
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/core/services/relatorio.service.spec.ts` | Contratos HTTP do relatório de NFSE e exportação CSV/XLSX |
+| `app/core/services/style-preferences.service.spec.ts` | Aplicação de tema e densidade no `documentElement` |
 | `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, troca de tamanho de página, inativação, estados de erro |
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |

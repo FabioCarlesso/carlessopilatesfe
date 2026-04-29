@@ -74,7 +74,7 @@ docker run --rm -p 4200:80 \
 |------------|-------------------------------|
 | Framework  | Angular 19.2 (standalone)     |
 | Linguagem  | TypeScript 5.7                |
-| Estilos    | SCSS                          |
+| Estilos    | SCSS + Design Tokens          |
 | Forms      | Reactive Forms                |
 | HTTP       | HttpClient + proxy `/api/*`   |
 | Testes     | Karma + Jasmine               |
@@ -99,7 +99,20 @@ src/app/
 ├── pages/profissionais/            # CRUD de profissionais
 ├── pages/relatorios/               # Relatórios administrativos
 └── shared/components/              # Componentes reutilizáveis
+src/styles/
+└── _tokens.scss                    # Tokens do Design System Carlesso
+assets/                             # Referências estáticas do Design System
 ```
+
+---
+
+## Design System
+
+Os arquivos de referência do Design System ficam em `assets/`, incluindo `Fundacao.html`, `Componentes.html`, `Marca.html`, `tokens.css` e os auxiliares React usados pelos protótipos. As páginas usam `DesignCanvas`, `DCSection`, `DCArtboard`, `BrowserWindow`, `Frame` e painel de tweaks próprios.
+
+No Angular, os tokens foram migrados para `src/styles/_tokens.scss` e importados por `src/styles.scss`. O sistema usa `data-theme="light|dark"` e `data-density="default|compact|comfortable"` no `documentElement`, aplicado pelo `StylePreferencesService`.
+
+Componentes globais como botões, inputs, cards, badges, tabelas, paginação, alertas e diálogos consomem tokens semânticos de cor, tipografia, raio, sombra e densidade.
 
 ---
 
@@ -127,6 +140,7 @@ Arquivos de teste:
 - `src/app/pages/relatorios/nfse-relatorio/nfse-relatorio.component.spec.ts`
 - `src/app/pages/auth/login/login.component.spec.ts`
 - `src/app/core/services/auth.service.spec.ts`
+- `src/app/core/services/style-preferences.service.spec.ts`
 - `src/app/core/interceptors/auth.interceptor.spec.ts`
 - `src/app/core/guards/auth.guard.spec.ts`
 

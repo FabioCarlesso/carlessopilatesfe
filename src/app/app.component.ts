@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { StylePreferencesService } from './core/services/style-preferences.service';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,11 @@ import { AuthService } from './core/services/auth.service';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  constructor(public authService: AuthService) {}
+  readonly authService = inject(AuthService);
+
+  constructor() {
+    inject(StylePreferencesService);
+  }
 
   sair(): void {
     this.authService.logout();

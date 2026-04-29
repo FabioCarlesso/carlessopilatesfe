@@ -33,8 +33,9 @@ O projeto está em fase inicial de desenvolvimento (**MVP**). Commits realizados
 19. Implementação de autenticação JWT: tela de login, AuthService, AuthInterceptor, AuthGuard, logout na navbar e redirecionamento para login em `401` por token expirado
 20. Implementação do relatório de emissão de NFSEs por competência, com filtro de nota anterior emitida e exportação CSV/XLSX
 21. Correção da listagem de profissionais para voltar automaticamente à última página válida após inativar o último item de uma página removida pela nova paginação
+22. Parametrização visual a partir do Design System Carlesso: inclusão dos protótipos em `assets/`, migração dos tokens para `src/styles/_tokens.scss`, suporte a tema claro/escuro via `data-theme` e densidade via `data-density`
 
-A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas, bloqueia navegação para páginas inválidas ou repetidas e recua automaticamente para a última página válida quando a página atual deixa de existir após inativação. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX, além do relatório fiscal de emissão de NFSEs por competência com exportação CSV/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP, logout e redirecionamento para login quando uma chamada autenticada retorna `401`.
+A funcionalidade central de **gestão de pacientes** está operacional, incluindo filtros de busca, paginação server-side com tamanho de página configurável na listagem e cobertura de testes unitários para o serviço e todos os componentes de página. A listagem de profissionais também usa paginação server-side, limita os botões visíveis a uma janela de 5 páginas, bloqueia navegação para páginas inválidas ou repetidas e recua automaticamente para a última página válida quando a página atual deixa de existir após inativação. A tela de aulas permite marcar uma aula como realizada somente após selecionar o profissional responsável, enviando esse vínculo para o backend. A seção de relatórios já possui consulta de pagamento de profissional por período, com seleção de profissional ativo, validação de datas, resumo por pagamento, detalhamento por aula realizada e exportação em PDF/XLSX, além do relatório fiscal de emissão de NFSEs por competência com exportação CSV/XLSX. A aplicação agora pode ser executada em container Docker. A autenticação via JWT está implementada: tela de login, guard de rotas, interceptor HTTP, logout e redirecionamento para login quando uma chamada autenticada retorna `401`. O estilo global do Angular consome tokens do Design System Carlesso em `src/styles/_tokens.scss`, com estratégia de tema e densidade centralizada pelo `StylePreferencesService`.
 
 ---
 
@@ -42,6 +43,12 @@ A funcionalidade central de **gestão de pacientes** está operacional, incluind
 
 ### Angular 19 com Standalone Components
 Todos os componentes são standalone (sem NgModules), seguindo a arquitetura moderna do Angular. Isso reduz boilerplate e melhora o tree-shaking.
+
+### Design System por tokens
+Os protótipos do Design System foram preservados em `assets/` para consulta e validação visual. O frontend Angular importa os tokens por `src/styles/_tokens.scss`, mantendo nomes semânticos para cores, tipografia, espaçamento, raios, sombras e densidade. A camada de componentes deve preferir esses tokens a valores hexadecimais ou medidas avulsas.
+
+### Tema e densidade
+Tema e densidade são parametrizados por atributos no elemento raiz: `data-theme` alterna as paletas clara e escura, enquanto `data-density` ajusta `--row-h`, `--input-h`, `--btn-h`, `--btn-h-sm` e `--gutter`. O `StylePreferencesService` aplica os defaults e oferece métodos para evoluir futuros controles de preferência.
 
 ### Lazy Loading em todas as rotas
 Cada componente de página é carregado sob demanda via `loadComponent()`, otimizando o bundle inicial.
