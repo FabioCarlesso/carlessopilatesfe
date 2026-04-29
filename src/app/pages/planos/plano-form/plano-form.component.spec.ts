@@ -133,4 +133,19 @@ describe('PlanoFormComponent', () => {
     expect(invalidComponent.erro).toBe('Identificador inválido.');
     expect(invalidServiceSpy.criar).not.toHaveBeenCalled();
   });
+
+  it('should unsubscribe on destroy', () => {
+    const sub = (component as any).subscriptions;
+    spyOn(sub, 'unsubscribe');
+    component.ngOnDestroy();
+    expect(sub.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('should revalidate diasSemana when frequenciaSemanal changes', () => {
+    component.form.patchValue({ frequenciaSemanal: 'UMA_VEZ', diasSemana: ['MONDAY', 'WEDNESDAY'] });
+    expect(component.form.get('diasSemana')?.hasError('diasInvalidos')).toBeTrue();
+
+    component.form.get('frequenciaSemanal')?.setValue('DUAS_VEZES');
+    expect(component.form.get('diasSemana')?.hasError('diasInvalidos')).toBeFalse();
+  });
 });

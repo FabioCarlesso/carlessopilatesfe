@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { PlanoService } from '../../../core/services/plano.service';
 import {
   DiaSemana,
@@ -30,11 +31,12 @@ function diasSemanaValidator(control: AbstractControl): ValidationErrors | null 
   templateUrl: './plano-form.component.html',
   styleUrl: './plano-form.component.scss'
 })
-export class PlanoFormComponent implements OnInit {
+export class PlanoFormComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   pacienteId: number | null = null;
   salvando = false;
   erro: string | null = null;
+  private subscriptions = new Subscription();
 
   readonly tipos: TipoPagamento[] = ['MENSAL', 'TRIMESTRAL', 'ANUAL'];
   readonly frequencias: FrequenciaSemanal[] = ['UMA_VEZ', 'DUAS_VEZES', 'TRES_VEZES'];
@@ -54,9 +56,11 @@ export class PlanoFormComponent implements OnInit {
       dataInicio: ['', Validators.required],
       diasSemana: [[], [Validators.required, diasSemanaValidator]]
     });
-    this.form.get('frequenciaSemanal')?.valueChanges.subscribe(() => {
-      this.form.get('diasSemana')?.updateValueAndValidity();
-    });
+    this.subscriptions.add(
+      this.form.get('frequenciaSemanal')?.valueChanges.subscribe(() => {
+        this.form.get('diasSemana')?.updateValueAndValidity();
+      })
+    );
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
     }
@@ -79,6 +83,10 @@ export class PlanoFormComponent implements OnInit {
 
   campo(nome: string) {
     return this.form.get(nome);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   salvar(): void {
