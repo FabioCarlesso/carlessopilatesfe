@@ -135,6 +135,8 @@ Arquivos de teste:
 - `src/app/pages/profissionais/profissional-list/profissional-list.component.spec.ts`
 - `src/app/pages/profissionais/profissional-form/profissional-form.component.spec.ts`
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
+- `src/app/pages/planos/plano-form/plano-form.component.spec.ts`
+- `src/app/pages/planos/plano-list/plano-list.component.spec.ts`
 - `src/app/pages/relatorios/relatorio-list/relatorio-list.component.spec.ts`
 - `src/app/pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component.spec.ts`
 - `src/app/pages/relatorios/nfse-relatorio/nfse-relatorio.component.spec.ts`
@@ -152,7 +154,7 @@ Arquivos de teste:
 |--------|-----------|
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
-| **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
+| **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
 | **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
@@ -195,6 +197,8 @@ As rotas que recebem identificadores numéricos validam os parâmetros antes de 
 | `/pagamentos/novo/:pacienteId` | Registrar novo pagamento |
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento |
+
+As telas de planos reutilizam as constantes `TIPO_LABEL`, `FREQUENCIA_LABEL` e `DIAS_SEMANA_LABEL` exportadas por `src/app/core/models/plano.ts`, mantendo as opções e exibições alinhadas entre formulário, listagem e demais fluxos.
 
 A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
 
