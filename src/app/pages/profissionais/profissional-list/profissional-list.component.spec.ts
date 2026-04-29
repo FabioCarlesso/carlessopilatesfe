@@ -77,6 +77,79 @@ describe('ProfissionalListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
   });
 
+  it('should go back one page and reload when current page becomes out of range', () => {
+    const currentPageResponse: ProfissionalPage = {
+      content: [mockProfissional],
+      page: { totalElements: 151, totalPages: 16, size: 10, number: 15 }
+    };
+    const afterInactivationResponse: ProfissionalPage = {
+      content: [],
+      page: { totalElements: 150, totalPages: 15, size: 10, number: 15 }
+    };
+    const previousPageResponse: ProfissionalPage = {
+      content: [mockProfissional],
+      page: { totalElements: 150, totalPages: 15, size: 10, number: 14 }
+    };
+
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValues(
+      of(currentPageResponse),
+      of(afterInactivationResponse),
+      of(previousPageResponse)
+    );
+    serviceSpy.inativar.and.returnValue(of(undefined));
+
+    component.currentPage = 15;
+    component.carregar();
+    component.confirmarInativarId = 1;
+    component.inativar();
+
+    expect(component.currentPage).toBe(14);
+    expect(serviceSpy.listar).toHaveBeenCalledTimes(3);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(15, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(14, 10);
+    expect(component.profissionais).toEqual([mockProfissional]);
+    expect(component.visiblePages.length).toBeGreaterThan(0);
+    expect(component.loading).toBeFalse();
+  });
+
+  it('should not backtrack and show empty list when totalPages is 0', () => {
+    const emptyResponse: ProfissionalPage = {
+      content: [],
+      page: { totalElements: 0, totalPages: 0, size: 10, number: 0 }
+    };
+
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValue(of(emptyResponse));
+
+    component.currentPage = 0;
+    component.carregar();
+
+    expect(serviceSpy.listar).toHaveBeenCalledTimes(1);
+    expect(component.profissionais).toEqual([]);
+    expect(component.totalPages).toBe(0);
+    expect(component.loading).toBeFalse();
+  });
+
+  it('should stop backtracking after 3 retries to prevent infinite recursion', () => {
+    const responses: ProfissionalPage[] = [
+      { content: [], page: { totalElements: 40, totalPages: 4, size: 10, number: 10 } },
+      { content: [], page: { totalElements: 30, totalPages: 3, size: 10, number: 3 } },
+      { content: [], page: { totalElements: 20, totalPages: 2, size: 10, number: 2 } },
+      { content: [mockProfissional], page: { totalElements: 10, totalPages: 1, size: 10, number: 1 } },
+    ];
+
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValues(...responses.map(r => of(r)));
+
+    component.currentPage = 10;
+    component.carregar();
+
+    expect(serviceSpy.listar).toHaveBeenCalledTimes(4);
+    expect(component.loading).toBeFalse();
+    expect(component.profissionais).toEqual([mockProfissional]);
+  });
+
   it('should set erro when inativar fails', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));
     component.confirmarInativarId = 1;
