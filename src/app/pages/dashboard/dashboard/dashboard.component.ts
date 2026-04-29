@@ -1,21 +1,33 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
 import { DashboardService } from '../../../core/services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink, CurrencyPipe, DatePipe],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
   resumo: DashboardResumoDTO | null = null;
-  loading = false;
+  loading = true;
   erro: string | null = null;
 
-  constructor(private service: DashboardService) {}
+  totalPacientes = 0;
+  totalProfissionais = 0;
+  totalPagamentos = 0;
+  totalAulasMesAtual = 0;
+  percentualAulasRealizadas = 0;
+
+  constructor(
+    private service: DashboardService,
+    private cdr: ChangeDetectorRef,
+    private destroyRef: DestroyRef
+  ) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -24,43 +36,34 @@ export class DashboardComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.erro = null;
+    this.resumo = null;
 
-    this.service.resumo().subscribe({
+    this.service.resumo().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: resumo => {
         this.resumo = resumo;
+        this.calcularTotais();
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar indicadores do sistema.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
-  totalPacientes(): number {
-    if (!this.resumo) return 0;
-    return this.resumo.pacientes.totalAtivos + this.resumo.pacientes.totalInativos;
-  }
-
-  totalProfissionais(): number {
-    if (!this.resumo) return 0;
-    return this.resumo.profissionais.totalAtivos + this.resumo.profissionais.totalInativos;
-  }
-
-  totalPagamentos(): number {
-    if (!this.resumo) return 0;
-    const pagamentos = this.resumo.pagamentos;
-    return pagamentos.totalPendentes + pagamentos.totalPagos + pagamentos.totalVencidos;
-  }
-
-  totalAulasMesAtual(): number {
-    if (!this.resumo) return 0;
-    return this.resumo.aulas.totalRealizadasMesAtual + this.resumo.aulas.totalAgendadasMesAtual;
-  }
-
-  percentualAulasRealizadas(): number {
-    const total = this.totalAulasMesAtual();
-    if (!this.resumo || total === 0) return 0;
-    return Math.round((this.resumo.aulas.totalRealizadasMesAtual / total) * 100);
+  private calcularTotais(): void {
+    if (!this.resumo) return;
+    this.totalPacientes = this.resumo.pacientes.totalAtivos + this.resumo.pacientes.totalInativos;
+    this.totalProfissionais = this.resumo.profissionais.totalAtivos + this.resumo.profissionais.totalInativos;
+    const p = this.resumo.pagamentos;
+    this.totalPagamentos = p.totalPendentes + p.totalPagos + p.totalVencidos;
+    const realizadas = this.resumo.aulas.totalRealizadasMesAtual;
+    const agendadas = this.resumo.aulas.totalAgendadasMesAtual;
+    this.totalAulasMesAtual = realizadas + agendadas;
+    this.percentualAulasRealizadas = this.totalAulasMesAtual === 0
+      ? 0
+      : Math.round((realizadas / this.totalAulasMesAtual) * 100);
   }
 }

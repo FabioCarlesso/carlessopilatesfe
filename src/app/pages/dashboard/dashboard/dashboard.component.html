@@ -9,17 +9,21 @@
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
 
-<div *ngIf="loading" class="loading">Carregando indicadores...</div>
+@if (loading) {
+  <div class="loading">Carregando indicadores...</div>
+}
 
-<ng-container *ngIf="!loading && resumo">
+@if (!loading && resumo) {
   <section class="dashboard-grid" aria-label="Indicadores principais">
     <article class="dashboard-card dashboard-card--highlight">
       <div class="dashboard-card__label">Pacientes ativos</div>
       <div class="dashboard-card__value">{{ resumo.pacientes.totalAtivos }}</div>
       <div class="dashboard-card__meta">
-        {{ resumo.pacientes.totalInativos }} inativos de {{ totalPacientes() }} cadastrados
+        {{ resumo.pacientes.totalInativos }} inativos de {{ totalPacientes }} cadastrados
       </div>
     </article>
 
@@ -27,7 +31,7 @@
       <div class="dashboard-card__label">Profissionais ativos</div>
       <div class="dashboard-card__value">{{ resumo.profissionais.totalAtivos }}</div>
       <div class="dashboard-card__meta">
-        {{ resumo.profissionais.totalInativos }} inativos de {{ totalProfissionais() }} cadastrados
+        {{ resumo.profissionais.totalInativos }} inativos de {{ totalProfissionais }} cadastrados
       </div>
     </article>
 
@@ -43,9 +47,9 @@
 
     <article class="dashboard-card">
       <div class="dashboard-card__label">Aulas no mês</div>
-      <div class="dashboard-card__value">{{ totalAulasMesAtual() }}</div>
+      <div class="dashboard-card__value">{{ totalAulasMesAtual }}</div>
       <div class="dashboard-card__meta">
-        {{ percentualAulasRealizadas() }}% realizadas
+        {{ percentualAulasRealizadas }}% realizadas
       </div>
     </article>
   </section>
@@ -57,7 +61,7 @@
           <p class="dashboard-eyebrow">Financeiro</p>
           <h2>Status dos pagamentos</h2>
         </div>
-        <span class="badge">{{ totalPagamentos() }} registros</span>
+        <span class="badge">{{ totalPagamentos }} registros</span>
       </div>
 
       <div class="status-list">
@@ -82,12 +86,12 @@
           <p class="dashboard-eyebrow">Operação</p>
           <h2>Aulas do mês atual</h2>
         </div>
-        <span class="badge">{{ totalAulasMesAtual() }} aulas</span>
+        <span class="badge">{{ totalAulasMesAtual }} aulas</span>
       </div>
 
       <div class="progress-block" aria-label="Progresso de aulas realizadas no mês">
         <div class="progress-block__bar">
-          <span [style.width.%]="percentualAulasRealizadas()"></span>
+          <span [style.width.%]="percentualAulasRealizadas"></span>
         </div>
         <div class="progress-block__legend">
           <span>{{ resumo.aulas.totalRealizadasMesAtual }} realizadas</span>
@@ -100,4 +104,4 @@
   <p class="dashboard-updated">
     Atualizado em {{ resumo.geradoEm | date:'dd/MM/yyyy HH:mm':'':'pt-BR' }}
   </p>
-</ng-container>
+}

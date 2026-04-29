@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { LOCALE_ID } from '@angular/core';
@@ -64,25 +64,33 @@ describe('DashboardComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
+  it('should set loading to true before response', () => {
+    serviceSpy.resumo.and.returnValue(NEVER);
+    component.carregar();
+    expect(component.loading).toBeTrue();
+  });
+
   it('should calculate totals and realized class percentage', () => {
-    expect(component.totalPacientes()).toBe(12);
-    expect(component.totalProfissionais()).toBe(4);
-    expect(component.totalPagamentos()).toBe(15);
-    expect(component.totalAulasMesAtual()).toBe(60);
-    expect(component.percentualAulasRealizadas()).toBe(67);
+    expect(component.totalPacientes).toBe(12);
+    expect(component.totalProfissionais).toBe(4);
+    expect(component.totalPagamentos).toBe(15);
+    expect(component.totalAulasMesAtual).toBe(60);
+    expect(component.percentualAulasRealizadas).toBe(67);
   });
 
   it('should return zero percentage when month has no classes', () => {
-    component.resumo = {
+    serviceSpy.resumo.and.returnValue(of({
       ...mockResumo,
       aulas: {
         totalRealizadasMesAtual: 0,
         totalAgendadasMesAtual: 0
       }
-    };
+    }));
 
-    expect(component.totalAulasMesAtual()).toBe(0);
-    expect(component.percentualAulasRealizadas()).toBe(0);
+    component.carregar();
+
+    expect(component.totalAulasMesAtual).toBe(0);
+    expect(component.percentualAulasRealizadas).toBe(0);
   });
 
   it('should render main indicators', () => {
@@ -101,5 +109,6 @@ describe('DashboardComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar indicadores do sistema.');
     expect(component.loading).toBeFalse();
+    expect(component.resumo).toBeNull();
   });
 });
