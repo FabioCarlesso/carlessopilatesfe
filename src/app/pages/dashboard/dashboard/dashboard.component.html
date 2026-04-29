@@ -1,0 +1,107 @@
+<div class="page-header">
+  <div>
+    <p class="dashboard-eyebrow">Painel inicial</p>
+    <h1>Início</h1>
+  </div>
+  <div class="acoes">
+    <a routerLink="/pacientes/novo" class="btn btn-secondary">Novo paciente</a>
+    <a routerLink="/relatorios" class="btn btn-primary">Relatórios</a>
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+
+@if (loading) {
+  <div class="loading">Carregando indicadores...</div>
+}
+
+@if (!loading && resumo) {
+  <section class="dashboard-grid" aria-label="Indicadores principais">
+    <article class="dashboard-card dashboard-card--highlight">
+      <div class="dashboard-card__label">Pacientes ativos</div>
+      <div class="dashboard-card__value">{{ resumo.pacientes.totalAtivos }}</div>
+      <div class="dashboard-card__meta">
+        {{ resumo.pacientes.totalInativos }} inativos de {{ totalPacientes }} cadastrados
+      </div>
+    </article>
+
+    <article class="dashboard-card">
+      <div class="dashboard-card__label">Profissionais ativos</div>
+      <div class="dashboard-card__value">{{ resumo.profissionais.totalAtivos }}</div>
+      <div class="dashboard-card__meta">
+        {{ resumo.profissionais.totalInativos }} inativos de {{ totalProfissionais }} cadastrados
+      </div>
+    </article>
+
+    <article class="dashboard-card">
+      <div class="dashboard-card__label">Receita do mês</div>
+      <div class="dashboard-card__value dashboard-card__value--currency">
+        {{ resumo.pagamentos.receitaMesAtual | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+      </div>
+      <div class="dashboard-card__meta">
+        {{ resumo.pagamentos.totalPagos }} pagamentos confirmados
+      </div>
+    </article>
+
+    <article class="dashboard-card">
+      <div class="dashboard-card__label">Aulas no mês</div>
+      <div class="dashboard-card__value">{{ totalAulasMesAtual }}</div>
+      <div class="dashboard-card__meta">
+        {{ percentualAulasRealizadas }}% realizadas
+      </div>
+    </article>
+  </section>
+
+  <section class="dashboard-panels">
+    <article class="dashboard-panel">
+      <div class="dashboard-panel__header">
+        <div>
+          <p class="dashboard-eyebrow">Financeiro</p>
+          <h2>Status dos pagamentos</h2>
+        </div>
+        <span class="badge">{{ totalPagamentos }} registros</span>
+      </div>
+
+      <div class="status-list">
+        <div class="status-row">
+          <span class="status-row__label">Pendentes</span>
+          <strong>{{ resumo.pagamentos.totalPendentes }}</strong>
+        </div>
+        <div class="status-row">
+          <span class="status-row__label">Pagos</span>
+          <strong>{{ resumo.pagamentos.totalPagos }}</strong>
+        </div>
+        <div class="status-row status-row--danger">
+          <span class="status-row__label">Vencidos</span>
+          <strong>{{ resumo.pagamentos.totalVencidos }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="dashboard-panel">
+      <div class="dashboard-panel__header">
+        <div>
+          <p class="dashboard-eyebrow">Operação</p>
+          <h2>Aulas do mês atual</h2>
+        </div>
+        <span class="badge">{{ totalAulasMesAtual }} aulas</span>
+      </div>
+
+      <div class="progress-block" aria-label="Progresso de aulas realizadas no mês">
+        <div class="progress-block__bar">
+          <span [style.width.%]="percentualAulasRealizadas"></span>
+        </div>
+        <div class="progress-block__legend">
+          <span>{{ resumo.aulas.totalRealizadasMesAtual }} realizadas</span>
+          <span>{{ resumo.aulas.totalAgendadasMesAtual }} agendadas</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <p class="dashboard-updated">
+    Atualizado em {{ resumo.geradoEm | date:'dd/MM/yyyy HH:mm':'':'pt-BR' }}
+  </p>
+}

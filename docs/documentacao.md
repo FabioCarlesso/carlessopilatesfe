@@ -31,6 +31,7 @@
 
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
+| Dashboard | `/` | Indicadores consolidados de pacientes, profissionais, pagamentos e aulas do mês atual |
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
@@ -54,6 +55,7 @@ carlessopilatesfe/
 │   │   │       ├── paciente.service.ts  # Serviço de integração com a API de pacientes
 │   │   │       └── profissional.service.ts # Serviço de integração com a API de profissionais
 │   │   ├── pages/
+│   │   │   ├── dashboard/               # Tela inicial com indicadores do sistema
 │   │   │   ├── pacientes/
 │   │   │   │   ├── paciente-list/       # Listagem paginada de pacientes
 │   │   │   │   ├── paciente-form/       # Formulário de cadastro e edição
@@ -85,6 +87,34 @@ carlessopilatesfe/
 ---
 
 ## Modelos de Dados
+
+Arquivo: `src/app/core/models/dashboard.ts`
+
+### `DashboardResumoDTO`
+Resumo consolidado consumido pela tela inicial.
+```typescript
+interface DashboardResumoDTO {
+  pacientes: {
+    totalAtivos: number;
+    totalInativos: number;
+  };
+  profissionais: {
+    totalAtivos: number;
+    totalInativos: number;
+  };
+  pagamentos: {
+    totalPendentes: number;
+    totalPagos: number;
+    totalVencidos: number;
+    receitaMesAtual: number;
+  };
+  aulas: {
+    totalRealizadasMesAtual: number;
+    totalAgendadasMesAtual: number;
+  };
+  geradoEm: string;
+}
+```
 
 Arquivo: `src/app/core/models/paciente.ts`
 
@@ -333,6 +363,23 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 
 ### Relatórios
 
+#### Dashboard inicial
+Rota: `/`
+
+A tela inicial consome `GET /api/dashboard/resumo`, encaminhado pelo proxy local e pelo Nginx para `GET /dashboard/resumo` no backend. O endpoint retorna um objeto consolidado com pacientes, profissionais, pagamentos, aulas e `geradoEm`, evitando múltiplas consultas de listagem para montar os indicadores.
+
+Contrato JSON consumido:
+```http
+GET /dashboard/resumo
+```
+
+Indicadores exibidos:
+- Pacientes ativos e inativos
+- Profissionais ativos e inativos
+- Receita confirmada no mês atual
+- Pagamentos pendentes, pagos e vencidos
+- Aulas realizadas e agendadas no mês atual
+
 #### Pagamento de Profissional
 Rota: `/relatorios/pagamento-profissional`
 
@@ -395,7 +442,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 
 | Caminho                  | Componente              | Função                         |
 |--------------------------|-------------------------|--------------------------------|
-| `/`                      | —                       | Redireciona para `/pacientes`  |
+| `/`                      | `DashboardComponent`    | Dashboard inicial de indicadores |
 | `/pacientes`             | `PacienteListComponent` | Lista de pacientes             |
 | `/pacientes/novo`        | `PacienteFormComponent` | Formulário de cadastro         |
 | `/pacientes/:id`         | `PacienteDetailComponent` | Detalhes do paciente         |
@@ -413,10 +460,18 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 ## Componentes
 
 ### `AppComponent`
+- Navbar com link para "Início"
 - Navbar com link para "Pacientes"
 - Navbar com link para "Profissionais"
 - Navbar com link para "Relatórios"
 - `<router-outlet>` para renderização das páginas
+
+### `DashboardComponent`
+- Consulta `DashboardService.resumo()` ao iniciar a tela
+- Exibe cards de pacientes ativos, profissionais ativos, receita do mês e aulas do mês
+- Detalha pagamentos pendentes, pagos e vencidos
+- Calcula percentual de aulas realizadas no mês
+- Trata estado de carregamento e erro de consulta
 
 ### `PacienteListComponent`
 - Tabela paginada de pacientes
@@ -572,11 +627,13 @@ Comando: `npm test`
 | Arquivo | Cobertura |
 |---------|-----------|
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
+| `app/core/services/dashboard.service.spec.ts` | Contrato HTTP do resumo do dashboard |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/core/services/relatorio.service.spec.ts` | Contratos HTTP do relatório de NFSE e exportação CSV/XLSX |
 | `app/core/services/style-preferences.service.spec.ts` | Aplicação de tema e densidade no `documentElement` |
 | `app/pages/pacientes/paciente-list/paciente-list.component.spec.ts` | Carregamento, filtros, paginação, troca de tamanho de página, inativação, estados de erro |
+| `app/pages/dashboard/dashboard/dashboard.component.spec.ts` | Carregamento de indicadores, cálculos derivados, renderização e estado de erro |
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
@@ -593,6 +650,7 @@ Comando: `npm test`
 ## Status do Projeto
 
 ### Implementado
+- Dashboard inicial com indicadores consolidados de pacientes, profissionais, pagamentos e aulas
 - CRUD completo de pacientes
 - Filtros na listagem de pacientes por nome, e-mail, CPF, telefone e status
 - Paginação da consulta de pacientes com resumo, navegação anterior/próxima, janela de páginas e tamanho de página configurável
@@ -608,12 +666,13 @@ Comando: `npm test`
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência
+- Autenticação JWT com login, guard de rotas, interceptor HTTP e logout
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos
-- Autenticação e autorização
+- Controle de acesso por perfil e tela dedicada para `403`
 - Configuração avançada de ambientes Angular, caso seja necessária no futuro
 - Componente `ConfirmarDialog` integrado
 - Testes E2E

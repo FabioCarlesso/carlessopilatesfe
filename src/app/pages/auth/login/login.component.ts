@@ -34,7 +34,7 @@ export class LoginComponent {
     this.erro = '';
 
     this.authService.login(this.form.value).subscribe({
-      next: () => this.router.navigate(['/pacientes']),
+      next: () => this.router.navigate(['/']),
       error: (err) => {
         this.carregando = false;
         if (err.status === 401) {
