@@ -4,7 +4,7 @@ Interface web para gestão administrativa de um estúdio de pilates, desenvolvid
 
 ## Visão Geral
 
-A aplicação oferece CRUDs administrativos para pacientes e profissionais, fluxos de planos, pagamentos e aulas, além de relatórios administrativos. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
+A aplicação oferece dashboard inicial de indicadores, CRUDs administrativos para pacientes e profissionais, fluxos de planos, pagamentos e aulas, além de relatórios administrativos. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
 
 **Documentação detalhada:** [`docs/documentacao.md`](docs/documentacao.md)  
 **Contexto e decisões técnicas:** [`docs/context.md`](docs/context.md)
@@ -91,6 +91,7 @@ src/app/
 │   ├── services/                   # Integração com a API REST
 │   ├── interceptors/               # HTTP interceptors (auth)
 │   └── guards/                     # Route guards (auth)
+├── pages/dashboard/                # Tela inicial com indicadores consolidados
 ├── pages/auth/login/               # Tela de login
 ├── pages/pacientes/
 │   ├── paciente-list/              # Listagem paginada com filtros
@@ -126,6 +127,7 @@ npm test
 
 Arquivos de teste:
 - `src/app/app.component.spec.ts`
+- `src/app/core/services/dashboard.service.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
 - `src/app/core/services/profissional.service.spec.ts`
 - `src/app/core/services/relatorio.service.spec.ts`
@@ -145,6 +147,7 @@ Arquivos de teste:
 - `src/app/core/services/style-preferences.service.spec.ts`
 - `src/app/core/interceptors/auth.interceptor.spec.ts`
 - `src/app/core/guards/auth.guard.spec.ts`
+- `src/app/pages/dashboard/dashboard/dashboard.component.spec.ts`
 
 ---
 
@@ -152,6 +155,7 @@ Arquivos de teste:
 
 | Módulo | Descrição |
 |--------|-----------|
+| **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
@@ -166,7 +170,7 @@ Arquivos de teste:
 
 | Caminho                 | Função                                      |
 |-------------------------|---------------------------------------------|
-| `/`                     | Redireciona para `/pacientes`               |
+| `/`                     | Dashboard inicial com indicadores do sistema |
 | `/pacientes`            | Lista de pacientes com filtros e paginação  |
 | `/pacientes/novo`       | Formulário de cadastro                      |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
@@ -183,6 +187,8 @@ Arquivos de teste:
 Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
 
 A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
+
+O dashboard inicial consome `GET /api/dashboard/resumo`, encaminhado pelo proxy para `GET /dashboard/resumo` no backend. A resposta consolida pacientes ativos/inativos, profissionais ativos/inativos, pagamentos pendentes/pagos/vencidos, receita confirmada do mês atual, aulas realizadas/agendadas no mês e o timestamp `geradoEm`. A tela exibe estados de carregamento e erro sem disparar chamadas adicionais para compor os indicadores.
 
 Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes. A navegação ignora páginas negativas, fora do total retornado pela API ou iguais à página atual, evitando requisições desnecessárias ou fora dos limites. Após cada resposta, a tela sincroniza `currentPage` e `pageSize` com `page.number` e `page.size` retornados pela API, preservando o estado local como fallback quando algum metadado estiver ausente.
 Quando o usuário inativa o último item de uma página e o total de páginas é reduzido (ex.: página 16 deixa de existir), a tela retorna automaticamente para a última página válida para evitar listagem vazia.

@@ -63,6 +63,15 @@ describe('AppComponent', () => {
     expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
   });
 
+  it('should render dashboard navigation link when authenticated', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/"]')?.textContent).toContain('Carlesso Pilates');
+    expect(el.querySelector('.navbar-menu a[href="/"]')?.textContent).toContain('Início');
+  });
+
   it('should show logout button when authenticated', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(AppComponent);
