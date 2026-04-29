@@ -34,8 +34,16 @@ export class ProfissionalListComponent implements OnInit {
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize).subscribe({
       next: page => {
+        const totalPages = page.page?.totalPages ?? this.totalPages;
+        if (totalPages > 0 && this.currentPage >= totalPages) {
+          this.currentPage = totalPages - 1;
+          this.loading = false;
+          this.carregar();
+          return;
+        }
+
         this.profissionais = page.content;
-        this.totalPages = page.page?.totalPages ?? this.totalPages;
+        this.totalPages = totalPages;
         this.visiblePages = this.pages();
         this.loading = false;
       },

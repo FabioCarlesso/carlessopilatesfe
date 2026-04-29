@@ -169,6 +169,7 @@ Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf
 A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
 
 Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes. A navegação ignora páginas negativas, fora do total retornado pela API ou iguais à página atual, evitando requisições desnecessárias ou fora dos limites.
+Quando o usuário inativa o último item de uma página e o total de páginas é reduzido (ex.: página 16 deixa de existir), a tela retorna automaticamente para a última página válida para evitar listagem vazia.
 
 As rotas que recebem identificadores numéricos validam os parâmetros antes de chamar a API. Apenas inteiros positivos seguros são aceitos; URLs com identificadores ausentes, não numéricos ou em formato inválido exibem a mensagem **Identificador inválido.** e não disparam requisições com `NaN` no caminho.
 
