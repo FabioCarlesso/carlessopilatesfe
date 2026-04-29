@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -27,7 +27,7 @@ function diasSemanaValidator(control: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-plano-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
   templateUrl: './plano-form.component.html',
   styleUrl: './plano-form.component.scss'
 })

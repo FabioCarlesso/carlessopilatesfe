@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
@@ -7,7 +7,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-plano-list',
-  imports: [CommonModule, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './plano-list.component.html',
   styleUrl: './plano-list.component.scss'
 })

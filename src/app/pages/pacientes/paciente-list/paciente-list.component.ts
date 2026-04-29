@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
@@ -15,7 +15,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss'
 })

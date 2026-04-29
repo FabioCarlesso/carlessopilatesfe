@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
@@ -7,7 +7,7 @@ import { PageMetadata } from '../../../core/models/paciente';
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [CommonModule, RouterLink],
+  imports: [NgIf, NgFor, RouterLink],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss'
 })

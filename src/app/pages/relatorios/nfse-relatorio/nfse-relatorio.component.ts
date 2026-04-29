@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,7 +8,7 @@ import { baixarBlob } from '../../../shared/utils/file-download';
 
 @Component({
   selector: 'app-nfse-relatorio',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './nfse-relatorio.component.html',
   styleUrl: './nfse-relatorio.component.scss'
 })

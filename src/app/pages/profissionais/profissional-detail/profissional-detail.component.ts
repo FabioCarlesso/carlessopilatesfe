@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, NgIf } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
@@ -7,7 +7,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [CommonModule, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink],
   templateUrl: './profissional-detail.component.html',
   styleUrl: './profissional-detail.component.scss'
 })

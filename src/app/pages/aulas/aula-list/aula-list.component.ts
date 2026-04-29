@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AulaService } from '../../../core/services/aula.service';
@@ -11,7 +11,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-aula-list',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss'
 })

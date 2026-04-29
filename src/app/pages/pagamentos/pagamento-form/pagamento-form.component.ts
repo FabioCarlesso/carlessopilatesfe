@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -9,7 +9,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-pagamento-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, ReactiveFormsModule, RouterLink],
   templateUrl: './pagamento-form.component.html',
   styleUrl: './pagamento-form.component.scss'
 })

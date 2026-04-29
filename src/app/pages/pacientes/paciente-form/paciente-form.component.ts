@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -7,7 +7,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-form',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, ReactiveFormsModule, RouterLink],
   templateUrl: './paciente-form.component.html',
   styleUrl: './paciente-form.component.scss'
 })

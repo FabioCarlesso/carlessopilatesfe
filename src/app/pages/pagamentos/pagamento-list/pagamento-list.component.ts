@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -8,7 +8,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss'
 })
