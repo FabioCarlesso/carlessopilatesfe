@@ -5,7 +5,7 @@ import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { PlanoFormComponent } from './plano-form.component';
 import { PlanoService } from '../../../core/services/plano.service';
-import { PlanoResponseDTO } from '../../../core/models/plano';
+import { DIAS_SEMANA_LABEL, FREQUENCIA_LABEL, PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
 
 const mockPlano: PlanoResponseDTO = {
   id: 1, pacienteId: 10, tipo: 'MENSAL', valor: 250,
@@ -48,6 +48,12 @@ describe('PlanoFormComponent', () => {
     ['tipo', 'valor', 'frequenciaSemanal', 'dataInicio', 'diasSemana'].forEach(c =>
       expect(component.form.contains(c)).toBeTrue()
     );
+  });
+
+  it('should expose labels exported by plano model', () => {
+    expect(component.tipoLabel).toBe(TIPO_LABEL);
+    expect(component.frequenciaLabel).toBe(FREQUENCIA_LABEL);
+    expect(component.diasLabel).toBe(DIAS_SEMANA_LABEL);
   });
 
   it('should fail validation when diasSemana count does not match frequencia', () => {

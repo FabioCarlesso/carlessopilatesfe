@@ -33,7 +33,7 @@
 |--------|-------|-----------------|
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
-| Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
+| Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
 | Relatórios | `/relatorios`, `/relatorios/pagamento-profissional`, `/relatorios/nfse` | Acessar relatórios administrativos, consultar pagamento de profissional por período, emissão de NFSEs por competência e exportar PDF/XLSX/CSV |
@@ -280,6 +280,17 @@ interface AulaResponseDTO {
   profissionalNome?: string | null;
 }
 ```
+
+### Labels e regras auxiliares de planos
+O model centraliza os labels usados nas telas de planos, pagamentos e aulas:
+```typescript
+const DIAS_SEMANA_LABEL: Record<DiaSemana, string>;
+const TIPO_LABEL: Record<TipoPagamento, string>;
+const FREQUENCIA_LABEL: Record<FrequenciaSemanal, string>;
+const FREQUENCIA_DIAS: Record<FrequenciaSemanal, number>;
+```
+
+O formulário de planos reutiliza essas constantes exportadas pelo model, evitando duplicação de textos de exibição para tipo, frequência e dias da semana.
 
 ---
 
@@ -593,7 +604,7 @@ Comando: `npm test`
 - Design responsivo
 - Ativação e inativação de pacientes via PATCH
 - E-mail mutável na edição (somente CPF é imutável)
-- Módulo Planos: listagem, criação com seleção de dias e validação de frequência
+- Módulo Planos: listagem, criação com seleção de dias, validação de frequência e reutilização dos labels exportados pelo model
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência

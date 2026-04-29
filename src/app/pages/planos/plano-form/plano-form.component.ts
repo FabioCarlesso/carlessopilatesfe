@@ -3,7 +3,15 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlanoService } from '../../../core/services/plano.service';
-import { DiaSemana, FREQUENCIA_DIAS, FrequenciaSemanal } from '../../../core/models/plano';
+import {
+  DiaSemana,
+  DIAS_SEMANA_LABEL,
+  FREQUENCIA_DIAS,
+  FREQUENCIA_LABEL,
+  FrequenciaSemanal,
+  TIPO_LABEL,
+  TipoPagamento
+} from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 function diasSemanaValidator(control: AbstractControl): ValidationErrors | null {
@@ -28,15 +36,12 @@ export class PlanoFormComponent implements OnInit {
   salvando = false;
   erro: string | null = null;
 
-  readonly tipos = ['MENSAL', 'TRIMESTRAL', 'ANUAL'] as const;
-  readonly frequencias = ['UMA_VEZ', 'DUAS_VEZES', 'TRES_VEZES'] as const;
+  readonly tipos: TipoPagamento[] = ['MENSAL', 'TRIMESTRAL', 'ANUAL'];
+  readonly frequencias: FrequenciaSemanal[] = ['UMA_VEZ', 'DUAS_VEZES', 'TRES_VEZES'];
   readonly diasDisponiveis: DiaSemana[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-  readonly diasLabel: Record<DiaSemana, string> = {
-    MONDAY: 'Segunda', TUESDAY: 'Terça', WEDNESDAY: 'Quarta',
-    THURSDAY: 'Quinta', FRIDAY: 'Sexta', SATURDAY: 'Sábado', SUNDAY: 'Domingo'
-  };
-  readonly tipoLabel: Record<string, string> = { MENSAL: 'Mensal', TRIMESTRAL: 'Trimestral', ANUAL: 'Anual' };
-  readonly frequenciaLabel: Record<string, string> = { UMA_VEZ: '1x por semana', DUAS_VEZES: '2x por semana', TRES_VEZES: '3x por semana' };
+  readonly diasLabel = DIAS_SEMANA_LABEL;
+  readonly tipoLabel = TIPO_LABEL;
+  readonly frequenciaLabel = FREQUENCIA_LABEL;
 
   constructor(private fb: FormBuilder, private service: PlanoService, private route: ActivatedRoute, private router: Router) {}
 
