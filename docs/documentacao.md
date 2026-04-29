@@ -637,6 +637,7 @@ Comando: `npm test`
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
+| `app/pages/planos/plano-form/plano-form.component.spec.ts` | Criação de plano, validação de frequência e dias, `ngOnDestroy`, reatividade do `valueChanges` |
 
 ### Estratégia de mocking
 
@@ -662,7 +663,7 @@ Comando: `npm test`
 - Design responsivo
 - Ativação e inativação de pacientes via PATCH
 - E-mail mutável na edição (somente CPF é imutável)
-- Módulo Planos: listagem, criação com seleção de dias, validação de frequência e reutilização dos labels exportados pelo model
+- Módulo Planos: listagem, criação com seleção de dias, validação de frequência, reutilização dos labels exportados pelo model e cleanup de subscriptions via `ngOnDestroy`
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência

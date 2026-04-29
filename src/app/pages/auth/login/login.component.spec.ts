@@ -42,7 +42,7 @@ describe('LoginComponent', () => {
     expect(btn.disabled).toBeTrue();
   });
 
-  it('should navigate to /pacientes on successful login', () => {
+  it('should navigate to / on successful login', () => {
     authServiceSpy.login.and.returnValue(of({ accessToken: 'token' }));
     const spy = spyOn(router, 'navigate');
 
@@ -52,7 +52,7 @@ describe('LoginComponent', () => {
     comp.entrar();
 
     expect(authServiceSpy.login).toHaveBeenCalledWith({ email: 'admin@carlessopilates.com', password: 'senha1234' });
-    expect(spy).toHaveBeenCalledWith(['/pacientes']);
+    expect(spy).toHaveBeenCalledWith(['/']);
   });
 
   it('should show 401 error message on invalid credentials', () => {
