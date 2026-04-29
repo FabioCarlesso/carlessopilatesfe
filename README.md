@@ -151,7 +151,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
-| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada de páginas e guarda de limites |
+| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal e seleção de dias |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas e confirmação de presença com vínculo do profissional responsável |
@@ -182,7 +182,7 @@ Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf
 
 A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
 
-Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes. A navegação ignora páginas negativas, fora do total retornado pela API ou iguais à página atual, evitando requisições desnecessárias ou fora dos limites.
+Na listagem de profissionais, a paginação server-side renderiza no máximo 5 botões de página por vez, evitando excesso de elementos no DOM em datasets grandes. A navegação ignora páginas negativas, fora do total retornado pela API ou iguais à página atual, evitando requisições desnecessárias ou fora dos limites. Após cada resposta, a tela sincroniza `currentPage` e `pageSize` com `page.number` e `page.size` retornados pela API, preservando o estado local como fallback quando algum metadado estiver ausente.
 Quando o usuário inativa o último item de uma página e o total de páginas é reduzido (ex.: página 16 deixa de existir), a tela retorna automaticamente para a última página válida para evitar listagem vazia.
 
 As rotas que recebem identificadores numéricos validam os parâmetros antes de chamar a API. Apenas inteiros positivos seguros são aceitos; URLs com identificadores ausentes, não numéricos ou em formato inválido exibem a mensagem **Identificador inválido.** e não disparam requisições com `NaN` no caminho.

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
+import { PageMetadata } from '../../../core/models/paciente';
 
 @Component({
   selector: 'app-profissional-list',
@@ -34,7 +35,8 @@ export class ProfissionalListComponent implements OnInit {
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize).subscribe({
       next: page => {
-        const totalPages = page.page?.totalPages ?? this.totalPages;
+        const meta = page.page ?? ({} as Partial<PageMetadata>);
+        const totalPages = meta.totalPages ?? this.totalPages;
         if (totalPages > 0 && this.currentPage >= totalPages && retryCount < 3) {
           this.currentPage = totalPages - 1;
           this.carregar(retryCount + 1);
@@ -43,6 +45,8 @@ export class ProfissionalListComponent implements OnInit {
 
         this.profissionais = page.content;
         this.totalPages = totalPages;
+        this.currentPage = this.normalizarPagina(meta.number, this.currentPage);
+        this.pageSize = this.normalizarTamanhoPagina(meta.size, this.pageSize);
         this.visiblePages = this.pages();
         this.loading = false;
       },
@@ -89,5 +93,13 @@ export class ProfissionalListComponent implements OnInit {
 
     const start = Math.max(0, Math.min(this.currentPage - 2, this.totalPages - this.maxVisiblePages));
     return Array.from({ length: this.maxVisiblePages }, (_, i) => start + i);
+  }
+
+  private normalizarPagina(pageNumber: number | undefined, fallback: number): number {
+    return typeof pageNumber === 'number' && Number.isInteger(pageNumber) && pageNumber >= 0 ? pageNumber : fallback;
+  }
+
+  private normalizarTamanhoPagina(size: number | undefined, fallback: number): number {
+    return typeof size === 'number' && Number.isInteger(size) && size > 0 ? size : fallback;
   }
 }
