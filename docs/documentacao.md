@@ -32,7 +32,7 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
-| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada e guarda de limites |
+| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias e validação de frequência), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
@@ -435,6 +435,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Tabela paginada de profissionais ativos
 - Navegação por página com janela de até 5 páginas visíveis para evitar excesso de botões no DOM
 - Guarda de limites na navegação, ignorando páginas negativas, fora do total retornado ou iguais à página atual
+- Sincroniza `currentPage` e `pageSize` com `page.number` e `page.size` retornados pela API, com fallback para o estado local quando metadados estiverem ausentes
 - Colunas: Nome, E-mail, Contrato, % por Aula, Ações
 - Ações: Ver, Editar e Inativar
 - Diálogo de confirmação inline para inativação

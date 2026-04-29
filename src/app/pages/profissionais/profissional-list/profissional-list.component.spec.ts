@@ -49,7 +49,47 @@ describe('ProfissionalListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.totalPages).toBe(2);
+    expect(component.currentPage).toBe(0);
+    expect(component.pageSize).toBe(10);
     expect(component.visiblePages).toEqual([0, 1]);
+  });
+
+  it('should sync currentPage and pageSize with API metadata', () => {
+    const response: ProfissionalPage = {
+      content: [mockProfissional],
+      page: { totalElements: 41, totalPages: 3, size: 20, number: 2 }
+    };
+
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValue(of(response));
+
+    component.currentPage = 1;
+    component.pageSize = 10;
+    component.carregar();
+
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+    expect(component.currentPage).toBe(2);
+    expect(component.pageSize).toBe(20);
+    expect(component.totalPages).toBe(3);
+    expect(component.visiblePages).toEqual([0, 1, 2]);
+  });
+
+  it('should keep currentPage and pageSize when API omits pagination metadata', () => {
+    const response = {
+      content: [mockProfissional],
+      page: { totalElements: 41, totalPages: 3 }
+    } as ProfissionalPage;
+
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValue(of(response));
+
+    component.currentPage = 1;
+    component.pageSize = 20;
+    component.carregar();
+
+    expect(component.currentPage).toBe(1);
+    expect(component.pageSize).toBe(20);
+    expect(component.totalPages).toBe(3);
   });
 
   it('should set erro when listar fails', () => {
@@ -158,6 +198,11 @@ describe('ProfissionalListComponent', () => {
   });
 
   it('should change currentPage and reload when pagina is called with a valid page', () => {
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockProfissional],
+      page: { totalElements: 21, totalPages: 3, size: 10, number: 1 }
+    }));
+
     component.totalPages = 3;
     component.pagina(1);
 
