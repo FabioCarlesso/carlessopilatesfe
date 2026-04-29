@@ -35,7 +35,7 @@
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
-| Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, confirmar presença e vincular profissional responsável |
+| Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, exibir carregamento inicial por pagamento, confirmar presença e vincular profissional responsável |
 | Relatórios | `/relatorios`, `/relatorios/pagamento-profissional`, `/relatorios/nfse` | Acessar relatórios administrativos, consultar pagamento de profissional por período, emissão de NFSEs por competência e exportar PDF/XLSX/CSV |
 
 ---

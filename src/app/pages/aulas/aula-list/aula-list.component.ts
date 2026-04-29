@@ -53,6 +53,8 @@ export class AulaListComponent implements OnInit {
     this.carregarProfissionais();
 
     if (this.pagamentoId !== null) {
+      this.loading = true;
+      this.erro = null;
       this.pagamentoService.buscar(this.pagamentoId).subscribe({
         next: pagamento => {
           this.pacienteId = pagamento.pacienteId;
@@ -60,6 +62,7 @@ export class AulaListComponent implements OnInit {
         },
         error: () => {
           this.erro = 'Erro ao carregar dados do pagamento.';
+          this.loading = false;
         }
       });
     } else {

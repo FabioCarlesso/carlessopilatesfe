@@ -3,7 +3,7 @@ import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { AulaListComponent } from './aula-list.component';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -157,6 +157,24 @@ describe('AulaListComponent', () => {
       pagamentoServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar dados do pagamento.');
+      expect(component.loading).toBeFalse();
+    });
+
+    it('should show loading while fetching payment before loading aulas', () => {
+      const pagamentoSubject = new Subject<PagamentoResponseDTO>();
+      pagamentoServiceSpy.buscar.and.returnValue(pagamentoSubject.asObservable());
+      serviceSpy.listarPorPagamento.calls.reset();
+
+      component.ngOnInit();
+
+      expect(component.loading).toBeTrue();
+      expect(serviceSpy.listarPorPagamento).not.toHaveBeenCalled();
+
+      pagamentoSubject.next(mockPagamento);
+      pagamentoSubject.complete();
+
+      expect(serviceSpy.listarPorPagamento).toHaveBeenCalledWith(1);
+      expect(component.loading).toBeFalse();
     });
   });
 
