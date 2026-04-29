@@ -18,20 +18,20 @@
   flex-direction: column;
   gap: .25rem;
   padding: 1rem;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-1);
 
   .label {
     font-size: .78rem;
     font-weight: 600;
-    color: var(--text-light);
+    color: var(--text-muted);
     text-transform: uppercase;
   }
 
   strong {
-    color: var(--text);
+    color: var(--text-primary);
   }
 }
 
