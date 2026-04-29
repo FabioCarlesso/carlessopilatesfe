@@ -3,20 +3,21 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #f5f0fa;
+  background: var(--bg-app);
 }
 
 .login-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(106, 13, 173, 0.12);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-3);
   padding: 2.5rem 2rem;
   width: 100%;
   max-width: 380px;
 }
 
 .login-title {
-  color: #6a0dad;
+  color: var(--text-brand);
   font-size: 1.6rem;
   font-weight: 700;
   margin: 0 0 0.25rem;
@@ -24,7 +25,7 @@
 }
 
 .login-subtitle {
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.9rem;
   text-align: center;
   margin: 0 0 2rem;
@@ -44,41 +45,44 @@
   label {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #444;
+    color: var(--text-secondary);
   }
 
   input {
     padding: 0.6rem 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-elev);
+    color: var(--text-primary);
     font-size: 0.95rem;
     outline: none;
     transition: border-color 0.2s;
 
     &:focus {
-      border-color: #6a0dad;
+      border-color: var(--c-horizonte);
+      box-shadow: var(--shadow-focus);
     }
   }
 }
 
 .field-error {
   font-size: 0.78rem;
-  color: #c0392b;
+  color: var(--c-danger);
 }
 
 .login-erro {
-  background: #fdecea;
-  color: #c0392b;
-  border-radius: 4px;
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
+  border-radius: var(--r-md);
   padding: 0.6rem 0.8rem;
   font-size: 0.88rem;
 }
 
 .btn-entrar {
-  background: #6a0dad;
-  color: #fff;
+  background: var(--c-horizonte);
+  color: var(--c-cloud-dancer);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--r-md);
   padding: 0.75rem;
   font-size: 1rem;
   font-weight: 600;
@@ -86,7 +90,7 @@
   transition: background 0.2s;
 
   &:hover:not(:disabled) {
-    background: #5a0b9d;
+    background: var(--c-tempestade);
   }
 
   &:disabled {

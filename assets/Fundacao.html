@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carlesso · 01 Fundação</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  html, body { background: #0e1620; }
+  body { color: var(--text-primary); }
+  .artboard-frame { background: var(--bg-app); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="common.jsx"></script>
+
+<script type="text/babel">
+const { useEffect } = React;
+
+const FundacaoTweakDefaults = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "density": "default"
+}/*EDITMODE-END*/;
+
+function Frame({ width, height, children, theme = 'light', density = 'default' }) {
+  return (
+    <div
+      data-theme={theme}
+      data-density={density}
+      className="artboard-frame"
+      style={{
+        width, height, overflow: 'hidden',
+        background: 'var(--bg-app)',
+        color: 'var(--text-primary)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Swatch({ name, hex, role, dark }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{
+        height: 110, borderRadius: 6, background: hex,
+        border: '1px solid var(--border-subtle)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '8px 10px', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase',
+          color: dark ? 'var(--c-cloud-dancer)' : 'var(--c-tempestade)',
+          fontFamily: 'var(--font-body)', fontWeight: 500,
+        }}>
+          {hex}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--text-primary)' }}>{name}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{role}</div>
+      </div>
+    </div>
+  );
+}
+
+function DesignSystemFoundation() {
+  return (
+    <div style={{ padding: '56px 64px', display: 'flex', flexDirection: 'column', gap: 48 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border-default)', paddingBottom: 24 }}>
+        <div>
+          <Eyebrow>Design system · 01 fundação</Eyebrow>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 76, lineHeight: 1, margin: '8px 0 0', letterSpacing: '0' }}>
+            Cores &amp; Tipografia
+          </h1>
+          <p style={{ fontFamily: 'var(--font-aux)', fontStyle: 'italic', fontSize: 22, color: 'var(--text-secondary)', marginTop: 8 }}>
+            Onde a ciência encontra a arte de mover-se.
+          </p>
+        </div>
+        <Lockup size={48} layout="horizontal" tagline="Manual digital" color="var(--c-horizonte)" />
+      </div>
+
+      <div>
+        <Eyebrow>Paleta principal</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 16 }}>
+          <Swatch name="Cloud Dancer" hex="#F0EDE8" role="Base · respiro · fundo" />
+          <Swatch name="Azul" hex="#708DA3" role="Identidade · corpo" dark />
+          <Swatch name="Noite Inverno" hex="#355978" role="Transição · equilíbrio" dark />
+          <Swatch name="Horizonte" hex="#374F6C" role="Assinatura · marca" dark />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 20 }}>
+          <Swatch name="Tempestade" hex="#141F2D" role="Contraste · texto principal" dark />
+          <Swatch name="Grafite" hex="#455157" role="Texto secundário" dark />
+          <Swatch name="Bruma" hex="#8A96A0" role="Texto auxiliar" dark />
+          <Swatch name="Linha" hex="#D8D3CB" role="Bordas · separadores" />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 64 }}>
+        <div>
+          <Eyebrow>Tipografia · display</Eyebrow>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+            Substituto digital de Dream Avenue · em produção, instalar a família oficial.
+          </p>
+          <div style={{ marginTop: 16, fontFamily: 'var(--font-display)', fontSize: 88, lineHeight: 1, letterSpacing: '0' }}>
+            Aa
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 38, marginTop: 8, lineHeight: 1.1 }}>
+            Tradição<br/>em movimento.
+          </div>
+        </div>
+        <div>
+          <Eyebrow>Tipografia · UI</Eyebrow>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Montserrat · 300/400/500/600 · uso em interface.</p>
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--text-primary)' }}>H1 · 28 / 500 · interface</div>
+            <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-primary)' }}>H2 · 22 / 500</div>
+            <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-primary)' }}>H3 · 18 / 500</div>
+            <div style={{ fontSize: 14 }}>Body · 14 · texto corrido em formulários e tabelas, mantém a leitura clara.</div>
+            <div style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>EYEBROW · 11 / 500 · 0.18em</div>
+            <div style={{ fontFamily: 'var(--font-aux)', fontStyle: 'italic', fontSize: 18, color: 'var(--text-primary)' }}>Auxiliar · itálico para datas e citações curtas</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, padding: 32, background: 'var(--bg-paper)', borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+        <div>
+          <Eyebrow>Voz</Eyebrow>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 28, marginTop: 8 }}>Autoridade serena</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 8 }}>
+            Frases curtas. Vazio estratégico. Verbos no infinitivo (cadastrar, registrar, confirmar).
+            Nunca exclamar, nunca interromper. O sistema assiste — não tagarela.
+          </p>
+        </div>
+        <BracketFrame>
+          A base sólida. O movimento começa na base para ganhar altura com segurança.
+        </BracketFrame>
+      </div>
+    </div>
+  );
+}
+
+const BrowserWindow = ({ title, url, children, ...rest }) =>
+  <ChromeWindow url={url} tabs={[{ title: title || 'Carlesso' }]} {...rest}>{children}</ChromeWindow>;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(FundacaoTweakDefaults);
+  const { theme, density } = tweaks;
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-density', density);
+  }, [theme, density]);
+
+  const W = 1440, H = 1100;
+
+  return (
+    <>
+      <DesignCanvas
+        title="Fundação · cores + tipografia + voz"
+        subtitle="Carlesso · página 01 do design system"
+      >
+        <DCSection id="fundacao" title="Sistema visual · 01 Fundação">
+          <DCArtboard id="ds-foundation" label="Fundação · cores + tipografia + voz" width={W} height={H}>
+            <BrowserWindow url="carlesso.design/fundacao" title="Carlesso · 01 Fundação">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <DesignSystemFoundation />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Aparência">
+          <TweakRadio
+            label="Tema"
+            value={tweaks.theme}
+            options={[{value:'light', label:'Claro'}, {value:'dark', label:'Escuro'}]}
+            onChange={v => setTweak('theme', v)}
+          />
+          <TweakRadio
+            label="Densidade"
+            value={tweaks.density}
+            options={[{value:'compact', label:'Compacta'}, {value:'default', label:'Padrão'}, {value:'comfortable', label:'Confortável'}]}
+            onChange={v => setTweak('density', v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

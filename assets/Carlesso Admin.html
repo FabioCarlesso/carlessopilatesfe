@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carlesso Admin · Proposta visual</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* Stage */
+  html, body { background: #0e1620; }
+  body { color: var(--text-primary); }
+  /* hide scrollbars on artboards */
+  .artboard-frame { background: var(--bg-app); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="common.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// Alias for browser-window starter (exports ChromeWindow)
+const BrowserWindow = ({ title, url, children, ...rest }) =>
+  <ChromeWindow url={url} tabs={[{ title: title || 'Carlesso' }]} {...rest}>{children}</ChromeWindow>;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark",
+  "density": "default",
+  "pattern": true,
+  "showQuotes": true
+}/*EDITMODE-END*/;
+
+// Wrapper: every screen is rendered inside a fixed-size div with tokens applied.
+function Frame({ width = 1440, height = 900, children, theme = 'light', density = 'default' }) {
+  return (
+    <div
+      data-theme={theme}
+      data-density={density}
+      className="artboard-frame"
+      style={{
+        width, height, overflow: 'hidden',
+        background: 'var(--bg-app)',
+        color: 'var(--text-primary)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Url for browser-window display
+function BWurl({ path }) { return `carlesso.app${path}`; }
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const theme = tweaks.theme;
+  const density = tweaks.density;
+
+  // Sync to root for design system page
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-density', density);
+  }, [theme, density]);
+
+  // Common frame size
+  const W = 1440, H = 900;
+
+  return (
+    <>
+      <DesignCanvas
+        title="Carlesso · Proposta visual"
+        subtitle="Design system + telas administrativas · Pilates e Fisioterapia"
+      >
+        {/* SECTION 1 — System foundation */}
+        <DCSection id="sys" title="Sistema visual">
+          <DCArtboard id="ds-foundation" label="Fundação · cores + tipografia + voz" width={1440} height={1100}>
+            <Frame width={1440} height={1100} theme={theme} density={density}>
+              <DesignSystemFoundation />
+            </Frame>
+          </DCArtboard>
+
+          <DCArtboard id="ds-components" label="Componentes · botões, inputs, tabelas, badges" width={1440} height={1300}>
+            <Frame width={1440} height={1300} theme={theme} density={density}>
+              <DesignSystemComponents />
+            </Frame>
+          </DCArtboard>
+
+          <DCArtboard id="ds-brand" label="Marca · símbolo, lockup, padronagens" width={1440} height={1000}>
+            <Frame width={1440} height={1000} theme={theme} density={density}>
+              <DesignSystemBrand />
+            </Frame>
+          </DCArtboard>
+        </DCSection>
+
+        {/* SECTION 2 — Entrada */}
+        <DCSection id="entrada" title="Entrada no sistema">
+          <DCArtboard id="login" label="Login" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/login'})} title="Carlesso · Acesso">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <ScreenLogin />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+        </DCSection>
+
+        {/* SECTION 3 — Operação diária */}
+        <DCSection id="operacao" title="Operação diária">
+          <DCArtboard id="dashboard" label="Início · dashboard administrativo" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/'})} title="Carlesso · Início">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <ScreenDashboard />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="pacientes-list" label="Pacientes · lista + filtros + paginação" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/pacientes'})} title="Carlesso · Pacientes">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <ScreenPacientesList />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="paciente-detail" label="Paciente · detalhe com tabs" width={W} height={1000}>
+            <BrowserWindow url={BWurl({path:'/pacientes/3'})} title="Carlesso · Carolina V.">
+              <Frame width={W} height={1000 - 38} theme={theme} density={density}>
+                <ScreenPacienteDetail />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="paciente-form" label="Paciente · cadastro / edição" width={W} height={1100}>
+            <BrowserWindow url={BWurl({path:'/pacientes/novo'})} title="Carlesso · Novo paciente">
+              <Frame width={W} height={1100 - 38} theme={theme} density={density}>
+                <ScreenPacienteForm />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="aulas" label="Aulas · agenda semanal" width={W} height={1100}>
+            <BrowserWindow url={BWurl({path:'/aulas'})} title="Carlesso · Aulas">
+              <Frame width={W} height={1100 - 38} theme={theme} density={density}>
+                <ScreenAulas />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="profissionais" label="Profissionais · equipe" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/profissionais'})} title="Carlesso · Profissionais">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <ScreenProfissionais />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+        </DCSection>
+
+        {/* SECTION 4 — Financeiro / Análise */}
+        <DCSection id="financeiro" title="Financeiro · análise">
+          <DCArtboard id="pagamentos" label="Pagamentos · planos + cobrança" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/pagamentos'})} title="Carlesso · Pagamentos">
+              <Frame width={W} height={H - 38} theme={theme} density={density}>
+                <ScreenPagamentos />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="relatorios" label="Relatórios · pagamento de profissional" width={W} height={1100}>
+            <BrowserWindow url={BWurl({path:'/relatorios/pagamento-profissional'})} title="Carlesso · Relatórios">
+              <Frame width={W} height={1100 - 38} theme={theme} density={density}>
+                <ScreenRelatorios />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+        </DCSection>
+
+        {/* SECTION 5 — Estados + responsiva */}
+        <DCSection id="estados" title="Estados + responsiva">
+          <DCArtboard id="states" label="Vazio · carregando · erro" width={W} height={780}>
+            <BrowserWindow url={BWurl({path:'/pacientes'})} title="Carlesso · Estados">
+              <Frame width={W} height={780 - 38} theme={theme} density={density}>
+                <ScreenStates />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+
+          <DCArtboard id="mobile" label="Mobile · pacientes" width={390} height={844}>
+            <Frame width={390} height={844} theme={theme} density={density}>
+              <ScreenMobile />
+            </Frame>
+          </DCArtboard>
+
+          <DCArtboard id="dark" label="Dark mode · dashboard" width={W} height={H}>
+            <BrowserWindow url={BWurl({path:'/'})} title="Carlesso · Dark mode">
+              <Frame width={W} height={H - 38} theme="dark" density={density}>
+                <ScreenDashboard />
+              </Frame>
+            </BrowserWindow>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      {/* Tweaks */}
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Aparência">
+          <TweakRadio
+            label="Tema"
+            value={tweaks.theme}
+            options={[{value:'light', label:'Claro'}, {value:'dark', label:'Escuro'}]}
+            onChange={v => setTweak('theme', v)}
+          />
+          <TweakRadio
+            label="Densidade"
+            value={tweaks.density}
+            options={[{value:'compact', label:'Compacta'}, {value:'default', label:'Padrão'}, {value:'comfortable', label:'Confortável'}]}
+            onChange={v => setTweak('density', v)}
+          />
+        </TweakSection>
+        <TweakSection title="Marca">
+          <TweakToggle label="Padronagem em fundos editoriais" value={tweaks.pattern} onChange={v => setTweak('pattern', v)} />
+          <TweakToggle label="Citações com molduras [ ]" value={tweaks.showQuotes} onChange={v => setTweak('showQuotes', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+// =====================================================================
+// Design system pages embedded inside artboards
+// =====================================================================
+function Swatch({ name, hex, role, dark }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{
+        height: 110, borderRadius: 6, background: hex,
+        border: '1px solid var(--border-subtle)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '8px 10px', fontSize: 10, letterSpacing: '0.16em', textTransform: 'uppercase',
+          color: dark ? 'var(--c-cloud-dancer)' : 'var(--c-tempestade)',
+          fontFamily: 'var(--font-body)', fontWeight: 500,
+        }}>
+          {hex}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--text-primary)' }}>{name}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{role}</div>
+      </div>
+    </div>
+  );
+}
+
+function DesignSystemFoundation() {
+  return (
+    <div style={{ padding: '56px 64px', display: 'flex', flexDirection: 'column', gap: 48 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border-default)', paddingBottom: 24 }}>
+        <div>
+          <Eyebrow>Design system · 01 fundação</Eyebrow>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 76, lineHeight: 1, margin: '8px 0 0', letterSpacing: '0' }}>
+            Cores &amp; Tipografia
+          </h1>
+          <p style={{ fontFamily: 'var(--font-aux)', fontStyle: 'italic', fontSize: 22, color: 'var(--text-secondary)', marginTop: 8 }}>
+            Onde a ciência encontra a arte de mover-se.
+          </p>
+        </div>
+        <Lockup size={48} layout="horizontal" tagline="Manual digital" color="var(--c-horizonte)" />
+      </div>
+
+      {/* Color section */}
+      <div>
+        <Eyebrow>Paleta principal</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 16 }}>
+          <Swatch name="Cloud Dancer" hex="#F0EDE8" role="Base · respiro · fundo" />
+          <Swatch name="Azul" hex="#708DA3" role="Identidade · corpo" dark />
+          <Swatch name="Noite Inverno" hex="#355978" role="Transição · equilíbrio" dark />
+          <Swatch name="Horizonte" hex="#374F6C" role="Assinatura · marca" dark />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginTop: 20 }}>
+          <Swatch name="Tempestade" hex="#141F2D" role="Contraste · texto principal" dark />
+          <Swatch name="Grafite" hex="#455157" role="Texto secundário" dark />
+          <Swatch name="Bruma" hex="#8A96A0" role="Texto auxiliar" dark />
+          <Swatch name="Linha" hex="#D8D3CB" role="Bordas · separadores" />
+        </div>
+      </div>
+
+      {/* Typography */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 64 }}>
+        <div>
+          <Eyebrow>Tipografia · display</Eyebrow>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+            Substituto digital de Dream Avenue · em produção, instalar a família oficial.
+          </p>
+          <div style={{ marginTop: 16, fontFamily: 'var(--font-display)', fontSize: 88, lineHeight: 1, letterSpacing: '0' }}>
+            Aa
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 38, marginTop: 8, lineHeight: 1.1 }}>
+            Tradição<br/>em movimento.
+          </div>
+        </div>
+        <div>
+          <Eyebrow>Tipografia · UI</Eyebrow>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>Montserrat · 300/400/500/600 · uso em interface.</p>
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--text-primary)' }}>H1 · 28 / 500 · interface</div>
+            <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-primary)' }}>H2 · 22 / 500</div>
+            <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-primary)' }}>H3 · 18 / 500</div>
+            <div style={{ fontSize: 14 }}>Body · 14 · texto corrido em formulários e tabelas, mantém a leitura clara.</div>
+            <div style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>EYEBROW · 11 / 500 · 0.18em</div>
+            <div style={{ fontFamily: 'var(--font-aux)', fontStyle: 'italic', fontSize: 18, color: 'var(--text-primary)' }}>Auxiliar · itálico para datas e citações curtas</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Voice */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, padding: 32, background: 'var(--bg-paper)', borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+        <div>
+          <Eyebrow>Voz</Eyebrow>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 28, marginTop: 8 }}>Autoridade serena</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 8 }}>
+            Frases curtas. Vazio estratégico. Verbos no infinitivo (cadastrar, registrar, confirmar).
+            Nunca exclamar, nunca interromper. O sistema assiste — não tagarela.
+          </p>
+        </div>
+        <BracketFrame>
+          A base sólida. O movimento começa na base para ganhar altura com segurança.
+        </BracketFrame>
+      </div>
+    </div>
+  );
+}
+
+function DesignSystemComponents() {
+  return (
+    <div style={{ padding: '56px 64px', display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <div style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: 16 }}>
+        <Eyebrow>Design system · 02 componentes</Eyebrow>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 64, lineHeight: 1, margin: '8px 0 0', letterSpacing: '0' }}>
+          Componentes
+        </h1>
+      </div>
+
+      {/* Buttons */}
+      <div>
+        <Eyebrow>Botões</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginTop: 16 }}>
+          {[
+            { l: 'Primário', n: <Button variant="primary" icon="check">Confirmar</Button> },
+            { l: 'Secundário', n: <Button variant="secondary" icon="download">Exportar</Button> },
+            { l: 'Ghost', n: <Button variant="ghost" icon="edit">Editar</Button> },
+            { l: 'Destrutivo', n: <Button variant="danger" icon="trash">Excluir</Button> },
+          ].map((b, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, padding: 20, border: '1px solid var(--border-subtle)', borderRadius: 6, background: 'var(--bg-paper)' }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{b.l}</span>
+              {b.n}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Inputs */}
+      <div>
+        <Eyebrow>Inputs &amp; Forms</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 16 }}>
+          <Field label="Texto" hint="Campo padrão"><input className="input" defaultValue="Carolina Vasques" /></Field>
+          <Field label="Com ícone">
+            <div className="input-wrap">
+              <span className="input-wrap__icon"><Icon name="search" size={16} /></span>
+              <input className="input input--with-icon" placeholder="Buscar…" />
+            </div>
+          </Field>
+          <Field label="Select">
+            <select className="select" defaultValue="anual">
+              <option value="anual">Anual · 3x/sem</option>
+              <option>Trimestral · 2x/sem</option>
+            </select>
+          </Field>
+          <Field label="Erro" error="Informe um e-mail válido">
+            <input className="input" defaultValue="email@" style={{ borderColor: 'var(--c-danger)' }} />
+          </Field>
+          <Field label="Desabilitado"><input className="input" disabled defaultValue="Bloqueado" /></Field>
+          <Field label="Textarea"><textarea className="textarea" placeholder="—" /></Field>
+        </div>
+        <div style={{ display: 'flex', gap: 32, marginTop: 24 }}>
+          <label className="check"><input type="checkbox" defaultChecked /><span className="check__box"><Icon name="check" size={11} /></span>Concorda com a LGPD</label>
+          <label className="check"><input type="checkbox" /><span className="check__box"><Icon name="check" size={11} /></span>Receber lembretes por e-mail</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
+            <span>Dark mode</span>
+            <span className="switch switch--on" />
+          </div>
+        </div>
+      </div>
+
+      {/* Badges */}
+      <div>
+        <Eyebrow>Badges</Eyebrow>
+        <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+          <Badge dot>Inativo</Badge>
+          <Badge variant="success" dot>Realizada</Badge>
+          <Badge variant="info" dot>Em andamento</Badge>
+          <Badge variant="warning" dot>Pendente</Badge>
+          <Badge variant="danger" dot>Atrasado</Badge>
+          <Badge variant="brand">Anual</Badge>
+        </div>
+      </div>
+
+      {/* Table preview */}
+      <div>
+        <Eyebrow>Tabela</Eyebrow>
+        <div className="table-wrap" style={{ marginTop: 16 }}>
+          <table className="table">
+            <thead>
+              <tr><th>Paciente</th><th>Plano</th><th>Próxima</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {[
+                { n: 'Ana Beatriz Moretti', p: 'Mensal · 3x', d: '29 abr', s: 'Ativo' },
+                { n: 'Bruno Henrique Cavalcante', p: 'Trimestral · 2x', d: '30 abr', s: 'Ativo' },
+                { n: 'Carolina Vasques de Almeida', p: 'Anual · 3x', d: '02 mai', s: 'Ativo' },
+              ].map((r, i) => (
+                <tr key={i}>
+                  <td><div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar name={r.n} size={32} /><span style={{ fontWeight: 500 }}>{r.n}</span></div></td>
+                  <td>{r.p}</td>
+                  <td><span style={{ fontFamily: 'var(--font-aux)', fontStyle: 'italic' }}>{r.d}</span></td>
+                  <td><Badge variant="success" dot>{r.s}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Cards & Tabs */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="card">
+          <div className="card__header">
+            <div>
+              <Eyebrow>Card</Eyebrow>
+              <h3 className="t-h2" style={{ marginTop: 4 }}>Plano vigente</h3>
+            </div>
+            <Button variant="ghost" size="sm" iconRight="arrow-right">Detalhes</Button>
+          </div>
+          <div className="card__body">
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Anual · 3 aulas/sem</div>
+            <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>Vigência até 11 jan 2027 · ter, qui, sáb · 08:00.</p>
+          </div>
+          <div className="card__footer">
+            <Button variant="ghost">Cancelar</Button>
+            <Button variant="primary">Renovar</Button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card__header"><Eyebrow>Tabs</Eyebrow></div>
+          <div style={{ padding: '0 24px' }}>
+            <Tabs activeKey="planos" onChange={()=>{}} items={[
+              { key: 'overview', label: 'Visão geral' },
+              { key: 'planos', label: 'Planos', count: 3 },
+              { key: 'pgto', label: 'Pagamentos', count: 12 },
+              { key: 'aulas', label: 'Aulas', count: 84 },
+            ]} />
+          </div>
+          <div className="card__body">
+            <p style={{ color: 'var(--text-secondary)' }}>Conteúdo da aba selecionada.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DesignSystemBrand() {
+  return (
+    <div style={{ padding: '56px 64px', display: 'flex', flexDirection: 'column', gap: 40 }}>
+      <div style={{ borderBottom: '1px solid var(--border-default)', paddingBottom: 16 }}>
+        <Eyebrow>Design system · 03 marca</Eyebrow>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 64, lineHeight: 1, margin: '8px 0 0', letterSpacing: '0' }}>
+          A marca em uso
+        </h1>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <PatternBackground opacity={0.06} density="dense" style={{ padding: 32, background: 'var(--c-cloud-dancer)', borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
+          <Eyebrow>Símbolo</Eyebrow>
+          <div style={{ marginTop: 24, display: 'grid', placeItems: 'center', height: 160 }}>
+            <SymbolFancy size={120} color="var(--c-horizonte)" />
+          </div>
+          <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-secondary)' }}>4 círculos entrelaçados — centralização e fundação. Uso solo em favicon, splash, empty states.</p>
+        </PatternBackground>
+
+        <div style={{ padding: 32, background: 'var(--c-horizonte)', borderRadius: 6, color: 'var(--c-cloud-dancer)' }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--c-azul-soft)' }}>Lockup horizontal</div>
+          <div style={{ marginTop: 24, display: 'grid', placeItems: 'center', height: 160 }}>
+            <Lockup size={56} layout="horizontal" tagline="Pilates e Fisioterapia" color="var(--c-cloud-dancer)" />
+          </div>
+          <p style={{ marginTop: 12, fontSize: 12, color: 'var(--c-azul-soft)' }}>Topbar, login, e-mails. Símbolo + wordmark + sublinha.</p>
+        </div>
+
+        <div style={{ padding: 32, background: 'var(--c-tempestade)', borderRadius: 6, color: 'var(--c-cloud-dancer)' }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--c-azul-3)' }}>Lockup vertical</div>
+          <div style={{ marginTop: 16, display: 'grid', placeItems: 'center', height: 180 }}>
+            <Lockup size={56} layout="vertical" tagline="Centro de Contrologia" color="var(--c-cloud-dancer)" />
+          </div>
+          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--c-azul-3)' }}>Login, capas, modais formais.</p>
+        </div>
+      </div>
+
+      {/* Padronagens */}
+      <div>
+        <Eyebrow>Padronagens · símbolo repetido</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
+          {[
+            { d: 'sparse', label: 'Esparsa · login, capas' },
+            { d: 'normal', label: 'Padrão · empty states, dividers' },
+            { d: 'dense', label: 'Densa · selo, área pequena' },
+          ].map((p, i) => (
+            <PatternBackground key={i} opacity={0.12} density={p.d} style={{
+              height: 200, background: 'var(--c-cloud-dancer)', borderRadius: 6,
+              border: '1px solid var(--border-subtle)', position: 'relative',
+            }}>
+              <div style={{ position: 'absolute', bottom: 12, left: 16, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>{p.label}</div>
+            </PatternBackground>
+          ))}
+        </div>
+      </div>
+
+      {/* Citação use */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ padding: 32, background: 'var(--bg-paper)', border: '1px solid var(--border-subtle)', borderRadius: 6 }}>
+          <Eyebrow>Citações · molduras [ ]</Eyebrow>
+          <div style={{ marginTop: 16 }}>
+            <BracketFrame>
+              Uma estrutura só permanece de pé se cada componente estiver em harmonia.
+            </BracketFrame>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12 }}>Uso editorial em login, dashboards, empty states. Nunca em tabelas ou formulários.</p>
+        </div>
+        <div style={{ padding: 32, background: 'var(--bg-paper)', border: '1px solid var(--border-subtle)', borderRadius: 6 }}>
+          <Eyebrow>Voz da marca · do nosso</Eyebrow>
+          <ul style={{ margin: '12px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
+            <li>→ "Bom dia, Claudia." (não "Olá!")</li>
+            <li>→ "Cadastrar paciente" (não "Adicionar novo")</li>
+            <li>→ "Aula realizada" (não "Aula concluída com sucesso")</li>
+            <li>→ "Onde a ciência encontra a arte de mover-se."</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
