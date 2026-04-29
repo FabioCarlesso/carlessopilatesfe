@@ -29,16 +29,15 @@ export class ProfissionalListComponent implements OnInit {
     this.carregar();
   }
 
-  carregar(): void {
+  carregar(retryCount = 0): void {
     this.loading = true;
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize).subscribe({
       next: page => {
         const totalPages = page.page?.totalPages ?? this.totalPages;
-        if (totalPages > 0 && this.currentPage >= totalPages) {
+        if (totalPages > 0 && this.currentPage >= totalPages && retryCount < 3) {
           this.currentPage = totalPages - 1;
-          this.loading = false;
-          this.carregar();
+          this.carregar(retryCount + 1);
           return;
         }
 
