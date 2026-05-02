@@ -626,6 +626,7 @@ Comando: `npm test`
 
 | Arquivo | Cobertura |
 |---------|-----------|
+| `app/app.routes.spec.ts` | Inventário de rotas, agrupamento e precedência de rotas estáticas e dinâmicas |
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
 | `app/core/services/dashboard.service.spec.ts` | Contrato HTTP do resumo do dashboard |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
