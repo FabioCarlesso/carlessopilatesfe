@@ -126,6 +126,7 @@ npm test
 ```
 
 Arquivos de teste:
+- `src/app/app.routes.spec.ts`
 - `src/app/app.component.spec.ts`
 - `src/app/core/services/dashboard.service.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
