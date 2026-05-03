@@ -138,6 +138,7 @@ Arquivos de teste:
 - `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
+- `src/app/pages/pacientes/paciente-avaliacao-fisioterapeutica/paciente-avaliacao-fisioterapeutica.component.spec.ts`
 - `src/app/pages/profissionais/profissional-list/profissional-list.component.spec.ts`
 - `src/app/pages/profissionais/profissional-form/profissional-form.component.spec.ts`
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
@@ -190,9 +191,11 @@ Arquivos de teste:
 | `/relatorios/nfse` | Relatório de emissão de NFSEs |
 | `/login` | Tela de autenticação (pública) |
 
-Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos, Aulas e Anamnese do paciente.
+Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos, Aulas, Anamnese e Avaliação Fisioterapêutica do paciente.
 
 A tela de anamnese do paciente fica em `/pacientes/:pacienteId/anamnese`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta a anamnese existente por `GET /api/anamneses/paciente/{pacienteId}`. Quando a API retorna `404` para a anamnese, o formulário permanece em modo de cadastro e envia `POST /api/anamneses` com `pacienteId`. Quando já existe registro, a tela preenche o formulário e salva alterações via `PUT /api/anamneses/{id}`. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam valores apenas com espaços.
+
+A tela de avaliação fisioterapêutica do paciente fica em `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta as avaliações por `GET /api/avaliacoes-fisioterapeuticas/paciente/{pacienteId}`. O backend retorna uma lista ordenada por data da avaliação e ID em ordem decrescente; a tela edita a avaliação mais recente quando a lista possui itens e permanece em modo de cadastro quando a lista vem vazia. O cadastro envia `POST /api/avaliacoes-fisioterapeuticas` com `pacienteId`; a edição usa `PUT /api/avaliacoes-fisioterapeuticas/{id}`. Os campos `dataAvaliacao`, `queixaFuncional`, `escalaDor` e `diagnosticoFisioterapeutico` são obrigatórios, com `escalaDor` entre 0 e 10 e textos obrigatórios rejeitando valores apenas com espaços.
 
 A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
 

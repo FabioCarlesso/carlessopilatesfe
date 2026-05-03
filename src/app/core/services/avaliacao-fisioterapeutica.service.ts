@@ -15,8 +15,8 @@ export class AvaliacaoFisioterapeuticaService {
 
   constructor(private http: HttpClient) {}
 
-  buscarPorPaciente(pacienteId: number): Observable<AvaliacaoFisioterapeuticaResponseDTO> {
-    return this.http.get<AvaliacaoFisioterapeuticaResponseDTO>(`${this.apiUrl}/paciente/${pacienteId}`);
+  listarPorPaciente(pacienteId: number): Observable<AvaliacaoFisioterapeuticaResponseDTO[]> {
+    return this.http.get<AvaliacaoFisioterapeuticaResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
   }
 
   criar(dto: AvaliacaoFisioterapeuticaRequestDTO): Observable<AvaliacaoFisioterapeuticaResponseDTO> {

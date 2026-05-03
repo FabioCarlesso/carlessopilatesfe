@@ -16,83 +16,99 @@
 <form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
   <h2 class="form-section-title">Avaliação clínica</h2>
 
-  <div class="form-group">
-    <label for="queixaPrincipal">Queixa principal *</label>
-    <textarea id="queixaPrincipal" formControlName="queixaPrincipal" class="form-control"
-      aria-describedby="queixaPrincipalError"
-      [class.is-invalid]="campo('queixaPrincipal')?.invalid && campo('queixaPrincipal')?.touched"></textarea>
-    <div id="queixaPrincipalError" class="invalid-feedback" *ngIf="campo('queixaPrincipal')?.touched && campo('queixaPrincipal')?.invalid">
-      Queixa principal é obrigatória.
+  <div class="form-row">
+    <div class="form-group">
+      <label for="dataAvaliacao">Data da avaliação *</label>
+      <input id="dataAvaliacao" type="date" formControlName="dataAvaliacao" class="form-control"
+        aria-describedby="dataAvaliacaoError"
+        [class.is-invalid]="campo('dataAvaliacao')?.invalid && campo('dataAvaliacao')?.touched" />
+      <div id="dataAvaliacaoError" class="invalid-feedback" *ngIf="campo('dataAvaliacao')?.touched && campo('dataAvaliacao')?.invalid">
+        Data da avaliação é obrigatória.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="escalaDor">Escala de dor (0-10) *</label>
+      <input id="escalaDor" type="number" formControlName="escalaDor" class="form-control"
+        min="0" max="10"
+        aria-describedby="escalaDorError"
+        [class.is-invalid]="campo('escalaDor')?.invalid && campo('escalaDor')?.touched" />
+      <div id="escalaDorError" class="invalid-feedback" *ngIf="campo('escalaDor')?.touched && campo('escalaDor')?.invalid">
+        Escala de dor é obrigatória e deve estar entre 0 e 10.
+      </div>
     </div>
   </div>
 
   <div class="form-group">
-    <label for="historicoClinico">Histórico clínico</label>
-    <textarea id="historicoClinico" formControlName="historicoClinico" class="form-control"></textarea>
+    <label for="queixaFuncional">Queixa funcional *</label>
+    <textarea id="queixaFuncional" formControlName="queixaFuncional" class="form-control"
+      aria-describedby="queixaFuncionalError"
+      [class.is-invalid]="campo('queixaFuncional')?.invalid && campo('queixaFuncional')?.touched"></textarea>
+    <div id="queixaFuncionalError" class="invalid-feedback" *ngIf="campo('queixaFuncional')?.touched && campo('queixaFuncional')?.invalid">
+      Queixa funcional é obrigatória.
+    </div>
   </div>
 
   <h2 class="form-section-title">Exame físico</h2>
 
   <div class="form-row">
     <div class="form-group">
-      <label for="examePostural">Exame postural</label>
-      <textarea id="examePostural" formControlName="examePostural" class="form-control"></textarea>
+      <label for="avaliacaoPostural">Avaliação postural</label>
+      <textarea id="avaliacaoPostural" formControlName="avaliacaoPostural" class="form-control"></textarea>
     </div>
     <div class="form-group">
-      <label for="exameFisico">Exame físico geral</label>
-      <textarea id="exameFisico" formControlName="exameFisico" class="form-control"></textarea>
+      <label for="mobilidadeArticular">Mobilidade articular</label>
+      <textarea id="mobilidadeArticular" formControlName="mobilidadeArticular" class="form-control"></textarea>
     </div>
   </div>
-
-  <div class="form-group">
-    <label for="testesEspeciais">Testes especiais</label>
-    <textarea id="testesEspeciais" formControlName="testesEspeciais" class="form-control"></textarea>
-  </div>
-
-  <h2 class="form-section-title">Dor</h2>
 
   <div class="form-row">
     <div class="form-group">
-      <label for="escalaDor">Escala de dor (0–10)</label>
-      <input type="number" id="escalaDor" formControlName="escalaDor" class="form-control"
-        min="0" max="10"
-        aria-describedby="escalaDorError"
-        [class.is-invalid]="campo('escalaDor')?.invalid && campo('escalaDor')?.touched" />
-      <div id="escalaDorError" class="invalid-feedback" *ngIf="campo('escalaDor')?.touched && campo('escalaDor')?.invalid">
-        Escala de dor deve estar entre 0 e 10.
-      </div>
+      <label for="forcaMuscular">Força muscular</label>
+      <textarea id="forcaMuscular" formControlName="forcaMuscular" class="form-control"></textarea>
     </div>
     <div class="form-group">
-      <label for="localizacaoDor">Localização da dor</label>
-      <input type="text" id="localizacaoDor" formControlName="localizacaoDor" class="form-control" />
+      <label for="flexibilidade">Flexibilidade</label>
+      <textarea id="flexibilidade" formControlName="flexibilidade" class="form-control"></textarea>
     </div>
   </div>
 
-  <h2 class="form-section-title">Diagnóstico e conduta</h2>
-
-  <div class="form-group">
-    <label for="hipoteseDiagnostica">Hipótese diagnóstica</label>
-    <textarea id="hipoteseDiagnostica" formControlName="hipoteseDiagnostica" class="form-control"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="objetivosTratamento">Objetivos do tratamento *</label>
-    <textarea id="objetivosTratamento" formControlName="objetivosTratamento" class="form-control"
-      aria-describedby="objetivosTratamentoError"
-      [class.is-invalid]="campo('objetivosTratamento')?.invalid && campo('objetivosTratamento')?.touched"></textarea>
-    <div id="objetivosTratamentoError" class="invalid-feedback" *ngIf="campo('objetivosTratamento')?.touched && campo('objetivosTratamento')?.invalid">
-      Objetivos do tratamento são obrigatórios.
+  <div class="form-row">
+    <div class="form-group">
+      <label for="equilibrio">Equilíbrio</label>
+      <textarea id="equilibrio" formControlName="equilibrio" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="coordenacaoMotora">Coordenação motora</label>
+      <textarea id="coordenacaoMotora" formControlName="coordenacaoMotora" class="form-control"></textarea>
     </div>
   </div>
 
   <div class="form-group">
-    <label for="condutaTerapeutica">Conduta terapêutica</label>
-    <textarea id="condutaTerapeutica" formControlName="condutaTerapeutica" class="form-control"></textarea>
+    <label for="padraoRespiratorio">Padrão respiratório</label>
+    <textarea id="padraoRespiratorio" formControlName="padraoRespiratorio" class="form-control"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Diagnóstico e testes</h2>
+
+  <div class="form-group">
+    <label for="testesFuncionaisRealizados">Testes funcionais realizados</label>
+    <textarea id="testesFuncionaisRealizados" formControlName="testesFuncionaisRealizados" class="form-control"></textarea>
   </div>
 
   <div class="form-group">
-    <label for="observacoes">Observações gerais</label>
-    <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
+    <label for="diagnosticoFisioterapeutico">Diagnóstico fisioterapêutico *</label>
+    <textarea id="diagnosticoFisioterapeutico" formControlName="diagnosticoFisioterapeutico" class="form-control"
+      aria-describedby="diagnosticoFisioterapeuticoError"
+      [class.is-invalid]="campo('diagnosticoFisioterapeutico')?.invalid && campo('diagnosticoFisioterapeutico')?.touched"></textarea>
+    <div id="diagnosticoFisioterapeuticoError" class="invalid-feedback" *ngIf="campo('diagnosticoFisioterapeutico')?.touched && campo('diagnosticoFisioterapeutico')?.invalid">
+      Diagnóstico fisioterapêutico é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoesGerais">Observações gerais</label>
+    <textarea id="observacoesGerais" formControlName="observacoesGerais" class="form-control"></textarea>
   </div>
 
   <div class="form-actions">

@@ -24,17 +24,19 @@ const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {
   id: 5,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',
-  queixaPrincipal: 'Dor no joelho direito',
-  objetivosTratamento: 'Redução da dor e melhora funcional',
-  historicoClinico: 'Gonartrose grau II',
-  examePostural: null,
-  exameFisico: 'Crepitação ao movimento',
-  testesEspeciais: null,
+  dataAvaliacao: '2026-05-03',
+  queixaFuncional: 'Dor no joelho direito',
+  avaliacaoPostural: 'Anteriorização de cabeça',
+  mobilidadeArticular: 'Redução de amplitude',
+  forcaMuscular: 'Grau 4',
+  flexibilidade: null,
+  equilibrio: null,
+  coordenacaoMotora: null,
+  padraoRespiratorio: null,
   escalaDor: 7,
-  localizacaoDor: 'Joelho direito',
-  hipoteseDiagnostica: 'Gonartrose',
-  condutaTerapeutica: 'Fortalecimento muscular e eletroterapia',
-  observacoes: null,
+  testesFuncionaisRealizados: null,
+  diagnosticoFisioterapeutico: 'Gonartrose',
+  observacoesGerais: null,
   dataCriacao: '2026-05-03T10:00:00',
   dataAtualizacao: null
 };
@@ -46,22 +48,18 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
   let avaliacaoServiceSpy: jasmine.SpyObj<AvaliacaoFisioterapeuticaService>;
 
   async function setup(
-    avaliacao: AvaliacaoFisioterapeuticaResponseDTO | null = mockAvaliacao,
+    avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[] = [mockAvaliacao],
     pacienteId = '1'
   ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     avaliacaoServiceSpy = jasmine.createSpyObj('AvaliacaoFisioterapeuticaService', [
-      'buscarPorPaciente',
+      'listarPorPaciente',
       'criar',
       'atualizar'
     ]);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
-    avaliacaoServiceSpy.buscarPorPaciente.and.returnValue(
-      avaliacao === null
-        ? throwError(() => new HttpErrorResponse({ status: 404 }))
-        : of(avaliacao)
-    );
+    avaliacaoServiceSpy.listarPorPaciente.and.returnValue(of(avaliacoes));
 
     await TestBed.configureTestingModule({
       imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
@@ -82,30 +80,33 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
   });
 
   describe('with existing avaliacao', () => {
-    beforeEach(async () => setup(mockAvaliacao));
+    beforeEach(async () => setup([mockAvaliacao]));
 
-    it('should create and load patient and avaliacao', () => {
+    it('should create and load patient and latest avaliacao', () => {
       expect(component).toBeTruthy();
       expect(pacienteServiceSpy.buscar).toHaveBeenCalledWith(1);
-      expect(avaliacaoServiceSpy.buscarPorPaciente).toHaveBeenCalledWith(1);
+      expect(avaliacaoServiceSpy.listarPorPaciente).toHaveBeenCalledWith(1);
       expect(component.paciente).toEqual(mockPaciente);
       expect(component.avaliacao).toEqual(mockAvaliacao);
-      expect(component.form.get('queixaPrincipal')?.value).toBe('Dor no joelho direito');
+      expect(component.form.get('queixaFuncional')?.value).toBe('Dor no joelho direito');
+      expect(component.form.get('dataAvaliacao')?.value).toBe('2026-05-03');
       expect(component.loading).toBeFalse();
     });
 
     it('should update an existing avaliacao and show success message', () => {
-      const updated = { ...mockAvaliacao, objetivosTratamento: 'Mobilidade' };
+      const updated = { ...mockAvaliacao, diagnosticoFisioterapeutico: 'Gonalgia' };
       avaliacaoServiceSpy.atualizar.and.returnValue(of(updated));
-      component.form.patchValue({ objetivosTratamento: 'Mobilidade' });
+      component.form.patchValue({ diagnosticoFisioterapeutico: 'Gonalgia' });
 
       component.salvar();
 
       expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(
         5,
         jasmine.objectContaining({
-          queixaPrincipal: 'Dor no joelho direito',
-          objetivosTratamento: 'Mobilidade'
+          dataAvaliacao: '2026-05-03',
+          queixaFuncional: 'Dor no joelho direito',
+          escalaDor: 7,
+          diagnosticoFisioterapeutico: 'Gonalgia'
         })
       );
       expect(component.avaliacao).toEqual(updated);
@@ -124,12 +125,12 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
   });
 
   describe('without existing avaliacao', () => {
-    beforeEach(async () => setup(null));
+    beforeEach(async () => setup([]));
 
-    it('should keep form empty when API returns 404 for avaliacao', () => {
+    it('should keep form empty when API returns an empty avaliacao list', () => {
       expect(component.paciente).toEqual(mockPaciente);
       expect(component.avaliacao).toBeNull();
-      expect(component.form.get('queixaPrincipal')?.value).toBe('');
+      expect(component.form.get('queixaFuncional')?.value).toBe('');
       expect(component.loading).toBeFalse();
       expect(component.erro).toBeNull();
     });
@@ -137,8 +138,10 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
     it('should create a new avaliacao and include pacienteId in payload', () => {
       avaliacaoServiceSpy.criar.and.returnValue(of(mockAvaliacao));
       component.form.patchValue({
-        queixaPrincipal: 'Dor no joelho direito',
-        objetivosTratamento: 'Redução da dor e melhora funcional'
+        dataAvaliacao: '2026-05-03',
+        queixaFuncional: 'Dor no joelho direito',
+        escalaDor: 7,
+        diagnosticoFisioterapeutico: 'Gonartrose'
       });
 
       component.salvar();
@@ -146,8 +149,10 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
       expect(avaliacaoServiceSpy.criar).toHaveBeenCalledWith(
         jasmine.objectContaining({
           pacienteId: 1,
-          queixaPrincipal: 'Dor no joelho direito',
-          objetivosTratamento: 'Redução da dor e melhora funcional'
+          dataAvaliacao: '2026-05-03',
+          queixaFuncional: 'Dor no joelho direito',
+          escalaDor: 7,
+          diagnosticoFisioterapeutico: 'Gonartrose'
         })
       );
       expect(component.avaliacao).toEqual(mockAvaliacao);
@@ -159,28 +164,33 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
       component.salvar();
 
       expect(avaliacaoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('queixaPrincipal')?.touched).toBeTrue();
-      expect(component.form.get('objetivosTratamento')?.touched).toBeTrue();
+      expect(component.form.get('dataAvaliacao')?.touched).toBeTrue();
+      expect(component.form.get('queixaFuncional')?.touched).toBeTrue();
+      expect(component.form.get('escalaDor')?.touched).toBeTrue();
+      expect(component.form.get('diagnosticoFisioterapeutico')?.touched).toBeTrue();
     });
 
-    it('should keep required fields invalid when they contain only whitespace', () => {
+    it('should keep required text fields invalid when they contain only whitespace', () => {
       component.form.patchValue({
-        queixaPrincipal: '   ',
-        objetivosTratamento: '   '
+        dataAvaliacao: '2026-05-03',
+        queixaFuncional: '   ',
+        escalaDor: 5,
+        diagnosticoFisioterapeutico: '   '
       });
 
       component.salvar();
 
       expect(avaliacaoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('queixaPrincipal')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('objetivosTratamento')?.hasError('pattern')).toBeTrue();
+      expect(component.form.get('queixaFuncional')?.hasError('pattern')).toBeTrue();
+      expect(component.form.get('diagnosticoFisioterapeutico')?.hasError('pattern')).toBeTrue();
     });
 
     it('should keep escalaDor invalid when value is out of range', () => {
       component.form.patchValue({
-        queixaPrincipal: 'Dor no joelho direito',
-        objetivosTratamento: 'Redução da dor',
-        escalaDor: 11
+        dataAvaliacao: '2026-05-03',
+        queixaFuncional: 'Dor no joelho direito',
+        escalaDor: 11,
+        diagnosticoFisioterapeutico: 'Gonartrose'
       });
 
       component.salvar();
@@ -191,16 +201,16 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
   });
 
   it('should not call services when pacienteId route param is invalid', async () => {
-    await setup(null, 'abc');
+    await setup([], 'abc');
 
     expect(component.erro).toBe('Identificador inválido.');
     expect(component.parametroInvalido).toBeTrue();
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
-    expect(avaliacaoServiceSpy.buscarPorPaciente).not.toHaveBeenCalled();
+    expect(avaliacaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
   });
 
   it('should set erro when patient loading fails', async () => {
-    await setup(mockAvaliacao);
+    await setup([mockAvaliacao]);
     pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
 
     component.carregar();
@@ -209,9 +219,9 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
-  it('should set erro when buscarPorPaciente returns a non-404 error', async () => {
-    await setup(mockAvaliacao);
-    avaliacaoServiceSpy.buscarPorPaciente.and.returnValue(
+  it('should set erro when listarPorPaciente fails', async () => {
+    await setup([mockAvaliacao]);
+    avaliacaoServiceSpy.listarPorPaciente.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 500 }))
     );
 

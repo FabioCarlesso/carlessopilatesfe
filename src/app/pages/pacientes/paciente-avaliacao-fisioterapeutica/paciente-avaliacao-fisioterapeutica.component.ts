@@ -1,10 +1,9 @@
 import { NgIf } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, throwError } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
@@ -39,17 +38,19 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      queixaPrincipal: ['', [Validators.required, Validators.pattern(/\S/)]],
-      historicoClinico: [''],
-      examePostural: [''],
-      exameFisico: [''],
-      testesEspeciais: [''],
-      escalaDor: [null, [Validators.min(0), Validators.max(10)]],
-      localizacaoDor: [''],
-      hipoteseDiagnostica: [''],
-      objetivosTratamento: ['', [Validators.required, Validators.pattern(/\S/)]],
-      condutaTerapeutica: [''],
-      observacoes: ['']
+      dataAvaliacao: ['', Validators.required],
+      queixaFuncional: ['', [Validators.required, Validators.pattern(/\S/)]],
+      avaliacaoPostural: [''],
+      mobilidadeArticular: [''],
+      forcaMuscular: [''],
+      flexibilidade: [''],
+      equilibrio: [''],
+      coordenacaoMotora: [''],
+      padraoRespiratorio: [''],
+      escalaDor: [null, [Validators.required, Validators.min(0), Validators.max(10)]],
+      testesFuncionaisRealizados: [''],
+      diagnosticoFisioterapeutico: ['', [Validators.required, Validators.pattern(/\S/)]],
+      observacoesGerais: ['']
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -76,20 +77,13 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
 
     forkJoin({
       paciente: this.pacienteService.buscar(this.pacienteId),
-      avaliacao: this.avaliacaoService.buscarPorPaciente(this.pacienteId).pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) {
-            return of(null);
-          }
-          return throwError(() => error);
-        })
-      )
+      avaliacoes: this.avaliacaoService.listarPorPaciente(this.pacienteId)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ paciente, avaliacao }) => {
+      next: ({ paciente, avaliacoes }) => {
         this.paciente = paciente;
-        this.avaliacao = avaliacao;
-        if (avaliacao) {
-          const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = avaliacao;
+        this.avaliacao = avaliacoes[0] ?? null;
+        if (this.avaliacao) {
+          const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = this.avaliacao;
           this.form.patchValue(formFields);
         }
         this.loading = false;
@@ -117,19 +111,21 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
     this.sucesso = null;
 
     const valor = this.form.value;
-    const opt = (v: string | null | undefined): string | null => (v?.trim() ? v : null);
+    const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
     const dto = {
-      queixaPrincipal: valor.queixaPrincipal,
-      historicoClinico: opt(valor.historicoClinico),
-      examePostural: opt(valor.examePostural),
-      exameFisico: opt(valor.exameFisico),
-      testesEspeciais: opt(valor.testesEspeciais),
-      escalaDor: valor.escalaDor !== '' && valor.escalaDor !== null ? Number(valor.escalaDor) : null,
-      localizacaoDor: opt(valor.localizacaoDor),
-      hipoteseDiagnostica: opt(valor.hipoteseDiagnostica),
-      objetivosTratamento: valor.objetivosTratamento,
-      condutaTerapeutica: opt(valor.condutaTerapeutica),
-      observacoes: opt(valor.observacoes)
+      dataAvaliacao: valor.dataAvaliacao,
+      queixaFuncional: valor.queixaFuncional,
+      avaliacaoPostural: opt(valor.avaliacaoPostural),
+      mobilidadeArticular: opt(valor.mobilidadeArticular),
+      forcaMuscular: opt(valor.forcaMuscular),
+      flexibilidade: opt(valor.flexibilidade),
+      equilibrio: opt(valor.equilibrio),
+      coordenacaoMotora: opt(valor.coordenacaoMotora),
+      padraoRespiratorio: opt(valor.padraoRespiratorio),
+      escalaDor: Number(valor.escalaDor),
+      testesFuncionaisRealizados: opt(valor.testesFuncionaisRealizados),
+      diagnosticoFisioterapeutico: valor.diagnosticoFisioterapeutico,
+      observacoesGerais: opt(valor.observacoesGerais)
     };
 
     const avaliacaoAtual = this.avaliacao;

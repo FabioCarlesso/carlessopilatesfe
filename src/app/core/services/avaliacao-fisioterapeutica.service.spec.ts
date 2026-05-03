@@ -11,17 +11,19 @@ const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {
   id: 5,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',
-  queixaPrincipal: 'Dor no joelho direito',
-  objetivosTratamento: 'Redução da dor e melhora funcional',
-  historicoClinico: 'Gonartrose grau II',
-  examePostural: null,
-  exameFisico: 'Crepitação ao movimento',
-  testesEspeciais: null,
+  dataAvaliacao: '2026-05-03',
+  queixaFuncional: 'Dor no joelho direito',
+  avaliacaoPostural: null,
+  mobilidadeArticular: 'Redução de amplitude',
+  forcaMuscular: 'Grau 4',
+  flexibilidade: null,
+  equilibrio: null,
+  coordenacaoMotora: null,
+  padraoRespiratorio: null,
   escalaDor: 7,
-  localizacaoDor: 'Joelho direito',
-  hipoteseDiagnostica: 'Gonartrose',
-  condutaTerapeutica: 'Fortalecimento muscular e eletroterapia',
-  observacoes: null,
+  testesFuncionaisRealizados: null,
+  diagnosticoFisioterapeutico: 'Gonartrose',
+  observacoesGerais: null,
   dataCriacao: '2026-05-03T10:00:00',
   dataAtualizacao: null
 };
@@ -46,18 +48,20 @@ describe('AvaliacaoFisioterapeuticaService', () => {
   });
 
   it('should GET /api/avaliacoes-fisioterapeuticas/paciente/:pacienteId', () => {
-    service.buscarPorPaciente(1).subscribe(a => expect(a).toEqual(mockAvaliacao));
+    service.listarPorPaciente(1).subscribe(a => expect(a).toEqual([mockAvaliacao]));
 
     const req = httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1');
     expect(req.request.method).toBe('GET');
-    req.flush(mockAvaliacao);
+    req.flush([mockAvaliacao]);
   });
 
   it('should POST to /api/avaliacoes-fisioterapeuticas with request body', () => {
     const dto: AvaliacaoFisioterapeuticaRequestDTO = {
       pacienteId: 1,
-      queixaPrincipal: 'Dor no joelho direito',
-      objetivosTratamento: 'Redução da dor e melhora funcional'
+      dataAvaliacao: '2026-05-03',
+      queixaFuncional: 'Dor no joelho direito',
+      escalaDor: 7,
+      diagnosticoFisioterapeutico: 'Gonartrose'
     };
 
     service.criar(dto).subscribe(a => expect(a).toEqual(mockAvaliacao));
@@ -70,8 +74,10 @@ describe('AvaliacaoFisioterapeuticaService', () => {
 
   it('should PUT to /api/avaliacoes-fisioterapeuticas/:id with update body', () => {
     const dto: AvaliacaoFisioterapeuticaUpdateDTO = {
-      queixaPrincipal: 'Dor no joelho esquerdo',
-      objetivosTratamento: 'Mobilidade e fortalecimento'
+      dataAvaliacao: '2026-05-04',
+      queixaFuncional: 'Dor no joelho esquerdo',
+      escalaDor: 6,
+      diagnosticoFisioterapeutico: 'Gonalgia'
     };
 
     service.atualizar(5, dto).subscribe(a => expect(a).toEqual(mockAvaliacao));
