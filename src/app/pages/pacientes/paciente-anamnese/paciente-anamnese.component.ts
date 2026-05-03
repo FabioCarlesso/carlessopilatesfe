@@ -1,6 +1,7 @@
 import { NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
@@ -16,7 +17,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   templateUrl: './paciente-anamnese.component.html',
   styleUrl: './paciente-anamnese.component.scss'
 })
-export class PacienteAnamneseComponent implements OnInit {
+export class PacienteAnamneseComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
@@ -26,12 +27,14 @@ export class PacienteAnamneseComponent implements OnInit {
   erro: string | null = null;
   sucesso: string | null = null;
   parametroInvalido = false;
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private fb: FormBuilder,
     private pacienteService: PacienteService,
     private anamneseService: AnamneseService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -58,6 +61,12 @@ export class PacienteAnamneseComponent implements OnInit {
     this.carregar();
   }
 
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+  }
+
   carregar(): void {
     if (this.pacienteId === null) return;
 
@@ -74,12 +83,13 @@ export class PacienteAnamneseComponent implements OnInit {
           return throwError(() => error);
         })
       )
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: ({ paciente, anamnese }) => {
         this.paciente = paciente;
         this.anamnese = anamnese;
         if (anamnese) {
-          this.form.patchValue(anamnese);
+          const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = anamnese;
+          this.form.patchValue(formFields);
         }
         this.loading = false;
       },
@@ -106,17 +116,18 @@ export class PacienteAnamneseComponent implements OnInit {
     this.sucesso = null;
 
     const valor = this.form.value;
+    const opt = (v: string): string | null => (v?.trim() ? v : null);
     const dto = {
       queixaPrincipal: valor.queixaPrincipal,
-      historicoDoencas: valor.historicoDoencas,
-      historicoCirurgias: valor.historicoCirurgias,
-      historicoLesoes: valor.historicoLesoes,
-      medicamentosUso: valor.medicamentosUso,
-      alergias: valor.alergias,
-      nivelAtividadeFisica: valor.nivelAtividadeFisica,
-      restricoesMedicas: valor.restricoesMedicas,
+      historicoDoencas: opt(valor.historicoDoencas),
+      historicoCirurgias: opt(valor.historicoCirurgias),
+      historicoLesoes: opt(valor.historicoLesoes),
+      medicamentosUso: opt(valor.medicamentosUso),
+      alergias: opt(valor.alergias),
+      nivelAtividadeFisica: opt(valor.nivelAtividadeFisica),
+      restricoesMedicas: opt(valor.restricoesMedicas),
       objetivos: valor.objetivos,
-      observacoes: valor.observacoes
+      observacoes: opt(valor.observacoes)
     };
 
     const anamneseAtual = this.anamnese;
@@ -125,11 +136,16 @@ export class PacienteAnamneseComponent implements OnInit {
       ? this.anamneseService.criar({ pacienteId: this.pacienteId, ...dto })
       : this.anamneseService.atualizar(anamneseAtual.id, dto);
 
-    obs.subscribe({
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
         this.anamnese = response;
-        this.form.patchValue(response);
+        const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
+        this.form.patchValue(formFields);
+        if (this.successTimer !== null) {
+          clearTimeout(this.successTimer);
+        }
         this.sucesso = criando ? 'Anamnese cadastrada com sucesso.' : 'Anamnese atualizada com sucesso.';
+        this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.salvando = false;
       },
       error: () => {

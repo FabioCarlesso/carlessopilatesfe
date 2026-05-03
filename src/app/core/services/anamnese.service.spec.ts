@@ -48,14 +48,6 @@ describe('AnamneseService', () => {
     req.flush(mockAnamnese);
   });
 
-  it('should GET /api/anamneses/:id', () => {
-    service.buscarPorId(10).subscribe(a => expect(a).toEqual(mockAnamnese));
-
-    const req = httpMock.expectOne('/api/anamneses/10');
-    expect(req.request.method).toBe('GET');
-    req.flush(mockAnamnese);
-  });
-
   it('should POST to /api/anamneses with request body', () => {
     const dto: AnamneseRequestDTO = {
       pacienteId: 1,

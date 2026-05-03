@@ -19,10 +19,6 @@ export class AnamneseService {
     return this.http.get<AnamneseResponseDTO>(`${this.apiUrl}/paciente/${pacienteId}`);
   }
 
-  buscarPorId(id: number): Observable<AnamneseResponseDTO> {
-    return this.http.get<AnamneseResponseDTO>(`${this.apiUrl}/${id}`);
-  }
-
   criar(dto: AnamneseRequestDTO): Observable<AnamneseResponseDTO> {
     return this.http.post<AnamneseResponseDTO>(this.apiUrl, dto);
   }

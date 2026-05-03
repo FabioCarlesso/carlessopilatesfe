@@ -19,8 +19,9 @@
   <div class="form-group">
     <label for="queixaPrincipal">Queixa principal *</label>
     <textarea id="queixaPrincipal" formControlName="queixaPrincipal" class="form-control"
+      aria-describedby="queixaPrincipalError"
       [class.is-invalid]="campo('queixaPrincipal')?.invalid && campo('queixaPrincipal')?.touched"></textarea>
-    <div class="invalid-feedback" *ngIf="campo('queixaPrincipal')?.touched && campo('queixaPrincipal')?.invalid">
+    <div id="queixaPrincipalError" class="invalid-feedback" *ngIf="campo('queixaPrincipal')?.touched && campo('queixaPrincipal')?.invalid">
       Queixa principal é obrigatória.
     </div>
   </div>
@@ -54,7 +55,13 @@
     </div>
     <div class="form-group">
       <label for="nivelAtividadeFisica">Nível de atividade física</label>
-      <textarea id="nivelAtividadeFisica" formControlName="nivelAtividadeFisica" class="form-control"></textarea>
+      <select id="nivelAtividadeFisica" formControlName="nivelAtividadeFisica" class="form-control">
+        <option value="">Selecione...</option>
+        <option value="Sedentário">Sedentário</option>
+        <option value="Leve">Leve</option>
+        <option value="Moderado">Moderado</option>
+        <option value="Intenso">Intenso</option>
+      </select>
     </div>
   </div>
 
@@ -68,8 +75,9 @@
   <div class="form-group">
     <label for="objetivos">Objetivos do paciente *</label>
     <textarea id="objetivos" formControlName="objetivos" class="form-control"
+      aria-describedby="objetivosError"
       [class.is-invalid]="campo('objetivos')?.invalid && campo('objetivos')?.touched"></textarea>
-    <div class="invalid-feedback" *ngIf="campo('objetivos')?.touched && campo('objetivos')?.invalid">
+    <div id="objetivosError" class="invalid-feedback" *ngIf="campo('objetivos')?.touched && campo('objetivos')?.invalid">
       Objetivos do paciente são obrigatórios.
     </div>
   </div>

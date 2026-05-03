@@ -180,4 +180,16 @@ describe('PacienteAnamneseComponent', () => {
     expect(component.erro).toBe('Erro ao carregar anamnese do paciente.');
     expect(component.loading).toBeFalse();
   });
+
+  it('should set erro when buscarPorPaciente returns a non-404 error', async () => {
+    await setup(mockAnamnese);
+    anamneseServiceSpy.buscarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    component.carregar();
+
+    expect(component.erro).toBe('Erro ao carregar anamnese do paciente.');
+    expect(component.loading).toBeFalse();
+  });
 });
