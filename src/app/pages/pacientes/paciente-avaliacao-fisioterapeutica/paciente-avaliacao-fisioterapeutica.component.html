@@ -1,0 +1,121 @@
+<div class="page-header">
+  <div>
+    <h1>Avaliação Fisioterapêutica</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Avaliação clínica</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="dataAvaliacao">Data da avaliação *</label>
+      <input id="dataAvaliacao" type="date" formControlName="dataAvaliacao" class="form-control"
+        aria-describedby="dataAvaliacaoError"
+        [class.is-invalid]="campo('dataAvaliacao')?.invalid && campo('dataAvaliacao')?.touched" />
+      <div id="dataAvaliacaoError" class="invalid-feedback" *ngIf="campo('dataAvaliacao')?.touched && campo('dataAvaliacao')?.invalid">
+        Data da avaliação é obrigatória.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="escalaDor">Escala de dor (0-10) *</label>
+      <input id="escalaDor" type="number" formControlName="escalaDor" class="form-control"
+        min="0" max="10"
+        aria-describedby="escalaDorError"
+        [class.is-invalid]="campo('escalaDor')?.invalid && campo('escalaDor')?.touched" />
+      <div id="escalaDorError" class="invalid-feedback" *ngIf="campo('escalaDor')?.touched && campo('escalaDor')?.invalid">
+        Escala de dor é obrigatória e deve estar entre 0 e 10.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="queixaFuncional">Queixa funcional *</label>
+    <textarea id="queixaFuncional" formControlName="queixaFuncional" class="form-control"
+      aria-describedby="queixaFuncionalError"
+      [class.is-invalid]="campo('queixaFuncional')?.invalid && campo('queixaFuncional')?.touched"></textarea>
+    <div id="queixaFuncionalError" class="invalid-feedback" *ngIf="campo('queixaFuncional')?.touched && campo('queixaFuncional')?.invalid">
+      Queixa funcional é obrigatória.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Exame físico</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="avaliacaoPostural">Avaliação postural</label>
+      <textarea id="avaliacaoPostural" formControlName="avaliacaoPostural" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="mobilidadeArticular">Mobilidade articular</label>
+      <textarea id="mobilidadeArticular" formControlName="mobilidadeArticular" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="forcaMuscular">Força muscular</label>
+      <textarea id="forcaMuscular" formControlName="forcaMuscular" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="flexibilidade">Flexibilidade</label>
+      <textarea id="flexibilidade" formControlName="flexibilidade" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="equilibrio">Equilíbrio</label>
+      <textarea id="equilibrio" formControlName="equilibrio" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="coordenacaoMotora">Coordenação motora</label>
+      <textarea id="coordenacaoMotora" formControlName="coordenacaoMotora" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="padraoRespiratorio">Padrão respiratório</label>
+    <textarea id="padraoRespiratorio" formControlName="padraoRespiratorio" class="form-control"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Diagnóstico e testes</h2>
+
+  <div class="form-group">
+    <label for="testesFuncionaisRealizados">Testes funcionais realizados</label>
+    <textarea id="testesFuncionaisRealizados" formControlName="testesFuncionaisRealizados" class="form-control"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="diagnosticoFisioterapeutico">Diagnóstico fisioterapêutico *</label>
+    <textarea id="diagnosticoFisioterapeutico" formControlName="diagnosticoFisioterapeutico" class="form-control"
+      aria-describedby="diagnosticoFisioterapeuticoError"
+      [class.is-invalid]="campo('diagnosticoFisioterapeutico')?.invalid && campo('diagnosticoFisioterapeutico')?.touched"></textarea>
+    <div id="diagnosticoFisioterapeuticoError" class="invalid-feedback" *ngIf="campo('diagnosticoFisioterapeutico')?.touched && campo('diagnosticoFisioterapeutico')?.invalid">
+      Diagnóstico fisioterapêutico é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoesGerais">Observações gerais</label>
+    <textarea id="observacoesGerais" formControlName="observacoesGerais" class="form-control"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (avaliacao ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Cancelar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

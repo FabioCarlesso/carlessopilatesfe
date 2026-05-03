@@ -38,6 +38,13 @@ export const routes: Routes = [
       import('./pages/pacientes/paciente-anamnese/paciente-anamnese.component').then(m => m.PacienteAnamneseComponent)
   },
   {
+    path: 'pacientes/:pacienteId/avaliacao-fisioterapeutica',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-avaliacao-fisioterapeutica/paciente-avaliacao-fisioterapeutica.component')
+        .then(m => m.PacienteAvaliacaoFisioterapeuticaComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [authGuard],
     loadComponent: () =>

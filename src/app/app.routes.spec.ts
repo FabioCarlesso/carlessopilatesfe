@@ -11,6 +11,7 @@ describe('app routes', () => {
       'pacientes/novo',
       'pacientes/:id/editar',
       'pacientes/:pacienteId/anamnese',
+      'pacientes/:pacienteId/avaliacao-fisioterapeutica',
       'pacientes/:id',
       'planos/novo/:pacienteId',
       'planos/paciente/:pacienteId',
@@ -32,6 +33,7 @@ describe('app routes', () => {
   it('should place pacientes/:id after static pacientes routes', () => {
     const idIndex = paths.indexOf('pacientes/:id');
     const anamneseIndex = paths.indexOf('pacientes/:pacienteId/anamnese');
+    const avaliacaoIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica');
     const editarIndex = paths.indexOf('pacientes/:id/editar');
     const novoIndex = paths.indexOf('pacientes/novo');
     const listIndex = paths.indexOf('pacientes');
@@ -39,7 +41,8 @@ describe('app routes', () => {
     expect(listIndex).toBeLessThan(novoIndex);
     expect(novoIndex).toBeLessThan(editarIndex);
     expect(editarIndex).toBeLessThan(anamneseIndex);
-    expect(anamneseIndex).toBeLessThan(idIndex);
+    expect(anamneseIndex).toBeLessThan(avaliacaoIndex);
+    expect(avaliacaoIndex).toBeLessThan(idIndex);
   });
 
   it('should place pacientes/:id before planos routes', () => {
