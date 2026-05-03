@@ -96,7 +96,8 @@ src/app/
 ├── pages/pacientes/
 │   ├── paciente-list/              # Listagem paginada com filtros
 │   ├── paciente-form/              # Cadastro e edição
-│   └── paciente-detail/            # Visualização detalhada
+│   ├── paciente-detail/            # Visualização detalhada
+│   └── paciente-anamnese/          # Cadastro e edição da anamnese
 ├── pages/profissionais/            # CRUD de profissionais
 ├── pages/relatorios/               # Relatórios administrativos
 └── shared/components/              # Componentes reutilizáveis
@@ -157,7 +158,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
-| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, e paginação com tamanho configurável |
+| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável e anamnese clínica vinculada |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -174,8 +175,9 @@ Arquivos de teste:
 | `/`                     | Dashboard inicial com indicadores do sistema |
 | `/pacientes`            | Lista de pacientes com filtros e paginação  |
 | `/pacientes/novo`       | Formulário de cadastro                      |
-| `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/pacientes/:id/editar` | Formulário de edição                        |
+| `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente |
+| `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/profissionais`        | Lista de profissionais ativos (paginada)    |
 | `/profissionais/novo`   | Formulário de cadastro de profissional      |
 | `/profissionais/:id`    | Detalhes do profissional                    |
@@ -185,7 +187,9 @@ Arquivos de teste:
 | `/relatorios/nfse` | Relatório de emissão de NFSEs |
 | `/login` | Tela de autenticação (pública) |
 
-Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos e Aulas do paciente.
+Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos, Aulas e Anamnese do paciente.
+
+A tela de anamnese do paciente fica em `/pacientes/:pacienteId/anamnese`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta a anamnese existente por `GET /api/anamneses/paciente/{pacienteId}`. Quando a API retorna `404` para a anamnese, o formulário permanece em modo de cadastro e envia `POST /api/anamneses` com `pacienteId`. Quando já existe registro, a tela preenche o formulário e salva alterações via `PUT /api/anamneses/{id}`. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam valores apenas com espaços.
 
 A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
 

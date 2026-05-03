@@ -1,0 +1,97 @@
+<div class="page-header">
+  <div>
+    <h1>Anamnese</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Informações clínicas</h2>
+
+  <div class="form-group">
+    <label for="queixaPrincipal">Queixa principal *</label>
+    <textarea id="queixaPrincipal" formControlName="queixaPrincipal" class="form-control"
+      aria-describedby="queixaPrincipalError"
+      [class.is-invalid]="campo('queixaPrincipal')?.invalid && campo('queixaPrincipal')?.touched"></textarea>
+    <div id="queixaPrincipalError" class="invalid-feedback" *ngIf="campo('queixaPrincipal')?.touched && campo('queixaPrincipal')?.invalid">
+      Queixa principal é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="historicoDoencas">Histórico de doenças</label>
+      <textarea id="historicoDoencas" formControlName="historicoDoencas" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="historicoCirurgias">Histórico de cirurgias</label>
+      <textarea id="historicoCirurgias" formControlName="historicoCirurgias" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="historicoLesoes">Histórico de lesões</label>
+      <textarea id="historicoLesoes" formControlName="historicoLesoes" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="medicamentosUso">Medicamentos em uso</label>
+      <textarea id="medicamentosUso" formControlName="medicamentosUso" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="alergias">Alergias</label>
+      <textarea id="alergias" formControlName="alergias" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="nivelAtividadeFisica">Nível de atividade física</label>
+      <select id="nivelAtividadeFisica" formControlName="nivelAtividadeFisica" class="form-control">
+        <option value="">Selecione...</option>
+        <option value="Sedentário">Sedentário</option>
+        <option value="Leve">Leve</option>
+        <option value="Moderado">Moderado</option>
+        <option value="Intenso">Intenso</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="restricoesMedicas">Restrições médicas</label>
+    <textarea id="restricoesMedicas" formControlName="restricoesMedicas" class="form-control"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Objetivos</h2>
+
+  <div class="form-group">
+    <label for="objetivos">Objetivos do paciente *</label>
+    <textarea id="objetivos" formControlName="objetivos" class="form-control"
+      aria-describedby="objetivosError"
+      [class.is-invalid]="campo('objetivos')?.invalid && campo('objetivos')?.touched"></textarea>
+    <div id="objetivosError" class="invalid-feedback" *ngIf="campo('objetivos')?.touched && campo('objetivos')?.invalid">
+      Objetivos do paciente são obrigatórios.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoes">Observações gerais</label>
+    <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (anamnese ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Cancelar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>
