@@ -97,7 +97,8 @@ src/app/
 │   ├── paciente-list/              # Listagem paginada com filtros
 │   ├── paciente-form/              # Cadastro e edição
 │   ├── paciente-detail/            # Visualização detalhada
-│   └── paciente-anamnese/          # Cadastro e edição da anamnese
+│   ├── paciente-anamnese/          # Cadastro e edição da anamnese
+│   └── paciente-avaliacao-fisioterapeutica/ # Cadastro e edição da avaliação fisioterapêutica
 ├── pages/profissionais/            # CRUD de profissionais
 ├── pages/relatorios/               # Relatórios administrativos
 └── shared/components/              # Componentes reutilizáveis
@@ -129,6 +130,7 @@ npm test
 Arquivos de teste:
 - `src/app/app.routes.spec.ts`
 - `src/app/app.component.spec.ts`
+- `src/app/core/services/avaliacao-fisioterapeutica.service.spec.ts`
 - `src/app/core/services/dashboard.service.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
 - `src/app/core/services/profissional.service.spec.ts`
@@ -158,7 +160,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
-| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável e anamnese clínica vinculada |
+| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica e avaliação fisioterapêutica vinculadas |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -177,6 +179,7 @@ Arquivos de teste:
 | `/pacientes/novo`       | Formulário de cadastro                      |
 | `/pacientes/:id/editar` | Formulário de edição                        |
 | `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | Cadastro e edição da avaliação fisioterapêutica do paciente |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/profissionais`        | Lista de profissionais ativos (paginada)    |
 | `/profissionais/novo`   | Formulário de cadastro de profissional      |

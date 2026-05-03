@@ -1,0 +1,105 @@
+<div class="page-header">
+  <div>
+    <h1>Avaliação Fisioterapêutica</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Avaliação clínica</h2>
+
+  <div class="form-group">
+    <label for="queixaPrincipal">Queixa principal *</label>
+    <textarea id="queixaPrincipal" formControlName="queixaPrincipal" class="form-control"
+      aria-describedby="queixaPrincipalError"
+      [class.is-invalid]="campo('queixaPrincipal')?.invalid && campo('queixaPrincipal')?.touched"></textarea>
+    <div id="queixaPrincipalError" class="invalid-feedback" *ngIf="campo('queixaPrincipal')?.touched && campo('queixaPrincipal')?.invalid">
+      Queixa principal é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="historicoClinico">Histórico clínico</label>
+    <textarea id="historicoClinico" formControlName="historicoClinico" class="form-control"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Exame físico</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="examePostural">Exame postural</label>
+      <textarea id="examePostural" formControlName="examePostural" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="exameFisico">Exame físico geral</label>
+      <textarea id="exameFisico" formControlName="exameFisico" class="form-control"></textarea>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="testesEspeciais">Testes especiais</label>
+    <textarea id="testesEspeciais" formControlName="testesEspeciais" class="form-control"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Dor</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="escalaDor">Escala de dor (0–10)</label>
+      <input type="number" id="escalaDor" formControlName="escalaDor" class="form-control"
+        min="0" max="10"
+        aria-describedby="escalaDorError"
+        [class.is-invalid]="campo('escalaDor')?.invalid && campo('escalaDor')?.touched" />
+      <div id="escalaDorError" class="invalid-feedback" *ngIf="campo('escalaDor')?.touched && campo('escalaDor')?.invalid">
+        Escala de dor deve estar entre 0 e 10.
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="localizacaoDor">Localização da dor</label>
+      <input type="text" id="localizacaoDor" formControlName="localizacaoDor" class="form-control" />
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Diagnóstico e conduta</h2>
+
+  <div class="form-group">
+    <label for="hipoteseDiagnostica">Hipótese diagnóstica</label>
+    <textarea id="hipoteseDiagnostica" formControlName="hipoteseDiagnostica" class="form-control"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="objetivosTratamento">Objetivos do tratamento *</label>
+    <textarea id="objetivosTratamento" formControlName="objetivosTratamento" class="form-control"
+      aria-describedby="objetivosTratamentoError"
+      [class.is-invalid]="campo('objetivosTratamento')?.invalid && campo('objetivosTratamento')?.touched"></textarea>
+    <div id="objetivosTratamentoError" class="invalid-feedback" *ngIf="campo('objetivosTratamento')?.touched && campo('objetivosTratamento')?.invalid">
+      Objetivos do tratamento são obrigatórios.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="condutaTerapeutica">Conduta terapêutica</label>
+    <textarea id="condutaTerapeutica" formControlName="condutaTerapeutica" class="form-control"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoes">Observações gerais</label>
+    <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (avaliacao ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Cancelar</a>
+    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>
