@@ -32,7 +32,7 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Dashboard | `/` | Indicadores consolidados de pacientes, profissionais, pagamentos e aulas do mês atual |
-| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar` | CRUD completo, filtros de busca, paginação, ativar/inativar |
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese` | CRUD completo, filtros de busca, paginação, ativar/inativar e anamnese clínica |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
@@ -59,7 +59,8 @@ carlessopilatesfe/
 │   │   │   ├── pacientes/
 │   │   │   │   ├── paciente-list/       # Listagem paginada de pacientes
 │   │   │   │   ├── paciente-form/       # Formulário de cadastro e edição
-│   │   │   │   └── paciente-detail/     # Visualização detalhada
+│   │   │   │   ├── paciente-detail/     # Visualização detalhada
+│   │   │   │   └── paciente-anamnese/   # Cadastro e edição da anamnese
 │   │   │   ├── profissionais/           # CRUD de profissionais
 │   │   │   └── relatorios/              # Relatórios administrativos
 │   │   ├── shared/
@@ -187,6 +188,48 @@ Wrapper de resposta paginada da API. Os metadados ficam em `page.page` (estrutur
 interface Page<T> {
   content: T[];
   page: PageMetadata;
+}
+```
+
+Arquivo: `src/app/core/models/anamnese.ts`
+
+### `AnamneseRequestDTO`
+Payload para criação de anamnese vinculada ao paciente.
+```typescript
+interface AnamneseRequestDTO {
+  pacienteId: number;
+  queixaPrincipal: string;
+  historicoDoencas?: string;
+  historicoCirurgias?: string;
+  historicoLesoes?: string;
+  medicamentosUso?: string;
+  alergias?: string;
+  nivelAtividadeFisica?: string;
+  restricoesMedicas?: string;
+  objetivos: string;
+  observacoes?: string;
+}
+```
+
+### `AnamneseResponseDTO`
+Retorno da API ao consultar ou salvar anamnese.
+```typescript
+interface AnamneseResponseDTO {
+  id: number;
+  pacienteId: number;
+  nomePaciente: string;
+  queixaPrincipal: string;
+  historicoDoencas: string | null;
+  historicoCirurgias: string | null;
+  historicoLesoes: string | null;
+  medicamentosUso: string | null;
+  alergias: string | null;
+  nivelAtividadeFisica: string | null;
+  restricoesMedicas: string | null;
+  objetivos: string;
+  observacoes: string | null;
+  dataCriacao: string;
+  dataAtualizacao: string | null;
 }
 ```
 
