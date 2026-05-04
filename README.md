@@ -121,6 +121,12 @@ Componentes globais como botões, inputs, cards, badges, tabelas, paginação, a
 
 ---
 
+## Licença
+
+Este projeto é distribuído sob a licença MIT. Consulte o arquivo [`LICENSE`](LICENSE) para mais detalhes.
+
+---
+
 ## Testes
 
 Os testes unitários cobrem o serviço e todos os componentes de página:
