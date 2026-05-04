@@ -1,0 +1,97 @@
+<div class="page-header">
+  <div>
+    <h1>{{ modoEdicao ? 'Editar' : 'Nova' }} Sessão</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+
+  <h2 class="form-section-title">Dados da sessão</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="tipo">Tipo *</label>
+      <select id="tipo" formControlName="tipo" class="form-control"
+        aria-describedby="tipoError"
+        [class.is-invalid]="campo('tipo')?.invalid && campo('tipo')?.touched">
+        <option *ngFor="let t of tipos" [value]="t">{{ tipoLabel[t] }}</option>
+      </select>
+      <div id="tipoError" class="invalid-feedback"
+        *ngIf="campo('tipo')?.touched && campo('tipo')?.invalid">
+        Tipo é obrigatório.
+      </div>
+    </div>
+
+    <div class="form-group" *ngIf="modoEdicao">
+      <label for="status">Status *</label>
+      <select id="status" formControlName="status" class="form-control"
+        aria-describedby="statusError"
+        [class.is-invalid]="campo('status')?.invalid && campo('status')?.touched">
+        <option *ngFor="let s of statuses" [value]="s">{{ statusLabel[s] }}</option>
+      </select>
+      <div id="statusError" class="invalid-feedback"
+        *ngIf="campo('status')?.touched && campo('status')?.invalid">
+        Status é obrigatório.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="dataHora">Data e hora *</label>
+      <input id="dataHora" type="datetime-local" formControlName="dataHora" class="form-control"
+        aria-describedby="dataHoraError"
+        [class.is-invalid]="campo('dataHora')?.invalid && campo('dataHora')?.touched" />
+      <div id="dataHoraError" class="invalid-feedback"
+        *ngIf="campo('dataHora')?.touched && campo('dataHora')?.invalid">
+        Data e hora são obrigatórias.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="duracao">Duração (minutos) *</label>
+      <input id="duracao" type="number" formControlName="duracao" class="form-control"
+        min="1" max="480"
+        aria-describedby="duracaoError"
+        [class.is-invalid]="campo('duracao')?.invalid && campo('duracao')?.touched" />
+      <div id="duracaoError" class="invalid-feedback"
+        *ngIf="campo('duracao')?.touched && campo('duracao')?.invalid">
+        Duração é obrigatória e deve estar entre 1 e 480 minutos.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="profissionalId">ID do profissional responsável</label>
+    <input id="profissionalId" type="number" formControlName="profissionalId" class="form-control"
+      min="1" step="1" placeholder="Opcional"
+      aria-describedby="profissionalIdError"
+      [class.is-invalid]="campo('profissionalId')?.invalid && campo('profissionalId')?.touched" />
+    <div id="profissionalIdError" class="invalid-feedback"
+      *ngIf="campo('profissionalId')?.touched && campo('profissionalId')?.invalid">
+      ID do profissional deve ser um número inteiro positivo.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Observações</h2>
+
+  <div class="form-group">
+    <label for="observacoes">Observações</label>
+    <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

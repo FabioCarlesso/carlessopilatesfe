@@ -1,0 +1,97 @@
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.alert-success {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+  border-color: transparent;
+}
+
+.sessoes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.sessao-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+
+  &.sessao-agendada {
+    border-left: 4px solid var(--c-primary);
+  }
+}
+
+.sessao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.sessao-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.sessao-tipo,
+.sessao-data,
+.sessao-duracao,
+.sessao-profissional {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.sessao-acoes {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.badge-status {
+  font-size: 0.75rem;
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.badge-agendada {
+  background: var(--c-info-bg, #dbeafe);
+  color: var(--c-info, #1d4ed8);
+}
+
+.badge-realizada {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+
+.badge-cancelada {
+  background: var(--c-danger-bg, #fde8e8);
+  color: var(--c-danger);
+}
+
+.sessao-body {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.dialog-title {
+  margin: 0 0 var(--sp-3);
+  font-size: 1.125rem;
+}
+
+.btn-success {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+  border: 1px solid currentColor;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}

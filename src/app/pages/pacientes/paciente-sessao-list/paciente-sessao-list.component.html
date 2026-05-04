@@ -1,0 +1,68 @@
+<div class="page-header">
+  <div>
+    <h1>Sessões</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar ao Paciente</a>
+    <a *ngIf="!paciente && pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && sessoes.length === 0 && !erro" class="empty-state">
+  Nenhuma sessão cadastrada.
+</div>
+
+<div *ngIf="sessoes.length > 0" class="sessoes-list">
+  <div *ngFor="let sessao of sessoes" class="sessao-card" [class.sessao-agendada]="sessao.status === 'AGENDADA'">
+    <div class="sessao-header">
+      <div class="sessao-info">
+        <span class="badge badge-status"
+          [class.badge-agendada]="sessao.status === 'AGENDADA'"
+          [class.badge-realizada]="sessao.status === 'REALIZADA'"
+          [class.badge-cancelada]="sessao.status === 'CANCELADA'">
+          {{ statusLabel[sessao.status] }}
+        </span>
+        <span class="sessao-tipo">{{ tipoLabel[sessao.tipo] }}</span>
+        <span class="sessao-data">{{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span class="sessao-duracao">{{ sessao.duracao }} min</span>
+        <span *ngIf="sessao.nomeProfissional" class="sessao-profissional">{{ sessao.nomeProfissional }}</span>
+      </div>
+      <div class="sessao-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']"
+          class="btn btn-secondary btn-sm">Editar</a>
+        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-success btn-sm"
+          [disabled]="acaoEmAndamentoId !== null"
+          (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>
+        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-danger btn-sm"
+          [disabled]="acaoEmAndamentoId !== null"
+          (click)="confirmarAcao(sessao.id, 'cancelar')">Cancelar</button>
+      </div>
+    </div>
+
+    <div *ngIf="sessao.observacoes" class="sessao-body">
+      <div class="detail-item">
+        <span class="label">Observações</span>
+        <span>{{ sessao.observacoes }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarAcaoId !== null">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirmarSessaoTitulo">
+    <h2 id="confirmarSessaoTitulo" class="dialog-title">
+      Confirmar ação
+    </h2>
+    <p>Confirma {{ acaoLabel() }} esta sessão?</p>
+    <div class="dialog-actions">
+      <button #confirmarButton class="btn btn-danger" [disabled]="acaoEmAndamentoId !== null" (click)="executarAcao()">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarAcao()">Cancelar</button>
+    </div>
+  </div>
+</div>

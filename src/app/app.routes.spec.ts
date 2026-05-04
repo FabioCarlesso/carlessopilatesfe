@@ -12,6 +12,9 @@ describe('app routes', () => {
       'pacientes/:id/editar',
       'pacientes/:pacienteId/anamnese',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica',
+      'pacientes/:pacienteId/sessoes/nova',
+      'pacientes/:pacienteId/sessoes/:id/editar',
+      'pacientes/:pacienteId/sessoes',
       'pacientes/:pacienteId/plano-tratamento/novo',
       'pacientes/:pacienteId/plano-tratamento/:id/editar',
       'pacientes/:pacienteId/plano-tratamento',
@@ -37,6 +40,9 @@ describe('app routes', () => {
     const idIndex = paths.indexOf('pacientes/:id');
     const anamneseIndex = paths.indexOf('pacientes/:pacienteId/anamnese');
     const avaliacaoIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica');
+    const sessoesNovaIndex = paths.indexOf('pacientes/:pacienteId/sessoes/nova');
+    const sessoesEditarIndex = paths.indexOf('pacientes/:pacienteId/sessoes/:id/editar');
+    const sessoesListIndex = paths.indexOf('pacientes/:pacienteId/sessoes');
     const planoTratamentoNovoIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/novo');
     const planoTratamentoEditarIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/:id/editar');
     const planoTratamentoListIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento');
@@ -48,7 +54,10 @@ describe('app routes', () => {
     expect(novoIndex).toBeLessThan(editarIndex);
     expect(editarIndex).toBeLessThan(anamneseIndex);
     expect(anamneseIndex).toBeLessThan(avaliacaoIndex);
-    expect(avaliacaoIndex).toBeLessThan(planoTratamentoNovoIndex);
+    expect(avaliacaoIndex).toBeLessThan(sessoesNovaIndex);
+    expect(sessoesNovaIndex).toBeLessThan(sessoesEditarIndex);
+    expect(sessoesEditarIndex).toBeLessThan(sessoesListIndex);
+    expect(sessoesListIndex).toBeLessThan(planoTratamentoNovoIndex);
     expect(planoTratamentoNovoIndex).toBeLessThan(planoTratamentoEditarIndex);
     expect(planoTratamentoEditarIndex).toBeLessThan(planoTratamentoListIndex);
     expect(planoTratamentoListIndex).toBeLessThan(idIndex);
