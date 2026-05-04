@@ -4,7 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { PlanoTratamentoResponseDTO, PLANO_TRATAMENTO_STATUS_LABEL, PlanoTratamentoStatus } from '../../../core/models/plano-tratamento';
+import {
+  PlanoTratamentoRequestDTO,
+  PlanoTratamentoResponseDTO,
+  PLANO_TRATAMENTO_STATUS_LABEL,
+  PlanoTratamentoStatus,
+  PlanoTratamentoUpdateDTO
+} from '../../../core/models/plano-tratamento';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -58,7 +64,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.planoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
 
-    if (this.pacienteId === null) {
+    if (this.pacienteId === null || (this.route.snapshot.paramMap.has('id') && this.planoId === null)) {
       this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
@@ -93,13 +99,21 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
       .subscribe({
         next: ({ paciente, plano }) => {
           this.paciente = paciente;
-          this.plano = plano;
           if (plano) {
+            if (plano.pacienteId !== this.pacienteId) {
+              this.parametroInvalido = true;
+              this.erro = 'Plano de tratamento não pertence ao paciente informado.';
+              this.loading = false;
+              return;
+            }
+            this.plano = plano;
             const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = plano;
             this.form.patchValue({
               ...formFields,
               dataPrevisaoTermino: formFields.dataPrevisaoTermino ?? ''
             });
+          } else {
+            this.plano = null;
           }
           this.loading = false;
         },
@@ -127,7 +141,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
-    const dto = {
+    const baseDto = {
       dataInicio: valor.dataInicio,
       dataPrevisaoTermino: opt(valor.dataPrevisaoTermino),
       objetivosTerapeuticos: valor.objetivosTerapeuticos,
@@ -136,15 +150,22 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
       exerciciosIndicados: valor.exerciciosIndicados,
       exerciciosContraindicados: opt(valor.exerciciosContraindicados),
       equipamentosPrevistos: opt(valor.equipamentosPrevistos),
-      observacoesClinicas: opt(valor.observacoesClinicas),
+      observacoesClinicas: opt(valor.observacoesClinicas)
+    };
+    const updateDto: PlanoTratamentoUpdateDTO = {
+      ...baseDto,
       status: valor.status as PlanoTratamentoStatus
+    };
+    const createDto: PlanoTratamentoRequestDTO = {
+      pacienteId: this.pacienteId,
+      ...baseDto
     };
 
     const planoAtual = this.plano;
     const criando = planoAtual === null;
     const obs = criando
-      ? this.planoTratamentoService.criar({ pacienteId: this.pacienteId, ...dto })
-      : this.planoTratamentoService.atualizar(planoAtual.id, dto);
+      ? this.planoTratamentoService.criar(createDto)
+      : this.planoTratamentoService.atualizar(planoAtual.id, updateDto);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { PlanoTratamentoResponseDTO } from '../../../core/models/plano-tratamento';
@@ -42,8 +42,12 @@ describe('PacientePlanoTratamentoFormComponent', () => {
   let fixture: ComponentFixture<PacientePlanoTratamentoFormComponent>;
   let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
   let planoTratamentoServiceSpy: jasmine.SpyObj<PlanoTratamentoService>;
+  let router: Router;
 
-  async function setup(params: { pacienteId: string; id?: string } = { pacienteId: '10' }) {
+  async function setup(
+    params: { pacienteId: string; id?: string } = { pacienteId: '10' },
+    plano: PlanoTratamentoResponseDTO = mockPlano
+  ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     planoTratamentoServiceSpy = jasmine.createSpyObj('PlanoTratamentoService', [
       'listarPorPaciente',
@@ -57,7 +61,7 @@ describe('PacientePlanoTratamentoFormComponent', () => {
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
 
     if (params.id) {
-      planoTratamentoServiceSpy.buscar.and.returnValue(of(mockPlano));
+      planoTratamentoServiceSpy.buscar.and.returnValue(of(plano));
     }
 
     await TestBed.configureTestingModule({
@@ -71,6 +75,7 @@ describe('PacientePlanoTratamentoFormComponent', () => {
 
     fixture = TestBed.createComponent(PacientePlanoTratamentoFormComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   }
 
@@ -136,6 +141,32 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       expect(component.form.get('frequenciaSemanal')?.hasError('max')).toBeTrue();
     });
 
+    it('should create without sending status in request body', () => {
+      planoTratamentoServiceSpy.criar.and.returnValue(of(mockPlano));
+      spyOn(router, 'navigate');
+      component.form.patchValue({
+        dataInicio: '2026-05-01',
+        objetivosTerapeuticos: 'Objetivo',
+        frequenciaSemanal: 2,
+        condutasPropostas: 'Conduta',
+        exerciciosIndicados: 'Exercício',
+        status: 'SUSPENSO'
+      });
+
+      component.salvar();
+
+      expect(planoTratamentoServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 10,
+        dataInicio: '2026-05-01',
+        objetivosTerapeuticos: 'Objetivo',
+        frequenciaSemanal: 2,
+        condutasPropostas: 'Conduta',
+        exerciciosIndicados: 'Exercício'
+      }));
+      const dto = planoTratamentoServiceSpy.criar.calls.mostRecent().args[0] as unknown as Record<string, unknown>;
+      expect(dto['status']).toBeUndefined();
+    });
+
     it('should set erro when loading fails', async () => {
       pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
 
@@ -196,11 +227,28 @@ describe('PacientePlanoTratamentoFormComponent', () => {
     });
   });
 
+  it('should reject a plan that belongs to another patient', async () => {
+    await setup({ pacienteId: '10', id: '1' }, { ...mockPlano, pacienteId: 99 });
+
+    expect(component.parametroInvalido).toBeTrue();
+    expect(component.erro).toBe('Plano de tratamento não pertence ao paciente informado.');
+    expect(component.plano).toBeNull();
+  });
+
   it('should set parametroInvalido and erro when pacienteId is invalid', async () => {
     await setup({ pacienteId: 'abc' });
 
     expect(component.erro).toBe('Identificador inválido.');
     expect(component.parametroInvalido).toBeTrue();
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
+  });
+
+  it('should set parametroInvalido and erro when plano id is invalid', async () => {
+    await setup({ pacienteId: '10', id: 'abc' });
+
+    expect(component.erro).toBe('Identificador inválido.');
+    expect(component.parametroInvalido).toBeTrue();
+    expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
+    expect(planoTratamentoServiceSpy.buscar).not.toHaveBeenCalled();
   });
 });
