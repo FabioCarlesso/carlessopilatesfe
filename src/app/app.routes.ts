@@ -45,6 +45,27 @@ export const routes: Routes = [
         .then(m => m.PacienteAvaliacaoFisioterapeuticaComponent)
   },
   {
+    path: 'pacientes/:pacienteId/plano-tratamento/novo',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component')
+        .then(m => m.PacientePlanoTratamentoFormComponent)
+  },
+  {
+    path: 'pacientes/:pacienteId/plano-tratamento/:id/editar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component')
+        .then(m => m.PacientePlanoTratamentoFormComponent)
+  },
+  {
+    path: 'pacientes/:pacienteId/plano-tratamento',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component')
+        .then(m => m.PacientePlanoTratamentoListComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [authGuard],
     loadComponent: () =>

@@ -12,6 +12,9 @@ describe('app routes', () => {
       'pacientes/:id/editar',
       'pacientes/:pacienteId/anamnese',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica',
+      'pacientes/:pacienteId/plano-tratamento/novo',
+      'pacientes/:pacienteId/plano-tratamento/:id/editar',
+      'pacientes/:pacienteId/plano-tratamento',
       'pacientes/:id',
       'planos/novo/:pacienteId',
       'planos/paciente/:pacienteId',
@@ -34,6 +37,9 @@ describe('app routes', () => {
     const idIndex = paths.indexOf('pacientes/:id');
     const anamneseIndex = paths.indexOf('pacientes/:pacienteId/anamnese');
     const avaliacaoIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica');
+    const planoTratamentoNovoIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/novo');
+    const planoTratamentoEditarIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/:id/editar');
+    const planoTratamentoListIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento');
     const editarIndex = paths.indexOf('pacientes/:id/editar');
     const novoIndex = paths.indexOf('pacientes/novo');
     const listIndex = paths.indexOf('pacientes');
@@ -42,7 +48,10 @@ describe('app routes', () => {
     expect(novoIndex).toBeLessThan(editarIndex);
     expect(editarIndex).toBeLessThan(anamneseIndex);
     expect(anamneseIndex).toBeLessThan(avaliacaoIndex);
-    expect(avaliacaoIndex).toBeLessThan(idIndex);
+    expect(avaliacaoIndex).toBeLessThan(planoTratamentoNovoIndex);
+    expect(planoTratamentoNovoIndex).toBeLessThan(planoTratamentoEditarIndex);
+    expect(planoTratamentoEditarIndex).toBeLessThan(planoTratamentoListIndex);
+    expect(planoTratamentoListIndex).toBeLessThan(idIndex);
   });
 
   it('should place pacientes/:id before planos routes', () => {

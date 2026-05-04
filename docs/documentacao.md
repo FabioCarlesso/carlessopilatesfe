@@ -32,7 +32,7 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Dashboard | `/` | Indicadores consolidados de pacientes, profissionais, pagamentos e aulas do mês atual |
-| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese` | CRUD completo, filtros de busca, paginação, ativar/inativar e anamnese clínica |
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese`, `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, `/pacientes/:pacienteId/plano-tratamento` | CRUD completo, filtros de busca, paginação, ativar/inativar, anamnese clínica, avaliação fisioterapêutica e planos de tratamento |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
@@ -50,9 +50,11 @@ carlessopilatesfe/
 │   │   ├── core/
 │   │   │   ├── models/
 │   │   │   │   ├── paciente.ts          # DTOs e interfaces de pacientes
+│   │   │   │   ├── plano-tratamento.ts  # DTOs e interfaces de planos de tratamento
 │   │   │   │   └── profissional.ts      # DTOs e interfaces de profissionais
 │   │   │   └── services/
 │   │   │       ├── paciente.service.ts  # Serviço de integração com a API de pacientes
+│   │   │       ├── plano-tratamento.service.ts # Serviço de planos de tratamento
 │   │   │       └── profissional.service.ts # Serviço de integração com a API de profissionais
 │   │   ├── pages/
 │   │   │   ├── dashboard/               # Tela inicial com indicadores do sistema
@@ -60,7 +62,10 @@ carlessopilatesfe/
 │   │   │   │   ├── paciente-list/       # Listagem paginada de pacientes
 │   │   │   │   ├── paciente-form/       # Formulário de cadastro e edição
 │   │   │   │   ├── paciente-detail/     # Visualização detalhada
-│   │   │   │   └── paciente-anamnese/   # Cadastro e edição da anamnese
+│   │   │   │   ├── paciente-anamnese/   # Cadastro e edição da anamnese
+│   │   │   │   ├── paciente-avaliacao-fisioterapeutica/ # Avaliação fisioterapêutica
+│   │   │   │   ├── paciente-plano-tratamento-list/ # Listagem de planos de tratamento
+│   │   │   │   └── paciente-plano-tratamento-form/ # Cadastro e edição de plano de tratamento
 │   │   │   ├── profissionais/           # CRUD de profissionais
 │   │   │   └── relatorios/              # Relatórios administrativos
 │   │   ├── shared/
@@ -233,6 +238,49 @@ interface AnamneseResponseDTO {
 }
 ```
 
+Arquivo: `src/app/core/models/plano-tratamento.ts`
+
+### `PlanoTratamentoRequestDTO`
+Payload para criação de plano de tratamento vinculado ao paciente.
+```typescript
+interface PlanoTratamentoRequestDTO {
+  pacienteId: number;
+  dataInicio: string;
+  dataPrevisaoTermino?: string | null;
+  objetivosTerapeuticos: string;
+  frequenciaSemanal: number;
+  condutasPropostas: string;
+  exerciciosIndicados: string;
+  exerciciosContraindicados?: string | null;
+  equipamentosPrevistos?: string | null;
+  observacoesClinicas?: string | null;
+}
+```
+
+### `PlanoTratamentoResponseDTO`
+Retorno da API ao listar, consultar ou salvar plano de tratamento.
+```typescript
+type PlanoTratamentoStatus = 'ATIVO' | 'ENCERRADO' | 'SUSPENSO';
+
+interface PlanoTratamentoResponseDTO {
+  id: number;
+  pacienteId: number;
+  nomePaciente: string;
+  dataInicio: string;
+  dataPrevisaoTermino: string | null;
+  objetivosTerapeuticos: string;
+  frequenciaSemanal: number;
+  condutasPropostas: string;
+  exerciciosIndicados: string;
+  exerciciosContraindicados: string | null;
+  equipamentosPrevistos: string | null;
+  observacoesClinicas: string | null;
+  status: PlanoTratamentoStatus;
+  dataCriacao: string;
+  dataAtualizacao: string | null;
+}
+```
+
 Arquivo: `src/app/core/models/profissional.ts`
 
 ### `ProfissionalResponseDTO`
@@ -386,6 +434,21 @@ Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhos
 | `ativar(id)`      | `PATCH /pacientes/{id}/ativar` | Reativa paciente inativo      |
 | `inativar(id)`    | `PATCH /pacientes/{id}/inativar` | Inativa paciente (soft delete) |
 
+### `PlanoTratamentoService`
+Arquivo: `src/app/core/services/plano-tratamento.service.ts`
+Injetável em toda a aplicação (`providedIn: 'root'`).
+
+**URL base no frontend:** `/api/planos-tratamento`
+
+| Método | Endpoint HTTP | Descrição |
+|--------|---------------|-----------|
+| `listarPorPaciente(pacienteId)` | `GET /planos-tratamento/paciente/{pacienteId}` | Lista planos do paciente |
+| `buscar(id)` | `GET /planos-tratamento/{id}` | Busca plano por ID |
+| `criar(dto)` | `POST /planos-tratamento` | Cria plano vinculado ao paciente |
+| `atualizar(id, dto)` | `PUT /planos-tratamento/{id}` | Atualiza dados e status do plano |
+| `encerrar(id)` | `PATCH /planos-tratamento/{id}/encerrar` | Encerra plano ativo ou suspenso |
+| `suspender(id)` | `PATCH /planos-tratamento/{id}/suspender` | Suspende plano ativo |
+
 ### `ProfissionalService`
 Arquivo: `src/app/core/services/profissional.service.ts`
 Injetável em toda a aplicação (`providedIn: 'root'`).
@@ -490,6 +553,11 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/novo`        | `PacienteFormComponent` | Formulário de cadastro         |
 | `/pacientes/:id`         | `PacienteDetailComponent` | Detalhes do paciente         |
 | `/pacientes/:id/editar`  | `PacienteFormComponent` | Formulário de edição           |
+| `/pacientes/:pacienteId/anamnese` | `PacienteAnamneseComponent` | Cadastro e edição da anamnese |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | `PacienteAvaliacaoFisioterapeuticaComponent` | Cadastro e edição da avaliação fisioterapêutica |
+| `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
+| `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
+| `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
 | `/profissionais`         | `ProfissionalListComponent` | Lista de profissionais      |
 | `/profissionais/novo`    | `ProfissionalFormComponent` | Formulário de cadastro      |
 | `/profissionais/:id`     | `ProfissionalDetailComponent` | Detalhes do profissional  |
@@ -539,6 +607,20 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Badge de status: Ativo (verde) / Inativo (vermelho)
 - Ações: Editar, Voltar; **Inativar** (se ativo) ou **Ativar** (se inativo)
 - Diálogos de confirmação para ativação e inativação
+
+### `PacientePlanoTratamentoListComponent`
+- Lista planos de tratamento por paciente
+- Exibe status, datas, frequência semanal, objetivos, condutas, exercícios, equipamentos e observações
+- Permite editar, suspender plano ativo e encerrar plano ativo ou suspenso
+- Usa confirmação modal com semântica acessível antes de encerrar ou suspender
+- Trata estados de carregamento, vazio, sucesso e erro
+
+### `PacientePlanoTratamentoFormComponent`
+- Modo duplo: cadastro e edição
+- Valida `pacienteId` e `id` antes de chamar a API
+- Em edição, valida que o plano retornado pertence ao paciente da rota antes de preencher o formulário
+- Reactive Form com campos obrigatórios e opcionais do contrato
+- Valida textos obrigatórios contra conteúdo somente com espaços e `frequenciaSemanal` entre 1 e 7
 
 ### `ProfissionalListComponent`
 - Tabela paginada de profissionais ativos
@@ -673,6 +755,7 @@ Comando: `npm test`
 | `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
 | `app/core/services/dashboard.service.spec.ts` | Contrato HTTP do resumo do dashboard |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
+| `app/core/services/plano-tratamento.service.spec.ts` | Métodos HTTP de planos de tratamento, incluindo encerrar e suspender |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/core/services/relatorio.service.spec.ts` | Contratos HTTP do relatório de NFSE e exportação CSV/XLSX |
 | `app/core/services/style-preferences.service.spec.ts` | Aplicação de tema e densidade no `documentElement` |
@@ -681,6 +764,8 @@ Comando: `npm test`
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
+| `app/pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component.spec.ts` | Carregamento, vazio, ações de status, confirmação e erros |
+| `app/pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component.spec.ts` | Criação, edição, validações, vínculo paciente/plano e erros |
 | `app/pages/planos/plano-form/plano-form.component.spec.ts` | Criação de plano, validação de frequência e dias, `ngOnDestroy`, reatividade do `valueChanges` |
 
 ### Estratégia de mocking
@@ -708,11 +793,12 @@ Comando: `npm test`
 - Ativação e inativação de pacientes via PATCH
 - E-mail mutável na edição (somente CPF é imutável)
 - Módulo Planos: listagem, criação com seleção de dias, validação de frequência, reutilização dos labels exportados pelo model e cleanup de subscriptions via `ngOnDestroy`
+- Plano de Tratamento do paciente: listagem, criação, edição, validação de vínculo paciente/plano e ações de encerrar/suspender
 - Módulo Pagamentos: listagem, criação e confirmação de pagamento (PAGO)
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência
 - Autenticação JWT com login, guard de rotas, interceptor HTTP e logout
-- Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas)
+- Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas / Anamnese / Avaliação Fisioterapêutica / Plano de Tratamento)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
 
