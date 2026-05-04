@@ -1,0 +1,85 @@
+<div class="page-header">
+  <div>
+    <h1>Planos de Tratamento</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'plano-tratamento', 'novo']" class="btn btn-primary">Novo Plano</a>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar ao Paciente</a>
+    <a *ngIf="!paciente && pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && planos.length === 0 && !erro" class="empty-state">
+  Nenhum plano de tratamento cadastrado.
+</div>
+
+<div *ngIf="planos.length > 0" class="planos-list">
+  <div *ngFor="let plano of planos" class="plano-card" [class.plano-ativo]="plano.status === 'ATIVO'">
+    <div class="plano-header">
+      <div class="plano-info">
+        <span class="badge badge-status" [class.badge-ativo]="plano.status === 'ATIVO'"
+          [class.badge-encerrado]="plano.status === 'ENCERRADO'"
+          [class.badge-suspenso]="plano.status === 'SUSPENSO'">
+          {{ statusLabel[plano.status] }}
+        </span>
+        <span class="plano-data">Início: {{ plano.dataInicio | date:'dd/MM/yyyy' }}</span>
+        <span *ngIf="plano.dataPrevisaoTermino" class="plano-data">
+          Previsão de término: {{ plano.dataPrevisaoTermino | date:'dd/MM/yyyy' }}
+        </span>
+        <span class="plano-frequencia">{{ plano.frequenciaSemanal }}x por semana</span>
+      </div>
+      <div class="plano-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento', plano.id, 'editar']"
+          class="btn btn-secondary btn-sm">Editar</a>
+        <button *ngIf="plano.status === 'ATIVO'" class="btn btn-warning btn-sm"
+          (click)="confirmarAcao(plano.id, 'suspender')">Suspender</button>
+        <button *ngIf="plano.status === 'ATIVO' || plano.status === 'SUSPENSO'" class="btn btn-danger btn-sm"
+          (click)="confirmarAcao(plano.id, 'encerrar')">Encerrar</button>
+      </div>
+    </div>
+
+    <div class="plano-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Objetivos terapêuticos</span>
+          <span>{{ plano.objetivosTerapeuticos }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Condutas propostas</span>
+          <span>{{ plano.condutasPropostas }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Exercícios indicados</span>
+          <span>{{ plano.exerciciosIndicados }}</span>
+        </div>
+        <div *ngIf="plano.exerciciosContraindicados" class="detail-item">
+          <span class="label">Exercícios contraindicados</span>
+          <span>{{ plano.exerciciosContraindicados }}</span>
+        </div>
+        <div *ngIf="plano.equipamentosPrevistos" class="detail-item">
+          <span class="label">Equipamentos previstos</span>
+          <span>{{ plano.equipamentosPrevistos }}</span>
+        </div>
+        <div *ngIf="plano.observacoesClinicas" class="detail-item">
+          <span class="label">Observações clínicas</span>
+          <span>{{ plano.observacoesClinicas }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog-overlay" *ngIf="confirmarAcaoId !== null">
+  <div class="dialog">
+    <p>Confirma {{ acaoLabel() }} este plano de tratamento?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" (click)="executarAcao()">Confirmar</button>
+      <button class="btn btn-outline" (click)="cancelarAcao()">Cancelar</button>
+    </div>
+  </div>
+</div>
