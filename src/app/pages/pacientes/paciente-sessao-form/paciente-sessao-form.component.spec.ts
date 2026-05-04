@@ -115,6 +115,20 @@ describe('PacienteSessaoFormComponent', () => {
       expect(component.form.get('duracao')?.hasError('max')).toBeTrue();
     });
 
+    it('should keep profissionalId invalid when it is not a positive integer', () => {
+      component.form.patchValue({
+        dataHora: '2026-05-10T10:00',
+        tipo: 'PILATES',
+        duracao: 60,
+        profissionalId: -1
+      });
+
+      component.salvar();
+
+      expect(sessaoServiceSpy.criar).not.toHaveBeenCalled();
+      expect(component.form.get('profissionalId')?.invalid).toBeTrue();
+    });
+
     it('should create without sending status in request body', () => {
       sessaoServiceSpy.criar.and.returnValue(of(mockSessao));
       spyOn(router, 'navigate');

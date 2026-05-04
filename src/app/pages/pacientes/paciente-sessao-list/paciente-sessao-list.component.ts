@@ -33,6 +33,7 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
   sucesso: string | null = null;
   confirmarAcaoId: number | null = null;
   acaoPendente: 'realizar' | 'cancelar' | null = null;
+  acaoEmAndamentoId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   private dialogFocusPending = false;
   private previousFocusedElement: HTMLElement | null = null;
@@ -107,6 +108,8 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
   }
 
   confirmarAcao(id: number, acao: 'realizar' | 'cancelar'): void {
+    if (this.acaoEmAndamentoId !== null) return;
+
     this.previousFocusedElement = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
@@ -124,11 +127,12 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
   }
 
   executarAcao(): void {
-    if (this.confirmarAcaoId === null || this.acaoPendente === null) return;
+    if (this.confirmarAcaoId === null || this.acaoPendente === null || this.acaoEmAndamentoId !== null) return;
 
     const id = this.confirmarAcaoId;
     const acao = this.acaoPendente;
     this.cancelarAcao();
+    this.acaoEmAndamentoId = id;
 
     const obs = acao === 'realizar'
       ? this.sessaoService.realizar(id)
@@ -144,9 +148,11 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
           clearTimeout(this.successTimer);
         }
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
+        this.acaoEmAndamentoId = null;
       },
       error: () => {
         this.erro = `Erro ao ${acao} sessão.`;
+        this.acaoEmAndamentoId = null;
       }
     });
   }

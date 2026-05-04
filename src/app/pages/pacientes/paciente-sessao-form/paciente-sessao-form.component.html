@@ -72,7 +72,13 @@
   <div class="form-group">
     <label for="profissionalId">ID do profissional responsável</label>
     <input id="profissionalId" type="number" formControlName="profissionalId" class="form-control"
-      min="1" placeholder="Opcional" />
+      min="1" step="1" placeholder="Opcional"
+      aria-describedby="profissionalIdError"
+      [class.is-invalid]="campo('profissionalId')?.invalid && campo('profissionalId')?.touched" />
+    <div id="profissionalIdError" class="invalid-feedback"
+      *ngIf="campo('profissionalId')?.touched && campo('profissionalId')?.invalid">
+      ID do profissional deve ser um número inteiro positivo.
+    </div>
   </div>
 
   <h2 class="form-section-title">Observações</h2>

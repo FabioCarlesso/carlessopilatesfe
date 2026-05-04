@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { SessaoService } from '../../../core/services/sessao.service';
@@ -162,6 +162,24 @@ describe('PacienteSessaoListComponent', () => {
       tick(4000);
       expect(component.sucesso).toBeNull();
     }));
+
+    it('should block duplicate actions while request is pending', () => {
+      const pending = new Subject<SessaoResponseDTO>();
+      sessaoServiceSpy.realizar.and.returnValue(pending.asObservable());
+
+      component.confirmarAcao(1, 'realizar');
+      component.executarAcao();
+      component.confirmarAcao(1, 'realizar');
+      component.executarAcao();
+
+      expect(sessaoServiceSpy.realizar).toHaveBeenCalledTimes(1);
+      expect(component.acaoEmAndamentoId).toBe(1);
+
+      pending.next({ ...mockSessaoAgendada, status: 'REALIZADA' });
+      pending.complete();
+
+      expect(component.acaoEmAndamentoId).toBeNull();
+    });
 
     it('should call cancelar and reload sessions on success', fakeAsync(() => {
       const cancelada = { ...mockSessaoAgendada, status: 'CANCELADA' as const };

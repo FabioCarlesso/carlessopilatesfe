@@ -56,7 +56,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
       dataHora: ['', Validators.required],
       tipo: ['PILATES', Validators.required],
       duracao: [null, [Validators.required, Validators.min(1), Validators.max(480)]],
-      profissionalId: [null],
+      profissionalId: [null, [Validators.min(1), Validators.pattern(/^[1-9]\d*$/)]],
       observacoes: [''],
       status: ['AGENDADA', Validators.required]
     });
