@@ -8,14 +8,14 @@ interface SessaoApiRequestDTO {
   profissionalId?: number | null;
   tipo: string;
   data: string;
-  horario?: string | null;
-  duracaoMinutos?: number | null;
+  horario: string;
+  duracaoMinutos: number;
   observacoes?: string | null;
 }
 
 interface SessaoApiUpdateDTO {
-  data?: string | null;
-  horario?: string | null;
+  data?: string;
+  horario?: string;
   duracaoMinutos?: number | null;
   status?: string | null;
   observacoes?: string | null;
@@ -91,14 +91,17 @@ export class SessaoService {
   }
 
   private toApiUpdate(dto: SessaoUpdateDTO): SessaoApiUpdateDTO {
-    const dataHora = dto.dataHora ? this.splitDataHora(dto.dataHora) : null;
-    return {
-      data: dataHora?.data,
-      horario: dataHora?.horario,
+    const result: SessaoApiUpdateDTO = {
       duracaoMinutos: dto.duracao,
       status: dto.status,
       observacoes: dto.observacoes
     };
+    if (dto.dataHora) {
+      const { data, horario } = this.splitDataHora(dto.dataHora);
+      result.data = data;
+      result.horario = horario;
+    }
+    return result;
   }
 
   private fromApi(dto: SessaoApiResponseDTO): SessaoResponseDTO {
@@ -108,7 +111,7 @@ export class SessaoService {
       nomePaciente: dto.nomePaciente,
       dataHora: this.joinDataHora(dto.data, dto.horario),
       tipo: dto.tipo,
-      duracao: dto.duracaoMinutos ?? 0,
+      duracao: dto.duracaoMinutos ?? null,
       profissionalId: dto.profissionalId,
       nomeProfissional: dto.nomeProfissional,
       status: dto.status,
@@ -118,12 +121,10 @@ export class SessaoService {
     };
   }
 
-  private splitDataHora(dataHora: string): { data: string; horario: string | null } {
-    const [data, horario] = dataHora.split('T');
-    return {
-      data,
-      horario: horario ? `${horario}:00`.slice(0, 8) : null
-    };
+  private splitDataHora(dataHora: string): { data: string; horario: string } {
+    const [data, time = '00:00'] = dataHora.split('T');
+    const horario = time.length <= 5 ? `${time}:00` : time.slice(0, 8);
+    return { data, horario };
   }
 
   private joinDataHora(data: string, horario: string | null): string {

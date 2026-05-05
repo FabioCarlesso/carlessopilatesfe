@@ -76,7 +76,9 @@ describe('SessaoService', () => {
       pacienteId: 10,
       dataHora: '2026-05-10T10:00:00',
       tipo: 'PILATES',
-      duracao: 60
+      duracao: 60,
+      profissionalId: null,
+      observacoes: null
     };
 
     service.criar(dto).subscribe(s => expect(s).toEqual(mockSessao));
@@ -85,12 +87,12 @@ describe('SessaoService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       pacienteId: 10,
-      profissionalId: undefined,
+      profissionalId: null,
       tipo: 'PILATES',
       data: '2026-05-10',
       horario: '10:00:00',
       duracaoMinutos: 60,
-      observacoes: undefined
+      observacoes: null
     });
     req.flush(mockSessaoApi);
   });
@@ -115,6 +117,28 @@ describe('SessaoService', () => {
       observacoes: 'Ajuste de carga'
     });
     req.flush(mockSessaoApi);
+  });
+
+  it('should PUT to /api/sessoes/:id without data/horario when dataHora is absent', () => {
+    const dto: SessaoUpdateDTO = { duracao: 45, observacoes: 'Ajuste' };
+
+    service.atualizar(1, dto).subscribe();
+
+    const req = httpMock.expectOne('/api/sessoes/1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body.data).toBeUndefined();
+    expect(req.request.body.horario).toBeUndefined();
+    expect(req.request.body.duracaoMinutos).toBe(45);
+    req.flush(mockSessaoApi);
+  });
+
+  it('should normalise API response with null horario and null duracaoMinutos', () => {
+    service.buscar(1).subscribe(s => {
+      expect(s.dataHora).toBe('2026-05-10T00:00');
+      expect(s.duracao).toBeNull();
+    });
+
+    httpMock.expectOne('/api/sessoes/1').flush({ ...mockSessaoApi, horario: null, duracaoMinutos: null });
   });
 
   it('should PATCH /api/sessoes/:id/realizar', () => {

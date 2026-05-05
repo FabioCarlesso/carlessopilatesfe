@@ -25,7 +25,7 @@ export interface SessaoResponseDTO {
   nomePaciente: string;
   dataHora: string;
   tipo: SessaoTipo;
-  duracao: number;
+  duracao: number | null;
   profissionalId: number | null;
   nomeProfissional: string | null;
   status: SessaoStatus;
