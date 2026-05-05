@@ -101,6 +101,7 @@ src/app/
 │   ├── paciente-avaliacao-fisioterapeutica/ # Cadastro e edição da avaliação fisioterapêutica
 │   ├── paciente-sessao-list/       # Listagem de sessões de pilates/fisioterapia
 │   ├── paciente-sessao-form/       # Cadastro e edição de sessão
+│   ├── paciente-evolucao-sessao/   # Cadastro e edição da evolução clínica da sessão
 │   ├── paciente-plano-tratamento-list/ # Listagem de planos de tratamento
 │   └── paciente-plano-tratamento-form/ # Cadastro e edição de plano de tratamento
 ├── pages/profissionais/            # CRUD de profissionais
@@ -147,11 +148,13 @@ Arquivos de teste:
 - `src/app/core/services/profissional.service.spec.ts`
 - `src/app/core/services/relatorio.service.spec.ts`
 - `src/app/core/services/sessao.service.spec.ts`
+- `src/app/core/services/evolucao-sessao.service.spec.ts`
 - `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
 - `src/app/pages/pacientes/paciente-sessao-list/paciente-sessao-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-sessao-form/paciente-sessao-form.component.spec.ts`
+- `src/app/pages/pacientes/paciente-evolucao-sessao/paciente-evolucao-sessao.component.spec.ts`
 - `src/app/pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-avaliacao-fisioterapeutica/paciente-avaliacao-fisioterapeutica.component.spec.ts`
@@ -177,7 +180,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
-| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica, planos de tratamento e sessões de pilates/fisioterapia vinculados |
+| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica, planos de tratamento, sessões de pilates/fisioterapia e evolução clínica da sessão |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -200,6 +203,7 @@ Arquivos de teste:
 | `/pacientes/:pacienteId/sessoes` | Lista de sessões de pilates/fisioterapia do paciente |
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de sessão |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | Edição de sessão |
+| `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | Cadastro e edição da evolução clínica da sessão |
 | `/pacientes/:pacienteId/plano-tratamento` | Lista de planos de tratamento do paciente |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | Edição de plano de tratamento |
@@ -220,6 +224,8 @@ A tela de anamnese do paciente fica em `/pacientes/:pacienteId/anamnese`, valida
 A tela de avaliação fisioterapêutica do paciente fica em `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta as avaliações por `GET /api/avaliacoes-fisioterapeuticas/paciente/{pacienteId}`. O backend retorna uma lista ordenada por data da avaliação e ID em ordem decrescente; a tela edita a avaliação mais recente quando a lista possui itens e permanece em modo de cadastro quando a lista vem vazia. O cadastro envia `POST /api/avaliacoes-fisioterapeuticas` com `pacienteId`; a edição usa `PUT /api/avaliacoes-fisioterapeuticas/{id}`. Os campos `dataAvaliacao`, `queixaFuncional`, `escalaDor` e `diagnosticoFisioterapeutico` são obrigatórios, com `escalaDor` entre 0 e 10 e textos obrigatórios rejeitando valores apenas com espaços.
 
 A tela de sessões do paciente fica em `/pacientes/:pacienteId/sessoes`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista as sessões por `GET /api/sessoes/paciente/{pacienteId}`. O cadastro usa `POST /api/sessoes` com `pacienteId`; a edição usa `GET /api/sessoes/{id}` e `PUT /api/sessoes/{id}`, validando que a sessão retornada pertence ao paciente da rota antes de exibir o formulário. A listagem permite marcar sessões agendadas como realizadas por `PATCH /api/sessoes/{id}/realizar` e cancelar sessões agendadas por `PATCH /api/sessoes/{id}/cancelar`, com confirmação antes da ação. Os campos `dataHora`, `tipo` e `duracao` são obrigatórios; a duração deve ficar entre 1 e 480 minutos, e o ID opcional do profissional deve ser um inteiro positivo.
+
+A tela de evolução da sessão fica em `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao`, valida os identificadores numéricos, carrega paciente e sessão, confirma que a sessão pertence ao paciente da rota e só então consulta `GET /api/evolucoes-sessao/sessao/{sessaoId}`. Retorno `404` nessa consulta mantém o formulário em modo de cadastro. O cadastro envia `POST /api/evolucoes-sessao` com `sessaoId` e `dataHoraRegistro`; a edição usa `PUT /api/evolucoes-sessao/{id}`. A evolução registra exercícios, equipamentos, cargas/molas, dor antes, dor depois, resposta do paciente, intercorrências, orientações e observações do fisioterapeuta. `dataHoraRegistro` é obrigatório; `dorAntes` e `dorDepois` devem ficar entre 0 e 10 quando informados.
 
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
 
