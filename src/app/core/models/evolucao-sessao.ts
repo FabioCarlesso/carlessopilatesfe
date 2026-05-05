@@ -1,36 +1,43 @@
 export interface EvolucaoSessaoRequestDTO {
   sessaoId: number;
-  subjetivo: string;
-  objetivo: string;
-  avaliacao: string;
-  plano: string;
+  dataHoraRegistro: string;
   exerciciosRealizados?: string | null;
-  escalaDor?: number | null;
-  observacoes?: string | null;
+  equipamentosUtilizados?: string | null;
+  cargasMolas?: string | null;
+  dorAntes?: number | null;
+  dorDepois?: number | null;
+  respostaPaciente?: string | null;
+  intercorrencias?: string | null;
+  orientacoes?: string | null;
+  observacoesFisioterapeuta?: string | null;
 }
 
 export interface EvolucaoSessaoUpdateDTO {
-  subjetivo?: string | null;
-  objetivo?: string | null;
-  avaliacao?: string | null;
-  plano?: string | null;
+  dataHoraRegistro?: string | null;
   exerciciosRealizados?: string | null;
-  escalaDor?: number | null;
-  observacoes?: string | null;
+  equipamentosUtilizados?: string | null;
+  cargasMolas?: string | null;
+  dorAntes?: number | null;
+  dorDepois?: number | null;
+  respostaPaciente?: string | null;
+  intercorrencias?: string | null;
+  orientacoes?: string | null;
+  observacoesFisioterapeuta?: string | null;
 }
 
 export interface EvolucaoSessaoResponseDTO {
   id: number;
   sessaoId: number;
-  pacienteId: number;
-  nomePaciente: string;
-  subjetivo: string;
-  objetivo: string;
-  avaliacao: string;
-  plano: string;
+  dataHoraRegistro: string;
   exerciciosRealizados: string | null;
-  escalaDor: number | null;
-  observacoes: string | null;
+  equipamentosUtilizados: string | null;
+  cargasMolas: string | null;
+  dorAntes: number | null;
+  dorDepois: number | null;
+  respostaPaciente: string | null;
+  intercorrencias: string | null;
+  orientacoes: string | null;
+  observacoesFisioterapeuta: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;
 }

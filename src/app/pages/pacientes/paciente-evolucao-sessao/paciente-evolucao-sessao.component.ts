@@ -5,7 +5,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
-import { EvolucaoSessaoResponseDTO } from '../../../core/models/evolucao-sessao';
+import {
+  EvolucaoSessaoRequestDTO,
+  EvolucaoSessaoResponseDTO,
+  EvolucaoSessaoUpdateDTO
+} from '../../../core/models/evolucao-sessao';
 import { SessaoResponseDTO, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.service';
@@ -46,13 +50,16 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      subjetivo: ['', [Validators.required, Validators.pattern(/\S/)]],
-      objetivo: ['', [Validators.required, Validators.pattern(/\S/)]],
-      avaliacao: ['', [Validators.required, Validators.pattern(/\S/)]],
-      plano: ['', [Validators.required, Validators.pattern(/\S/)]],
+      dataHoraRegistro: [this.toDateTimeLocal(new Date()), Validators.required],
       exerciciosRealizados: [''],
-      escalaDor: [null, [Validators.min(0), Validators.max(10)]],
-      observacoes: ['']
+      equipamentosUtilizados: [''],
+      cargasMolas: [''],
+      dorAntes: [null, [Validators.min(0), Validators.max(10)]],
+      dorDepois: [null, [Validators.min(0), Validators.max(10)]],
+      respostaPaciente: [''],
+      intercorrencias: [''],
+      orientacoes: [''],
+      observacoesFisioterapeuta: ['']
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -81,17 +88,9 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
 
     forkJoin({
       paciente: this.pacienteService.buscar(this.pacienteId),
-      sessao: this.sessaoService.buscar(this.sessaoId),
-      evolucao: this.evolucaoSessaoService.buscarPorSessao(this.sessaoId).pipe(
-        catchError((error: HttpErrorResponse) => {
-          if (error.status === 404) {
-            return of(null);
-          }
-          return throwError(() => error);
-        })
-      )
+      sessao: this.sessaoService.buscar(this.sessaoId)
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ paciente, sessao, evolucao }) => {
+      next: ({ paciente, sessao }) => {
         if (sessao.pacienteId !== this.pacienteId) {
           this.parametroInvalido = true;
           this.erro = 'Sessão não pertence ao paciente informado.';
@@ -100,14 +99,31 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
         }
         this.paciente = paciente;
         this.sessao = sessao;
+        this.carregarEvolucao();
+      },
+      error: () => {
+        this.erro = 'Erro ao carregar dados da evolução.';
+        this.loading = false;
+      }
+    });
+  }
+
+  private carregarEvolucao(): void {
+    if (this.sessaoId === null) return;
+
+    this.evolucaoSessaoService.buscarPorSessao(this.sessaoId).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return of(null);
+        }
+        return throwError(() => error);
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: evolucao => {
         this.evolucao = evolucao;
         if (evolucao) {
-          const { id, sessaoId, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = evolucao;
-          this.form.patchValue({
-            ...formFields,
-            exerciciosRealizados: formFields.exerciciosRealizados ?? '',
-            observacoes: formFields.observacoes ?? ''
-          });
+          this.preencherFormulario(evolucao);
         }
         this.loading = false;
       },
@@ -135,33 +151,45 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
-    const escalaDor = valor.escalaDor !== null && valor.escalaDor !== '' ? Number(valor.escalaDor) : null;
+    const dor = (v: number | string | null | undefined): number | null =>
+      v !== null && v !== undefined && v !== '' ? Number(v) : null;
 
-    const dto = {
-      subjetivo: valor.subjetivo,
-      objetivo: valor.objetivo,
-      avaliacao: valor.avaliacao,
-      plano: valor.plano,
+    const dto: EvolucaoSessaoUpdateDTO = {
+      dataHoraRegistro: valor.dataHoraRegistro,
       exerciciosRealizados: opt(valor.exerciciosRealizados),
-      escalaDor,
-      observacoes: opt(valor.observacoes)
+      equipamentosUtilizados: opt(valor.equipamentosUtilizados),
+      cargasMolas: opt(valor.cargasMolas),
+      dorAntes: dor(valor.dorAntes),
+      dorDepois: dor(valor.dorDepois),
+      respostaPaciente: opt(valor.respostaPaciente),
+      intercorrencias: opt(valor.intercorrencias),
+      orientacoes: opt(valor.orientacoes),
+      observacoesFisioterapeuta: opt(valor.observacoesFisioterapeuta)
     };
 
     const evolucaoAtual = this.evolucao;
     const criando = evolucaoAtual === null;
+    const createDto: EvolucaoSessaoRequestDTO = {
+      sessaoId: this.sessaoId,
+      dataHoraRegistro: valor.dataHoraRegistro,
+      exerciciosRealizados: dto.exerciciosRealizados,
+      equipamentosUtilizados: dto.equipamentosUtilizados,
+      cargasMolas: dto.cargasMolas,
+      dorAntes: dto.dorAntes,
+      dorDepois: dto.dorDepois,
+      respostaPaciente: dto.respostaPaciente,
+      intercorrencias: dto.intercorrencias,
+      orientacoes: dto.orientacoes,
+      observacoesFisioterapeuta: dto.observacoesFisioterapeuta
+    };
     const obs = criando
-      ? this.evolucaoSessaoService.criar({ sessaoId: this.sessaoId, ...dto })
+      ? this.evolucaoSessaoService.criar(createDto)
       : this.evolucaoSessaoService.atualizar(evolucaoAtual.id, dto);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
         this.evolucao = response;
-        const { id, sessaoId, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
-        this.form.patchValue({
-          ...formFields,
-          exerciciosRealizados: formFields.exerciciosRealizados ?? '',
-          observacoes: formFields.observacoes ?? ''
-        });
+        this.preencherFormulario(response);
         if (this.successTimer !== null) {
           clearTimeout(this.successTimer);
         }
@@ -178,5 +206,32 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
 
   campo(nome: string) {
     return this.form.get(nome);
+  }
+
+  private preencherFormulario(evolucao: EvolucaoSessaoResponseDTO): void {
+    const { id, sessaoId, dataCriacao, dataAtualizacao, ...formFields } = evolucao;
+    this.form.patchValue({
+      ...formFields,
+      dataHoraRegistro: this.toDateTimeLocal(formFields.dataHoraRegistro),
+      exerciciosRealizados: formFields.exerciciosRealizados ?? '',
+      equipamentosUtilizados: formFields.equipamentosUtilizados ?? '',
+      cargasMolas: formFields.cargasMolas ?? '',
+      respostaPaciente: formFields.respostaPaciente ?? '',
+      intercorrencias: formFields.intercorrencias ?? '',
+      orientacoes: formFields.orientacoes ?? '',
+      observacoesFisioterapeuta: formFields.observacoesFisioterapeuta ?? ''
+    });
+  }
+
+  private toDateTimeLocal(value: string | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const pad = (n: number): string => n.toString().padStart(2, '0');
+    return [
+      date.getFullYear(),
+      pad(date.getMonth() + 1),
+      pad(date.getDate())
+    ].join('-') + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 }

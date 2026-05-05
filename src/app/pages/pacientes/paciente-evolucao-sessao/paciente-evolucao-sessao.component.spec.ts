@@ -40,16 +40,17 @@ const mockSessao: SessaoResponseDTO = {
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
   id: 1,
   sessaoId: 5,
-  pacienteId: 10,
-  nomePaciente: 'Ana Silva',
-  subjetivo: 'Paciente relata melhora na dor lombar.',
-  objetivo: 'Amplitude de movimento aumentada.',
-  avaliacao: 'Boa evolução clínica.',
-  plano: 'Continuar protocolo de fortalecimento.',
+  dataHoraRegistro: '2026-05-10T10:30:00',
   exerciciosRealizados: 'Agachamento, ponte.',
-  escalaDor: 3,
-  observacoes: null,
-  dataCriacao: '2026-05-01T09:00:00',
+  equipamentosUtilizados: 'Reformer',
+  cargasMolas: 'Mola 3',
+  dorAntes: 5,
+  dorDepois: 2,
+  respostaPaciente: 'Boa evolução clínica.',
+  intercorrencias: null,
+  orientacoes: 'Manter exercícios respiratórios.',
+  observacoesFisioterapeuta: null,
+  dataCriacao: '2026-05-10T10:30:00',
   dataAtualizacao: null
 };
 
@@ -113,23 +114,30 @@ describe('PacienteEvolucaoSessaoComponent', () => {
     });
 
     it('should pre-fill form with existing evolution data', () => {
-      expect(component.form.get('subjetivo')?.value).toBe('Paciente relata melhora na dor lombar.');
-      expect(component.form.get('objetivo')?.value).toBe('Amplitude de movimento aumentada.');
-      expect(component.form.get('avaliacao')?.value).toBe('Boa evolução clínica.');
-      expect(component.form.get('plano')?.value).toBe('Continuar protocolo de fortalecimento.');
-      expect(component.form.get('escalaDor')?.value).toBe(3);
+      expect(component.form.get('dataHoraRegistro')?.value).toBe('2026-05-10T10:30');
+      expect(component.form.get('exerciciosRealizados')?.value).toBe('Agachamento, ponte.');
+      expect(component.form.get('equipamentosUtilizados')?.value).toBe('Reformer');
+      expect(component.form.get('cargasMolas')?.value).toBe('Mola 3');
+      expect(component.form.get('dorAntes')?.value).toBe(5);
+      expect(component.form.get('dorDepois')?.value).toBe(2);
+      expect(component.form.get('respostaPaciente')?.value).toBe('Boa evolução clínica.');
+      expect(component.form.get('orientacoes')?.value).toBe('Manter exercícios respiratórios.');
     });
 
     it('should update existing evolution and show success message', () => {
-      const updated = { ...mockEvolucao, escalaDor: 2 };
+      const updated = { ...mockEvolucao, dorDepois: 1 };
       evolucaoSessaoServiceSpy.atualizar.and.returnValue(of(updated));
-      component.form.patchValue({ escalaDor: 2 });
+      component.form.patchValue({ dorDepois: 1 });
 
       component.salvar();
 
       expect(evolucaoSessaoServiceSpy.atualizar).toHaveBeenCalledWith(
         1,
-        jasmine.objectContaining({ escalaDor: 2 })
+        jasmine.objectContaining({
+          dataHoraRegistro: '2026-05-10T10:30',
+          dorAntes: 5,
+          dorDepois: 1
+        })
       );
       expect(component.evolucao).toEqual(updated);
       expect(component.sucesso).toBe('Evolução atualizada com sucesso.');
@@ -149,22 +157,29 @@ describe('PacienteEvolucaoSessaoComponent', () => {
   describe('without existing evolucao (404)', () => {
     beforeEach(async () => setup({ pacienteId: '10', sessaoId: '5' }, null));
 
-    it('should keep form empty when API returns 404 for evolucao', () => {
+    it('should keep optional fields empty when API returns 404 for evolucao', () => {
       expect(component.paciente).toEqual(mockPaciente);
       expect(component.sessao).toEqual(mockSessao);
       expect(component.evolucao).toBeNull();
-      expect(component.form.get('subjetivo')?.value).toBe('');
+      expect(component.form.get('dataHoraRegistro')?.value).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+      expect(component.form.get('exerciciosRealizados')?.value).toBe('');
       expect(component.loading).toBeFalse();
       expect(component.erro).toBeNull();
     });
 
-    it('should create a new evolucao and include sessaoId in payload', () => {
+    it('should create a new evolucao and include backend contract fields in payload', () => {
       evolucaoSessaoServiceSpy.criar.and.returnValue(of(mockEvolucao));
       component.form.patchValue({
-        subjetivo: 'Relato do paciente.',
-        objetivo: 'Achados objetivos.',
-        avaliacao: 'Avaliação clínica.',
-        plano: 'Próximas sessões.'
+        dataHoraRegistro: '2026-05-10T10:30',
+        exerciciosRealizados: 'Reformer, Cadillac',
+        equipamentosUtilizados: 'Reformer',
+        cargasMolas: 'Mola 3',
+        dorAntes: 5,
+        dorDepois: 2,
+        respostaPaciente: 'Boa evolução',
+        intercorrencias: 'Sem intercorrências',
+        orientacoes: 'Manter exercícios',
+        observacoesFisioterapeuta: 'Progresso notável'
       });
 
       component.salvar();
@@ -172,10 +187,16 @@ describe('PacienteEvolucaoSessaoComponent', () => {
       expect(evolucaoSessaoServiceSpy.criar).toHaveBeenCalledWith(
         jasmine.objectContaining({
           sessaoId: 5,
-          subjetivo: 'Relato do paciente.',
-          objetivo: 'Achados objetivos.',
-          avaliacao: 'Avaliação clínica.',
-          plano: 'Próximas sessões.'
+          dataHoraRegistro: '2026-05-10T10:30',
+          exerciciosRealizados: 'Reformer, Cadillac',
+          equipamentosUtilizados: 'Reformer',
+          cargasMolas: 'Mola 3',
+          dorAntes: 5,
+          dorDepois: 2,
+          respostaPaciente: 'Boa evolução',
+          intercorrencias: 'Sem intercorrências',
+          orientacoes: 'Manter exercícios',
+          observacoesFisioterapeuta: 'Progresso notável'
         })
       );
       expect(component.evolucao).toEqual(mockEvolucao);
@@ -183,50 +204,47 @@ describe('PacienteEvolucaoSessaoComponent', () => {
       expect(component.salvando).toBeFalse();
     });
 
-    it('should not save when required fields are missing', () => {
+    it('should not save when dataHoraRegistro is missing', () => {
+      component.form.patchValue({ dataHoraRegistro: '' });
+
       component.salvar();
 
       expect(evolucaoSessaoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('subjetivo')?.touched).toBeTrue();
-      expect(component.form.get('objetivo')?.touched).toBeTrue();
-      expect(component.form.get('avaliacao')?.touched).toBeTrue();
-      expect(component.form.get('plano')?.touched).toBeTrue();
+      expect(component.form.get('dataHoraRegistro')?.touched).toBeTrue();
     });
 
-    it('should keep required fields invalid when they contain only whitespace', () => {
-      component.form.patchValue({
-        subjetivo: '   ',
-        objetivo: '   ',
-        avaliacao: '   ',
-        plano: '   '
-      });
+    it('should reject dorAntes out of range', () => {
+      component.form.patchValue({ dorAntes: 15 });
 
       component.salvar();
 
       expect(evolucaoSessaoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('subjetivo')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('objetivo')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('avaliacao')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('plano')?.hasError('pattern')).toBeTrue();
+      expect(component.form.get('dorAntes')?.hasError('max')).toBeTrue();
     });
 
-    it('should reject escalaDor out of range', () => {
-      component.form.patchValue({
-        subjetivo: 'Relato.',
-        objetivo: 'Achados.',
-        avaliacao: 'Avaliação.',
-        plano: 'Plano.',
-        escalaDor: 15
-      });
+    it('should reject dorDepois out of range', () => {
+      component.form.patchValue({ dorDepois: -1 });
 
       component.salvar();
 
       expect(evolucaoSessaoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('escalaDor')?.hasError('max')).toBeTrue();
+      expect(component.form.get('dorDepois')?.hasError('min')).toBeTrue();
+    });
+
+    it('should set erro when create returns a validation or conflict error', () => {
+      evolucaoSessaoServiceSpy.criar.and.returnValue(
+        throwError(() => new HttpErrorResponse({ status: 409 }))
+      );
+      component.form.patchValue({ dataHoraRegistro: '2026-05-10T10:30' });
+
+      component.salvar();
+
+      expect(component.erro).toBe('Erro ao salvar evolução.');
+      expect(component.salvando).toBeFalse();
     });
   });
 
-  it('should reject a session that belongs to another patient', async () => {
+  it('should reject a session that belongs to another patient without loading evolution', async () => {
     await setup(
       { pacienteId: '10', sessaoId: '5' },
       mockEvolucao,
@@ -236,6 +254,7 @@ describe('PacienteEvolucaoSessaoComponent', () => {
     expect(component.parametroInvalido).toBeTrue();
     expect(component.erro).toBe('Sessão não pertence ao paciente informado.');
     expect(component.sessao).toBeNull();
+    expect(evolucaoSessaoServiceSpy.buscarPorSessao).not.toHaveBeenCalled();
   });
 
   it('should set parametroInvalido when pacienteId is invalid', async () => {
@@ -254,7 +273,7 @@ describe('PacienteEvolucaoSessaoComponent', () => {
     expect(sessaoServiceSpy.buscar).not.toHaveBeenCalled();
   });
 
-  it('should set erro when loading fails', async () => {
+  it('should set erro when loading patient or session fails', async () => {
     await setup();
     pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
 

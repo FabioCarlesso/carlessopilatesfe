@@ -10,15 +10,16 @@ import {
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
   id: 1,
   sessaoId: 5,
-  pacienteId: 10,
-  nomePaciente: 'Ana Silva',
-  subjetivo: 'Paciente relata melhora na dor lombar.',
-  objetivo: 'Amplitude de movimento aumentada em 10 graus.',
-  avaliacao: 'Boa evolução clínica.',
-  plano: 'Continuar protocolo de fortalecimento.',
+  dataHoraRegistro: '2026-05-10T10:30:00',
   exerciciosRealizados: 'Agachamento, ponte, dead bug.',
-  escalaDor: 3,
-  observacoes: null,
+  equipamentosUtilizados: 'Reformer',
+  cargasMolas: 'Mola 3',
+  dorAntes: 5,
+  dorDepois: 2,
+  respostaPaciente: 'Boa evolução.',
+  intercorrencias: null,
+  orientacoes: 'Manter exercícios em casa.',
+  observacoesFisioterapeuta: null,
   dataCriacao: '2026-05-01T09:00:00',
   dataAtualizacao: null
 };
@@ -53,10 +54,10 @@ describe('EvolucaoSessaoService', () => {
   it('should POST to /api/evolucoes-sessao with request body', () => {
     const dto: EvolucaoSessaoRequestDTO = {
       sessaoId: 5,
-      subjetivo: 'Paciente relata melhora na dor lombar.',
-      objetivo: 'Amplitude de movimento aumentada em 10 graus.',
-      avaliacao: 'Boa evolução clínica.',
-      plano: 'Continuar protocolo de fortalecimento.'
+      dataHoraRegistro: '2026-05-10T10:30:00',
+      exerciciosRealizados: 'Agachamento, ponte, dead bug.',
+      dorAntes: 5,
+      dorDepois: 2
     };
 
     service.criar(dto).subscribe(e => expect(e).toEqual(mockEvolucao));
@@ -68,7 +69,7 @@ describe('EvolucaoSessaoService', () => {
   });
 
   it('should PUT to /api/evolucoes-sessao/:id with update body', () => {
-    const dto: EvolucaoSessaoUpdateDTO = { escalaDor: 2, observacoes: 'Progresso notável.' };
+    const dto: EvolucaoSessaoUpdateDTO = { dorDepois: 1, observacoesFisioterapeuta: 'Progresso notável.' };
 
     service.atualizar(1, dto).subscribe(e => expect(e).toEqual(mockEvolucao));
 

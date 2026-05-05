@@ -32,7 +32,7 @@
 | Módulo | Rotas | Funcionalidades |
 |--------|-------|-----------------|
 | Dashboard | `/` | Indicadores consolidados de pacientes, profissionais, pagamentos e aulas do mês atual |
-| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese`, `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, `/pacientes/:pacienteId/plano-tratamento` | CRUD completo, filtros de busca, paginação, ativar/inativar, anamnese clínica, avaliação fisioterapêutica e planos de tratamento |
+| Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese`, `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, `/pacientes/:pacienteId/sessoes`, `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao`, `/pacientes/:pacienteId/plano-tratamento` | CRUD completo, filtros de busca, paginação, ativar/inativar, anamnese clínica, avaliação fisioterapêutica, sessões, evolução clínica da sessão e planos de tratamento |
 | Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
@@ -51,10 +51,14 @@ carlessopilatesfe/
 │   │   │   ├── models/
 │   │   │   │   ├── paciente.ts          # DTOs e interfaces de pacientes
 │   │   │   │   ├── plano-tratamento.ts  # DTOs e interfaces de planos de tratamento
+│   │   │   │   ├── sessao.ts            # DTOs e interfaces de sessões
+│   │   │   │   ├── evolucao-sessao.ts   # DTOs e interfaces de evoluções de sessão
 │   │   │   │   └── profissional.ts      # DTOs e interfaces de profissionais
 │   │   │   └── services/
 │   │   │       ├── paciente.service.ts  # Serviço de integração com a API de pacientes
 │   │   │       ├── plano-tratamento.service.ts # Serviço de planos de tratamento
+│   │   │       ├── sessao.service.ts    # Serviço de sessões
+│   │   │       ├── evolucao-sessao.service.ts # Serviço de evoluções de sessão
 │   │   │       └── profissional.service.ts # Serviço de integração com a API de profissionais
 │   │   ├── pages/
 │   │   │   ├── dashboard/               # Tela inicial com indicadores do sistema
@@ -64,6 +68,9 @@ carlessopilatesfe/
 │   │   │   │   ├── paciente-detail/     # Visualização detalhada
 │   │   │   │   ├── paciente-anamnese/   # Cadastro e edição da anamnese
 │   │   │   │   ├── paciente-avaliacao-fisioterapeutica/ # Avaliação fisioterapêutica
+│   │   │   │   ├── paciente-sessao-list/ # Listagem de sessões
+│   │   │   │   ├── paciente-sessao-form/ # Cadastro e edição de sessão
+│   │   │   │   ├── paciente-evolucao-sessao/ # Cadastro e edição da evolução da sessão
 │   │   │   │   ├── paciente-plano-tratamento-list/ # Listagem de planos de tratamento
 │   │   │   │   └── paciente-plano-tratamento-form/ # Cadastro e edição de plano de tratamento
 │   │   │   ├── profissionais/           # CRUD de profissionais
@@ -449,6 +456,35 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `encerrar(id)` | `PATCH /planos-tratamento/{id}/encerrar` | Encerra plano ativo ou suspenso |
 | `suspender(id)` | `PATCH /planos-tratamento/{id}/suspender` | Suspende plano ativo |
 
+### `SessaoService`
+Arquivo: `src/app/core/services/sessao.service.ts`
+Injetável em toda a aplicação (`providedIn: 'root'`).
+
+**URL base no frontend:** `/api/sessoes`
+
+| Método | Endpoint HTTP | Descrição |
+|--------|---------------|-----------|
+| `listarPorPaciente(pacienteId)` | `GET /sessoes/paciente/{pacienteId}` | Lista sessões do paciente |
+| `buscar(id)` | `GET /sessoes/{id}` | Busca sessão por ID |
+| `criar(dto)` | `POST /sessoes` | Cria sessão vinculada ao paciente |
+| `atualizar(id, dto)` | `PUT /sessoes/{id}` | Atualiza dados e status da sessão |
+| `realizar(id)` | `PATCH /sessoes/{id}/realizar` | Marca sessão agendada como realizada |
+| `cancelar(id)` | `PATCH /sessoes/{id}/cancelar` | Cancela sessão agendada |
+
+### `EvolucaoSessaoService`
+Arquivo: `src/app/core/services/evolucao-sessao.service.ts`
+Injetável em toda a aplicação (`providedIn: 'root'`).
+
+**URL base no frontend:** `/api/evolucoes-sessao`
+
+| Método | Endpoint HTTP | Descrição |
+|--------|---------------|-----------|
+| `buscarPorSessao(sessaoId)` | `GET /evolucoes-sessao/sessao/{sessaoId}` | Busca evolução vinculada a uma sessão |
+| `criar(dto)` | `POST /evolucoes-sessao` | Cria evolução com `sessaoId` e `dataHoraRegistro` |
+| `atualizar(id, dto)` | `PUT /evolucoes-sessao/{id}` | Atualiza dados da evolução |
+
+O contrato de evolução usa `dataHoraRegistro`, `exerciciosRealizados`, `equipamentosUtilizados`, `cargasMolas`, `dorAntes`, `dorDepois`, `respostaPaciente`, `intercorrencias`, `orientacoes` e `observacoesFisioterapeuta`. `dorAntes` e `dorDepois` aceitam apenas valores de 0 a 10 quando informados.
+
 ### `ProfissionalService`
 Arquivo: `src/app/core/services/profissional.service.ts`
 Injetável em toda a aplicação (`providedIn: 'root'`).
@@ -555,6 +591,10 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/:id/editar`  | `PacienteFormComponent` | Formulário de edição           |
 | `/pacientes/:pacienteId/anamnese` | `PacienteAnamneseComponent` | Cadastro e edição da anamnese |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | `PacienteAvaliacaoFisioterapeuticaComponent` | Cadastro e edição da avaliação fisioterapêutica |
+| `/pacientes/:pacienteId/sessoes` | `PacienteSessaoListComponent` | Lista sessões de pilates/fisioterapia |
+| `/pacientes/:pacienteId/sessoes/nova` | `PacienteSessaoFormComponent` | Cadastro de sessão |
+| `/pacientes/:pacienteId/sessoes/:id/editar` | `PacienteSessaoFormComponent` | Edição de sessão |
+| `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | `PacienteEvolucaoSessaoComponent` | Cadastro e edição da evolução clínica da sessão |
 | `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
@@ -607,6 +647,28 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Badge de status: Ativo (verde) / Inativo (vermelho)
 - Ações: Editar, Voltar; **Inativar** (se ativo) ou **Ativar** (se inativo)
 - Diálogos de confirmação para ativação e inativação
+
+### `PacienteSessaoListComponent`
+- Lista sessões de pilates/fisioterapia por paciente
+- Exibe status, tipo, data/hora, duração, profissional e observações
+- Permite editar, acessar a evolução, realizar sessão agendada e cancelar sessão agendada
+- Usa confirmação modal antes de realizar ou cancelar
+- Trata estados de carregamento, vazio, sucesso e erro
+
+### `PacienteSessaoFormComponent`
+- Modo duplo: cadastro e edição
+- Valida `pacienteId` e `id` antes de chamar a API
+- Em edição, valida que a sessão retornada pertence ao paciente da rota antes de preencher o formulário
+- Reactive Form com data/hora, tipo, duração, profissional opcional, observações e status
+- Valida duração entre 1 e 480 minutos e profissional opcional como inteiro positivo
+
+### `PacienteEvolucaoSessaoComponent`
+- Modo duplo: cadastro e edição da evolução vinculada a uma sessão
+- Valida `pacienteId` e `sessaoId` antes de chamar a API
+- Carrega a evolução somente depois de confirmar que a sessão pertence ao paciente da rota
+- Reactive Form alinhado ao DTO do backend, com `dataHoraRegistro` obrigatório
+- Valida `dorAntes` e `dorDepois` entre 0 e 10 quando informados
+- Trata ausência de evolução por `404`, mantendo a tela em modo de cadastro
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente
@@ -756,6 +818,8 @@ Comando: `npm test`
 | `app/core/services/dashboard.service.spec.ts` | Contrato HTTP do resumo do dashboard |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/plano-tratamento.service.spec.ts` | Métodos HTTP de planos de tratamento, incluindo encerrar e suspender |
+| `app/core/services/sessao.service.spec.ts` | Métodos HTTP de sessões, incluindo realizar e cancelar |
+| `app/core/services/evolucao-sessao.service.spec.ts` | Métodos HTTP de evolução de sessão, incluindo busca por sessão, criação e atualização |
 | `app/core/services/profissional.service.spec.ts` | Métodos HTTP de profissionais, incluindo atualização via PUT |
 | `app/core/services/relatorio.service.spec.ts` | Contratos HTTP do relatório de NFSE e exportação CSV/XLSX |
 | `app/core/services/style-preferences.service.spec.ts` | Aplicação de tema e densidade no `documentElement` |
@@ -764,6 +828,9 @@ Comando: `npm test`
 | `app/pages/profissionais/profissional-list/profissional-list.component.spec.ts` | Carregamento, inativação, estados de erro e janela limitada de páginas visíveis |
 | `app/pages/pacientes/paciente-form/paciente-form.component.spec.ts` | Modo criação e edição, validações, navegação, erros |
 | `app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts` | Carregamento, inativação, estados de erro |
+| `app/pages/pacientes/paciente-sessao-list/paciente-sessao-list.component.spec.ts` | Carregamento, vazio, ações de status, confirmação e erros |
+| `app/pages/pacientes/paciente-sessao-form/paciente-sessao-form.component.spec.ts` | Criação, edição, validações, vínculo paciente/sessão e erros |
+| `app/pages/pacientes/paciente-evolucao-sessao/paciente-evolucao-sessao.component.spec.ts` | Criação, edição, validações, vínculo paciente/sessão, contrato de API e erros |
 | `app/pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component.spec.ts` | Carregamento, vazio, ações de status, confirmação e erros |
 | `app/pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component.spec.ts` | Criação, edição, validações, vínculo paciente/plano e erros |
 | `app/pages/planos/plano-form/plano-form.component.spec.ts` | Criação de plano, validação de frequência e dias, `ngOnDestroy`, reatividade do `valueChanges` |
