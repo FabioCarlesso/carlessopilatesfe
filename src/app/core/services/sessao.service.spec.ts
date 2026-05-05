@@ -7,12 +7,30 @@ const mockSessao: SessaoResponseDTO = {
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
-  dataHora: '2026-05-10T10:00:00',
+  dataHora: '2026-05-10T10:00',
   tipo: 'PILATES',
   duracao: 60,
   profissionalId: null,
   nomeProfissional: null,
   status: 'AGENDADA',
+  observacoes: null,
+  dataCriacao: '2026-05-01T09:00:00',
+  dataAtualizacao: null
+};
+
+const mockSessaoApi = {
+  id: 1,
+  pacienteId: 10,
+  nomePaciente: 'Ana Silva',
+  profissionalId: null,
+  nomeProfissional: null,
+  planoTratamentoId: null,
+  tipo: 'PILATES',
+  status: 'AGENDADA',
+  data: '2026-05-10',
+  horario: '10:00:00',
+  local: null,
+  duracaoMinutos: 60,
   observacoes: null,
   dataCriacao: '2026-05-01T09:00:00',
   dataAtualizacao: null
@@ -42,7 +60,7 @@ describe('SessaoService', () => {
 
     const req = httpMock.expectOne('/api/sessoes/paciente/10');
     expect(req.request.method).toBe('GET');
-    req.flush([mockSessao]);
+    req.flush([mockSessaoApi]);
   });
 
   it('should GET /api/sessoes/:id', () => {
@@ -50,10 +68,10 @@ describe('SessaoService', () => {
 
     const req = httpMock.expectOne('/api/sessoes/1');
     expect(req.request.method).toBe('GET');
-    req.flush(mockSessao);
+    req.flush(mockSessaoApi);
   });
 
-  it('should POST to /api/sessoes with request body', () => {
+  it('should POST to /api/sessoes with API request body', () => {
     const dto: SessaoRequestDTO = {
       pacienteId: 10,
       dataHora: '2026-05-10T10:00:00',
@@ -65,19 +83,38 @@ describe('SessaoService', () => {
 
     const req = httpMock.expectOne('/api/sessoes');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(dto);
-    req.flush(mockSessao);
+    expect(req.request.body).toEqual({
+      pacienteId: 10,
+      profissionalId: undefined,
+      tipo: 'PILATES',
+      data: '2026-05-10',
+      horario: '10:00:00',
+      duracaoMinutos: 60,
+      observacoes: undefined
+    });
+    req.flush(mockSessaoApi);
   });
 
-  it('should PUT to /api/sessoes/:id with update body', () => {
-    const dto: SessaoUpdateDTO = { duracao: 45, observacoes: 'Ajuste de carga' };
+  it('should PUT to /api/sessoes/:id with API update body', () => {
+    const dto: SessaoUpdateDTO = {
+      dataHora: '2026-05-10T11:30',
+      duracao: 45,
+      status: 'REALIZADA',
+      observacoes: 'Ajuste de carga'
+    };
 
     service.atualizar(1, dto).subscribe(s => expect(s).toEqual(mockSessao));
 
     const req = httpMock.expectOne('/api/sessoes/1');
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(dto);
-    req.flush(mockSessao);
+    expect(req.request.body).toEqual({
+      data: '2026-05-10',
+      horario: '11:30:00',
+      duracaoMinutos: 45,
+      status: 'REALIZADA',
+      observacoes: 'Ajuste de carga'
+    });
+    req.flush(mockSessaoApi);
   });
 
   it('should PATCH /api/sessoes/:id/realizar', () => {
@@ -86,7 +123,7 @@ describe('SessaoService', () => {
 
     const req = httpMock.expectOne('/api/sessoes/1/realizar');
     expect(req.request.method).toBe('PATCH');
-    req.flush(realizada);
+    req.flush({ ...mockSessaoApi, status: 'REALIZADA' });
   });
 
   it('should PATCH /api/sessoes/:id/cancelar', () => {
@@ -95,6 +132,6 @@ describe('SessaoService', () => {
 
     const req = httpMock.expectOne('/api/sessoes/1/cancelar');
     expect(req.request.method).toBe('PATCH');
-    req.flush(cancelada);
+    req.flush({ ...mockSessaoApi, status: 'CANCELADA' });
   });
 });

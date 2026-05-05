@@ -471,6 +471,8 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `realizar(id)` | `PATCH /sessoes/{id}/realizar` | Marca sessão agendada como realizada |
 | `cancelar(id)` | `PATCH /sessoes/{id}/cancelar` | Cancela sessão agendada |
 
+O model usado pelos componentes centraliza a data e hora em `dataHora` e a duração em `duracao`. O contrato atual da API de sessões usa `data`, `horario` e `duracaoMinutos`; por isso o `SessaoService` faz a tradução no `POST`/`PUT` e normaliza as respostas para o formato consumido pela UI.
+
 ### `EvolucaoSessaoService`
 Arquivo: `src/app/core/services/evolucao-sessao.service.ts`
 Injetável em toda a aplicação (`providedIn: 'root'`).
