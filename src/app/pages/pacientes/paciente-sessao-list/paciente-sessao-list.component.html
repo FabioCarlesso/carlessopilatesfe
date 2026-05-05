@@ -36,6 +36,8 @@
       <div class="sessao-acoes">
         <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']"
           class="btn btn-secondary btn-sm">Editar</a>
+        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
+          class="btn btn-secondary btn-sm">Evolução</a>
         <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-success btn-sm"
           [disabled]="acaoEmAndamentoId !== null"
           (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>

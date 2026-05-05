@@ -59,6 +59,13 @@ export const routes: Routes = [
         .then(m => m.PacienteSessaoFormComponent)
   },
   {
+    path: 'pacientes/:pacienteId/sessoes/:sessaoId/evolucao',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-evolucao-sessao/paciente-evolucao-sessao.component')
+        .then(m => m.PacienteEvolucaoSessaoComponent)
+  },
+  {
     path: 'pacientes/:pacienteId/sessoes',
     canActivate: [authGuard],
     loadComponent: () =>

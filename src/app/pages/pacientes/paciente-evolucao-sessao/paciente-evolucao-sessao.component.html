@@ -1,0 +1,98 @@
+<div class="page-header">
+  <div>
+    <h1>Evolução da Sessão</h1>
+    <p *ngIf="sessao" class="page-subtitle">
+      {{ tipoLabel[sessao.tipo] }} — {{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}
+      <span *ngIf="paciente"> — {{ paciente.nome }}</span>
+    </p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId && sessaoId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar às Sessões</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+
+  <h2 class="form-section-title">Subjetivo</h2>
+  <div class="form-group">
+    <label for="subjetivo">Relato do paciente *</label>
+    <textarea id="subjetivo" formControlName="subjetivo" class="form-control" rows="3"
+      aria-describedby="subjetivoError"
+      [class.is-invalid]="campo('subjetivo')?.invalid && campo('subjetivo')?.touched"></textarea>
+    <div id="subjetivoError" class="invalid-feedback"
+      *ngIf="campo('subjetivo')?.touched && campo('subjetivo')?.invalid">
+      Relato do paciente é obrigatório.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Objetivo</h2>
+  <div class="form-group">
+    <label for="objetivo">Achados clínicos objetivos *</label>
+    <textarea id="objetivo" formControlName="objetivo" class="form-control" rows="3"
+      aria-describedby="objetivoError"
+      [class.is-invalid]="campo('objetivo')?.invalid && campo('objetivo')?.touched"></textarea>
+    <div id="objetivoError" class="invalid-feedback"
+      *ngIf="campo('objetivo')?.touched && campo('objetivo')?.invalid">
+      Achados clínicos objetivos são obrigatórios.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Avaliação</h2>
+  <div class="form-group">
+    <label for="avaliacao">Avaliação clínica *</label>
+    <textarea id="avaliacao" formControlName="avaliacao" class="form-control" rows="3"
+      aria-describedby="avaliacaoError"
+      [class.is-invalid]="campo('avaliacao')?.invalid && campo('avaliacao')?.touched"></textarea>
+    <div id="avaliacaoError" class="invalid-feedback"
+      *ngIf="campo('avaliacao')?.touched && campo('avaliacao')?.invalid">
+      Avaliação clínica é obrigatória.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Plano</h2>
+  <div class="form-group">
+    <label for="plano">Planejamento para próximas sessões *</label>
+    <textarea id="plano" formControlName="plano" class="form-control" rows="3"
+      aria-describedby="planoError"
+      [class.is-invalid]="campo('plano')?.invalid && campo('plano')?.touched"></textarea>
+    <div id="planoError" class="invalid-feedback"
+      *ngIf="campo('plano')?.touched && campo('plano')?.invalid">
+      Planejamento é obrigatório.
+    </div>
+  </div>
+
+  <h2 class="form-section-title">Detalhes da Sessão</h2>
+
+  <div class="form-group">
+    <label for="exerciciosRealizados">Exercícios realizados</label>
+    <textarea id="exerciciosRealizados" formControlName="exerciciosRealizados" class="form-control" rows="3"></textarea>
+  </div>
+
+  <div class="form-group form-group-sm">
+    <label for="escalaDor">Escala de dor (0–10)</label>
+    <input id="escalaDor" type="number" formControlName="escalaDor" class="form-control"
+      min="0" max="10" placeholder="Opcional"
+      aria-describedby="escalaDorError"
+      [class.is-invalid]="campo('escalaDor')?.invalid && campo('escalaDor')?.touched" />
+    <div id="escalaDorError" class="invalid-feedback"
+      *ngIf="campo('escalaDor')?.touched && campo('escalaDor')?.invalid">
+      A escala de dor deve estar entre 0 e 10.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoes">Observações gerais</label>
+    <textarea id="observacoes" formControlName="observacoes" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (evolucao ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="pacienteId && sessaoId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

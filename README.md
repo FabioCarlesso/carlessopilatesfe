@@ -101,6 +101,7 @@ src/app/
 │   ├── paciente-avaliacao-fisioterapeutica/ # Cadastro e edição da avaliação fisioterapêutica
 │   ├── paciente-sessao-list/       # Listagem de sessões de pilates/fisioterapia
 │   ├── paciente-sessao-form/       # Cadastro e edição de sessão
+│   ├── paciente-evolucao-sessao/   # Cadastro e edição da evolução clínica da sessão
 │   ├── paciente-plano-tratamento-list/ # Listagem de planos de tratamento
 │   └── paciente-plano-tratamento-form/ # Cadastro e edição de plano de tratamento
 ├── pages/profissionais/            # CRUD de profissionais
@@ -147,11 +148,13 @@ Arquivos de teste:
 - `src/app/core/services/profissional.service.spec.ts`
 - `src/app/core/services/relatorio.service.spec.ts`
 - `src/app/core/services/sessao.service.spec.ts`
+- `src/app/core/services/evolucao-sessao.service.spec.ts`
 - `src/app/pages/pacientes/paciente-list/paciente-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-form/paciente-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-detail/paciente-detail.component.spec.ts`
 - `src/app/pages/pacientes/paciente-sessao-list/paciente-sessao-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-sessao-form/paciente-sessao-form.component.spec.ts`
+- `src/app/pages/pacientes/paciente-evolucao-sessao/paciente-evolucao-sessao.component.spec.ts`
 - `src/app/pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-avaliacao-fisioterapeutica/paciente-avaliacao-fisioterapeutica.component.spec.ts`
@@ -200,6 +203,7 @@ Arquivos de teste:
 | `/pacientes/:pacienteId/sessoes` | Lista de sessões de pilates/fisioterapia do paciente |
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de sessão |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | Edição de sessão |
+| `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | Cadastro e edição da evolução clínica da sessão |
 | `/pacientes/:pacienteId/plano-tratamento` | Lista de planos de tratamento do paciente |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | Edição de plano de tratamento |
