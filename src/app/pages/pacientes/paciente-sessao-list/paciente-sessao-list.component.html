@@ -30,7 +30,7 @@
         </span>
         <span class="sessao-tipo">{{ tipoLabel[sessao.tipo] }}</span>
         <span class="sessao-data">{{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
-        <span class="sessao-duracao">{{ sessao.duracao }} min</span>
+        <span class="sessao-duracao">{{ sessao.duracao !== null ? sessao.duracao + ' min' : '-' }}</span>
         <span *ngIf="sessao.nomeProfissional" class="sessao-profissional">{{ sessao.nomeProfissional }}</span>
       </div>
       <div class="sessao-acoes">
