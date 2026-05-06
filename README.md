@@ -191,7 +191,7 @@ Arquivos de teste:
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, e confirmação de presença com vínculo do profissional responsável |
 | **Relatórios** | Seção administrativa com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
-| **Autenticação** | Login com JWT via `POST /api/auth/login`, guard de rotas, interceptor HTTP, logout e tratamento de `401` por token expirado |
+| **Autenticação** | Login com JWT via `POST /api/auth/login`, armazenamento centralizado do token e do usuário logado, helpers de perfil, guard de rotas, interceptor HTTP, logout e tratamento de `401` por token expirado |
 
 ---
 
@@ -239,7 +239,7 @@ A tela de reavaliações do paciente fica em `/pacientes/:pacienteId/reavaliacoe
 
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
 
-A autenticação usa JWT armazenado em `localStorage`. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove o token e redireciona para `/login`. Controle por perfil e tratamento dedicado de `403` ainda não foram implementados.
+A autenticação consome `POST /api/auth/login`, cujo retorno esperado contém `accessToken`, `tokenType` e o objeto `user` com `id`, `name`, `email`, `role` e `active` opcional. O `AuthService` armazena o JWT na chave `accessToken` e o usuário logado na chave `currentUser` do `localStorage`, remove ambos no logout e expõe `getCurrentUser()`, `getCurrentUserRole()`, `isAdmin()` e `hasRole(role)` para consultas centralizadas. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove token e usuário antes de redirecionar para `/login`. Controle por perfil em rotas e tratamento dedicado de `403` ainda não foram implementados.
 
 O dashboard inicial consome `GET /api/dashboard/resumo`, encaminhado pelo proxy para `GET /dashboard/resumo` no backend. A resposta consolida pacientes ativos/inativos, profissionais ativos/inativos, pagamentos pendentes/pagos/vencidos, receita confirmada do mês atual, aulas realizadas/agendadas no mês e o timestamp `geradoEm`. A tela exibe estados de carregamento e erro sem disparar chamadas adicionais para compor os indicadores.
 

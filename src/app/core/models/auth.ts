@@ -3,15 +3,18 @@ export interface LoginRequestDTO {
   password: string;
 }
 
-export interface LoginResponseDTO {
-  accessToken: string;
-  nome: string;
+export type UserRole = 'USER' | 'ADMIN';
+
+export interface AuthenticatedUser {
+  id: number;
+  name: string;
   email: string;
-  perfil: string;
+  role: UserRole;
+  active?: boolean;
 }
 
-export interface UsuarioLogado {
-  nome: string;
-  email: string;
-  perfil: string;
+export interface LoginResponseDTO {
+  accessToken: string;
+  tokenType: string;
+  user: AuthenticatedUser;
 }
