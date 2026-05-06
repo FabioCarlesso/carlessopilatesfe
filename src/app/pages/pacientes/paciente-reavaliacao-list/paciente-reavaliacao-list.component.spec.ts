@@ -106,6 +106,14 @@ describe('PacienteReavaliacaoListComponent', () => {
     expect(component.reavaliacoes.length).toBe(2);
   });
 
+  it('should display date-only values without timezone shift', async () => {
+    await setup([mockReavaliacao]);
+
+    const dateElement: HTMLElement | null = fixture.nativeElement.querySelector('.reavaliacao-data');
+
+    expect(dateElement?.textContent?.trim()).toBe('10/05/2026');
+  });
+
   it('should set erro when patient loading fails', async () => {
     await setup([]);
     pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));

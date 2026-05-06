@@ -1,4 +1,4 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,10 +7,11 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-paciente-reavaliacao-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, LocalDatePipe, RouterLink],
   templateUrl: './paciente-reavaliacao-list.component.html',
   styleUrl: './paciente-reavaliacao-list.component.scss'
 })

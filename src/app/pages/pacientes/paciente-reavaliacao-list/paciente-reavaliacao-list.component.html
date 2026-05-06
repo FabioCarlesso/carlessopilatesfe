@@ -21,7 +21,7 @@
   <div *ngFor="let reavaliacao of reavaliacoes" class="reavaliacao-card">
     <div class="reavaliacao-header">
       <div class="reavaliacao-info">
-        <span class="reavaliacao-data">{{ reavaliacao.dataReavaliacao | date:'dd/MM/yyyy' }}</span>
+        <span class="reavaliacao-data">{{ reavaliacao.dataReavaliacao | localDate }}</span>
       </div>
       <div class="reavaliacao-acoes">
         <a [routerLink]="['/pacientes', pacienteId, 'reavaliacoes', reavaliacao.id, 'editar']"

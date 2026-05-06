@@ -122,6 +122,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.erro = 'Erro ao carregar dados da reavaliação.';
+          this.parametroInvalido = true;
           this.loading = false;
         }
       });
@@ -130,6 +131,11 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
   salvar(): void {
     if (this.parametroInvalido || this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
+      return;
+    }
+
+    if (this.modoEdicao && this.reavaliacao === null) {
+      this.erro = 'Erro ao carregar dados da reavaliação.';
       return;
     }
 

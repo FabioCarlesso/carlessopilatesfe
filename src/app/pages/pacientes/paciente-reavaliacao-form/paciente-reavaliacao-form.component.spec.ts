@@ -46,7 +46,8 @@ describe('PacienteReavaliacaoFormComponent', () => {
 
   async function setup(
     params: { pacienteId: string; id?: string } = { pacienteId: '10' },
-    reavaliacao: ReavaliacaoResponseDTO = mockReavaliacao
+    reavaliacao: ReavaliacaoResponseDTO = mockReavaliacao,
+    reavaliacaoLoadError = false
   ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     reavaliacaoServiceSpy = jasmine.createSpyObj('ReavaliacaoService', [
@@ -58,7 +59,9 @@ describe('PacienteReavaliacaoFormComponent', () => {
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
 
-    if (params.id) {
+    if (params.id && reavaliacaoLoadError) {
+      reavaliacaoServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
+    } else if (params.id) {
       reavaliacaoServiceSpy.buscar.and.returnValue(of(reavaliacao));
     }
 
@@ -177,6 +180,18 @@ describe('PacienteReavaliacaoFormComponent', () => {
       expect(component.erro).toBe('Erro ao salvar reavaliação.');
       expect(component.salvando).toBeFalse();
     });
+  });
+
+  it('should block saving when edit reavaliacao loading fails', async () => {
+    await setup({ pacienteId: '10', id: '1' }, mockReavaliacao, true);
+    component.form.patchValue({ dataReavaliacao: '2026-05-10' });
+
+    component.salvar();
+
+    expect(component.parametroInvalido).toBeTrue();
+    expect(component.erro).toBe('Identificador inválido.');
+    expect(reavaliacaoServiceSpy.criar).not.toHaveBeenCalled();
+    expect(reavaliacaoServiceSpy.atualizar).not.toHaveBeenCalled();
   });
 
   it('should reject a reavaliacao that belongs to another patient', async () => {
