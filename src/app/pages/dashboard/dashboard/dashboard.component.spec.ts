@@ -7,6 +7,7 @@ import { LOCALE_ID } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
+import { AuthService } from '../../../core/services/auth.service';
 
 registerLocaleData(localePt);
 
@@ -36,15 +37,19 @@ describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
   let serviceSpy: jasmine.SpyObj<DashboardService>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('DashboardService', ['resumo']);
     serviceSpy.resumo.and.returnValue(of(mockResumo));
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAdmin']);
+    authServiceSpy.isAdmin.and.returnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent, RouterTestingModule],
       providers: [
         { provide: DashboardService, useValue: serviceSpy },
+        { provide: AuthService, useValue: authServiceSpy },
         { provide: LOCALE_ID, useValue: 'pt-BR' }
       ]
     }).compileComponents();
@@ -100,6 +105,20 @@ describe('DashboardComponent', () => {
     expect(el.textContent).toContain('Receita do mês');
     expect(el.textContent).toContain('Status dos pagamentos');
     expect(el.textContent).toContain('Aulas do mês atual');
+  });
+
+  it('should render reports action when user is admin', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
+  });
+
+  it('should hide reports action when user is not admin', () => {
+    authServiceSpy.isAdmin.and.returnValue(false);
+    const userFixture = TestBed.createComponent(DashboardComponent);
+    userFixture.detectChanges();
+
+    const el = userFixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
   });
 
   it('should set erro when summary load fails', () => {

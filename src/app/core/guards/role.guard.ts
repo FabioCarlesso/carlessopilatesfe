@@ -13,7 +13,12 @@ export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
     }
 
     const role = authService.getCurrentUserRole();
-    if (role && allowedRoles.includes(role)) {
+    if (!role) {
+      authService.clearSession();
+      return router.createUrlTree(['/login']);
+    }
+
+    if (allowedRoles.includes(role)) {
       return true;
     }
 

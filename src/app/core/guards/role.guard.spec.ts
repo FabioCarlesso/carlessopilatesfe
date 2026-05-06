@@ -63,11 +63,24 @@ describe('roleGuard', () => {
     expect((result as UrlTree).toString()).toBe('/login');
   });
 
-  it('should redirect to /403 when token exists but user data is missing', () => {
+  it('should redirect to /login and clear session when token exists but user data is missing', () => {
     localStorage.setItem('accessToken', 'token');
 
     const result = TestBed.runInInjectionContext(() => roleGuard(['ADMIN'])({} as any, {} as any));
     expect(result instanceof UrlTree).toBeTrue();
-    expect((result as UrlTree).toString()).toBe('/403');
+    expect((result as UrlTree).toString()).toBe('/login');
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('currentUser')).toBeNull();
+  });
+
+  it('should redirect to /login and clear session when stored user data is invalid', () => {
+    localStorage.setItem('accessToken', 'token');
+    localStorage.setItem('currentUser', 'invalid-json');
+
+    const result = TestBed.runInInjectionContext(() => roleGuard(['ADMIN'])({} as any, {} as any));
+    expect(result instanceof UrlTree).toBeTrue();
+    expect((result as UrlTree).toString()).toBe('/login');
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('currentUser')).toBeNull();
   });
 });

@@ -7,9 +7,10 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 describe('AppComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
-  function setup(authenticated: boolean) {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'logout']);
+  function setup(authenticated: boolean, admin = false) {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
     authServiceSpy.isAuthenticated.and.returnValue(authenticated);
+    authServiceSpy.isAdmin.and.returnValue(admin);
 
     TestBed.configureTestingModule({
       imports: [AppComponent, RouterTestingModule, HttpClientTestingModule],
@@ -55,12 +56,22 @@ describe('AppComponent', () => {
     expect(el.querySelector('.navbar-brand')?.textContent).toContain('Carlesso Pilates');
   });
 
-  it('should render relatorios navigation link when authenticated', async () => {
-    await setup(true);
+  it('should render admin navigation links when authenticated user is admin', async () => {
+    await setup(true, true);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/profissionais"]')?.textContent).toContain('Profissionais');
     expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
+  });
+
+  it('should hide admin navigation links when authenticated user is not admin', async () => {
+    await setup(true, false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/profissionais"]')).toBeNull();
+    expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
   });
 
   it('should render dashboard navigation link when authenticated', async () => {
