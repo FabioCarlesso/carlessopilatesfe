@@ -5,4 +5,13 @@ export interface LoginRequestDTO {
 
 export interface LoginResponseDTO {
   accessToken: string;
+  nome: string;
+  email: string;
+  perfil: string;
+}
+
+export interface UsuarioLogado {
+  nome: string;
+  email: string;
+  perfil: string;
 }

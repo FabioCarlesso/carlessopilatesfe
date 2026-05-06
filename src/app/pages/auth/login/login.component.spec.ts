@@ -43,7 +43,7 @@ describe('LoginComponent', () => {
   });
 
   it('should navigate to / on successful login', () => {
-    authServiceSpy.login.and.returnValue(of({ accessToken: 'token' }));
+    authServiceSpy.login.and.returnValue(of({ accessToken: 'token', nome: 'Admin', email: 'admin@carlessopilates.com', perfil: 'ADMIN' }));
     const spy = spyOn(router, 'navigate');
 
     const fixture = TestBed.createComponent(LoginComponent);
