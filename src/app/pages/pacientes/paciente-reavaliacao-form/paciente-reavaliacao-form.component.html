@@ -1,0 +1,86 @@
+<div class="page-header">
+  <div>
+    <h1>{{ modoEdicao ? 'Editar' : 'Nova' }} Reavaliação</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'reavaliacoes']" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+
+  <h2 class="form-section-title">Dados da reavaliação</h2>
+
+  <div class="form-group form-group-sm">
+    <label for="dataReavaliacao">Data da reavaliação *</label>
+    <input id="dataReavaliacao" type="date" formControlName="dataReavaliacao" class="form-control"
+      aria-describedby="dataReavaliacaoError"
+      [class.is-invalid]="campo('dataReavaliacao')?.invalid && campo('dataReavaliacao')?.touched" />
+    <div id="dataReavaliacaoError" class="invalid-feedback"
+      *ngIf="campo('dataReavaliacao')?.touched && campo('dataReavaliacao')?.invalid">
+      Data da reavaliação é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="comparativoAvaliacaoAnterior">Comparativo com avaliação anterior</label>
+    <textarea id="comparativoAvaliacaoAnterior" formControlName="comparativoAvaliacaoAnterior"
+      class="form-control" rows="3"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Evolução clínica</h2>
+
+  <div class="form-group">
+    <label for="evolucaoDor">Evolução da dor</label>
+    <textarea id="evolucaoDor" formControlName="evolucaoDor" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="evolucaoForca">Evolução de força</label>
+    <textarea id="evolucaoForca" formControlName="evolucaoForca" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="evolucaoMobilidade">Evolução de mobilidade</label>
+    <textarea id="evolucaoMobilidade" formControlName="evolucaoMobilidade" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="evolucaoFuncional">Evolução funcional</label>
+    <textarea id="evolucaoFuncional" formControlName="evolucaoFuncional" class="form-control" rows="2"></textarea>
+  </div>
+
+  <h2 class="form-section-title">Resultados e ajustes</h2>
+
+  <div class="form-group">
+    <label for="objetivosAlcancados">Objetivos alcançados</label>
+    <textarea id="objetivosAlcancados" formControlName="objetivosAlcancados" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="pontosAtencao">Pontos de atenção</label>
+    <textarea id="pontosAtencao" formControlName="pontosAtencao" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="ajustesPlanoTratamento">Ajustes recomendados no plano de tratamento</label>
+    <textarea id="ajustesPlanoTratamento" formControlName="ajustesPlanoTratamento" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="observacoesGerais">Observações gerais</label>
+    <textarea id="observacoesGerais" formControlName="observacoesGerais" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+    </button>
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'reavaliacoes']" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

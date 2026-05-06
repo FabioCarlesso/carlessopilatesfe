@@ -94,6 +94,27 @@ export const routes: Routes = [
         .then(m => m.PacientePlanoTratamentoListComponent)
   },
   {
+    path: 'pacientes/:pacienteId/reavaliacoes/nova',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-reavaliacao-form/paciente-reavaliacao-form.component')
+        .then(m => m.PacienteReavaliacaoFormComponent)
+  },
+  {
+    path: 'pacientes/:pacienteId/reavaliacoes/:id/editar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-reavaliacao-form/paciente-reavaliacao-form.component')
+        .then(m => m.PacienteReavaliacaoFormComponent)
+  },
+  {
+    path: 'pacientes/:pacienteId/reavaliacoes',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-reavaliacao-list/paciente-reavaliacao-list.component')
+        .then(m => m.PacienteReavaliacaoListComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [authGuard],
     loadComponent: () =>

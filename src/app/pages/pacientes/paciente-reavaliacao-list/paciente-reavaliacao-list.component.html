@@ -1,0 +1,73 @@
+<div class="page-header">
+  <div>
+    <h1>Reavaliações</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'reavaliacoes', 'nova']" class="btn btn-primary">Nova Reavaliação</a>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar ao Paciente</a>
+    <a *ngIf="!paciente && pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && reavaliacoes.length === 0 && !erro" class="empty-state">
+  Nenhuma reavaliação cadastrada.
+</div>
+
+<div *ngIf="reavaliacoes.length > 0" class="reavaliacoes-list">
+  <div *ngFor="let reavaliacao of reavaliacoes" class="reavaliacao-card">
+    <div class="reavaliacao-header">
+      <div class="reavaliacao-info">
+        <span class="reavaliacao-data">{{ reavaliacao.dataReavaliacao | localDate }}</span>
+      </div>
+      <div class="reavaliacao-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'reavaliacoes', reavaliacao.id, 'editar']"
+          class="btn btn-secondary btn-sm">Editar</a>
+      </div>
+    </div>
+
+    <div class="reavaliacao-body">
+      <div class="detail-grid">
+        <div *ngIf="reavaliacao.comparativoAvaliacaoAnterior" class="detail-item">
+          <span class="label">Comparativo com avaliação anterior</span>
+          <span>{{ reavaliacao.comparativoAvaliacaoAnterior }}</span>
+        </div>
+        <div *ngIf="reavaliacao.evolucaoDor" class="detail-item">
+          <span class="label">Evolução da dor</span>
+          <span>{{ reavaliacao.evolucaoDor }}</span>
+        </div>
+        <div *ngIf="reavaliacao.evolucaoForca" class="detail-item">
+          <span class="label">Evolução de força</span>
+          <span>{{ reavaliacao.evolucaoForca }}</span>
+        </div>
+        <div *ngIf="reavaliacao.evolucaoMobilidade" class="detail-item">
+          <span class="label">Evolução de mobilidade</span>
+          <span>{{ reavaliacao.evolucaoMobilidade }}</span>
+        </div>
+        <div *ngIf="reavaliacao.evolucaoFuncional" class="detail-item">
+          <span class="label">Evolução funcional</span>
+          <span>{{ reavaliacao.evolucaoFuncional }}</span>
+        </div>
+        <div *ngIf="reavaliacao.objetivosAlcancados" class="detail-item">
+          <span class="label">Objetivos alcançados</span>
+          <span>{{ reavaliacao.objetivosAlcancados }}</span>
+        </div>
+        <div *ngIf="reavaliacao.pontosAtencao" class="detail-item">
+          <span class="label">Pontos de atenção</span>
+          <span>{{ reavaliacao.pontosAtencao }}</span>
+        </div>
+        <div *ngIf="reavaliacao.ajustesPlanoTratamento" class="detail-item">
+          <span class="label">Ajustes no plano de tratamento</span>
+          <span>{{ reavaliacao.ajustesPlanoTratamento }}</span>
+        </div>
+        <div *ngIf="reavaliacao.observacoesGerais" class="detail-item">
+          <span class="label">Observações gerais</span>
+          <span>{{ reavaliacao.observacoesGerais }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
