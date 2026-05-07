@@ -183,6 +183,30 @@ export const routes: Routes = [
         .then(m => m.NfseRelatorioComponent)
   },
   {
+    path: 'admin',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/admin/admin-home/admin-home.component').then(m => m.AdminHomeComponent)
+  },
+  {
+    path: 'admin/usuarios',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/admin/usuarios/usuario-list/usuario-list.component').then(m => m.UsuarioListComponent)
+  },
+  {
+    path: 'admin/usuarios/novo',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/admin/usuarios/usuario-form/usuario-form.component').then(m => m.UsuarioFormComponent)
+  },
+  {
+    path: 'admin/usuarios/:id/editar',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/admin/usuarios/usuario-form/usuario-form.component').then(m => m.UsuarioFormComponent)
+  },
+  {
     path: 'profissionais',
     canActivate: [roleGuard(['ADMIN'])],
     loadComponent: () =>

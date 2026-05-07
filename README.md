@@ -109,6 +109,11 @@ src/app/
 │   └── paciente-reavaliacao-form/  # Cadastro e edição de reavaliação
 ├── pages/profissionais/            # CRUD de profissionais
 ├── pages/relatorios/               # Relatórios administrativos
+├── pages/admin/
+│   ├── admin-home/                 # Hub da seção administrativa
+│   └── usuarios/
+│       ├── usuario-list/           # Listagem de usuários (placeholder)
+│       └── usuario-form/           # Cadastro/edição de usuários (placeholder)
 └── shared/components/              # Componentes reutilizáveis
 src/styles/
 └── _tokens.scss                    # Tokens do Design System Carlesso
@@ -178,6 +183,9 @@ Arquivos de teste:
 - `src/app/core/interceptors/auth.interceptor.spec.ts`
 - `src/app/core/guards/auth.guard.spec.ts`
 - `src/app/pages/dashboard/dashboard/dashboard.component.spec.ts`
+- `src/app/pages/admin/admin-home/admin-home.component.spec.ts`
+- `src/app/pages/admin/usuarios/usuario-list/usuario-list.component.spec.ts`
+- `src/app/pages/admin/usuarios/usuario-form/usuario-form.component.spec.ts`
 
 ---
 
@@ -192,6 +200,7 @@ Arquivos de teste:
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, e confirmação de presença com vínculo do profissional responsável |
 | **Relatórios** | Seção administrativa restrita a `ADMIN`, com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
+| **Administração** | Seção administrativa restrita a `ADMIN` em `/admin`, com hub inicial e rotas placeholder para gestão de usuários (`/admin/usuarios`, `/admin/usuarios/novo`, `/admin/usuarios/:id/editar`) |
 | **Autenticação e Autorização** | Login com JWT via `POST /api/auth/login`, armazenamento centralizado do token e do usuário logado, helpers de perfil, `authGuard`, `roleGuard`, rota `/403`, interceptor HTTP, logout e tratamento de `401` por token expirado |
 
 ---
@@ -224,6 +233,10 @@ Arquivos de teste:
 | `/relatorios`           | Seção de relatórios (`ADMIN`)              |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (`ADMIN`) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (`ADMIN`) |
+| `/admin` | Hub da seção administrativa (`ADMIN`) |
+| `/admin/usuarios` | Listagem de usuários (`ADMIN`, placeholder) |
+| `/admin/usuarios/novo` | Cadastro de usuário (`ADMIN`, placeholder) |
+| `/admin/usuarios/:id/editar` | Edição de usuário (`ADMIN`, placeholder) |
 | `/login` | Tela de autenticação (pública) |
 | `/403` | Tela de acesso negado |
 
@@ -240,6 +253,8 @@ A tela de evolução da sessão fica em `/pacientes/:pacienteId/sessoes/:sessaoI
 A tela de reavaliações do paciente fica em `/pacientes/:pacienteId/reavaliacoes`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista as reavaliações por `GET /api/reavaliacoes/paciente/{pacienteId}`. O cadastro usa `POST /api/reavaliacoes` com `pacienteId`; a edição usa `GET /api/reavaliacoes/{id}` e `PUT /api/reavaliacoes/{id}`, validando que a reavaliação retornada pertence ao paciente da rota antes de exibir o formulário. O único campo obrigatório é `dataReavaliacao`; os demais campos — `comparativoAvaliacaoAnterior`, `evolucaoDor`, `evolucaoForca`, `evolucaoMobilidade`, `evolucaoFuncional`, `objetivosAlcancados`, `pontosAtencao`, `ajustesPlanoTratamento` e `observacoesGerais` — são opcionais.
 
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
+
+A seção administrativa fica em `/admin`, exige autenticação e perfil `ADMIN` via `roleGuard(['ADMIN'])` e serve como hub inicial para a gestão de usuários e demais configurações administrativas. A partir do hub o administrador acessa as rotas placeholder de usuários (`/admin/usuarios`, `/admin/usuarios/novo`, `/admin/usuarios/:id/editar`), reservadas para os fluxos de listagem e formulário a serem implementados em issues específicas. O link **Administração** aparece na navbar somente quando o usuário logado tem perfil `ADMIN`.
 
 A autenticação consome `POST /api/auth/login`, cujo retorno esperado contém `accessToken`, `tokenType` e o objeto `user` com `id`, `name`, `email`, `role` e `active` opcional. O `AuthService` armazena o JWT na chave `accessToken` e o usuário logado na chave `currentUser` do `localStorage`, remove ambos no logout e expõe `getCurrentUser()`, `getCurrentUserRole()`, `isAdmin()` e `hasRole(role)` para consultas centralizadas. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove token e usuário antes de redirecionar para `/login`. O `roleGuard` protege rotas por perfil, redireciona sessões inválidas para `/login`, direciona usuários autenticados sem permissão para `/403` e restringe `profissionais` e `relatorios` a `ADMIN`.
 

@@ -33,6 +33,10 @@ describe('app routes', () => {
       'relatorios',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
+      'admin',
+      'admin/usuarios',
+      'admin/usuarios/novo',
+      'admin/usuarios/:id/editar',
       'profissionais',
       'profissionais/novo',
       'profissionais/:id/editar',
@@ -91,5 +95,24 @@ describe('app routes', () => {
     expect(listIndex).toBeLessThan(novoIndex);
     expect(novoIndex).toBeLessThan(editarIndex);
     expect(editarIndex).toBeLessThan(idIndex);
+  });
+
+  it('should group admin routes with home before usuarios subroutes', () => {
+    const homeIndex = paths.indexOf('admin');
+    const listIndex = paths.indexOf('admin/usuarios');
+    const novoIndex = paths.indexOf('admin/usuarios/novo');
+    const editarIndex = paths.indexOf('admin/usuarios/:id/editar');
+
+    expect(homeIndex).toBeLessThan(listIndex);
+    expect(listIndex).toBeLessThan(novoIndex);
+    expect(novoIndex).toBeLessThan(editarIndex);
+  });
+
+  it('should protect every admin route with a canActivate guard', () => {
+    const adminRoutes = routes.filter(r => r.path?.startsWith('admin'));
+    expect(adminRoutes.length).toBe(4);
+    for (const route of adminRoutes) {
+      expect(route.canActivate?.length).toBeGreaterThan(0);
+    }
   });
 });

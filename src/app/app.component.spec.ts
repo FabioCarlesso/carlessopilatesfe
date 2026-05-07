@@ -63,6 +63,7 @@ describe('AppComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('a[href="/profissionais"]')?.textContent).toContain('Profissionais');
     expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
+    expect(el.querySelector('a[href="/admin"]')?.textContent).toContain('Administração');
   });
 
   it('should hide admin navigation links when authenticated user is not admin', async () => {
@@ -72,6 +73,7 @@ describe('AppComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('a[href="/profissionais"]')).toBeNull();
     expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
+    expect(el.querySelector('a[href="/admin"]')).toBeNull();
   });
 
   it('should render dashboard navigation link when authenticated', async () => {

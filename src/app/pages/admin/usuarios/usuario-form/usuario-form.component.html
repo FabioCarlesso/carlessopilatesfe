@@ -1,0 +1,12 @@
+<div class="page-header">
+  <h1>{{ isEdit ? 'Editar Usuário' : 'Novo Usuário' }}</h1>
+  <a routerLink="/admin/usuarios" class="btn btn-outline">Voltar</a>
+</div>
+
+@if (parametroInvalido) {
+  <div class="alert alert-danger">Identificador inválido.</div>
+} @else {
+  <div class="empty-state">
+    O formulário de usuário ainda será implementado em uma issue futura.
+  </div>
+}
