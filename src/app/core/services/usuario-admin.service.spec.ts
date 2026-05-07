@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { UsuarioAdminService } from './usuario-admin.service';
+import { UserRole } from '../models/auth';
 import {
-  RoleOption,
   UsuarioAdminCreateRequestDTO,
   UsuarioAdminPage,
   UsuarioAdminResponseDTO,
@@ -58,6 +58,15 @@ describe('UsuarioAdminService', () => {
     const req = httpMock.expectOne(r => r.url === '/api/users');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('size')).toBe('20');
+    expect(req.request.params.get('sort')).toBe('name');
+    req.flush(mockPage);
+  });
+
+  it('should GET /api/users with custom sort', () => {
+    service.listar(0, 10, 'email').subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/users');
+    expect(req.request.params.get('sort')).toBe('email');
     req.flush(mockPage);
   });
 
@@ -117,6 +126,7 @@ describe('UsuarioAdminService', () => {
 
     const req = httpMock.expectOne('/api/users/1/ativar');
     expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({});
     req.flush(null);
   });
 
@@ -125,14 +135,12 @@ describe('UsuarioAdminService', () => {
 
     const req = httpMock.expectOne('/api/users/1/inativar');
     expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({});
     req.flush(null);
   });
 
   it('should GET /api/users/roles', () => {
-    const mockRoles: RoleOption[] = [
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ];
+    const mockRoles: UserRole[] = ['ADMIN', 'USER'];
 
     service.listarRoles().subscribe(roles => expect(roles).toEqual(mockRoles));
 

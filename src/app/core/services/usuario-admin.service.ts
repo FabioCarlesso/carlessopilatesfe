@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthenticatedUser, UserRole } from '../models/auth';
 import {
-  RoleOption,
   UsuarioAdminCreateRequestDTO,
   UsuarioAdminPage,
   UsuarioAdminResponseDTO,
@@ -17,8 +17,8 @@ export class UsuarioAdminService {
 
   constructor(private http: HttpClient) {}
 
-  listar(page = 0, size = 10): Observable<UsuarioAdminPage> {
-    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'name');
+  listar(page = 0, size = 10, sort = 'name'): Observable<UsuarioAdminPage> {
+    const params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
     return this.http.get<UsuarioAdminPage>(this.apiUrl, { params });
   }
 
@@ -26,8 +26,8 @@ export class UsuarioAdminService {
     return this.http.get<UsuarioAdminResponseDTO>(`${this.apiUrl}/${id}`);
   }
 
-  buscarPerfil(): Observable<UsuarioAdminResponseDTO> {
-    return this.http.get<UsuarioAdminResponseDTO>(`${this.apiUrl}/me`);
+  buscarPerfil(): Observable<AuthenticatedUser> {
+    return this.http.get<AuthenticatedUser>(`${this.apiUrl}/me`);
   }
 
   cadastrar(dto: UsuarioAdminCreateRequestDTO): Observable<UsuarioAdminResponseDTO> {
@@ -50,7 +50,9 @@ export class UsuarioAdminService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
   }
 
-  listarRoles(): Observable<RoleOption[]> {
-    return this.http.get<RoleOption[]>(`${this.apiUrl}/roles`);
+  // ROLE_OPTIONS in usuario-admin.ts maps UserRole values to display labels for forms.
+  // listarRoles() fetches the valid roles from the backend, decoupling the frontend from hardcoded assumptions.
+  listarRoles(): Observable<UserRole[]> {
+    return this.http.get<UserRole[]>(`${this.apiUrl}/roles`);
   }
 }

@@ -1,5 +1,5 @@
 import { UserRole } from './auth';
-import { Page } from './paciente';
+import { Page } from './common';
 
 export interface UsuarioAdminResponseDTO {
   id: number;
