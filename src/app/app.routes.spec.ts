@@ -1,7 +1,23 @@
+import { Routes } from '@angular/router';
 import { routes } from './app.routes';
 
+function getAllPaths(routeList: Routes, prefix = ''): string[] {
+  const result: string[] = [];
+  for (const route of routeList) {
+    const segment = route.path ?? '';
+    const full = prefix ? (segment ? `${prefix}/${segment}` : prefix) : segment;
+    if (!result.includes(full)) result.push(full);
+    if (route.children) {
+      for (const cp of getAllPaths(route.children, full)) {
+        if (!result.includes(cp)) result.push(cp);
+      }
+    }
+  }
+  return result;
+}
+
 describe('app routes', () => {
-  const paths = routes.map(r => r.path);
+  const paths = getAllPaths(routes);
 
   it('should contain all expected routes', () => {
     const expected = [
@@ -108,11 +124,10 @@ describe('app routes', () => {
     expect(novoIndex).toBeLessThan(editarIndex);
   });
 
-  it('should protect every admin route with a canActivate guard', () => {
-    const adminRoutes = routes.filter(r => r.path?.startsWith('admin'));
-    expect(adminRoutes.length).toBe(4);
-    for (const route of adminRoutes) {
-      expect(route.canActivate?.length).toBeGreaterThan(0);
-    }
+  it('should protect every admin route with a canActivate guard on the parent', () => {
+    const adminRoute = routes.find(r => r.path === 'admin');
+    expect(adminRoute).toBeTruthy();
+    expect(adminRoute!.canActivate?.length).toBeGreaterThan(0);
+    expect(adminRoute!.children?.length).toBeGreaterThan(0);
   });
 });

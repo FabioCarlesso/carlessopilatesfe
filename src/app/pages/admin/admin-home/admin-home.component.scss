@@ -22,8 +22,11 @@
   text-decoration: none;
   box-shadow: var(--shadow-1);
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     border-color: var(--primary);
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 
   &__title {

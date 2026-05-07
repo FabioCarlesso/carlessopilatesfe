@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { UsuarioFormComponent } from './usuario-form.component';
 
 function configure(idParam: string | null) {
   return TestBed.configureTestingModule({
-    imports: [UsuarioFormComponent, RouterTestingModule],
+    imports: [UsuarioFormComponent],
     providers: [
+      provideRouter([]),
       {
         provide: ActivatedRoute,
         useValue: {
@@ -67,4 +67,16 @@ describe('UsuarioFormComponent', () => {
     const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/admin/usuarios"]');
     expect(link).toBeTruthy();
   });
+
+  const invalidIds = ['0', '-1', '1.5', '9007199254740992'];
+  for (const id of invalidIds) {
+    it(`should flag '${id}' as an invalid id`, async () => {
+      await configure(id);
+      fixture = TestBed.createComponent(UsuarioFormComponent);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.parametroInvalido).toBeTrue();
+      expect(fixture.componentInstance.isEdit).toBeFalse();
+    });
+  }
 });

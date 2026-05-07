@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideRouter } from '@angular/router';
 import { UsuarioListComponent } from './usuario-list.component';
 
 describe('UsuarioListComponent', () => {
@@ -7,7 +7,8 @@ describe('UsuarioListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UsuarioListComponent, RouterTestingModule]
+      imports: [UsuarioListComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UsuarioListComponent);
@@ -23,12 +24,12 @@ describe('UsuarioListComponent', () => {
     expect(el.querySelector('h1')?.textContent).toContain('Usuários');
   });
 
-  it('should render a link to create a new user', () => {
+  it('should render a disabled button for creating a new user', () => {
     const el = fixture.nativeElement as HTMLElement;
-    const link = el.querySelector('a[href="/admin/usuarios/novo"]');
+    const button = el.querySelector('button[disabled]');
 
-    expect(link).toBeTruthy();
-    expect(link?.textContent).toContain('Novo Usuário');
+    expect(button).toBeTruthy();
+    expect(button?.textContent).toContain('Novo Usuário');
   });
 
   it('should render a link back to the admin home', () => {
