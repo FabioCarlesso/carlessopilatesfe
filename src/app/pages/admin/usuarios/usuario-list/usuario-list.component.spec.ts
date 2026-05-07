@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { Subject, of, throwError } from 'rxjs';
 import { UsuarioListComponent } from './usuario-list.component';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -51,8 +51,9 @@ describe('UsuarioListComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [UsuarioListComponent, RouterTestingModule],
+      imports: [UsuarioListComponent],
       providers: [
+        provideRouter([]),
         { provide: UsuarioAdminService, useValue: serviceSpy },
         { provide: AuthService, useValue: authSpy }
       ]
@@ -62,8 +63,6 @@ describe('UsuarioListComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
-
-  afterEach(() => TestBed.resetTestingModule());
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -306,6 +305,8 @@ describe('UsuarioListComponent', () => {
       role: 'ADMIN'
     });
 
+    fixture = TestBed.createComponent(UsuarioListComponent);
+    component = fixture.componentInstance;
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
@@ -340,5 +341,167 @@ describe('UsuarioListComponent', () => {
 
     const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
     expect(buttons.length).toBe(5);
+  });
+
+  it('should trigger executarConfirmacao when the dialog Confirmar button is clicked', () => {
+    serviceSpy.inativar.and.returnValue(of(undefined));
+    serviceSpy.listar.calls.reset();
+
+    component.confirmarAcao('inativar', mockUsuario);
+    fixture.detectChanges();
+
+    const confirmBtn = fixture.nativeElement.querySelector('.dialog .btn-danger') as HTMLButtonElement;
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn.click();
+
+    expect(serviceSpy.inativar).toHaveBeenCalledWith(mockUsuario.id);
+    expect(serviceSpy.listar).toHaveBeenCalledTimes(1);
+    expect(component.confirmacao).toBeNull();
+  });
+
+  it('should close the dialog when the Cancelar button is clicked', () => {
+    component.confirmarAcao('excluir', mockUsuario);
+    fixture.detectChanges();
+
+    const cancelBtn = fixture.nativeElement.querySelector('.dialog .btn-outline') as HTMLButtonElement;
+    expect(cancelBtn).toBeTruthy();
+    cancelBtn.click();
+
+    expect(component.confirmacao).toBeNull();
+    expect(serviceSpy.excluir).not.toHaveBeenCalled();
+  });
+
+  it('should close the dialog when the overlay is clicked', () => {
+    component.confirmarAcao('excluir', mockUsuario);
+    fixture.detectChanges();
+
+    const overlay = fixture.nativeElement.querySelector('.dialog-overlay') as HTMLElement;
+    overlay.click();
+
+    expect(component.confirmacao).toBeNull();
+  });
+
+  it('should not close the dialog when clicking inside the dialog content', () => {
+    component.confirmarAcao('excluir', mockUsuario);
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('.dialog') as HTMLElement;
+    dialog.click();
+
+    expect(component.confirmacao).not.toBeNull();
+  });
+
+  it('should close the dialog when Escape is pressed', () => {
+    component.confirmarAcao('excluir', mockUsuario);
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(component.confirmacao).toBeNull();
+  });
+
+  it('should disable confirmar/cancelar buttons while a destructive action is in flight', () => {
+    const inativarSubject = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(inativarSubject.asObservable());
+
+    component.confirmarAcao('inativar', mockUsuario);
+    fixture.detectChanges();
+
+    component.executarConfirmacao();
+    fixture.detectChanges();
+
+    expect(component.acaoEmAndamento).toBeTrue();
+    const buttons = fixture.nativeElement.querySelectorAll('.dialog button') as NodeListOf<HTMLButtonElement>;
+    buttons.forEach(btn => expect(btn.disabled).toBeTrue());
+
+    inativarSubject.next();
+    inativarSubject.complete();
+    expect(component.acaoEmAndamento).toBeFalse();
+  });
+
+  it('should ignore double-clicks on Confirmar while a request is in flight', () => {
+    const inativarSubject = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(inativarSubject.asObservable());
+
+    component.confirmarAcao('inativar', mockUsuario);
+    component.executarConfirmacao();
+    component.executarConfirmacao();
+    component.executarConfirmacao();
+
+    expect(serviceSpy.inativar).toHaveBeenCalledTimes(1);
+    inativarSubject.next();
+    inativarSubject.complete();
+  });
+
+  it('should ignore cancelarConfirmacao while a request is in flight', () => {
+    const inativarSubject = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(inativarSubject.asObservable());
+
+    component.confirmarAcao('inativar', mockUsuario);
+    component.executarConfirmacao();
+    component.cancelarConfirmacao();
+
+    expect(component.confirmacao).not.toBeNull();
+    inativarSubject.next();
+    inativarSubject.complete();
+  });
+
+  it('should reset erro when opening a new confirmation dialog', () => {
+    component.erro = 'Erro anterior';
+    component.confirmarAcao('inativar', mockUsuario);
+    expect(component.erro).toBeNull();
+  });
+
+  it('should not render Inativar/Reativar/Excluir buttons when active is undefined', () => {
+    const usuarioDesconhecido: UsuarioAdminResponseDTO = {
+      id: 3,
+      name: 'Estado Desconhecido',
+      email: 'desconhecido@carlessopilates.com',
+      role: 'USER'
+    };
+    serviceSpy.listar.and.returnValue(of({
+      content: [usuarioDesconhecido],
+      page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
+    }));
+    component.carregar();
+    fixture.detectChanges();
+
+    const row = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+    expect(row.textContent).toContain('—');
+    expect(row.textContent).not.toContain('Inativar');
+    expect(row.textContent).not.toContain('Reativar');
+    expect(row.textContent).not.toContain('Excluir');
+  });
+
+  it('should not disable the Reativar button for the currently logged-in user', () => {
+    authSpy.getCurrentUser.and.returnValue({
+      id: mockUsuarioInativo.id,
+      name: mockUsuarioInativo.name,
+      email: mockUsuarioInativo.email,
+      role: 'USER'
+    });
+
+    fixture = TestBed.createComponent(UsuarioListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr');
+    const reativarRow = rows[1] as HTMLElement;
+    const reativarBtn = Array.from(reativarRow.querySelectorAll('button'))
+      .find(b => b.textContent?.includes('Reativar')) as HTMLButtonElement;
+    expect(reativarBtn).toBeTruthy();
+    expect(reativarBtn.disabled).toBeFalse();
+  });
+
+  it('should expose aria attributes on the pagination buttons', () => {
+    component.totalPages = 4;
+    component.currentPage = 1;
+    component.visiblePages = component.pages();
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination button') as NodeListOf<HTMLButtonElement>;
+    expect(buttons[0].getAttribute('aria-label')).toBe('Página 1');
+    expect(buttons[1].getAttribute('aria-current')).toBe('page');
+    expect(buttons[0].getAttribute('aria-current')).toBeNull();
   });
 });

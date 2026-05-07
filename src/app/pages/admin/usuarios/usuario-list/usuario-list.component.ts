@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
@@ -36,6 +36,8 @@ export class UsuarioListComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmacao: Confirmacao | null = null;
+  acaoEmAndamento = false;
+  private currentUserId: number | null = null;
 
   readonly roleLabel = ROLE_LABEL;
 
@@ -45,6 +47,7 @@ export class UsuarioListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.currentUserId = this.auth.getCurrentUser()?.id ?? null;
     this.carregar();
   }
 
@@ -76,28 +79,39 @@ export class UsuarioListComponent implements OnInit {
   }
 
   isUsuarioAtual(usuario: UsuarioAdminResponseDTO): boolean {
-    return this.auth.getCurrentUser()?.id === usuario.id;
+    return this.currentUserId === usuario.id;
   }
 
   confirmarAcao(acao: ConfirmacaoAcao, usuario: UsuarioAdminResponseDTO): void {
+    this.erro = null;
     this.confirmacao = { acao, usuario };
   }
 
   cancelarConfirmacao(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmacao = null;
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.confirmacao) this.cancelarConfirmacao();
+  }
+
   executarConfirmacao(): void {
-    if (!this.confirmacao) return;
+    if (!this.confirmacao || this.acaoEmAndamento) return;
     const { acao, usuario } = this.confirmacao;
+
+    this.acaoEmAndamento = true;
 
     const onError = () => {
       this.erro = this.mensagemErro(acao);
       this.confirmacao = null;
+      this.acaoEmAndamento = false;
     };
 
     const onSuccess = () => {
       this.confirmacao = null;
+      this.acaoEmAndamento = false;
       this.carregar();
     };
 
