@@ -1,10 +1,93 @@
 <div class="page-header">
   <h1>Usuários</h1>
-  <button class="btn btn-primary" disabled title="Funcionalidade disponível em breve">+ Novo Usuário</button>
+  <a routerLink="/admin/usuarios/novo" class="btn btn-primary">+ Novo Usuário</a>
 </div>
 
-<div class="empty-state">
-  A gestão de usuários ainda será implementada em uma issue futura.
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && usuarios.length === 0 && !erro" class="empty-state">
+  Nenhum usuário cadastrado.
 </div>
 
-<a routerLink="/admin" class="btn btn-outline">Voltar à Administração</a>
+<table *ngIf="!loading && usuarios.length > 0" class="table">
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>E-mail</th>
+      <th>Perfil</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let u of usuarios">
+      <td>{{ u.name }}</td>
+      <td>{{ u.email }}</td>
+      <td>{{ roleLabel[u.role] }}</td>
+      <td>
+        <span *ngIf="u.active === true" class="status status--ativo">Ativo</span>
+        <span *ngIf="u.active === false" class="status status--inativo">Inativo</span>
+        <span *ngIf="u.active === undefined" class="status status--desconhecido">—</span>
+      </td>
+      <td class="acoes">
+        <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+        <button
+          *ngIf="u.active === true"
+          class="btn btn-sm btn-warning"
+          [disabled]="isUsuarioAtual(u)"
+          [title]="isUsuarioAtual(u) ? 'Você não pode inativar a própria conta' : ''"
+          (click)="confirmarAcao('inativar', u)">
+          Inativar
+        </button>
+        <button
+          *ngIf="u.active === false"
+          class="btn btn-sm btn-success"
+          (click)="confirmarAcao('ativar', u)">
+          Reativar
+        </button>
+        <button
+          *ngIf="u.active !== undefined"
+          class="btn btn-sm btn-danger"
+          [disabled]="isUsuarioAtual(u)"
+          [title]="isUsuarioAtual(u) ? 'Você não pode excluir a própria conta' : ''"
+          (click)="confirmarAcao('excluir', u)">
+          Excluir
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de usuários">
+  <button
+    *ngFor="let p of visiblePages"
+    [class.active]="p === currentPage"
+    [attr.aria-label]="'Página ' + (p + 1)"
+    [attr.aria-current]="p === currentPage ? 'page' : null"
+    (click)="pagina(p)">
+    {{ p + 1 }}
+  </button>
+</div>
+
+<a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
+
+<div
+  class="dialog-overlay"
+  *ngIf="confirmacao"
+  (click)="cancelarConfirmacao()">
+  <div
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialog-confirmacao-titulo"
+    tabindex="-1"
+    (click)="$event.stopPropagation()">
+    <p id="dialog-confirmacao-titulo">{{ mensagemConfirmacao() }}</p>
+    <div class="dialog-actions">
+      <button class="btn btn-danger" [disabled]="acaoEmAndamento" (click)="executarConfirmacao()">Confirmar</button>
+      <button class="btn btn-outline" [disabled]="acaoEmAndamento" (click)="cancelarConfirmacao()">Cancelar</button>
+    </div>
+  </div>
+</div>
