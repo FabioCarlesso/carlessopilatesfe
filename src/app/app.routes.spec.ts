@@ -1,7 +1,23 @@
+import { Routes } from '@angular/router';
 import { routes } from './app.routes';
 
+function getAllPaths(routeList: Routes, prefix = ''): string[] {
+  const result: string[] = [];
+  for (const route of routeList) {
+    const segment = route.path ?? '';
+    const full = prefix ? (segment ? `${prefix}/${segment}` : prefix) : segment;
+    if (!result.includes(full)) result.push(full);
+    if (route.children) {
+      for (const cp of getAllPaths(route.children, full)) {
+        if (!result.includes(cp)) result.push(cp);
+      }
+    }
+  }
+  return result;
+}
+
 describe('app routes', () => {
-  const paths = routes.map(r => r.path);
+  const paths = getAllPaths(routes);
 
   it('should contain all expected routes', () => {
     const expected = [
@@ -33,6 +49,10 @@ describe('app routes', () => {
       'relatorios',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
+      'admin',
+      'admin/usuarios',
+      'admin/usuarios/novo',
+      'admin/usuarios/:id/editar',
       'profissionais',
       'profissionais/novo',
       'profissionais/:id/editar',
@@ -91,5 +111,23 @@ describe('app routes', () => {
     expect(listIndex).toBeLessThan(novoIndex);
     expect(novoIndex).toBeLessThan(editarIndex);
     expect(editarIndex).toBeLessThan(idIndex);
+  });
+
+  it('should group admin routes with home before usuarios subroutes', () => {
+    const homeIndex = paths.indexOf('admin');
+    const listIndex = paths.indexOf('admin/usuarios');
+    const novoIndex = paths.indexOf('admin/usuarios/novo');
+    const editarIndex = paths.indexOf('admin/usuarios/:id/editar');
+
+    expect(homeIndex).toBeLessThan(listIndex);
+    expect(listIndex).toBeLessThan(novoIndex);
+    expect(novoIndex).toBeLessThan(editarIndex);
+  });
+
+  it('should protect every admin route with a canActivate guard on the parent', () => {
+    const adminRoute = routes.find(r => r.path === 'admin');
+    expect(adminRoute).toBeTruthy();
+    expect(adminRoute!.canActivate?.length).toBeGreaterThan(0);
+    expect(adminRoute!.children?.length).toBeGreaterThan(0);
   });
 });
