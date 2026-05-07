@@ -1,0 +1,45 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--text-primary);
+  }
+}
+
+.acoes {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &--ativo {
+    background: var(--bg-success, #e6f4ea);
+    color: var(--text-success, #1e6b3a);
+  }
+
+  &--inativo {
+    background: var(--bg-warning, #fdecea);
+    color: var(--text-warning, #b3261e);
+  }
+
+  &--desconhecido {
+    color: var(--text-light);
+  }
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+}
