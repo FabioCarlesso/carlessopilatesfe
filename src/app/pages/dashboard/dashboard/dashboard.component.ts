@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -25,6 +26,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private service: DashboardService,
+    public authService: AuthService,
     private cdr: ChangeDetectorRef,
     private destroyRef: DestroyRef
   ) {}

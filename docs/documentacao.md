@@ -33,11 +33,12 @@
 |--------|-------|-----------------|
 | Dashboard | `/` | Indicadores consolidados de pacientes, profissionais, pagamentos e aulas do mês atual |
 | Pacientes | `/pacientes`, `/pacientes/:id`, `/pacientes/novo`, `/pacientes/:id/editar`, `/pacientes/:pacienteId/anamnese`, `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, `/pacientes/:pacienteId/sessoes`, `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao`, `/pacientes/:pacienteId/plano-tratamento` | CRUD completo, filtros de busca, paginação, ativar/inativar, anamnese clínica, avaliação fisioterapêutica, sessões, evolução clínica da sessão e planos de tratamento |
-| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
+| Profissionais | `/profissionais`, `/profissionais/:id`, `/profissionais/novo`, `/profissionais/:id/editar` | CRUD completo restrito a `ADMIN`, ativar/inativar, atualização via PUT, paginação com janela limitada, guarda de limites e sincronização com metadados da API |
 | Planos | `/planos/paciente/:pacienteId`, `/planos/novo/:pacienteId` | Listar, criar (com seleção de dias, validação de frequência e labels centralizados no model), inativar |
 | Pagamentos | `/pagamentos/paciente/:pacienteId`, `/pagamentos/novo/:pacienteId` | Listar, criar, confirmar pagamento |
 | Aulas | `/aulas/paciente/:pacienteId`, `/aulas/pagamento/:pagamentoId` | Listar, exibir carregamento inicial por pagamento, confirmar presença e vincular profissional responsável |
-| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional`, `/relatorios/nfse` | Acessar relatórios administrativos, consultar pagamento de profissional por período, emissão de NFSEs por competência e exportar PDF/XLSX/CSV |
+| Relatórios | `/relatorios`, `/relatorios/pagamento-profissional`, `/relatorios/nfse` | Acessar relatórios administrativos restritos a `ADMIN`, consultar pagamento de profissional por período, emissão de NFSEs por competência e exportar PDF/XLSX/CSV |
+| Autorização | `/403` | `roleGuard` para rotas por perfil e tela dedicada de acesso negado |
 
 ---
 
@@ -600,13 +601,14 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
-| `/profissionais`         | `ProfissionalListComponent` | Lista de profissionais      |
-| `/profissionais/novo`    | `ProfissionalFormComponent` | Formulário de cadastro      |
-| `/profissionais/:id`     | `ProfissionalDetailComponent` | Detalhes do profissional  |
-| `/profissionais/:id/editar` | `ProfissionalFormComponent` | Formulário de edição     |
-| `/relatorios`            | `RelatorioListComponent` | Seção de relatórios          |
-| `/relatorios/pagamento-profissional` | `ProfissionalPagamentoRelatorioComponent` | Relatório de pagamento de profissional |
-| `/relatorios/nfse`       | `NfseRelatorioComponent` | Relatório de emissão de NFSEs |
+| `/profissionais`         | `ProfissionalListComponent` | Lista de profissionais (`ADMIN`) |
+| `/profissionais/novo`    | `ProfissionalFormComponent` | Formulário de cadastro (`ADMIN`) |
+| `/profissionais/:id`     | `ProfissionalDetailComponent` | Detalhes do profissional (`ADMIN`) |
+| `/profissionais/:id/editar` | `ProfissionalFormComponent` | Formulário de edição (`ADMIN`) |
+| `/relatorios`            | `RelatorioListComponent` | Seção de relatórios (`ADMIN`) |
+| `/relatorios/pagamento-profissional` | `ProfissionalPagamentoRelatorioComponent` | Relatório de pagamento de profissional (`ADMIN`) |
+| `/relatorios/nfse`       | `NfseRelatorioComponent` | Relatório de emissão de NFSEs (`ADMIN`) |
+| `/403`                   | `ForbiddenComponent` | Acesso negado |
 
 ---
 
@@ -615,8 +617,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 ### `AppComponent`
 - Navbar com link para "Início"
 - Navbar com link para "Pacientes"
-- Navbar com link para "Profissionais"
-- Navbar com link para "Relatórios"
+- Navbar com links administrativos para "Profissionais" e "Relatórios" apenas para usuários `ADMIN`
 - `<router-outlet>` para renderização das páginas
 
 ### `DashboardComponent`
@@ -625,6 +626,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Detalha pagamentos pendentes, pagos e vencidos
 - Calcula percentual de aulas realizadas no mês
 - Trata estado de carregamento e erro de consulta
+- Exibe ação de acesso a relatórios apenas para usuários `ADMIN`
 
 ### `PacienteListComponent`
 - Tabela paginada de pacientes
@@ -867,12 +869,12 @@ Comando: `npm test`
 - Módulo Aulas: listagem e confirmação de presença com vínculo do profissional responsável
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência
 - Autenticação JWT com login, guard de rotas, interceptor HTTP e logout
+- Autorização por perfil com `roleGuard`, rotas administrativas restritas a `ADMIN` e tela dedicada `/403`
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas / Anamnese / Avaliação Fisioterapêutica / Plano de Tratamento)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
 
 ### Não implementado / Próximos passos
-- Controle de acesso por perfil e tela dedicada para `403`
 - Configuração avançada de ambientes Angular, caso seja necessária no futuro
 - Componente `ConfirmarDialog` integrado
 - Testes E2E

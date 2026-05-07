@@ -94,6 +94,18 @@ describe('AuthService', () => {
     expect(spy).toHaveBeenCalledWith(['/login']);
   });
 
+  it('clearSession() should remove token and user data without navigation', () => {
+    localStorage.setItem('accessToken', 'abc');
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    const spy = spyOn(router, 'navigate');
+
+    service.clearSession();
+
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('currentUser')).toBeNull();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('getCurrentUser() should return parsed user from localStorage', () => {
     localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
     const user = service.getCurrentUser();

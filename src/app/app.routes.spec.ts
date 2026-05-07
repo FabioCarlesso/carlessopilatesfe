@@ -7,6 +7,7 @@ describe('app routes', () => {
     const expected = [
       '',
       'login',
+      '403',
       'pacientes',
       'pacientes/novo',
       'pacientes/:id/editar',
