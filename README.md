@@ -112,8 +112,8 @@ src/app/
 ├── pages/admin/
 │   ├── admin-home/                 # Hub da seção administrativa
 │   └── usuarios/
-│       ├── usuario-list/           # Listagem de usuários (placeholder)
-│       └── usuario-form/           # Cadastro/edição de usuários (placeholder)
+│       ├── usuario-list/           # Listagem de usuários
+│       └── usuario-form/           # Cadastro/edição de usuários
 └── shared/components/              # Componentes reutilizáveis
 src/styles/
 └── _tokens.scss                    # Tokens do Design System Carlesso
@@ -235,8 +235,8 @@ Arquivos de teste:
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |
 | `/admin/usuarios` | Listagem administrativa de usuários (`ADMIN`) |
-| `/admin/usuarios/novo` | Cadastro de usuário (`ADMIN`, placeholder) |
-| `/admin/usuarios/:id/editar` | Edição de usuário (`ADMIN`, placeholder) |
+| `/admin/usuarios/novo` | Cadastro de usuário (`ADMIN`) |
+| `/admin/usuarios/:id/editar` | Edição de usuário (`ADMIN`) |
 | `/login` | Tela de autenticação (pública) |
 | `/403` | Tela de acesso negado |
 
@@ -254,7 +254,7 @@ A tela de reavaliações do paciente fica em `/pacientes/:pacienteId/reavaliacoe
 
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
 
-A seção administrativa fica em `/admin`, exige autenticação e perfil `ADMIN` via `roleGuard(['ADMIN'])` e serve como hub inicial para a gestão de usuários e demais configurações administrativas. A partir do hub o administrador acessa a listagem de usuários em `/admin/usuarios`, que consome `GET /api/users` com paginação server-side e exibe nome, e-mail, perfil e status (Ativo/Inativo) em formato tabular. O cabeçalho oferece **+ Novo Usuário** (rota `/admin/usuarios/novo`); cada linha tem **Editar** (rota `/admin/usuarios/:id/editar`), **Inativar** ou **Reativar** (`PATCH /api/users/{id}/inativar` ou `PATCH /api/users/{id}/ativar` conforme o campo `active`) e **Excluir** (`DELETE /api/users/{id}`). Toda ação destrutiva exige confirmação em diálogo modal antes do disparo da requisição, e os botões de inativar/excluir ficam desabilitados para o próprio usuário logado para alinhamento com as regras do backend. A tela exibe estados de carregamento, erro e lista vazia, e recua para a página anterior válida quando o último item de uma página é removido. O link **Administração** aparece na navbar somente quando o usuário logado tem perfil `ADMIN`.
+A seção administrativa fica em `/admin`, exige autenticação e perfil `ADMIN` via `roleGuard(['ADMIN'])` e serve como hub inicial para a gestão de usuários e demais configurações administrativas. A partir do hub o administrador acessa a listagem de usuários em `/admin/usuarios`, que consome `GET /api/users` com paginação server-side e exibe nome, e-mail, perfil e status (Ativo/Inativo) em formato tabular. O cabeçalho oferece **+ Novo Usuário** (rota `/admin/usuarios/novo`), que abre um formulário reativo para nome, e-mail, senha obrigatória e perfil carregado de `GET /api/users/roles`; cada linha tem **Editar** (rota `/admin/usuarios/:id/editar`), que carrega `GET /api/users/{id}` e permite alterar nome, e-mail, perfil e opcionalmente a senha, **Inativar** ou **Reativar** (`PATCH /api/users/{id}/inativar` ou `PATCH /api/users/{id}/ativar` conforme o campo `active`) e **Excluir** (`DELETE /api/users/{id}`). O formulário salva com `POST /api/users` no cadastro e `PUT /api/users/{id}` na edição, retornando à listagem após sucesso. Toda ação destrutiva exige confirmação em diálogo modal antes do disparo da requisição, e os botões de inativar/excluir ficam desabilitados para o próprio usuário logado para alinhamento com as regras do backend. A tela exibe estados de carregamento, erro e lista vazia, e recua para a página anterior válida quando o último item de uma página é removido. O link **Administração** aparece na navbar somente quando o usuário logado tem perfil `ADMIN`.
 
 A autenticação consome `POST /api/auth/login`, cujo retorno esperado contém `accessToken`, `tokenType` e o objeto `user` com `id`, `name`, `email`, `role` e `active` opcional. O `AuthService` armazena o JWT na chave `accessToken` e o usuário logado na chave `currentUser` do `localStorage`, remove ambos no logout e expõe `getCurrentUser()`, `getCurrentUserRole()`, `isAdmin()` e `hasRole(role)` para consultas centralizadas. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e, ao receber `401` fora do login, remove token e usuário antes de redirecionar para `/login`. O `roleGuard` protege rotas por perfil, redireciona sessões inválidas para `/login`, direciona usuários autenticados sem permissão para `/403` e restringe `profissionais` e `relatorios` a `ADMIN`.
 

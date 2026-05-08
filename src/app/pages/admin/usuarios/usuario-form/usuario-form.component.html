@@ -3,10 +3,91 @@
   <a routerLink="/admin/usuarios" class="btn btn-outline">Voltar</a>
 </div>
 
-@if (parametroInvalido) {
-  <div class="alert alert-danger">Identificador inválido.</div>
-} @else {
-  <div class="empty-state">
-    O formulário de usuário ainda será implementado em uma issue futura.
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Dados de acesso</h2>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="name">Nome *</label>
+      <input
+        id="name"
+        formControlName="name"
+        type="text"
+        class="form-control"
+        autocomplete="name"
+        [class.is-invalid]="campo('name')?.invalid && campo('name')?.touched"
+      />
+      <div class="invalid-feedback" *ngIf="campo('name')?.errors?.['required'] && campo('name')?.touched">
+        Nome é obrigatório.
+      </div>
+      <div class="invalid-feedback" *ngIf="campo('name')?.errors?.['minlength'] && campo('name')?.touched">
+        Nome deve ter ao menos 3 caracteres.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">E-mail *</label>
+      <input
+        id="email"
+        formControlName="email"
+        type="email"
+        class="form-control"
+        autocomplete="email"
+        [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched"
+      />
+      <div class="invalid-feedback" *ngIf="campo('email')?.touched && campo('email')?.invalid">
+        E-mail inválido.
+      </div>
+    </div>
   </div>
-}
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="role">Perfil *</label>
+      <select
+        id="role"
+        formControlName="role"
+        class="form-control"
+        [class.is-invalid]="campo('role')?.invalid && campo('role')?.touched"
+      >
+        <option value="">Selecione...</option>
+        <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+      </select>
+      <div class="invalid-feedback" *ngIf="campo('role')?.invalid && campo('role')?.touched">
+        Perfil é obrigatório.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Senha {{ isEdit ? '' : '*' }}</label>
+      <input
+        id="password"
+        formControlName="password"
+        type="password"
+        class="form-control"
+        [autocomplete]="isEdit ? 'new-password' : 'new-password'"
+        [placeholder]="isEdit ? 'Preencha somente para alterar' : ''"
+        [class.is-invalid]="campo('password')?.invalid && campo('password')?.touched"
+      />
+      <div class="field-hint" *ngIf="isEdit">
+        Deixe em branco para manter a senha atual.
+      </div>
+      <div class="invalid-feedback" *ngIf="campo('password')?.errors?.['required'] && campo('password')?.touched">
+        Senha é obrigatória.
+      </div>
+      <div class="invalid-feedback" *ngIf="campo('password')?.errors?.['minlength'] && campo('password')?.touched">
+        Senha deve ter ao menos 8 caracteres.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : 'Salvar' }}
+    </button>
+    <a routerLink="/admin/usuarios" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>
