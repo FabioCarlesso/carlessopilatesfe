@@ -128,6 +128,32 @@ describe('authInterceptor', () => {
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
+  it('should NOT logout when invalid_token appears outside the Bearer error parameter', () => {
+    localStorage.setItem('accessToken', 'valid-token');
+    const navigateSpy = spyOn(router, 'navigate');
+    let errorStatus: number | undefined;
+
+    http.get('/api/pacientes').subscribe({
+      error: err => errorStatus = err.status
+    });
+
+    const req = httpMock.expectOne('/api/pacientes');
+    req.flush(
+      { message: 'Unauthorized' },
+      {
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: {
+          'WWW-Authenticate': 'Bearer error="invalid_request", error_description="invalid_token was mentioned"'
+        }
+      }
+    );
+
+    expect(errorStatus).toBe(401);
+    expect(localStorage.getItem('accessToken')).toBe('valid-token');
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
   it('should not logout when login returns 401', () => {
     localStorage.setItem('accessToken', 'old-token');
     const navigateSpy = spyOn(router, 'navigate');

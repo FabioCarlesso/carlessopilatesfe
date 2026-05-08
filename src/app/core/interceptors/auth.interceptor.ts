@@ -36,9 +36,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 function isTokenInvalidResponse(error: HttpErrorResponse): boolean {
   const wwwAuthenticate = error.headers?.get('WWW-Authenticate') ?? '';
-  if (wwwAuthenticate) {
-    const lowered = wwwAuthenticate.toLowerCase();
-    if (TOKEN_INVALID_HEADER_HINTS.some(hint => lowered.includes(hint))) {
+  const bearerError = getBearerError(wwwAuthenticate);
+  if (bearerError) {
+    if (TOKEN_INVALID_HEADER_HINTS.includes(bearerError.toLowerCase())) {
       return true;
     }
   }
@@ -52,4 +52,15 @@ function isTokenInvalidResponse(error: HttpErrorResponse): boolean {
   }
 
   return false;
+}
+
+function getBearerError(wwwAuthenticate: string): string | null {
+  const bearerMatch = wwwAuthenticate.match(/\bBearer\b(?<params>.*)/i);
+  const params = bearerMatch?.groups?.['params'];
+  if (!params) {
+    return null;
+  }
+
+  const errorMatch = params.match(/(?:^|,)\s*error\s*=\s*"?([^",\s]+)"?/i);
+  return errorMatch?.[1] ?? null;
 }
