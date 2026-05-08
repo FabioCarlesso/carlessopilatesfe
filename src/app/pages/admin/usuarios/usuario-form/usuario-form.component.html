@@ -3,10 +3,122 @@
   <a routerLink="/admin/usuarios" class="btn btn-outline">Voltar</a>
 </div>
 
-@if (parametroInvalido) {
-  <div class="alert alert-danger">Identificador inválido.</div>
-} @else {
-  <div class="empty-state">
-    O formulário de usuário ainda será implementado em uma issue futura.
-  </div>
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card" novalidate>
+    <h2 class="form-section-title">Dados de acesso</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name">Nome <span aria-hidden="true">*</span></label>
+        <input
+          id="name"
+          formControlName="name"
+          type="text"
+          class="form-control"
+          autocomplete="name"
+          aria-required="true"
+          aria-describedby="name-errors"
+          [class.is-invalid]="campo('name')?.invalid && campo('name')?.touched"
+        />
+        <div id="name-errors" aria-live="polite">
+          @if (campo('name')?.errors?.['required'] && campo('name')?.touched) {
+            <div class="invalid-feedback">Nome é obrigatório.</div>
+          }
+          @if (campo('name')?.errors?.['minlength'] && campo('name')?.touched) {
+            <div class="invalid-feedback">Nome deve ter ao menos 3 caracteres.</div>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">E-mail <span aria-hidden="true">*</span></label>
+        <input
+          id="email"
+          formControlName="email"
+          type="email"
+          class="form-control"
+          autocomplete="email"
+          aria-required="true"
+          aria-describedby="email-errors"
+          [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched"
+        />
+        <div id="email-errors" aria-live="polite">
+          @if (campo('email')?.touched && campo('email')?.invalid) {
+            <div class="invalid-feedback">E-mail inválido.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="role">Perfil <span aria-hidden="true">*</span></label>
+        <select
+          id="role"
+          formControlName="role"
+          class="form-control"
+          aria-required="true"
+          aria-describedby="role-errors"
+          [class.is-invalid]="campo('role')?.invalid && campo('role')?.touched"
+        >
+          <option value="">Selecione...</option>
+          @for (role of roles; track role.value) {
+            <option [value]="role.value">{{ role.label }}</option>
+          }
+        </select>
+        <div id="role-errors" aria-live="polite">
+          @if (campo('role')?.invalid && campo('role')?.touched) {
+            <div class="invalid-feedback">Perfil é obrigatório.</div>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          Senha
+          @if (!isEdit) {
+            <span aria-hidden="true">*</span>
+          }
+        </label>
+        <input
+          id="password"
+          formControlName="password"
+          type="password"
+          class="form-control"
+          autocomplete="new-password"
+          [attr.aria-required]="isEdit ? null : 'true'"
+          aria-describedby="password-hint password-errors"
+          [placeholder]="isEdit ? 'Preencha somente para alterar' : ''"
+          [class.is-invalid]="campo('password')?.invalid && campo('password')?.touched"
+        />
+        <div id="password-hint">
+          @if (isEdit) {
+            <div class="field-hint">Deixe em branco para manter a senha atual.</div>
+          }
+        </div>
+        <div id="password-errors" aria-live="polite">
+          @if (campo('password')?.errors?.['required'] && campo('password')?.touched) {
+            <div class="invalid-feedback">Senha é obrigatória.</div>
+          }
+          @if (campo('password')?.errors?.['minlength'] && campo('password')?.touched) {
+            <div class="invalid-feedback">Senha deve ter ao menos 8 caracteres.</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/admin/usuarios" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
 }
