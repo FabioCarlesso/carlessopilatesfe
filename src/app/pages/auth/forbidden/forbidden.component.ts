@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Location } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -8,4 +9,10 @@ import { RouterLink } from '@angular/router';
   templateUrl: './forbidden.component.html',
   styleUrl: './forbidden.component.scss'
 })
-export class ForbiddenComponent {}
+export class ForbiddenComponent {
+  private readonly location = inject(Location);
+
+  voltar(): void {
+    this.location.back();
+  }
+}

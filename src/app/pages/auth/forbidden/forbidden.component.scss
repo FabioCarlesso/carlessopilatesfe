@@ -2,54 +2,78 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background: var(--bg-app);
+  min-height: calc(100vh - 64px - (var(--gutter) * 2));
+  padding: var(--sp-8) 0;
 }
 
 .forbidden-card {
+  width: min(100%, 520px);
+  padding: var(--sp-8);
+  text-align: center;
   background: var(--bg-elev);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-3);
-  padding: 3rem 2.5rem;
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
+}
+
+.forbidden-eyebrow {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-caps-tight);
+  text-transform: uppercase;
 }
 
 .forbidden-code {
+  margin-bottom: var(--sp-4);
   color: var(--c-danger);
-  font-size: 5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-  line-height: 1;
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 16vw, 7.5rem);
+  font-weight: 400;
+  letter-spacing: var(--ls-display);
+  line-height: 0.9;
 }
 
 .forbidden-title {
+  margin: 0 0 var(--sp-3);
   color: var(--text-primary);
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-display-sm);
+  font-weight: 400;
+  line-height: var(--lh-tight);
 }
 
 .forbidden-message {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin: 0 0 2rem;
+  max-width: 400px;
+  margin: 0 auto var(--sp-7);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
 }
 
-.btn-home {
-  display: inline-block;
-  background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
-  border-radius: var(--r-md);
-  padding: 0.65rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s;
+.forbidden-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+}
 
-  &:hover {
-    background: var(--c-tempestade);
+@media (max-width: 520px) {
+  .forbidden-container {
+    align-items: flex-start;
+    padding-top: var(--sp-5);
+  }
+
+  .forbidden-card {
+    padding: var(--sp-7) var(--sp-5);
+  }
+
+  .forbidden-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
   }
 }
