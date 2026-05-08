@@ -1,9 +1,12 @@
 import { NgFor, NgIf } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { UserRole } from '../../../../core/models/auth';
-import { ROLE_OPTIONS, RoleOption } from '../../../../core/models/usuario-admin';
+import { ROLE_OPTIONS, RoleOption, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
 
@@ -39,9 +42,10 @@ export class UsuarioFormComponent implements OnInit {
       role: ['', Validators.required]
     });
 
-    this.carregarRoles();
-
-    if (!this.route.snapshot.paramMap.has('id')) return;
+    if (!this.route.snapshot.paramMap.has('id')) {
+      this.carregarRoles();
+      return;
+    }
 
     this.usuarioId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
     if (this.usuarioId === null) {
@@ -51,10 +55,9 @@ export class UsuarioFormComponent implements OnInit {
     }
 
     this.isEdit = true;
-    this.form.get('password')?.clearValidators();
-    this.form.get('password')?.setValidators([Validators.minLength(8)]);
+    this.form.get('password')?.setValidators(Validators.minLength(8));
     this.form.get('password')?.updateValueAndValidity();
-    this.carregarUsuario(this.usuarioId);
+    this.carregarEdicao(this.usuarioId);
   }
 
   salvar(): void {
@@ -63,7 +66,9 @@ export class UsuarioFormComponent implements OnInit {
       return;
     }
 
-    if (this.form.invalid || this.salvando) {
+    if (this.salvando) return;
+
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -71,7 +76,7 @@ export class UsuarioFormComponent implements OnInit {
     this.salvando = true;
     this.erro = null;
     const valor = this.form.getRawValue();
-    const senha = (valor.password ?? '').trim();
+    const senha: string = valor.password ?? '';
 
     const request$ = this.isEdit && this.usuarioId !== null
       ? this.service.atualizar(this.usuarioId, {
@@ -89,8 +94,8 @@ export class UsuarioFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => this.router.navigate(['/admin/usuarios']),
-      error: () => {
-        this.erro = 'Erro ao salvar usuário.';
+      error: (err: HttpErrorResponse) => {
+        this.erro = this.mensagemErroSalvar(err);
         this.salvando = false;
       }
     });
@@ -100,37 +105,62 @@ export class UsuarioFormComponent implements OnInit {
     return this.form.get(nome);
   }
 
-  private carregarUsuario(id: number): void {
+  private carregarEdicao(id: number): void {
     this.loading = true;
-    this.service.buscar(id).subscribe({
-      next: usuario => {
-        this.form.patchValue({
-          name: usuario.name,
-          email: usuario.email,
-          role: usuario.role,
-          password: ''
-        });
+    forkJoin({
+      roles: this.rolesObservable(),
+      usuario: this.service.buscar(id)
+    }).subscribe({
+      next: ({ roles, usuario }) => {
+        this.roles = roles;
+        this.preencherFormulario(usuario);
         this.loading = false;
       },
-      error: () => {
-        this.erro = 'Erro ao carregar usuário.';
+      error: (err: HttpErrorResponse) => {
+        this.erro = this.mensagemErroCarregar(err);
         this.loading = false;
       }
     });
   }
 
   private carregarRoles(): void {
-    this.service.listarRoles().subscribe({
-      next: roles => {
-        this.roles = roles.map(role => ({ value: role, label: this.labelRole(role) }));
-      },
-      error: () => {
-        this.roles = ROLE_OPTIONS;
-      }
+    this.rolesObservable().subscribe(roles => {
+      this.roles = roles;
     });
+  }
+
+  private rolesObservable(): Observable<RoleOption[]> {
+    return this.service.listarRoles().pipe(
+      map(roles => (roles?.length ? roles.map(role => this.toRoleOption(role)) : ROLE_OPTIONS)),
+      catchError(() => of(ROLE_OPTIONS))
+    );
+  }
+
+  private preencherFormulario(usuario: UsuarioAdminResponseDTO): void {
+    this.form.patchValue({
+      name: usuario.name,
+      email: usuario.email,
+      role: usuario.role,
+      password: ''
+    });
+  }
+
+  private toRoleOption(role: UserRole): RoleOption {
+    return { value: role, label: this.labelRole(role) };
   }
 
   private labelRole(role: UserRole): string {
     return ROLE_OPTIONS.find(opt => opt.value === role)?.label ?? role;
+  }
+
+  private mensagemErroSalvar(err: HttpErrorResponse): string {
+    if (err?.status === 409) return 'Já existe um usuário com este e-mail.';
+    if (err?.status === 400) return err.error?.message ?? 'Dados inválidos.';
+    return 'Erro ao salvar usuário.';
+  }
+
+  private mensagemErroCarregar(err: HttpErrorResponse): string {
+    if (err?.status === 404) return 'Usuário não encontrado.';
+    return 'Erro ao carregar usuário.';
   }
 }

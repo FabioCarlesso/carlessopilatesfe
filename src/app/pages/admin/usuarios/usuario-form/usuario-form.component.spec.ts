@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { UsuarioFormComponent } from './usuario-form.component';
@@ -95,6 +96,30 @@ describe('UsuarioFormComponent', () => {
     ]);
   });
 
+  it('should fall back to ROLE_OPTIONS when listarRoles returns an empty array', async () => {
+    const serviceSpy = jasmine.createSpyObj<UsuarioAdminService>(
+      'UsuarioAdminService',
+      ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
+    );
+    serviceSpy.listarRoles.and.returnValue(of([]));
+    serviceSpy.buscar.and.returnValue(of(mockUsuario));
+    serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
+    serviceSpy.atualizar.and.returnValue(of(mockUsuario));
+
+    const { component } = await setup(null, serviceSpy);
+
+    expect(component.roles).toEqual([
+      { value: 'ADMIN', label: 'Administrador' },
+      { value: 'USER', label: 'Usuário' }
+    ]);
+  });
+
+  it('should not call listarRoles when route id is invalid', async () => {
+    const { serviceSpy } = await setup('abc');
+
+    expect(serviceSpy.listarRoles).not.toHaveBeenCalled();
+  });
+
   it('should call cadastrar and navigate on valid submit', async () => {
     const { component, serviceSpy, router } = await setup(null);
     component.form.patchValue({
@@ -115,6 +140,22 @@ describe('UsuarioFormComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/admin/usuarios']);
   });
 
+  it('should preserve whitespace in password instead of trimming it', async () => {
+    const { component, serviceSpy } = await setup(null);
+    component.form.patchValue({
+      name: 'João Usuário',
+      email: 'joao@carlessopilates.com',
+      password: 'senha 12 ',
+      role: 'USER'
+    });
+
+    component.salvar();
+
+    expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+      password: 'senha 12 '
+    }));
+  });
+
   it('should not call service when creating with invalid form', async () => {
     const { component, serviceSpy } = await setup(null);
 
@@ -124,9 +165,57 @@ describe('UsuarioFormComponent', () => {
     expect(component.form.touched).toBeTrue();
   });
 
+  it('should block submit when email is invalid', async () => {
+    const { component, serviceSpy } = await setup(null);
+    component.form.patchValue({
+      name: 'João Usuário',
+      email: 'nao-eh-email',
+      password: 'senha1234',
+      role: 'USER'
+    });
+
+    component.salvar();
+
+    expect(component.form.get('email')?.errors?.['email']).toBeTruthy();
+    expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+  });
+
+  it('should block submit when name is shorter than minlength', async () => {
+    const { component, serviceSpy } = await setup(null);
+    component.form.patchValue({
+      name: 'Jo',
+      email: 'joao@carlessopilates.com',
+      password: 'senha1234',
+      role: 'USER'
+    });
+
+    component.salvar();
+
+    expect(component.form.get('name')?.errors?.['minlength']).toBeTruthy();
+    expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+  });
+
+  it('should not call cadastrar twice on rapid double-submit', async () => {
+    const { component, serviceSpy } = await setup(null);
+    const cadastrarSubject = new Subject<UsuarioAdminResponseDTO>();
+    serviceSpy.cadastrar.and.returnValue(cadastrarSubject.asObservable());
+    component.form.patchValue({
+      name: 'João Usuário',
+      email: 'joao@carlessopilates.com',
+      password: 'senha1234',
+      role: 'USER'
+    });
+
+    component.salvar();
+    component.salvar();
+
+    expect(serviceSpy.cadastrar).toHaveBeenCalledTimes(1);
+    cadastrarSubject.complete();
+  });
+
   it('should set erro on cadastrar failure', async () => {
     const { component, serviceSpy } = await setup(null);
-    serviceSpy.cadastrar.and.returnValue(throwError(() => new Error('fail')));
+    serviceSpy.cadastrar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     component.form.patchValue({
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
@@ -138,6 +227,39 @@ describe('UsuarioFormComponent', () => {
 
     expect(component.erro).toBe('Erro ao salvar usuário.');
     expect(component.salvando).toBeFalse();
+  });
+
+  it('should map 409 conflict to a duplicate-email message', async () => {
+    const { component, serviceSpy } = await setup(null);
+    serviceSpy.cadastrar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+    component.form.patchValue({
+      name: 'João Usuário',
+      email: 'joao@carlessopilates.com',
+      password: 'senha1234',
+      role: 'USER'
+    });
+
+    component.salvar();
+
+    expect(component.erro).toBe('Já existe um usuário com este e-mail.');
+  });
+
+  it('should map 400 bad request using backend message when available', async () => {
+    const { component, serviceSpy } = await setup(null);
+    serviceSpy.cadastrar.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 400,
+      error: { message: 'Senha fraca.' }
+    })));
+    component.form.patchValue({
+      name: 'João Usuário',
+      email: 'joao@carlessopilates.com',
+      password: 'senha1234',
+      role: 'USER'
+    });
+
+    component.salvar();
+
+    expect(component.erro).toBe('Senha fraca.');
   });
 
   it('should switch to edit mode and load user data when a valid id param is present', async () => {
@@ -160,6 +282,14 @@ describe('UsuarioFormComponent', () => {
     component.form.patchValue({ password: '' });
 
     expect(component.form.get('password')?.valid).toBeTrue();
+  });
+
+  it('should still enforce password minlength in edit mode when filled', async () => {
+    const { component } = await setup('42');
+
+    component.form.patchValue({ password: '123' });
+
+    expect(component.form.get('password')?.errors?.['minlength']).toBeTruthy();
   });
 
   it('should call atualizar without password when edit password is blank', async () => {
@@ -188,7 +318,7 @@ describe('UsuarioFormComponent', () => {
 
   it('should set erro on atualizar failure', async () => {
     const { component, serviceSpy } = await setup('42');
-    serviceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));
+    serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
     component.salvar();
 
@@ -202,7 +332,7 @@ describe('UsuarioFormComponent', () => {
       ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
     );
     serviceSpy.listarRoles.and.returnValue(of(['ADMIN', 'USER']));
-    serviceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
+    serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
 
@@ -210,6 +340,21 @@ describe('UsuarioFormComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar usuário.');
     expect(component.loading).toBeFalse();
+  });
+
+  it('should map 404 on buscar to a not-found message', async () => {
+    const serviceSpy = jasmine.createSpyObj<UsuarioAdminService>(
+      'UsuarioAdminService',
+      ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
+    );
+    serviceSpy.listarRoles.and.returnValue(of(['ADMIN', 'USER']));
+    serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
+    serviceSpy.atualizar.and.returnValue(of(mockUsuario));
+
+    const { component } = await setup('42', serviceSpy);
+
+    expect(component.erro).toBe('Usuário não encontrado.');
   });
 
   it('should flag invalid id parameters and show error message', async () => {
