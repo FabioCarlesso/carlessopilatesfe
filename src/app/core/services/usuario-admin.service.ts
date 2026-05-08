@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthenticatedUser, UserRole } from '../models/auth';
+import { AuthenticatedUser } from '../models/auth';
 import {
+  RoleOption,
   UsuarioAdminCreateRequestDTO,
   UsuarioAdminPage,
   UsuarioAdminResponseDTO,
@@ -50,9 +51,7 @@ export class UsuarioAdminService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
   }
 
-  // ROLE_OPTIONS in usuario-admin.ts maps UserRole values to display labels for forms.
-  // listarRoles() fetches the valid roles from the backend, decoupling the frontend from hardcoded assumptions.
-  listarRoles(): Observable<UserRole[]> {
-    return this.http.get<UserRole[]>(`${this.apiUrl}/roles`);
+  listarRoles(): Observable<RoleOption[]> {
+    return this.http.get<RoleOption[]>(`${this.apiUrl}/roles`);
   }
 }

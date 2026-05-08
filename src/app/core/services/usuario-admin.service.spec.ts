@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { UsuarioAdminService } from './usuario-admin.service';
-import { UserRole } from '../models/auth';
 import {
+  RoleOption,
   UsuarioAdminCreateRequestDTO,
   UsuarioAdminPage,
   UsuarioAdminResponseDTO,
@@ -140,7 +140,10 @@ describe('UsuarioAdminService', () => {
   });
 
   it('should GET /api/users/roles', () => {
-    const mockRoles: UserRole[] = ['ADMIN', 'USER'];
+    const mockRoles: RoleOption[] = [
+      { value: 'ADMIN', label: 'Administrador' },
+      { value: 'USER', label: 'Usuário' }
+    ];
 
     service.listarRoles().subscribe(roles => expect(roles).toEqual(mockRoles));
 
