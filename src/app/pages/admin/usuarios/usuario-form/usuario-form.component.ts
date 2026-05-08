@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { UserRole } from '../../../../core/models/auth';
 import { ROLE_OPTIONS, RoleOption, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
@@ -128,7 +127,7 @@ export class UsuarioFormComponent implements OnInit {
 
   private rolesObservable(): Observable<RoleOption[]> {
     return this.service.listarRoles().pipe(
-      map(roles => (roles?.length ? roles.map(role => this.toRoleOption(role)) : ROLE_OPTIONS)),
+      map(roles => (roles?.length ? roles : ROLE_OPTIONS)),
       catchError(() => of(ROLE_OPTIONS))
     );
   }
@@ -140,14 +139,6 @@ export class UsuarioFormComponent implements OnInit {
       role: usuario.role,
       password: ''
     });
-  }
-
-  private toRoleOption(role: UserRole): RoleOption {
-    return { value: role, label: this.labelRole(role) };
-  }
-
-  private labelRole(role: UserRole): string {
-    return ROLE_OPTIONS.find(opt => opt.value === role)?.label ?? role;
   }
 
   private mensagemErroSalvar(err: HttpErrorResponse): string {

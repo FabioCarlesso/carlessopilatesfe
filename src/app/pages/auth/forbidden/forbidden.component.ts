@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-forbidden',
@@ -8,4 +9,15 @@ import { RouterLink } from '@angular/router';
   templateUrl: './forbidden.component.html',
   styleUrl: './forbidden.component.scss'
 })
-export class ForbiddenComponent {}
+export class ForbiddenComponent {
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
+
+  voltar(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl('/');
+  }
+}

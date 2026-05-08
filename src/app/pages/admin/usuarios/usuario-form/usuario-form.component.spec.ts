@@ -21,7 +21,10 @@ async function setup(idParam: string | null, service?: jasmine.SpyObj<UsuarioAdm
   );
 
   if (!service) {
-    serviceSpy.listarRoles.and.returnValue(of(['ADMIN', 'USER']));
+    serviceSpy.listarRoles.and.returnValue(of([
+      { value: 'ADMIN', label: 'Administrador' },
+      { value: 'USER', label: 'Usuário' }
+    ]));
     serviceSpy.buscar.and.returnValue(of(mockUsuario));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
@@ -331,7 +334,10 @@ describe('UsuarioFormComponent', () => {
       'UsuarioAdminService',
       ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
     );
-    serviceSpy.listarRoles.and.returnValue(of(['ADMIN', 'USER']));
+    serviceSpy.listarRoles.and.returnValue(of([
+      { value: 'ADMIN', label: 'Administrador' },
+      { value: 'USER', label: 'Usuário' }
+    ]));
     serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
@@ -347,7 +353,10 @@ describe('UsuarioFormComponent', () => {
       'UsuarioAdminService',
       ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
     );
-    serviceSpy.listarRoles.and.returnValue(of(['ADMIN', 'USER']));
+    serviceSpy.listarRoles.and.returnValue(of([
+      { value: 'ADMIN', label: 'Administrador' },
+      { value: 'USER', label: 'Usuário' }
+    ]));
     serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));

@@ -1,8 +1,16 @@
-<div class="forbidden-container">
-  <div class="forbidden-card">
-    <h1 class="forbidden-code">403</h1>
-    <p class="forbidden-title">Acesso não autorizado</p>
-    <p class="forbidden-message">Você não tem permissão para acessar esta página.</p>
-    <a routerLink="/" class="btn-home">Voltar ao início</a>
-  </div>
-</div>
+<section class="forbidden-container" aria-labelledby="forbidden-title">
+  <article class="forbidden-card">
+    <div class="forbidden-code" aria-hidden="true">403</div>
+
+    <h1 id="forbidden-title" class="forbidden-title">Acesso negado</h1>
+    <p class="forbidden-message">
+      Seu perfil não possui permissão para acessar esta área do sistema.
+      Caso precise liberar o acesso, entre em contato com um administrador.
+    </p>
+
+    <div class="forbidden-actions" role="group" aria-label="Ações para sair da página de acesso negado">
+      <a routerLink="/" class="btn btn-primary">Ir para o início</a>
+      <button type="button" class="btn btn-secondary" (click)="voltar()">Voltar</button>
+    </div>
+  </article>
+</section>
