@@ -1,6 +1,5 @@
-import { NgFor, NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
@@ -13,11 +12,16 @@ import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
 @Component({
   selector: 'app-usuario-form',
   standalone: true,
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './usuario-form.component.html',
   styleUrl: './usuario-form.component.scss'
 })
 export class UsuarioFormComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly service = inject(UsuarioAdminService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
   form!: FormGroup;
   isEdit = false;
   usuarioId: number | null = null;
@@ -26,13 +30,6 @@ export class UsuarioFormComponent implements OnInit {
   salvando = false;
   erro: string | null = null;
   roles: RoleOption[] = ROLE_OPTIONS;
-
-  constructor(
-    private fb: FormBuilder,
-    private service: UsuarioAdminService,
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
