@@ -1,6 +1,5 @@
 <section class="forbidden-container" aria-labelledby="forbidden-title">
   <article class="forbidden-card">
-    <p class="forbidden-eyebrow">Erro 403</p>
     <div class="forbidden-code" aria-hidden="true">403</div>
 
     <h1 id="forbidden-title" class="forbidden-title">Acesso negado</h1>
@@ -9,7 +8,7 @@
       Caso precise liberar o acesso, entre em contato com um administrador.
     </p>
 
-    <div class="forbidden-actions" aria-label="Ações para sair da página de acesso negado">
+    <div class="forbidden-actions" role="group" aria-label="Ações para sair da página de acesso negado">
       <a routerLink="/" class="btn btn-primary">Ir para o início</a>
       <button type="button" class="btn btn-secondary" (click)="voltar()">Voltar</button>
     </div>
