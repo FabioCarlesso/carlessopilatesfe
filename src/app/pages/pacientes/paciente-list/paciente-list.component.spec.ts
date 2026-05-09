@@ -421,4 +421,15 @@ describe('PacienteListComponent', () => {
     expect(select).withContext('page size select must be present').toBeTruthy();
     expect(select.value).toBe('20');
   });
+
+  it('should render patient actions inside a wrapped actions group', () => {
+    fixture.detectChanges();
+
+    const actionsCell = fixture.nativeElement.querySelector('td.acoes-cell') as HTMLTableCellElement;
+    const actionsGroup = actionsCell?.querySelector('.acoes[aria-label="Ações do paciente"]');
+
+    expect(actionsCell).withContext('actions must stay in a table cell').toBeTruthy();
+    expect(actionsGroup).withContext('buttons must be grouped for flexible wrapping').toBeTruthy();
+    expect(actionsGroup?.querySelectorAll('.btn').length).toBe(3);
+  });
 });

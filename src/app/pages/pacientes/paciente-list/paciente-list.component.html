@@ -59,37 +59,41 @@
     </label>
   </div>
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>E-mail</th>
-        <th>CPF</th>
-        <th>Telefone</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of pacientes">
-        <td>{{ p.nome }}</td>
-        <td>{{ p.email }}</td>
-        <td>{{ p.cpf }}</td>
-        <td>{{ p.telefone || '-' }}</td>
-        <td>
-          <span class="status-badge" [class.inactive]="!p.ativo">
-            {{ p.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </td>
-        <td class="acoes">
-          <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
-          <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-          <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
-          <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-wrap paciente-table-wrap">
+    <table class="table paciente-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>CPF</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th class="acoes-header">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of pacientes">
+          <td>{{ p.nome }}</td>
+          <td>{{ p.email }}</td>
+          <td>{{ p.cpf }}</td>
+          <td>{{ p.telefone || '-' }}</td>
+          <td>
+            <span class="status-badge" [class.inactive]="!p.ativo">
+              {{ p.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="acoes-cell">
+            <div class="acoes" aria-label="Ações do paciente">
+              <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
+              <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+              <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+              <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <div class="pagination" *ngIf="totalPages > 1">
     <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
