@@ -7,6 +7,8 @@ Interface web para gestão administrativa de um estúdio de pilates, desenvolvid
 A aplicação oferece dashboard inicial de indicadores, CRUDs administrativos para pacientes e profissionais, fluxos de planos, pagamentos e aulas, além de relatórios administrativos. Consome uma API REST (Spring Boot) via proxy do Angular CLI.
 
 **Documentação detalhada:** [`docs/documentacao.md`](docs/documentacao.md)  
+**Documentação visual em HTML:** [`docs/documentacao.html`](docs/documentacao.html)
+
 **Contexto e decisões técnicas:** [`docs/context.md`](docs/context.md)
 
 ---
