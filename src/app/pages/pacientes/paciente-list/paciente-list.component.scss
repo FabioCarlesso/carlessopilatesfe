@@ -33,8 +33,13 @@
     border: 1px solid var(--border-default);
     border-radius: var(--r-md);
     padding: .45rem .6rem;
+    background: var(--bg-elev);
     color: var(--text-primary);
     font: inherit;
+  }
+
+  input::placeholder {
+    color: var(--text-muted);
   }
 
   input:focus,
@@ -136,6 +141,7 @@
     border: 1px solid var(--border-default);
     border-radius: var(--r-md);
     padding: .35rem .5rem;
+    background: var(--bg-elev);
     color: var(--text-primary);
     font: inherit;
   }
