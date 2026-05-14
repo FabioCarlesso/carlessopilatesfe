@@ -74,8 +74,8 @@ No startup, o serviço resolve a preferência inicial nesta ordem: (1) preferên
 
 O dark mode em si é definido inteiramente pelos tokens em `[data-theme="dark"]` (`src/styles/_tokens.scss`, espelhado em `assets/tokens.css`), que sobrescrevem superfícies (`--bg-*`), texto (`--text-*`), bordas (`--border-*`), sombras e fundos funcionais. Não há paleta paralela nem cores hardcoded específicas de tema na camada de componentes.
 
-### Controle de tema na navbar
-A navbar do `AppComponent` expõe o botão **Tema claro/Tema escuro** (`.btn-tema`), agrupado com o botão **Sair** em `.navbar-actions`. O botão chama `StylePreferencesService.toggleTheme()` e expõe `aria-pressed` (estado do tema escuro) e `aria-label` descritivo da ação. O controle só aparece quando o usuário está autenticado, junto com o restante da navbar; a tela de login continua respeitando o tema persistido ou o `prefers-color-scheme`.
+### Controle de tema na interface
+A navbar do `AppComponent` expõe o botão **Tema claro/Tema escuro** (`.btn-tema`), agrupado com o botão **Sair** em `.navbar-actions`. A tela de login também expõe o mesmo controle visual por meio de `.login-theme-toggle`, permitindo alternar o tema antes da autenticação. Ambos chamam `StylePreferencesService.toggleTheme()` e expõem `aria-pressed` (estado do tema escuro) e `aria-label` descritivo da ação. A navbar continua aparecendo apenas quando o usuário está autenticado; a tela de login respeita e também pode alterar o tema persistido ou resolvido por `prefers-color-scheme`.
 
 ### Lazy Loading em todas as rotas
 Cada componente de página é carregado sob demanda via `loadComponent()`, otimizando o bundle inicial.

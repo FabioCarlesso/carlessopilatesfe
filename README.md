@@ -134,7 +134,7 @@ Componentes globais como botões, inputs, cards, badges, tabelas, paginação, a
 
 ### Tema claro/escuro
 
-O `StylePreferencesService` persiste a preferência de tema e densidade em `localStorage` (chave `carlesso.style-preferences`). No primeiro acesso, sem preferência salva, o tema inicial segue `prefers-color-scheme` do sistema operacional; depois disso a escolha do usuário tem prioridade e permanece após recarregar a página ou reabrir o sistema no mesmo navegador. A navbar expõe o botão **Tema claro/Tema escuro** que alterna o tema via `StylePreferencesService.toggleTheme()`, com `aria-label` e `aria-pressed` para acessibilidade. O dark mode é definido inteiramente pelos tokens em `[data-theme="dark"]` — ao ajustar tokens, mantenha `src/styles/_tokens.scss` e `assets/tokens.css` em sincronia.
+O `StylePreferencesService` persiste a preferência de tema e densidade em `localStorage` (chave `carlesso.style-preferences`). No primeiro acesso, sem preferência salva, o tema inicial segue `prefers-color-scheme` do sistema operacional; depois disso a escolha do usuário tem prioridade e permanece após recarregar a página ou reabrir o sistema no mesmo navegador. A navbar e a tela de login expõem o botão **Tema claro/Tema escuro**, permitindo alternar o tema via `StylePreferencesService.toggleTheme()` antes ou depois da autenticação, com `aria-label` e `aria-pressed` para acessibilidade. O dark mode é definido inteiramente pelos tokens em `[data-theme="dark"]` — ao ajustar tokens, mantenha `src/styles/_tokens.scss` e `assets/tokens.css` em sincronia.
 
 ---
 

@@ -83,6 +83,17 @@ describe('StylePreferencesService', () => {
     expect(service.current.theme).toBe('dark');
   });
 
+  it('should preserve a valid saved density while falling back to the OS preference when the saved theme is invalid', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: 'invalid', density: 'compact' }));
+    mockPrefersDark(true);
+
+    const service = createService();
+
+    expect(service.current).toEqual({ theme: 'dark', density: 'compact' });
+    expect(documentRef.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(documentRef.documentElement.getAttribute('data-density')).toBe('compact');
+  });
+
   it('should persist the theme to localStorage and apply data-theme when it changes', () => {
     mockPrefersDark(false);
     const service = createService();

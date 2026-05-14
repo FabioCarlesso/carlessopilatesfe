@@ -85,7 +85,7 @@ export class StylePreferencesService {
         return null;
       }
       return {
-        theme: theme ?? DEFAULT_PREFERENCES.theme,
+        theme: theme ?? (this.prefersDarkScheme() ? 'dark' : 'light'),
         density: density ?? DEFAULT_PREFERENCES.density
       };
     } catch {
