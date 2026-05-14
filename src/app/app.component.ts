@@ -12,12 +12,17 @@ import { StylePreferencesService } from './core/services/style-preferences.servi
 })
 export class AppComponent {
   readonly authService = inject(AuthService);
+  private readonly stylePreferences = inject(StylePreferencesService);
 
-  constructor() {
-    inject(StylePreferencesService);
+  get isDarkTheme(): boolean {
+    return this.stylePreferences.current.theme === 'dark';
   }
 
   sair(): void {
     this.authService.logout();
+  }
+
+  toggleTheme(): void {
+    this.stylePreferences.toggleTheme();
   }
 }

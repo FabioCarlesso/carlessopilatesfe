@@ -98,10 +98,17 @@ a {
       }
     }
   }
+
+  &-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
 }
 
 .btn,
-.btn-sair {
+.btn-sair,
+.btn-tema {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +168,8 @@ a {
 }
 
 .btn-outline,
-.btn-sair {
+.btn-sair,
+.btn-tema {
   background: transparent;
   border-color: var(--border-default);
   color: var(--text-secondary);
@@ -172,7 +180,8 @@ a {
   }
 }
 
-.btn-sair {
+.btn-sair,
+.btn-tema {
   border-color: rgba(240, 237, 232, 0.55);
   color: var(--c-cloud-dancer);
   min-height: var(--btn-h-sm);

@@ -1,4 +1,14 @@
 <div class="login-container">
+  <button
+    type="button"
+    class="btn btn-outline btn-sm login-theme-toggle"
+    (click)="toggleTheme()"
+    [attr.aria-pressed]="isDarkTheme"
+    [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+  >
+    {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
+  </button>
+
   <div class="login-card">
     <h1 class="login-title">Carlesso Pilates</h1>
     <p class="login-subtitle">Área administrativa</p>

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { StylePreferencesService } from '../../../core/services/style-preferences.service';
 
 @Component({
   selector: 'app-login',
@@ -18,12 +19,23 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private stylePreferences: StylePreferencesService
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+  }
+
+  // O tema é só preferência visual em localStorage (data-theme), sem dado
+  // sensível nem chamada ao backend — pode ser alternado sem estar logado.
+  get isDarkTheme(): boolean {
+    return this.stylePreferences.current.theme === 'dark';
+  }
+
+  toggleTheme(): void {
+    this.stylePreferences.toggleTheme();
   }
 
   entrar(): void {

@@ -6,17 +6,36 @@ import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { StylePreferencesService, StyleTheme } from '../../../core/services/style-preferences.service';
 
 describe('LoginComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let stylePreferencesSpy: jasmine.SpyObj<StylePreferencesService>;
   let router: Router;
+
+  function setTheme(theme: StyleTheme): void {
+    (stylePreferencesSpy as { current: { theme: StyleTheme; density: string } }).current = {
+      theme,
+      density: 'default'
+    };
+  }
 
   beforeEach(async () => {
     authServiceSpy = jasmine.createSpyObj('AuthService', ['login', 'isAuthenticated']);
+    stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>('StylePreferencesService', [
+      'toggleTheme',
+      'setTheme',
+      'setDensity',
+      'apply'
+    ]);
+    setTheme('light');
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent, RouterTestingModule, HttpClientTestingModule],
-      providers: [{ provide: AuthService, useValue: authServiceSpy }]
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: StylePreferencesService, useValue: stylePreferencesSpy }
+      ]
     }).compileComponents();
 
     router = TestBed.inject(Router);
@@ -101,5 +120,40 @@ describe('LoginComponent', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.login-erro')?.textContent).toContain('Erro ao realizar login');
+  });
+
+  it('should render the theme toggle without being authenticated', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.login-theme-toggle')).toBeTruthy();
+  });
+
+  it('should call toggleTheme when the theme toggle is clicked', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.login-theme-toggle') as HTMLButtonElement;
+    btn.click();
+    expect(stylePreferencesSpy.toggleTheme).toHaveBeenCalled();
+  });
+
+  it('should label the theme toggle to switch to dark while the light theme is active', () => {
+    setTheme('light');
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.login-theme-toggle') as HTMLButtonElement;
+    expect(btn.textContent).toContain('Tema escuro');
+    expect(btn.getAttribute('aria-label')).toBe('Mudar para tema escuro');
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('should label the theme toggle to switch to light while the dark theme is active', () => {
+    setTheme('dark');
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.login-theme-toggle') as HTMLButtonElement;
+    expect(btn.textContent).toContain('Tema claro');
+    expect(btn.getAttribute('aria-label')).toBe('Mudar para tema claro');
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
   });
 });

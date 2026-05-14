@@ -12,7 +12,18 @@
         <li><a routerLink="/admin">Administração</a></li>
       }
     </ul>
-    <button class="btn-sair" (click)="sair()">Sair</button>
+    <div class="navbar-actions">
+      <button
+        type="button"
+        class="btn-tema"
+        (click)="toggleTheme()"
+        [attr.aria-pressed]="isDarkTheme"
+        [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      >
+        {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
+      </button>
+      <button class="btn-sair" (click)="sair()">Sair</button>
+    </div>
   </nav>
 }
 
