@@ -1,0 +1,128 @@
+<div class="page-header">
+  <h1>Alterar senha</h1>
+  <a routerLink="/" class="btn btn-outline">Voltar</a>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="salvar()" class="form-card" novalidate autocomplete="off">
+  <p class="form-section-hint">
+    Informe a senha atual e a nova senha. A nova senha precisa ter pelo menos 8 caracteres
+    e ser diferente da senha atual.
+  </p>
+
+  <div class="form-group">
+    <label for="senhaAtual">Senha atual <span aria-hidden="true">*</span></label>
+    <div class="password-field">
+      <input
+        id="senhaAtual"
+        formControlName="senhaAtual"
+        [type]="mostrarSenhaAtual ? 'text' : 'password'"
+        class="form-control"
+        autocomplete="current-password"
+        aria-required="true"
+        aria-describedby="senhaAtual-errors"
+        [class.is-invalid]="campo('senhaAtual')?.invalid && campo('senhaAtual')?.touched"
+      />
+      <button
+        type="button"
+        class="btn-toggle-password"
+        (click)="toggleSenhaAtual()"
+        [attr.aria-pressed]="mostrarSenhaAtual"
+        [attr.aria-label]="mostrarSenhaAtual ? 'Ocultar senha atual' : 'Mostrar senha atual'"
+      >
+        {{ mostrarSenhaAtual ? 'Ocultar' : 'Mostrar' }}
+      </button>
+    </div>
+    <div id="senhaAtual-errors" aria-live="polite">
+      @if (campo('senhaAtual')?.errors?.['required'] && campo('senhaAtual')?.touched) {
+        <div class="invalid-feedback">Senha atual é obrigatória.</div>
+      }
+      @if (campo('senhaAtual')?.errors?.['incorreta']) {
+        <div class="invalid-feedback">Senha atual incorreta.</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="novaSenha">Nova senha <span aria-hidden="true">*</span></label>
+    <div class="password-field">
+      <input
+        id="novaSenha"
+        formControlName="novaSenha"
+        [type]="mostrarNovaSenha ? 'text' : 'password'"
+        class="form-control"
+        autocomplete="new-password"
+        aria-required="true"
+        aria-describedby="novaSenha-hint novaSenha-errors"
+        [class.is-invalid]="campo('novaSenha')?.invalid && campo('novaSenha')?.touched"
+      />
+      <button
+        type="button"
+        class="btn-toggle-password"
+        (click)="toggleNovaSenha()"
+        [attr.aria-pressed]="mostrarNovaSenha"
+        [attr.aria-label]="mostrarNovaSenha ? 'Ocultar nova senha' : 'Mostrar nova senha'"
+      >
+        {{ mostrarNovaSenha ? 'Ocultar' : 'Mostrar' }}
+      </button>
+    </div>
+    <div id="novaSenha-hint" class="field-hint">Mínimo de 8 caracteres.</div>
+    <div id="novaSenha-errors" aria-live="polite">
+      @if (campo('novaSenha')?.errors?.['required'] && campo('novaSenha')?.touched) {
+        <div class="invalid-feedback">Nova senha é obrigatória.</div>
+      }
+      @if (campo('novaSenha')?.errors?.['minlength'] && campo('novaSenha')?.touched) {
+        <div class="invalid-feedback">Nova senha deve ter ao menos 8 caracteres.</div>
+      }
+      @if (campo('novaSenha')?.errors?.['igualAtual'] && campo('novaSenha')?.touched) {
+        <div class="invalid-feedback">A nova senha deve ser diferente da senha atual.</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="confirmacaoNovaSenha">Confirmar nova senha <span aria-hidden="true">*</span></label>
+    <div class="password-field">
+      <input
+        id="confirmacaoNovaSenha"
+        formControlName="confirmacaoNovaSenha"
+        [type]="mostrarConfirmacao ? 'text' : 'password'"
+        class="form-control"
+        autocomplete="new-password"
+        aria-required="true"
+        aria-describedby="confirmacaoNovaSenha-errors"
+        [class.is-invalid]="campo('confirmacaoNovaSenha')?.invalid && campo('confirmacaoNovaSenha')?.touched"
+      />
+      <button
+        type="button"
+        class="btn-toggle-password"
+        (click)="toggleConfirmacao()"
+        [attr.aria-pressed]="mostrarConfirmacao"
+        [attr.aria-label]="mostrarConfirmacao ? 'Ocultar confirmação' : 'Mostrar confirmação'"
+      >
+        {{ mostrarConfirmacao ? 'Ocultar' : 'Mostrar' }}
+      </button>
+    </div>
+    <div id="confirmacaoNovaSenha-errors" aria-live="polite">
+      @if (campo('confirmacaoNovaSenha')?.errors?.['required'] && campo('confirmacaoNovaSenha')?.touched) {
+        <div class="invalid-feedback">Confirmação é obrigatória.</div>
+      }
+      @if (campo('confirmacaoNovaSenha')?.errors?.['naoConfere'] && campo('confirmacaoNovaSenha')?.touched) {
+        <div class="invalid-feedback">A confirmação não confere com a nova senha.</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="form.invalid || salvando">
+      {{ salvando ? 'Salvando...' : 'Alterar senha' }}
+    </button>
+    <a routerLink="/" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

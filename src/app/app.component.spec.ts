@@ -96,6 +96,24 @@ describe('AppComponent', () => {
     expect(el.querySelector('.navbar-menu a[href="/"]')?.textContent).toContain('Início');
   });
 
+  it('should render the alterar senha link when authenticated', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/perfil/alterar-senha"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Alterar senha');
+  });
+
+  it('should hide the alterar senha link when not authenticated', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/perfil/alterar-senha"]')).toBeNull();
+  });
+
   it('should show logout button when authenticated', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(AppComponent);

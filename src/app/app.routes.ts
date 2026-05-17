@@ -10,6 +10,12 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
+    path: 'perfil/alterar-senha',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/perfil/alterar-senha/alterar-senha.component').then(m => m.AlterarSenhaComponent)
+  },
+  {
     path: 'login',
     loadComponent: () =>
       import('./pages/auth/login/login.component').then(m => m.LoginComponent)
