@@ -139,9 +139,12 @@ describe('AlterarSenhaComponent', () => {
     subject.complete();
   });
 
-  it('should map 401 to a senha atual incorrect message', async () => {
+  it('should map explicit senha atual errors to the field message', async () => {
     const { component, serviceSpy } = await setup();
-    serviceSpy.alterarSenha.and.returnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
+    serviceSpy.alterarSenha.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 401,
+      error: { code: 'SENHA_ATUAL_INCORRETA' }
+    })));
     preencherFormulario(component);
 
     component.salvar();
@@ -151,14 +154,29 @@ describe('AlterarSenhaComponent', () => {
     expect(component.salvando).toBeFalse();
   });
 
-  it('should map 403 to the same senha atual incorrect message', async () => {
+  it('should map field validation errors for senhaAtual to the field message', async () => {
+    const { component, serviceSpy } = await setup();
+    serviceSpy.alterarSenha.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 400,
+      error: { fieldErrors: [{ field: 'senhaAtual', message: 'Senha atual inválida.' }] }
+    })));
+    preencherFormulario(component);
+
+    component.salvar();
+
+    expect(component.erro).toBe('Senha atual incorreta.');
+    expect(component.form.get('senhaAtual')?.errors?.['incorreta']).toBeTruthy();
+  });
+
+  it('should not map generic 401 or 403 responses to senha atual incorrect', async () => {
     const { component, serviceSpy } = await setup();
     serviceSpy.alterarSenha.and.returnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
     preencherFormulario(component);
 
     component.salvar();
 
-    expect(component.erro).toBe('Senha atual incorreta.');
+    expect(component.erro).toBe('Não foi possível confirmar sua autorização. Faça login novamente e tente alterar a senha.');
+    expect(component.form.get('senhaAtual')?.errors?.['incorreta']).toBeFalsy();
   });
 
   it('should map 400 to the backend message when available', async () => {

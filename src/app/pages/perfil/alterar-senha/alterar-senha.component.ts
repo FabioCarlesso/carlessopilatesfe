@@ -13,6 +13,14 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioAdminService } from '../../../core/services/usuario-admin.service';
 
+const SENHA_ATUAL_INCORRETA_CODES = [
+  'SENHA_ATUAL_INCORRETA',
+  'SENHA_ATUAL_INVALIDA',
+  'CURRENT_PASSWORD_INCORRECT',
+  'CURRENT_PASSWORD_INVALID',
+  'INVALID_CURRENT_PASSWORD'
+];
+
 @Component({
   selector: 'app-alterar-senha',
   standalone: true,
@@ -97,9 +105,14 @@ export class AlterarSenhaComponent {
   }
 
   private aplicarErro(err: HttpErrorResponse): void {
-    if (err?.status === 401 || err?.status === 403) {
+    if (this.isSenhaAtualIncorreta(err)) {
       this.form.get('senhaAtual')?.setErrors({ incorreta: true });
       this.erro = 'Senha atual incorreta.';
+      return;
+    }
+
+    if (err?.status === 401 || err?.status === 403) {
+      this.erro = 'Não foi possível confirmar sua autorização. Faça login novamente e tente alterar a senha.';
       return;
     }
 
@@ -110,6 +123,34 @@ export class AlterarSenhaComponent {
     }
 
     this.erro = 'Erro ao alterar a senha. Tente novamente.';
+  }
+
+  private isSenhaAtualIncorreta(err: HttpErrorResponse): boolean {
+    const body = err?.error;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return false;
+    }
+
+    const erro = body as { code?: unknown; field?: unknown; fieldErrors?: unknown };
+    const code = typeof erro.code === 'string' ? erro.code.toUpperCase() : null;
+    if (code && SENHA_ATUAL_INCORRETA_CODES.includes(code)) {
+      return true;
+    }
+
+    if (erro.field === 'senhaAtual') {
+      return true;
+    }
+
+    if (Array.isArray(erro.fieldErrors)) {
+      return erro.fieldErrors.some(fieldError => {
+        if (!fieldError || typeof fieldError !== 'object' || Array.isArray(fieldError)) {
+          return false;
+        }
+        return (fieldError as { field?: unknown }).field === 'senhaAtual';
+      });
+    }
+
+    return false;
   }
 
   private matchValidator(controlName: string, matchingName: string): ValidatorFn {

@@ -539,10 +539,16 @@ select.form-control,
   }
 
   .navbar-menu,
+  .navbar-actions,
   .page-header,
   .form-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .navbar-actions {
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .container {
