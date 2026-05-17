@@ -1,0 +1,35 @@
+.form-section-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+}
+
+.password-field {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-sm, 0.5rem);
+
+  .form-control {
+    flex: 1;
+  }
+}
+
+.btn-toggle-password {
+  background: transparent;
+  border: 1px solid var(--border-default, currentColor);
+  color: var(--text-default, inherit);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 var(--space-md, 1rem);
+  font-size: var(--fs-micro);
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    background: var(--surface-muted, transparent);
+  }
+}

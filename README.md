@@ -192,6 +192,7 @@ Arquivos de teste:
 - `src/app/pages/admin/admin-home/admin-home.component.spec.ts`
 - `src/app/pages/admin/usuarios/usuario-list/usuario-list.component.spec.ts`
 - `src/app/pages/admin/usuarios/usuario-form/usuario-form.component.spec.ts`
+- `src/app/pages/perfil/alterar-senha/alterar-senha.component.spec.ts`
 
 ---
 
@@ -208,6 +209,7 @@ Arquivos de teste:
 | **Relatórios** | Seção administrativa restrita a `ADMIN`, com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
 | **Administração** | Seção administrativa restrita a `ADMIN` em `/admin`, com hub inicial e listagem de usuários em `/admin/usuarios` (paginação server-side, criar/editar/inativar/reativar/excluir com confirmação) |
 | **Autenticação e Autorização** | Login com JWT via `POST /api/auth/login`, armazenamento centralizado do token e do usuário logado, helpers de perfil, `authGuard`, `roleGuard`, rota `/403`, interceptor HTTP, logout e tratamento de `401` por token expirado |
+| **Troca de senha** | Tela `/perfil/alterar-senha` acessível ao usuário autenticado, com validação local (obrigatoriedade, mínimo de 8 caracteres, confirmação coincidente, nova ≠ atual), toggle de visibilidade por campo, integração com `PUT /api/users/me/senha` e limpeza de sessão com redirecionamento para `/login` após sucesso |
 
 ---
 
@@ -243,6 +245,7 @@ Arquivos de teste:
 | `/admin/usuarios` | Listagem administrativa de usuários (`ADMIN`) |
 | `/admin/usuarios/novo` | Cadastro de usuário (`ADMIN`) |
 | `/admin/usuarios/:id/editar` | Edição de usuário (`ADMIN`) |
+| `/perfil/alterar-senha` | Troca de senha do usuário autenticado |
 | `/login` | Tela de autenticação (pública) |
 | `/403` | Tela de acesso negado |
 
@@ -261,6 +264,8 @@ A tela de reavaliações do paciente fica em `/pacientes/:pacienteId/reavaliacoe
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
 
 A seção administrativa fica em `/admin`, exige autenticação e perfil `ADMIN` via `roleGuard(['ADMIN'])` e serve como hub inicial para a gestão de usuários e demais configurações administrativas. A partir do hub o administrador acessa a listagem de usuários em `/admin/usuarios`, que consome `GET /api/users` com paginação server-side e exibe nome, e-mail, perfil e status (Ativo/Inativo) em formato tabular. O cabeçalho oferece **+ Novo Usuário** (rota `/admin/usuarios/novo`), que abre um formulário reativo para nome, e-mail, senha obrigatória e perfil carregado de `GET /api/users/roles`; cada linha tem **Editar** (rota `/admin/usuarios/:id/editar`), que carrega `GET /api/users/{id}` e permite alterar nome, e-mail, perfil e opcionalmente a senha, **Inativar** ou **Reativar** (`PATCH /api/users/{id}/inativar` ou `PATCH /api/users/{id}/ativar` conforme o campo `active`) e **Excluir** (`DELETE /api/users/{id}`). O formulário salva com `POST /api/users` no cadastro e `PUT /api/users/{id}` na edição, retornando à listagem após sucesso. Toda ação destrutiva exige confirmação em diálogo modal antes do disparo da requisição, e os botões de inativar/excluir ficam desabilitados para o próprio usuário logado para alinhamento com as regras do backend. A tela exibe estados de carregamento, erro e lista vazia, e recua para a página anterior válida quando o último item de uma página é removido. O link **Administração** aparece na navbar somente quando o usuário logado tem perfil `ADMIN`.
+
+A troca de senha do usuário autenticado fica em `/perfil/alterar-senha`, exige autenticação via `authGuard` e usa um formulário reativo com os campos `senhaAtual`, `novaSenha` e `confirmacaoNovaSenha`. As validações locais cobrem obrigatoriedade, tamanho mínimo de 8 caracteres na nova senha, confirmação coincidente e impedimento de reutilização da senha atual. Cada campo possui toggle de visibilidade (mostrar/ocultar) com `aria-pressed` e `aria-label`. O submit chama `UsuarioAdminService.alterarSenha`, que envia `PUT /api/users/me/senha` com o payload `{ senhaAtual, novaSenha, confirmacaoNovaSenha }`. Erros com código/campo explícito de `senhaAtual` exibem a mensagem específica "Senha atual incorreta." junto ao campo; `401`/`403` sem esse sinal exibem mensagem de autorização/sessão; `400` propaga a mensagem do backend quando disponível; demais erros caem em mensagem genérica. Após sucesso, o componente exibe confirmação, limpa o formulário, chama `AuthService.clearSession()` e redireciona para `/login` para relogin com a nova senha. A navbar exibe o link **Alterar senha** para todo usuário autenticado.
 
 A autenticação consome `POST /api/auth/login`, cujo retorno esperado contém `accessToken`, `tokenType` e o objeto `user` com `id`, `name`, `email`, `role` e `active` opcional. O `AuthService` armazena o JWT na chave `accessToken` e o usuário logado na chave `currentUser` do `localStorage`, remove ambos no logout e expõe `getCurrentUser()`, `getCurrentUserRole()`, `isAdmin()` e `hasRole(role)` para consultas centralizadas. O interceptor adiciona `Authorization: Bearer <token>` nas chamadas protegidas, ignora o endpoint público de login e só executa logout (removendo token/usuário e redirecionando para `/login`) quando a resposta `401` indica explicitamente token inválido ou expirado — via `WWW-Authenticate: Bearer error="invalid_token" | "expired_token"` ou corpo com `code` em `{TOKEN_EXPIRED, INVALID_TOKEN, TOKEN_INVALID}`. Demais `401` (rota inexistente, falha pontual do backend) são propagados ao componente sem derrubar a sessão. O `roleGuard` protege rotas por perfil, redireciona sessões inválidas para `/login`, direciona usuários autenticados sem permissão para `/403` e restringe `profissionais` e `relatorios` a `ADMIN`.
 

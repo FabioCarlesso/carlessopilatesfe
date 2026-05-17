@@ -18,3 +18,9 @@ export interface LoginResponseDTO {
   tokenType: string;
   user: AuthenticatedUser;
 }
+
+export interface AlterarSenhaRequestDTO {
+  senhaAtual: string;
+  novaSenha: string;
+  confirmacaoNovaSenha: string;
+}

@@ -108,7 +108,8 @@ a {
 
 .btn,
 .btn-sair,
-.btn-tema {
+.btn-tema,
+.btn-alterar-senha {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +170,8 @@ a {
 
 .btn-outline,
 .btn-sair,
-.btn-tema {
+.btn-tema,
+.btn-alterar-senha {
   background: transparent;
   border-color: var(--border-default);
   color: var(--text-secondary);
@@ -181,7 +183,8 @@ a {
 }
 
 .btn-sair,
-.btn-tema {
+.btn-tema,
+.btn-alterar-senha {
   border-color: rgba(240, 237, 232, 0.55);
   color: var(--c-cloud-dancer);
   min-height: var(--btn-h-sm);
@@ -536,10 +539,16 @@ select.form-control,
   }
 
   .navbar-menu,
+  .navbar-actions,
   .page-header,
   .form-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .navbar-actions {
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .container {

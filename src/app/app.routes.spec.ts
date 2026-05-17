@@ -22,6 +22,7 @@ describe('app routes', () => {
   it('should contain all expected routes', () => {
     const expected = [
       '',
+      'perfil/alterar-senha',
       'login',
       '403',
       'pacientes',

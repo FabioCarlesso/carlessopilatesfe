@@ -139,6 +139,23 @@ describe('UsuarioAdminService', () => {
     req.flush(null);
   });
 
+  it('should PUT /api/users/me/senha with the alterar senha payload', () => {
+    const dto = {
+      senhaAtual: 'senhaAtual1',
+      novaSenha: 'novaSenha123',
+      confirmacaoNovaSenha: 'novaSenha123'
+    };
+
+    let observed = false;
+    service.alterarSenha(dto).subscribe(() => { observed = true; });
+
+    const req = httpMock.expectOne('/api/users/me/senha');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(dto);
+    req.flush(null);
+    expect(observed).toBeTrue();
+  });
+
   it('should GET /api/users/roles', () => {
     const mockRoles: RoleOption[] = [
       { value: 'ADMIN', label: 'Administrador' },

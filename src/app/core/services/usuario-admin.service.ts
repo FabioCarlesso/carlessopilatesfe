@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthenticatedUser } from '../models/auth';
+import { AlterarSenhaRequestDTO, AuthenticatedUser } from '../models/auth';
 import {
   RoleOption,
   UsuarioAdminCreateRequestDTO,
@@ -53,5 +53,9 @@ export class UsuarioAdminService {
 
   listarRoles(): Observable<RoleOption[]> {
     return this.http.get<RoleOption[]>(`${this.apiUrl}/roles`);
+  }
+
+  alterarSenha(dto: AlterarSenhaRequestDTO): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/me/senha`, dto);
   }
 }
