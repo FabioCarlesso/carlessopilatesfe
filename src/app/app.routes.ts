@@ -134,6 +134,13 @@ export const routes: Routes = [
         .then(m => m.PacienteNfseEmitidaFormComponent)
   },
   {
+    path: 'pacientes/:pacienteId/nfse-emitidas/:id/editar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-nfse-emitida-form/paciente-nfse-emitida-form.component')
+        .then(m => m.PacienteNfseEmitidaFormComponent)
+  },
+  {
     path: 'pacientes/:pacienteId/nfse-emitidas',
     canActivate: [authGuard],
     loadComponent: () =>

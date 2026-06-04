@@ -1,6 +1,6 @@
 <div class="page-header">
   <div>
-    <h1>Registrar NFSE Emitida</h1>
+    <h1>{{ modoEdicao ? 'Editar' : 'Registrar' }} NFSE Emitida</h1>
     <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
   </div>
   <div class="acoes">
@@ -66,7 +66,7 @@
 
   <div class="form-actions">
     <button type="submit" class="btn btn-primary" [disabled]="salvando">
-      {{ salvando ? 'Salvando...' : 'Cadastrar' }}
+      {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
     </button>
     <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas']" class="btn btn-outline">Cancelar</a>
   </div>

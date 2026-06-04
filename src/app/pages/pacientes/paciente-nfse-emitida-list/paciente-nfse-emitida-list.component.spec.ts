@@ -91,6 +91,16 @@ describe('PacienteNfseEmitidaListComponent', () => {
     expect(component.ultimaNota).toEqual(mockNota);
   });
 
+  it('should break ties on equal emission dates by id descending', async () => {
+    const mesmaData = { ...mockNota, id: 5, dataEmissao: '2026-05-20' };
+    const mesmaDataAntiga = { ...mockNota, id: 3, dataEmissao: '2026-05-20' };
+
+    await setup([mesmaDataAntiga, mesmaData]);
+
+    expect(component.notas[0].id).toBe(5);
+    expect(component.ultimaNota?.id).toBe(5);
+  });
+
   it('should show empty state and null ultimaNota when no notas exist', async () => {
     await setup([]);
 

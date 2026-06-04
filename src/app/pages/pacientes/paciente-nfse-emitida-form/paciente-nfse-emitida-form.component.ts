@@ -3,11 +3,13 @@ import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NotaFiscalEmitidaRequestDTO } from '../../../core/models/nfse-emitida';
+import { forkJoin, of } from 'rxjs';
+import { NotaFiscalEmitidaRequestDTO, NotaFiscalEmitidaResponseDTO } from '../../../core/models/nfse-emitida';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-form',
@@ -18,6 +20,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 export class PacienteNfseEmitidaFormComponent implements OnInit {
   form!: FormGroup;
   pacienteId: number | null = null;
+  nfseId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
   loading = false;
   salvando = false;
@@ -46,7 +49,9 @@ export class PacienteNfseEmitidaFormComponent implements OnInit {
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    if (this.pacienteId === null) {
+    this.nfseId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+
+    if (this.pacienteId === null || (this.route.snapshot.paramMap.has('id') && this.nfseId === null)) {
       this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
@@ -55,25 +60,58 @@ export class PacienteNfseEmitidaFormComponent implements OnInit {
     this.carregar();
   }
 
+  get modoEdicao(): boolean {
+    return this.nfseId !== null;
+  }
+
   carregar(): void {
     if (this.pacienteId === null) return;
 
     this.loading = true;
     this.erro = null;
 
-    this.pacienteService.buscar(this.pacienteId)
+    const paciente$ = this.pacienteService.buscar(this.pacienteId);
+    // O backend não expõe busca de NFSE por ID; em modo de edição a nota é
+    // localizada na listagem do paciente, que também valida o vínculo.
+    const notas$ = this.nfseId !== null
+      ? this.nfseEmitidaService.listarPorPaciente(this.pacienteId)
+      : of(null);
+
+    forkJoin({ paciente: paciente$, notas: notas$ })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: paciente => {
+        next: ({ paciente, notas }) => {
           this.paciente = paciente;
+
+          if (this.nfseId !== null) {
+            const nota = (notas ?? []).find(n => n.id === this.nfseId);
+            if (!nota) {
+              this.parametroInvalido = true;
+              this.erro = 'NFSE emitida não encontrada para o paciente informado.';
+              this.loading = false;
+              return;
+            }
+            this.preencherFormulario(nota);
+          }
+
           this.loading = false;
         },
-        error: () => {
-          this.erro = 'Erro ao carregar dados do paciente.';
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao carregar dados da NFSE emitida.');
           this.parametroInvalido = true;
           this.loading = false;
         }
       });
+  }
+
+  private preencherFormulario(nota: NotaFiscalEmitidaResponseDTO): void {
+    this.form.patchValue({
+      competencia: nota.competencia,
+      dataEmissao: nota.dataEmissao,
+      numeroNota: nota.numeroNota ?? '',
+      valor: nota.valor ?? null,
+      observacoes: nota.observacoes ?? ''
+    });
   }
 
   campo(nome: string) {
@@ -96,13 +134,14 @@ export class PacienteNfseEmitidaFormComponent implements OnInit {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
+    const numero = valor.valor != null && valor.valor !== '' ? Number(valor.valor) : null;
 
     const dto: NotaFiscalEmitidaRequestDTO = {
       pacienteId: this.pacienteId,
       competencia: valor.competencia,
       dataEmissao: valor.dataEmissao,
       numeroNota: opt(valor.numeroNota),
-      valor: valor.valor != null && valor.valor !== '' ? +valor.valor : null,
+      valor: numero != null && Number.isFinite(numero) ? numero : null,
       observacoes: opt(valor.observacoes)
     };
 
@@ -110,8 +149,8 @@ export class PacienteNfseEmitidaFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.router.navigate(['/pacientes', this.pacienteId, 'nfse-emitidas']),
-        error: () => {
-          this.erro = 'Erro ao registrar NFSE emitida.';
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao registrar NFSE emitida.');
           this.salvando = false;
         }
       });

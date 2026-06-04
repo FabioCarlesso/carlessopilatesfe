@@ -7,6 +7,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
@@ -55,8 +56,8 @@ export class PacienteNfseEmitidaListComponent implements OnInit {
           this.paciente = paciente;
           this.carregarNotas();
         },
-        error: () => {
-          this.erro = 'Erro ao carregar dados do paciente.';
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao carregar dados do paciente.');
           this.loading = false;
         }
       });
@@ -69,11 +70,13 @@ export class PacienteNfseEmitidaListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: notas => {
-          this.notas = [...notas].sort((a, b) => b.dataEmissao.localeCompare(a.dataEmissao));
+          this.notas = [...notas].sort((a, b) =>
+            b.dataEmissao.localeCompare(a.dataEmissao) || b.id - a.id
+          );
           this.loading = false;
         },
-        error: () => {
-          this.erro = 'Erro ao carregar NFSEs emitidas.';
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao carregar NFSEs emitidas.');
           this.loading = false;
         }
       });

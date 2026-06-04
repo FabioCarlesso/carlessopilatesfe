@@ -41,6 +41,7 @@ describe('app routes', () => {
       'pacientes/:pacienteId/reavaliacoes/:id/editar',
       'pacientes/:pacienteId/reavaliacoes',
       'pacientes/:pacienteId/nfse-emitidas/nova',
+      'pacientes/:pacienteId/nfse-emitidas/:id/editar',
       'pacientes/:pacienteId/nfse-emitidas',
       'pacientes/:id',
       'planos/novo/:pacienteId',
@@ -79,6 +80,7 @@ describe('app routes', () => {
     const reavaliacaoEditarIndex = paths.indexOf('pacientes/:pacienteId/reavaliacoes/:id/editar');
     const reavaliacaoListIndex = paths.indexOf('pacientes/:pacienteId/reavaliacoes');
     const nfseEmitidaNovaIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas/nova');
+    const nfseEmitidaEditarIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas/:id/editar');
     const nfseEmitidaListIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas');
     const editarIndex = paths.indexOf('pacientes/:id/editar');
     const novoIndex = paths.indexOf('pacientes/novo');
@@ -99,7 +101,8 @@ describe('app routes', () => {
     expect(reavaliacaoNovaIndex).toBeLessThan(reavaliacaoEditarIndex);
     expect(reavaliacaoEditarIndex).toBeLessThan(reavaliacaoListIndex);
     expect(reavaliacaoListIndex).toBeLessThan(nfseEmitidaNovaIndex);
-    expect(nfseEmitidaNovaIndex).toBeLessThan(nfseEmitidaListIndex);
+    expect(nfseEmitidaNovaIndex).toBeLessThan(nfseEmitidaEditarIndex);
+    expect(nfseEmitidaEditarIndex).toBeLessThan(nfseEmitidaListIndex);
     expect(nfseEmitidaListIndex).toBeLessThan(idIndex);
   });
 

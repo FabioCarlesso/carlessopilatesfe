@@ -32,6 +32,10 @@
         <span class="nfse-data">{{ nota.dataEmissao | localDate }}</span>
         <span class="nfse-competencia">Competência {{ nota.competencia }}</span>
       </div>
+      <div class="nfse-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas', nota.id, 'editar']"
+          class="btn btn-secondary btn-sm">Editar</a>
+      </div>
     </div>
 
     <div class="nfse-body">

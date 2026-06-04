@@ -65,6 +65,12 @@
   font-size: 0.9rem;
 }
 
+.nfse-acoes {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
 .nfse-body {
   border-top: 1px solid var(--border);
   padding-top: var(--sp-3);
