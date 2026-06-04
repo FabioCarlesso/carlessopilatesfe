@@ -1,0 +1,58 @@
+<div class="page-header">
+  <div>
+    <h1>NFSEs Emitidas</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas', 'nova']" class="btn btn-primary">Registrar NFSE</a>
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar ao Paciente</a>
+    <a *ngIf="!paciente && pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && !erro && ultimaNota" class="ultima-nota">
+  <span class="ultima-nota-label">Última NFSE emitida</span>
+  <strong class="ultima-nota-valor">
+    {{ ultimaNota.dataEmissao | localDate }} · Competência {{ ultimaNota.competencia }}
+    <ng-container *ngIf="ultimaNota.numeroNota"> · Nº {{ ultimaNota.numeroNota }}</ng-container>
+  </strong>
+</div>
+
+<div *ngIf="!loading && notas.length === 0 && !erro" class="empty-state">
+  Nenhuma NFSE emitida cadastrada para este paciente.
+</div>
+
+<div *ngIf="notas.length > 0" class="nfse-list">
+  <div *ngFor="let nota of notas" class="nfse-card">
+    <div class="nfse-header">
+      <div class="nfse-info">
+        <span class="nfse-data">{{ nota.dataEmissao | localDate }}</span>
+        <span class="nfse-competencia">Competência {{ nota.competencia }}</span>
+      </div>
+      <div class="nfse-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas', nota.id, 'editar']"
+          class="btn btn-secondary btn-sm">Editar</a>
+      </div>
+    </div>
+
+    <div class="nfse-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Número da nota</span>
+          <span>{{ nota.numeroNota || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Valor</span>
+          <span>{{ nota.valor != null ? (nota.valor | currency:'BRL') : '-' }}</span>
+        </div>
+        <div *ngIf="nota.observacoes" class="detail-item">
+          <span class="label">Observações</span>
+          <span>{{ nota.observacoes }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
