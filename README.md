@@ -183,6 +183,9 @@ Arquivos de teste:
 - `src/app/pages/relatorios/relatorio-list/relatorio-list.component.spec.ts`
 - `src/app/pages/relatorios/profissional-pagamento-relatorio/profissional-pagamento-relatorio.component.spec.ts`
 - `src/app/pages/relatorios/nfse-relatorio/nfse-relatorio.component.spec.ts`
+- `src/app/pages/pacientes/paciente-nfse-emitida-list/paciente-nfse-emitida-list.component.spec.ts`
+- `src/app/pages/pacientes/paciente-nfse-emitida-form/paciente-nfse-emitida-form.component.spec.ts`
+- `src/app/core/services/nfse-emitida.service.spec.ts`
 - `src/app/pages/auth/login/login.component.spec.ts`
 - `src/app/core/services/auth.service.spec.ts`
 - `src/app/core/services/style-preferences.service.spec.ts`
@@ -233,6 +236,8 @@ Arquivos de teste:
 | `/pacientes/:pacienteId/reavaliacoes` | Lista de reavaliações do paciente |
 | `/pacientes/:pacienteId/reavaliacoes/nova` | Cadastro de reavaliação |
 | `/pacientes/:pacienteId/reavaliacoes/:id/editar` | Edição de reavaliação |
+| `/pacientes/:pacienteId/nfse-emitidas` | Lista de NFSEs emitidas do paciente, com destaque para a última |
+| `/pacientes/:pacienteId/nfse-emitidas/nova` | Registro/atualização de NFSE emitida |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
 | `/profissionais`        | Lista de profissionais ativos (paginada, `ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
@@ -249,7 +254,7 @@ Arquivos de teste:
 | `/login` | Tela de autenticação (pública) |
 | `/403` | Tela de acesso negado |
 
-Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos, Aulas, Anamnese, Avaliação Fisioterapêutica, Sessões, Plano de Tratamento e Reavaliações do paciente.
+Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf`, `telefone` e `ativo` para a API junto de `page`, `size` e `sort=nome`. O status padrão é **Ativos**. A paginação exibe o intervalo atual, total de pacientes, navegação por página, botões anterior/próxima e seletor de itens por página. Os metadados são lidos da estrutura aninhada `page.page.*` do Spring Boot 3.x, com fallback para o estado atual quando algum atributo está ausente, evitando `NaN` no resumo e seletor vazio. A ação da linha muda conforme o status: **Inativar** para pacientes ativos, **Ativar** para inativos. A tela de detalhe também exibe links de navegação para Planos, Pagamentos, Aulas, Anamnese, Avaliação Fisioterapêutica, Sessões, Plano de Tratamento, Reavaliações e NFSEs Emitidas do paciente.
 
 A tela de anamnese do paciente fica em `/pacientes/:pacienteId/anamnese`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta a anamnese existente por `GET /api/anamneses/paciente/{pacienteId}`. Quando a API retorna `404` para a anamnese, o formulário permanece em modo de cadastro e envia `POST /api/anamneses` com `pacienteId`. Quando já existe registro, a tela preenche o formulário e salva alterações via `PUT /api/anamneses/{id}`. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam valores apenas com espaços.
 
@@ -260,6 +265,8 @@ A tela de sessões do paciente fica em `/pacientes/:pacienteId/sessoes`, valida 
 A tela de evolução da sessão fica em `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao`, valida os identificadores numéricos, carrega paciente e sessão, confirma que a sessão pertence ao paciente da rota e só então consulta `GET /api/evolucoes-sessao/sessao/{sessaoId}`. Retorno `404` nessa consulta mantém o formulário em modo de cadastro. O cadastro envia `POST /api/evolucoes-sessao` com `sessaoId` e `dataHoraRegistro`; a edição usa `PUT /api/evolucoes-sessao/{id}`. A evolução registra exercícios, equipamentos, cargas/molas, dor antes, dor depois, resposta do paciente, intercorrências, orientações e observações do fisioterapeuta. `dataHoraRegistro` é obrigatório; `dorAntes` e `dorDepois` devem ficar entre 0 e 10 quando informados.
 
 A tela de reavaliações do paciente fica em `/pacientes/:pacienteId/reavaliacoes`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista as reavaliações por `GET /api/reavaliacoes/paciente/{pacienteId}`. O cadastro usa `POST /api/reavaliacoes` com `pacienteId`; a edição usa `GET /api/reavaliacoes/{id}` e `PUT /api/reavaliacoes/{id}`, validando que a reavaliação retornada pertence ao paciente da rota antes de exibir o formulário. O único campo obrigatório é `dataReavaliacao`; os demais campos — `comparativoAvaliacaoAnterior`, `evolucaoDor`, `evolucaoForca`, `evolucaoMobilidade`, `evolucaoFuncional`, `objetivosAlcancados`, `pontosAtencao`, `ajustesPlanoTratamento` e `observacoesGerais` — são opcionais.
+
+A tela de NFSEs emitidas do paciente fica em `/pacientes/:pacienteId/nfse-emitidas`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista as notas por `GET /api/nfse-emitidas/paciente/{pacienteId}`. As notas são ordenadas por data de emissão decrescente, com destaque para a última NFSE emitida e estado vazio explícito para pacientes sem registro. O cadastro/atualização fica em `/pacientes/:pacienteId/nfse-emitidas/nova` e usa `POST /api/nfse-emitidas` com `pacienteId`, `competencia` (formato `MM/AAAA`) e `dataEmissao` obrigatórios e `numeroNota` (máx. 60), `valor` (≥ 0) e `observacoes` opcionais. Como o proxy local e o Nginx removem o primeiro prefixo `/api`, o `NfseEmitidaService` chama `/api/api/nfse-emitidas` para preservar o `/api` esperado pelo backend, seguindo o mesmo padrão do relatório de NFSEs. Esse dado persistido alimenta o campo "nota anterior emitida" do relatório fiscal de emissão de NFSEs.
 
 A tela de planos de tratamento do paciente fica em `/pacientes/:pacienteId/plano-tratamento`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista os planos por `GET /api/planos-tratamento/paciente/{pacienteId}`. O cadastro usa `POST /api/planos-tratamento` com `pacienteId`; a edição usa `GET /api/planos-tratamento/{id}` e `PUT /api/planos-tratamento/{id}`, validando que o plano retornado pertence ao paciente da rota antes de exibir o formulário. A listagem permite encerrar ou suspender planos por `PATCH /api/planos-tratamento/{id}/encerrar` e `PATCH /api/planos-tratamento/{id}/suspender`, com confirmação antes da ação. Os campos `dataInicio`, `objetivosTerapeuticos`, `frequenciaSemanal`, `condutasPropostas` e `exerciciosIndicados` são obrigatórios; a frequência deve ficar entre 1 e 7 e textos obrigatórios rejeitam valores apenas com espaços.
 

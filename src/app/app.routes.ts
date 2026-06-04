@@ -127,6 +127,20 @@ export const routes: Routes = [
         .then(m => m.PacienteReavaliacaoListComponent)
   },
   {
+    path: 'pacientes/:pacienteId/nfse-emitidas/nova',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-nfse-emitida-form/paciente-nfse-emitida-form.component')
+        .then(m => m.PacienteNfseEmitidaFormComponent)
+  },
+  {
+    path: 'pacientes/:pacienteId/nfse-emitidas',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-nfse-emitida-list/paciente-nfse-emitida-list.component')
+        .then(m => m.PacienteNfseEmitidaListComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [authGuard],
     loadComponent: () =>
