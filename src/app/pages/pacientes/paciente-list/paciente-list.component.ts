@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
 
@@ -17,7 +18,8 @@ interface FiltroUI {
   selector: 'app-paciente-list',
   imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './paciente-list.component.html',
-  styleUrl: './paciente-list.component.scss'
+  styleUrl: './paciente-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PacienteListComponent implements OnInit {
   pacientes: PacienteResponseDTO[] = [];
@@ -39,7 +41,7 @@ export class PacienteListComponent implements OnInit {
     status: 'ativos'
   };
 
-  constructor(private service: PacienteService) {}
+  constructor(private service: PacienteService, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -48,7 +50,7 @@ export class PacienteListComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         if ((meta.totalPages ?? 0) > 0 && this.currentPage >= (meta.totalPages ?? 0)) {
@@ -63,10 +65,12 @@ export class PacienteListComponent implements OnInit {
         this.currentPage = meta.number ?? this.currentPage;
         this.pageSize = this.pageSizeOptions.includes(meta.size as number) ? (meta.size as number) : this.pageSize;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar pacientes. Verifique se a API está em execução.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -110,7 +114,7 @@ export class PacienteListComponent implements OnInit {
 
   inativar(): void {
     if (this.confirmarInativarId === null) return;
-    this.service.inativar(this.confirmarInativarId).subscribe({
+    this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarInativarId = null;
         this.carregar();
@@ -118,13 +122,14 @@ export class PacienteListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao inativar paciente.';
         this.confirmarInativarId = null;
+        this.cdr.markForCheck();
       }
     });
   }
 
   ativar(): void {
     if (this.confirmarAtivarId === null) return;
-    this.service.ativar(this.confirmarAtivarId).subscribe({
+    this.service.ativar(this.confirmarAtivarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarAtivarId = null;
         this.carregar();
@@ -132,6 +137,7 @@ export class PacienteListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao ativar paciente.';
         this.confirmarAtivarId = null;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -165,6 +171,10 @@ export class PacienteListComponent implements OnInit {
     this.pageSize = novoTamanho;
     this.currentPage = 0;
     this.carregar();
+  }
+
+  trackByPaciente(_: number, paciente: PacienteResponseDTO): number {
+    return paciente.id;
   }
 
   pages(): number[] {

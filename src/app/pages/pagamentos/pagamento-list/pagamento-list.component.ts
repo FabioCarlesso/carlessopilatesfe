@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
@@ -10,7 +11,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   selector: 'app-pagamento-list',
   imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './pagamento-list.component.html',
-  styleUrl: './pagamento-list.component.scss'
+  styleUrl: './pagamento-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PagamentoListComponent implements OnInit {
   pacienteId: number | null = null;
@@ -29,7 +31,9 @@ export class PagamentoListComponent implements OnInit {
   constructor(
     private service: PagamentoService,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -49,16 +53,22 @@ export class PagamentoListComponent implements OnInit {
     }
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.pacienteId).subscribe({
+    this.service.listar(this.pacienteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: pagamentos => {
         this.pagamentos = pagamentos;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar pagamentos.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  trackByPagamento(_: number, pagamento: PagamentoResponseDTO): number {
+    return pagamento.id;
   }
 
   abrirPagar(id: number): void {
@@ -73,7 +83,7 @@ export class PagamentoListComponent implements OnInit {
   confirmarPagar(): void {
     if (this.pagarForm.invalid || this.pagarId === null) return;
     const { dataPagamento } = this.pagarForm.value;
-    this.service.pagar(this.pagarId, dataPagamento).subscribe({
+    this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.pagarId = null;
         this.carregar();
@@ -81,6 +91,7 @@ export class PagamentoListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao confirmar pagamento.';
         this.pagarId = null;
+        this.cdr.markForCheck();
       }
     });
   }

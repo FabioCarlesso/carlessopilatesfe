@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -13,7 +14,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   selector: 'app-aula-list',
   imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink],
   templateUrl: './aula-list.component.html',
-  styleUrl: './aula-list.component.scss'
+  styleUrl: './aula-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AulaListComponent implements OnInit {
   pacienteId: number | null = null;
@@ -29,7 +31,9 @@ export class AulaListComponent implements OnInit {
     private service: AulaService,
     private pagamentoService: PagamentoService,
     private profissionalService: ProfissionalService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +59,7 @@ export class AulaListComponent implements OnInit {
     if (this.pagamentoId !== null) {
       this.loading = true;
       this.erro = null;
-      this.pagamentoService.buscar(this.pagamentoId).subscribe({
+      this.pagamentoService.buscar(this.pagamentoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: pagamento => {
           this.pacienteId = pagamento.pacienteId;
           this.carregar();
@@ -63,6 +67,7 @@ export class AulaListComponent implements OnInit {
         error: () => {
           this.erro = 'Erro ao carregar dados do pagamento.';
           this.loading = false;
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -71,12 +76,14 @@ export class AulaListComponent implements OnInit {
   }
 
   carregarProfissionais(): void {
-    this.profissionalService.listar(0, 100).subscribe({
+    this.profissionalService.listar(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         this.profissionais = page.content;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar profissionais.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -92,7 +99,7 @@ export class AulaListComponent implements OnInit {
       ? this.service.listarPorPagamento(this.pagamentoId)
       : this.service.listarPorPaciente(this.pacienteId!);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: aulas => {
         this.aulas = aulas;
         this.profissionalSelecionadoPorAula = aulas.reduce<Record<number, number | null>>((acc, aula) => {
@@ -100,12 +107,18 @@ export class AulaListComponent implements OnInit {
           return acc;
         }, {});
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar aulas.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  trackByAula(_: number, aula: AulaResponseDTO): number {
+    return aula.id;
   }
 
   realizar(id: number): void {
@@ -115,9 +128,12 @@ export class AulaListComponent implements OnInit {
       return;
     }
 
-    this.service.realizar(id, profissionalId).subscribe({
+    this.service.realizar(id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.carregar(),
-      error: () => (this.erro = 'Erro ao marcar aula como realizada.')
+      error: () => {
+        this.erro = 'Erro ao marcar aula como realizada.';
+        this.cdr.markForCheck();
+      }
     });
   }
 }

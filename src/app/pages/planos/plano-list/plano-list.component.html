@@ -26,7 +26,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let plano of planos">
+    <tr *ngFor="let plano of planos; trackBy: trackByPlano">
       <td>{{ tipoLabel[plano.tipo] }}</td>
       <td>{{ plano.valor | currency:'BRL' }}</td>
       <td>{{ frequenciaLabel[plano.frequenciaSemanal] }}</td>

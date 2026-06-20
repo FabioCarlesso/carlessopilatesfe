@@ -1,9 +1,11 @@
+import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { AulaListComponent } from './aula-list.component';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -71,6 +73,21 @@ describe('AulaListComponent', () => {
     });
 
     it('should create', () => expect(component).toBeTruthy());
+
+    it('should use OnPush change detection strategy', () => {
+      expect(isOnPush(AulaListComponent)).toBeTrue();
+    });
+
+    it('should mark for check after loading the list', () => {
+      const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+      const markForCheckSpy = spyOn(cdr, 'markForCheck');
+      component.carregar();
+      expect(markForCheckSpy).toHaveBeenCalled();
+    });
+
+    it('should track table rows by id', () => {
+      expect(component.trackByAula(0, mockAula)).toBe(mockAula.id);
+    });
 
     it('should load aulas on init', () => {
       expect(serviceSpy.listarPorPaciente).toHaveBeenCalledWith(10);
@@ -183,7 +200,7 @@ describe('AulaListComponent', () => {
     const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
     const profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, invalidRoute);
+    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
 
     component.ngOnInit();
 

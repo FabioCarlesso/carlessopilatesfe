@@ -1,8 +1,10 @@
+import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO } from '../../../core/models/plano';
@@ -36,6 +38,21 @@ describe('PagamentoListComponent', () => {
   });
 
   it('should create', () => expect(component).toBeTruthy());
+
+  it('should use OnPush change detection strategy', () => {
+    expect(isOnPush(PagamentoListComponent)).toBeTrue();
+  });
+
+  it('should mark for check after loading the list', () => {
+    const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+    const markForCheckSpy = spyOn(cdr, 'markForCheck');
+    component.carregar();
+    expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('should track table rows by id', () => {
+    expect(component.trackByPagamento(0, mockPagamento)).toBe(mockPagamento.id);
+  });
 
   it('should load pagamentos on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(10);
@@ -88,7 +105,7 @@ describe('PagamentoListComponent', () => {
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder));
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
 
     invalidComponent.ngOnInit();
 

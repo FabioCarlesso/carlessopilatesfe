@@ -1,6 +1,8 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { ProfissionalListComponent } from './profissional-list.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
@@ -43,6 +45,21 @@ describe('ProfissionalListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should use OnPush change detection strategy', () => {
+    expect(isOnPush(ProfissionalListComponent)).toBeTrue();
+  });
+
+  it('should mark for check after loading the list', () => {
+    const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+    const markForCheckSpy = spyOn(cdr, 'markForCheck');
+    component.carregar();
+    expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('should track table rows by id', () => {
+    expect(component.trackByProfissional(0, mockProfissional)).toBe(mockProfissional.id);
   });
 
   it('should load profissionais on init', () => {
@@ -253,6 +270,7 @@ describe('ProfissionalListComponent', () => {
     component.currentPage = 250;
     component.visiblePages = component.pages();
 
+    (component as unknown as { cdr: ChangeDetectorRef }).cdr.markForCheck();
     fixture.detectChanges();
 
     const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
