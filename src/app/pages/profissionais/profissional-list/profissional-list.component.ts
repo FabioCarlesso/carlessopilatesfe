@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -9,7 +9,8 @@ import { PageMetadata } from '../../../core/models/paciente';
   selector: 'app-profissional-list',
   imports: [NgIf, NgFor, RouterLink],
   templateUrl: './profissional-list.component.html',
-  styleUrl: './profissional-list.component.scss'
+  styleUrl: './profissional-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfissionalListComponent implements OnInit {
   profissionais: ProfissionalResponseDTO[] = [];
@@ -24,7 +25,7 @@ export class ProfissionalListComponent implements OnInit {
 
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
 
-  constructor(private service: ProfissionalService) {}
+  constructor(private service: ProfissionalService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -49,10 +50,12 @@ export class ProfissionalListComponent implements OnInit {
         this.pageSize = this.normalizarTamanhoPagina(meta.size, this.pageSize);
         this.visiblePages = this.pages();
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar profissionais.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -76,6 +79,7 @@ export class ProfissionalListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao inativar profissional.';
         this.confirmarInativarId = null;
+        this.cdr.markForCheck();
       }
     });
   }

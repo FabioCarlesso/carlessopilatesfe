@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,7 +13,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   selector: 'app-aula-list',
   imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink],
   templateUrl: './aula-list.component.html',
-  styleUrl: './aula-list.component.scss'
+  styleUrl: './aula-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AulaListComponent implements OnInit {
   pacienteId: number | null = null;
@@ -29,7 +30,8 @@ export class AulaListComponent implements OnInit {
     private service: AulaService,
     private pagamentoService: PagamentoService,
     private profissionalService: ProfissionalService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +65,7 @@ export class AulaListComponent implements OnInit {
         error: () => {
           this.erro = 'Erro ao carregar dados do pagamento.';
           this.loading = false;
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -74,9 +77,11 @@ export class AulaListComponent implements OnInit {
     this.profissionalService.listar(0, 100).subscribe({
       next: page => {
         this.profissionais = page.content;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar profissionais.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -100,10 +105,12 @@ export class AulaListComponent implements OnInit {
           return acc;
         }, {});
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar aulas.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -117,7 +124,10 @@ export class AulaListComponent implements OnInit {
 
     this.service.realizar(id, profissionalId).subscribe({
       next: () => this.carregar(),
-      error: () => (this.erro = 'Erro ao marcar aula como realizada.')
+      error: () => {
+        this.erro = 'Erro ao marcar aula como realizada.';
+        this.cdr.markForCheck();
+      }
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlanoService } from '../../../core/services/plano.service';
@@ -9,7 +9,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   selector: 'app-plano-list',
   imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './plano-list.component.html',
-  styleUrl: './plano-list.component.scss'
+  styleUrl: './plano-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlanoListComponent implements OnInit {
   pacienteId: number | null = null;
@@ -22,7 +23,7 @@ export class PlanoListComponent implements OnInit {
   readonly frequenciaLabel = FREQUENCIA_LABEL;
   readonly diasLabel = DIAS_SEMANA_LABEL;
 
-  constructor(private service: PlanoService, private route: ActivatedRoute) {}
+  constructor(private service: PlanoService, private route: ActivatedRoute, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -44,10 +45,12 @@ export class PlanoListComponent implements OnInit {
       next: planos => {
         this.planos = planos;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar planos.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -70,6 +73,7 @@ export class PlanoListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao inativar plano.';
         this.confirmarInativarId = null;
+        this.cdr.markForCheck();
       }
     });
   }

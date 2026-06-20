@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -17,7 +17,8 @@ interface FiltroUI {
   selector: 'app-paciente-list',
   imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './paciente-list.component.html',
-  styleUrl: './paciente-list.component.scss'
+  styleUrl: './paciente-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PacienteListComponent implements OnInit {
   pacientes: PacienteResponseDTO[] = [];
@@ -39,7 +40,7 @@ export class PacienteListComponent implements OnInit {
     status: 'ativos'
   };
 
-  constructor(private service: PacienteService) {}
+  constructor(private service: PacienteService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -63,10 +64,12 @@ export class PacienteListComponent implements OnInit {
         this.currentPage = meta.number ?? this.currentPage;
         this.pageSize = this.pageSizeOptions.includes(meta.size as number) ? (meta.size as number) : this.pageSize;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar pacientes. Verifique se a API está em execução.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -118,6 +121,7 @@ export class PacienteListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao inativar paciente.';
         this.confirmarInativarId = null;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -132,6 +136,7 @@ export class PacienteListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao ativar paciente.';
         this.confirmarAtivarId = null;
+        this.cdr.markForCheck();
       }
     });
   }

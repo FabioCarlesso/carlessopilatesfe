@@ -47,6 +47,17 @@ describe('PacienteListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should use OnPush change detection strategy', () => {
+    expect((PacienteListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+  });
+
+  it('should mark for check after loading the list', () => {
+    const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+    const markForCheckSpy = spyOn(cdr, 'markForCheck');
+    component.carregar();
+    expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
   it('should call listar on init with default page, size and active filter', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
       nome: '',

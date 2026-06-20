@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -35,6 +36,17 @@ describe('PlanoListComponent', () => {
   });
 
   it('should create', () => expect(component).toBeTruthy());
+
+  it('should use OnPush change detection strategy', () => {
+    expect((PlanoListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+  });
+
+  it('should mark for check after loading the list', () => {
+    const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+    const markForCheckSpy = spyOn(cdr, 'markForCheck');
+    component.carregar();
+    expect(markForCheckSpy).toHaveBeenCalled();
+  });
 
   it('should load planos on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(10);
@@ -83,7 +95,7 @@ describe('PlanoListComponent', () => {
   it('should not load planos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PlanoService', ['listar', 'inativar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidRoute);
+    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef);
 
     invalidComponent.ngOnInit();
 

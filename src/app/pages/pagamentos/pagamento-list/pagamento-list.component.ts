@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,7 +10,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   selector: 'app-pagamento-list',
   imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './pagamento-list.component.html',
-  styleUrl: './pagamento-list.component.scss'
+  styleUrl: './pagamento-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PagamentoListComponent implements OnInit {
   pacienteId: number | null = null;
@@ -29,7 +30,8 @@ export class PagamentoListComponent implements OnInit {
   constructor(
     private service: PagamentoService,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -53,10 +55,12 @@ export class PagamentoListComponent implements OnInit {
       next: pagamentos => {
         this.pagamentos = pagamentos;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.erro = 'Erro ao carregar pagamentos.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -81,6 +85,7 @@ export class PagamentoListComponent implements OnInit {
       error: () => {
         this.erro = 'Erro ao confirmar pagamento.';
         this.pagarId = null;
+        this.cdr.markForCheck();
       }
     });
   }

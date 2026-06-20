@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
@@ -71,6 +72,17 @@ describe('AulaListComponent', () => {
     });
 
     it('should create', () => expect(component).toBeTruthy());
+
+    it('should use OnPush change detection strategy', () => {
+      expect((AulaListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+    });
+
+    it('should mark for check after loading the list', () => {
+      const cdr = (component as unknown as { cdr: { markForCheck: () => void } }).cdr;
+      const markForCheckSpy = spyOn(cdr, 'markForCheck');
+      component.carregar();
+      expect(markForCheckSpy).toHaveBeenCalled();
+    });
 
     it('should load aulas on init', () => {
       expect(serviceSpy.listarPorPaciente).toHaveBeenCalledWith(10);
@@ -183,7 +195,7 @@ describe('AulaListComponent', () => {
     const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
     const profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, invalidRoute);
+    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef);
 
     component.ngOnInit();
 
