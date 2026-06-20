@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
 
@@ -40,7 +41,7 @@ export class PacienteListComponent implements OnInit {
     status: 'ativos'
   };
 
-  constructor(private service: PacienteService, private cdr: ChangeDetectorRef) {}
+  constructor(private service: PacienteService, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -49,7 +50,7 @@ export class PacienteListComponent implements OnInit {
   carregar(): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         if ((meta.totalPages ?? 0) > 0 && this.currentPage >= (meta.totalPages ?? 0)) {
@@ -113,7 +114,7 @@ export class PacienteListComponent implements OnInit {
 
   inativar(): void {
     if (this.confirmarInativarId === null) return;
-    this.service.inativar(this.confirmarInativarId).subscribe({
+    this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarInativarId = null;
         this.carregar();
@@ -128,7 +129,7 @@ export class PacienteListComponent implements OnInit {
 
   ativar(): void {
     if (this.confirmarAtivarId === null) return;
-    this.service.ativar(this.confirmarAtivarId).subscribe({
+    this.service.ativar(this.confirmarAtivarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarAtivarId = null;
         this.carregar();
@@ -170,6 +171,10 @@ export class PacienteListComponent implements OnInit {
     this.pageSize = novoTamanho;
     this.currentPage = 0;
     this.carregar();
+  }
+
+  trackByPaciente(_: number, paciente: PacienteResponseDTO): number {
+    return paciente.id;
   }
 
   pages(): number[] {

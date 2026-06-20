@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { PacienteListComponent } from './paciente-list.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { Page, PacienteResponseDTO } from '../../../core/models/paciente';
@@ -48,7 +49,7 @@ describe('PacienteListComponent', () => {
   });
 
   it('should use OnPush change detection strategy', () => {
-    expect((PacienteListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+    expect(isOnPush(PacienteListComponent)).toBeTrue();
   });
 
   it('should mark for check after loading the list', () => {
@@ -56,6 +57,10 @@ describe('PacienteListComponent', () => {
     const markForCheckSpy = spyOn(cdr, 'markForCheck');
     component.carregar();
     expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('should track table rows by id', () => {
+    expect(component.trackByPaciente(0, mockPaciente)).toBe(mockPaciente.id);
   });
 
   it('should call listar on init with default page, size and active filter', () => {

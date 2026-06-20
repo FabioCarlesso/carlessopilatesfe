@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
@@ -23,7 +24,7 @@ export class PlanoListComponent implements OnInit {
   readonly frequenciaLabel = FREQUENCIA_LABEL;
   readonly diasLabel = DIAS_SEMANA_LABEL;
 
-  constructor(private service: PlanoService, private route: ActivatedRoute, private cdr: ChangeDetectorRef) {}
+  constructor(private service: PlanoService, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -41,7 +42,7 @@ export class PlanoListComponent implements OnInit {
     }
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.pacienteId).subscribe({
+    this.service.listar(this.pacienteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: planos => {
         this.planos = planos;
         this.loading = false;
@@ -65,7 +66,7 @@ export class PlanoListComponent implements OnInit {
 
   inativar(): void {
     if (this.confirmarInativarId === null) return;
-    this.service.inativar(this.confirmarInativarId).subscribe({
+    this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarInativarId = null;
         this.carregar();
@@ -76,6 +77,10 @@ export class PlanoListComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  trackByPlano(_: number, plano: PlanoResponseDTO): number {
+    return plano.id;
   }
 
   diasFormatados(plano: PlanoResponseDTO): string {

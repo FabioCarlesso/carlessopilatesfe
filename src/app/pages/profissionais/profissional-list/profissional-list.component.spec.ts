@@ -2,6 +2,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { ProfissionalListComponent } from './profissional-list.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
@@ -47,7 +48,7 @@ describe('ProfissionalListComponent', () => {
   });
 
   it('should use OnPush change detection strategy', () => {
-    expect((ProfissionalListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+    expect(isOnPush(ProfissionalListComponent)).toBeTrue();
   });
 
   it('should mark for check after loading the list', () => {
@@ -55,6 +56,10 @@ describe('ProfissionalListComponent', () => {
     const markForCheckSpy = spyOn(cdr, 'markForCheck');
     component.carregar();
     expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('should track table rows by id', () => {
+    expect(component.trackByProfissional(0, mockProfissional)).toBe(mockProfissional.id);
   });
 
   it('should load profissionais on init', () => {

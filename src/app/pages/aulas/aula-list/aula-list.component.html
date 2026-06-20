@@ -21,7 +21,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let aula of aulas">
+    <tr *ngFor="let aula of aulas; trackBy: trackByAula">
       <td>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
       <td>
         <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">

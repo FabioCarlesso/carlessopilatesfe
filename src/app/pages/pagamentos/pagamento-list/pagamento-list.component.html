@@ -25,7 +25,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let p of pagamentos">
+    <tr *ngFor="let p of pagamentos; trackBy: trackByPagamento">
       <td>
         <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
           {{ statusLabel[p.status] }}

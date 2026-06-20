@@ -22,7 +22,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let p of profissionais">
+    <tr *ngFor="let p of profissionais; trackBy: trackByProfissional">
       <td>{{ p.nome }}</td>
       <td>{{ p.email }}</td>
       <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
@@ -25,7 +26,7 @@ export class ProfissionalListComponent implements OnInit {
 
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
 
-  constructor(private service: ProfissionalService, private cdr: ChangeDetectorRef) {}
+  constructor(private service: ProfissionalService, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.carregar();
@@ -34,7 +35,7 @@ export class ProfissionalListComponent implements OnInit {
   carregar(retryCount = 0): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize).subscribe({
+    this.service.listar(this.currentPage, this.pageSize).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         const totalPages = meta.totalPages ?? this.totalPages;
@@ -71,7 +72,7 @@ export class ProfissionalListComponent implements OnInit {
   inativar(): void {
     if (this.confirmarInativarId === null) return;
 
-    this.service.inativar(this.confirmarInativarId).subscribe({
+    this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.confirmarInativarId = null;
         this.carregar();
@@ -88,6 +89,10 @@ export class ProfissionalListComponent implements OnInit {
     if (p < 0 || p >= this.totalPages || p === this.currentPage) return;
     this.currentPage = p;
     this.carregar();
+  }
+
+  trackByProfissional(_: number, profissional: ProfissionalResponseDTO): number {
+    return profissional.id;
   }
 
   pages(): number[] {

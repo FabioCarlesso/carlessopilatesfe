@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -31,7 +32,8 @@ export class AulaListComponent implements OnInit {
     private pagamentoService: PagamentoService,
     private profissionalService: ProfissionalService,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
@@ -57,7 +59,7 @@ export class AulaListComponent implements OnInit {
     if (this.pagamentoId !== null) {
       this.loading = true;
       this.erro = null;
-      this.pagamentoService.buscar(this.pagamentoId).subscribe({
+      this.pagamentoService.buscar(this.pagamentoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: pagamento => {
           this.pacienteId = pagamento.pacienteId;
           this.carregar();
@@ -74,7 +76,7 @@ export class AulaListComponent implements OnInit {
   }
 
   carregarProfissionais(): void {
-    this.profissionalService.listar(0, 100).subscribe({
+    this.profissionalService.listar(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         this.profissionais = page.content;
         this.cdr.markForCheck();
@@ -97,7 +99,7 @@ export class AulaListComponent implements OnInit {
       ? this.service.listarPorPagamento(this.pagamentoId)
       : this.service.listarPorPaciente(this.pacienteId!);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: aulas => {
         this.aulas = aulas;
         this.profissionalSelecionadoPorAula = aulas.reduce<Record<number, number | null>>((acc, aula) => {
@@ -115,6 +117,10 @@ export class AulaListComponent implements OnInit {
     });
   }
 
+  trackByAula(_: number, aula: AulaResponseDTO): number {
+    return aula.id;
+  }
+
   realizar(id: number): void {
     const profissionalId = this.profissionalSelecionadoPorAula[id];
     if (!profissionalId) {
@@ -122,7 +128,7 @@ export class AulaListComponent implements OnInit {
       return;
     }
 
-    this.service.realizar(id, profissionalId).subscribe({
+    this.service.realizar(id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.carregar(),
       error: () => {
         this.erro = 'Erro ao marcar aula como realizada.';

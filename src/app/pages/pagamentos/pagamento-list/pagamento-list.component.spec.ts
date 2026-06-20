@@ -1,9 +1,10 @@
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
+import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO } from '../../../core/models/plano';
@@ -39,7 +40,7 @@ describe('PagamentoListComponent', () => {
   it('should create', () => expect(component).toBeTruthy());
 
   it('should use OnPush change detection strategy', () => {
-    expect((PagamentoListComponent as unknown as { ɵcmp: { onPush: boolean } }).ɵcmp.onPush).toBeTrue();
+    expect(isOnPush(PagamentoListComponent)).toBeTrue();
   });
 
   it('should mark for check after loading the list', () => {
@@ -47,6 +48,10 @@ describe('PagamentoListComponent', () => {
     const markForCheckSpy = spyOn(cdr, 'markForCheck');
     component.carregar();
     expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('should track table rows by id', () => {
+    expect(component.trackByPagamento(0, mockPagamento)).toBe(mockPagamento.id);
   });
 
   it('should load pagamentos on init', () => {
@@ -100,7 +105,7 @@ describe('PagamentoListComponent', () => {
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef);
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
 
     invalidComponent.ngOnInit();
 
