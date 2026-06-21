@@ -81,7 +81,7 @@ export class PlanoFormComponent implements OnInit, OnDestroy {
     return f ? FREQUENCIA_DIAS[f] : 0;
   }
 
-  campo(nome: string) {
+  campo(nome: string): AbstractControl | null {
     return this.form.get(nome);
   }
 

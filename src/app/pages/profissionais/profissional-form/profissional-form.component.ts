@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissional';
@@ -101,7 +101,7 @@ export class ProfissionalFormComponent implements OnInit {
     });
   }
 
-  campo(nome: string) {
+  campo(nome: string): AbstractControl | null {
     return this.form.get(nome);
   }
 }

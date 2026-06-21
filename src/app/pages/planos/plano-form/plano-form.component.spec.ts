@@ -50,6 +50,10 @@ describe('PlanoFormComponent', () => {
     );
   });
 
+  it('campo() should return the matching AbstractControl', () => {
+    expect(component.campo('valor')).toBe(component.form.get('valor'));
+  });
+
   it('should expose labels exported by plano model', () => {
     expect(component.tipoLabel).toBe(TIPO_LABEL);
     expect(component.frequenciaLabel).toBe(FREQUENCIA_LABEL);
