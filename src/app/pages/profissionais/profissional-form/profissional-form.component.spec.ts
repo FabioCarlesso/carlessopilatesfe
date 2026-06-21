@@ -89,6 +89,10 @@ describe('ProfissionalFormComponent', () => {
       expect(component.erro).toBe('Erro ao salvar profissional.');
       expect(component.salvando).toBeFalse();
     });
+
+    it('campo() should return the matching AbstractControl', () => {
+      expect(component.campo('nome')).toBe(component.form.get('nome'));
+    });
   });
 
   describe('in edit mode', () => {

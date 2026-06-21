@@ -73,6 +73,10 @@ describe('PagamentoFormComponent', () => {
     expect(component.form.contains('periodoFim')).toBeFalse();
   });
 
+  it('campo() should return the matching AbstractControl', () => {
+    expect(component.campo('valor')).toBe(component.form.get('valor'));
+  });
+
   it('should call criar with pacienteId and navigate on valid submit', () => {
     pagamentoServiceSpy.criar.and.returnValue(of(mockPagamento));
     component.form.setValue({

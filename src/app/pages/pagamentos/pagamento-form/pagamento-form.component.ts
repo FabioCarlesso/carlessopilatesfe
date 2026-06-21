@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PlanoService } from '../../../core/services/plano.service';
@@ -64,7 +64,7 @@ export class PagamentoFormComponent implements OnInit {
     });
   }
 
-  campo(nome: string) {
+  campo(nome: string): AbstractControl | null {
     return this.form.get(nome);
   }
 
