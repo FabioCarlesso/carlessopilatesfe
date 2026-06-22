@@ -468,6 +468,7 @@ select.form-control,
   font-weight: 500;
   letter-spacing: var(--ls-caps-tight);
   text-transform: uppercase;
+  white-space: nowrap;
   background: var(--bg-sunken);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
