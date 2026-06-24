@@ -316,6 +316,19 @@ describe('UsuarioListComponent', () => {
     buttons.forEach(btn => expect(btn.hasAttribute('disabled')).toBeTrue());
   });
 
+  it('should keep the status text on a single line (no line wrapping)', () => {
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const statuses = fixture.nativeElement.querySelectorAll('.status') as NodeListOf<HTMLElement>;
+      expect(statuses.length).toBeGreaterThan(0);
+      statuses.forEach(status => {
+        expect(getComputedStyle(status).whiteSpace).toBe('nowrap');
+      });
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should render a Reativar button for inactive users and an Inativar button for active users', () => {
     const el = fixture.nativeElement as HTMLElement;
     const rows = el.querySelectorAll('tbody tr');

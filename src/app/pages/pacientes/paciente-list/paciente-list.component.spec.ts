@@ -63,6 +63,17 @@ describe('PacienteListComponent', () => {
     expect(component.trackByPaciente(0, mockPaciente)).toBe(mockPaciente.id);
   });
 
+  it('should keep the status badge text on a single line (no line wrapping)', () => {
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const badge = fixture.nativeElement.querySelector('.status-badge') as HTMLElement;
+      expect(badge).toBeTruthy();
+      expect(getComputedStyle(badge).whiteSpace).toBe('nowrap');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should call listar on init with default page, size and active filter', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
       nome: '',
