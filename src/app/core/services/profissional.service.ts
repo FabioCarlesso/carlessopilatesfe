@@ -6,8 +6,17 @@ import {
   ProfissionalPagamentoRelatorioDTO,
   ProfissionalRequestDTO,
   ProfissionalResponseDTO,
-  ProfissionalUpdateDTO
+  ProfissionalUpdateDTO,
+  TipoContrato
 } from '../models/profissional';
+
+export interface ProfissionalFiltro {
+  nome?: string;
+  email?: string;
+  tipoContrato?: TipoContrato;
+  percentualPagamentoAula?: number;
+  ativo?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -17,8 +26,15 @@ export class ProfissionalService {
 
   constructor(private http: HttpClient) {}
 
-  listar(page = 0, size = 10): Observable<ProfissionalPage> {
-    const params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+  listar(page = 0, size = 10, filtro: ProfissionalFiltro = {}): Observable<ProfissionalPage> {
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+
+    Object.entries(filtro).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+
     return this.http.get<ProfissionalPage>(this.apiUrl, { params });
   }
 

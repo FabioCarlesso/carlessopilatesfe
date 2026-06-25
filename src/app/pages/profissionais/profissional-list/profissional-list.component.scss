@@ -11,6 +11,56 @@
   }
 }
 
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-1);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    color: var(--text-secondary);
+    font-size: .9rem;
+    font-weight: 600;
+  }
+
+  input,
+  select {
+    min-height: 38px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    padding: .45rem .6rem;
+    background: var(--bg-elev);
+    color: var(--text-primary);
+    font: inherit;
+  }
+
+  input::placeholder {
+    color: var(--text-muted);
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--c-horizonte);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.filter-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
 .acoes {
   display: flex;
   gap: .5rem;
