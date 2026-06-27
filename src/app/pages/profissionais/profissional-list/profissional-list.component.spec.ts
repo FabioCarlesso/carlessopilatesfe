@@ -123,7 +123,7 @@ describe('ProfissionalListComponent', () => {
       nome: '  Paula  ',
       email: '  paula@carlessopilates.com  ',
       tipoContrato: 'PJ',
-      percentualPagamentoAula: '45',
+      percentualPagamentoAula: 45,
       status: 'inativos'
     };
 
@@ -145,7 +145,7 @@ describe('ProfissionalListComponent', () => {
       nome: '',
       email: '',
       tipoContrato: '',
-      percentualPagamentoAula: '   ',
+      percentualPagamentoAula: null,
       status: 'todos'
     };
 
@@ -166,7 +166,7 @@ describe('ProfissionalListComponent', () => {
       nome: 'Paula',
       email: 'paula@carlessopilates.com',
       tipoContrato: 'CLT',
-      percentualPagamentoAula: '30',
+      percentualPagamentoAula: 30,
       status: 'inativos'
     };
     component.currentPage = 3;
@@ -177,7 +177,7 @@ describe('ProfissionalListComponent', () => {
       nome: '',
       email: '',
       tipoContrato: '',
-      percentualPagamentoAula: '',
+      percentualPagamentoAula: null,
       status: 'ativos'
     });
     expect(component.currentPage).toBe(0);

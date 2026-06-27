@@ -11,7 +11,7 @@ interface FiltroUI {
   nome: string;
   email: string;
   tipoContrato: '' | TipoContrato;
-  percentualPagamentoAula: string;
+  percentualPagamentoAula: number | null;
   status: 'ativos' | 'inativos' | 'todos';
 }
 
@@ -36,7 +36,7 @@ export class ProfissionalListComponent implements OnInit {
     nome: '',
     email: '',
     tipoContrato: '',
-    percentualPagamentoAula: '',
+    percentualPagamentoAula: null,
     status: 'ativos'
   };
 
@@ -88,7 +88,7 @@ export class ProfissionalListComponent implements OnInit {
       nome: '',
       email: '',
       tipoContrato: '',
-      percentualPagamentoAula: '',
+      percentualPagamentoAula: null,
       status: 'ativos'
     };
     this.buscar();
@@ -104,12 +104,9 @@ export class ProfissionalListComponent implements OnInit {
       filtro.tipoContrato = this.filtro.tipoContrato;
     }
 
-    const percentual = this.filtro.percentualPagamentoAula.trim();
-    if (percentual !== '') {
-      const valor = Number(percentual);
-      if (Number.isFinite(valor)) {
-        filtro.percentualPagamentoAula = valor;
-      }
+    const percentual = this.filtro.percentualPagamentoAula;
+    if (percentual !== null && Number.isFinite(percentual)) {
+      filtro.percentualPagamentoAula = percentual;
     }
 
     if (this.filtro.status !== 'todos') {
