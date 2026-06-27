@@ -1,14 +1,23 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProfissionalService } from '../../../core/services/profissional.service';
-import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
+import { ProfissionalFiltro, ProfissionalService } from '../../../core/services/profissional.service';
+import { ProfissionalResponseDTO, TipoContrato, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
+
+interface FiltroUI {
+  nome: string;
+  email: string;
+  tipoContrato: '' | TipoContrato;
+  percentualPagamentoAula: number | null;
+  status: 'ativos' | 'inativos' | 'todos';
+}
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [NgIf, NgFor, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -23,8 +32,16 @@ export class ProfissionalListComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
+  filtro: FiltroUI = {
+    nome: '',
+    email: '',
+    tipoContrato: '',
+    percentualPagamentoAula: null,
+    status: 'ativos'
+  };
 
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
+  readonly tiposContrato: TipoContrato[] = ['CLT', 'PJ', 'AUTONOMO'];
 
   constructor(private service: ProfissionalService, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
@@ -35,7 +52,7 @@ export class ProfissionalListComponent implements OnInit {
   carregar(retryCount = 0): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         const totalPages = meta.totalPages ?? this.totalPages;
@@ -59,6 +76,44 @@ export class ProfissionalListComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  buscar(): void {
+    this.currentPage = 0;
+    this.carregar();
+  }
+
+  limparFiltros(): void {
+    this.filtro = {
+      nome: '',
+      email: '',
+      tipoContrato: '',
+      percentualPagamentoAula: null,
+      status: 'ativos'
+    };
+    this.buscar();
+  }
+
+  private montarFiltro(): ProfissionalFiltro {
+    const filtro: ProfissionalFiltro = {
+      nome: this.filtro.nome.trim(),
+      email: this.filtro.email.trim()
+    };
+
+    if (this.filtro.tipoContrato) {
+      filtro.tipoContrato = this.filtro.tipoContrato;
+    }
+
+    const percentual = this.filtro.percentualPagamentoAula;
+    if (percentual !== null && Number.isFinite(percentual)) {
+      filtro.percentualPagamentoAula = percentual;
+    }
+
+    if (this.filtro.status !== 'todos') {
+      filtro.ativo = this.filtro.status === 'ativos';
+    }
+
+    return filtro;
   }
 
   confirmarInativar(id: number): void {

@@ -98,6 +98,47 @@ describe('ProfissionalService', () => {
     req.flush(mockPage);
   });
 
+  it('should pass custom page and size params', () => {
+    service.listar(2, 5).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('5');
+    req.flush(mockPage);
+  });
+
+  it('should pass filter params when provided', () => {
+    service.listar(0, 10, {
+      nome: 'Paula',
+      email: 'paula@carlessopilates.com',
+      tipoContrato: 'PJ',
+      percentualPagamentoAula: 45,
+      ativo: false
+    }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais');
+    expect(req.request.params.get('nome')).toBe('Paula');
+    expect(req.request.params.get('email')).toBe('paula@carlessopilates.com');
+    expect(req.request.params.get('tipoContrato')).toBe('PJ');
+    expect(req.request.params.get('percentualPagamentoAula')).toBe('45');
+    expect(req.request.params.get('ativo')).toBe('false');
+    req.flush(mockPage);
+  });
+
+  it('should ignore empty filter params', () => {
+    service.listar(0, 10, {
+      nome: '',
+      email: undefined,
+      ativo: true
+    }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais');
+    expect(req.request.params.has('nome')).toBeFalse();
+    expect(req.request.params.has('email')).toBeFalse();
+    expect(req.request.params.get('ativo')).toBe('true');
+    req.flush(mockPage);
+  });
+
   it('should GET /api/profissionais/:id', () => {
     service.buscar(1).subscribe(item => expect(item).toEqual(mockProfissional));
 

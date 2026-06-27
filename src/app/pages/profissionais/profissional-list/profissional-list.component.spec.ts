@@ -24,6 +24,8 @@ const mockPage: ProfissionalPage = {
   page: { totalElements: 1, totalPages: 2, size: 10, number: 0 }
 };
 
+const defaultFiltro = { nome: '', email: '', ativo: true };
+
 describe('ProfissionalListComponent', () => {
   let component: ProfissionalListComponent;
   let fixture: ComponentFixture<ProfissionalListComponent>;
@@ -63,7 +65,7 @@ describe('ProfissionalListComponent', () => {
   });
 
   it('should load profissionais on init', () => {
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.totalPages).toBe(2);
     expect(component.currentPage).toBe(0);
@@ -84,7 +86,7 @@ describe('ProfissionalListComponent', () => {
     component.pageSize = 10;
     component.carregar();
 
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro);
     expect(component.currentPage).toBe(2);
     expect(component.pageSize).toBe(20);
     expect(component.totalPages).toBe(3);
@@ -113,6 +115,73 @@ describe('ProfissionalListComponent', () => {
     serviceSpy.listar.and.returnValue(throwError(() => new Error('fail')));
     component.carregar();
     expect(component.erro).toBe('Erro ao carregar profissionais.');
+  });
+
+  it('should send trimmed filter params built from the UI state', () => {
+    serviceSpy.listar.calls.reset();
+    component.filtro = {
+      nome: '  Paula  ',
+      email: '  paula@carlessopilates.com  ',
+      tipoContrato: 'PJ',
+      percentualPagamentoAula: 45,
+      status: 'inativos'
+    };
+
+    component.buscar();
+
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: 'Paula',
+      email: 'paula@carlessopilates.com',
+      tipoContrato: 'PJ',
+      percentualPagamentoAula: 45,
+      ativo: false
+    });
+  });
+
+  it('should omit contrato and percentual when not informed and ativo when status is todos', () => {
+    serviceSpy.listar.calls.reset();
+    component.filtro = {
+      nome: '',
+      email: '',
+      tipoContrato: '',
+      percentualPagamentoAula: null,
+      status: 'todos'
+    };
+
+    component.buscar();
+
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, { nome: '', email: '' });
+  });
+
+  it('should reset to first page when buscar is called', () => {
+    component.currentPage = 4;
+    component.buscar();
+    expect(component.currentPage).toBe(0);
+  });
+
+  it('should reset filters to defaults and reload when limparFiltros is called', () => {
+    serviceSpy.listar.calls.reset();
+    component.filtro = {
+      nome: 'Paula',
+      email: 'paula@carlessopilates.com',
+      tipoContrato: 'CLT',
+      percentualPagamentoAula: 30,
+      status: 'inativos'
+    };
+    component.currentPage = 3;
+
+    component.limparFiltros();
+
+    expect(component.filtro).toEqual({
+      nome: '',
+      email: '',
+      tipoContrato: '',
+      percentualPagamentoAula: null,
+      status: 'ativos'
+    });
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
   });
 
   it('should set confirmarInativarId when confirmarInativar is called', () => {
@@ -163,8 +232,8 @@ describe('ProfissionalListComponent', () => {
 
     expect(component.currentPage).toBe(14);
     expect(serviceSpy.listar).toHaveBeenCalledTimes(3);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(15, 10);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(14, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(15, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(14, 10, defaultFiltro);
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.visiblePages.length).toBeGreaterThan(0);
     expect(component.loading).toBeFalse();
@@ -224,7 +293,7 @@ describe('ProfissionalListComponent', () => {
     component.pagina(1);
 
     expect(component.currentPage).toBe(1);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro);
   });
 
   it('should ignore invalid or current page when pagina is called', () => {

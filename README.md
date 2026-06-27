@@ -206,7 +206,7 @@ Arquivos de teste:
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica, planos de tratamento, sessões de pilates/fisioterapia, evolução clínica da sessão e reavaliações periódicas |
-| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API; acesso restrito a `ADMIN` |
+| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT, filtros por nome, e-mail, contrato, % por aula e status, e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API; acesso restrito a `ADMIN` |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, e confirmação de presença com vínculo do profissional responsável |
@@ -241,7 +241,7 @@ Arquivos de teste:
 | `/pacientes/:pacienteId/nfse-emitidas/nova` | Registro de NFSE emitida |
 | `/pacientes/:pacienteId/nfse-emitidas/:id/editar` | Edição de NFSE emitida |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo)     |
-| `/profissionais`        | Lista de profissionais ativos (paginada, `ADMIN`) |
+| `/profissionais`        | Lista de profissionais com filtros e paginação (`ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
 | `/profissionais/:id`    | Detalhes do profissional (`ADMIN`)         |
 | `/profissionais/:id/editar` | Formulário de edição de profissional (`ADMIN`) |
