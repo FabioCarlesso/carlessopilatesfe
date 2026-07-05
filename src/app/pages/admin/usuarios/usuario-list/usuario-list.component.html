@@ -73,10 +73,18 @@
 
 <a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
 
+<!--
+  Backdrop: clicar fora fecha o dialogo (aprimoramento com mouse). O fechamento
+  por teclado ja e garantido pelo @HostListener('document:keydown.escape') do
+  componente e pelos botoes acessiveis abaixo, portanto o clique no overlay nao
+  precisa de equivalente de teclado nem de foco proprio.
+-->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <div
   class="dialog-overlay"
   *ngIf="confirmacao"
   (click)="cancelarConfirmacao()">
+  <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
   <div
     class="dialog"
     role="dialog"

@@ -64,11 +64,6 @@ module.exports = tseslint.config(
         "error",
         { allowNullOrUndefined: true },
       ],
-      // Divida de acessibilidade pre-existente: sinalizada como aviso para nao
-      // bloquear o CI na adocao inicial do lint. Revisar em atividade dedicada.
-      "@angular-eslint/template/click-events-have-key-events": "warn",
-      "@angular-eslint/template/interactive-supports-focus": "warn",
-      "@angular-eslint/template/label-has-associated-control": "warn",
     },
   }
 );
