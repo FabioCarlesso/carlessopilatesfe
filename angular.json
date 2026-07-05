@@ -81,6 +81,7 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
+            "karmaConfig": "karma.conf.js",
             "polyfills": [
               "zone.js",
               "zone.js/testing"
@@ -98,11 +99,23 @@
             ],
             "scripts": []
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": "dbb02d4f-884d-41ce-b7bc-5f4f51cdbb08"
+    "analytics": "dbb02d4f-884d-41ce-b7bc-5f4f51cdbb08",
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   }
 }

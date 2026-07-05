@@ -15,7 +15,7 @@ A aplicação oferece dashboard inicial de indicadores, CRUDs administrativos pa
 
 ## Pré-requisitos
 
-- Node.js 18+
+- Node.js 22+ (mesma versão usada no build Docker e na CI)
 - Angular CLI: `npm install -g @angular/cli`
 - Backend rodando em `http://localhost:8080`
 - Docker e Docker Compose, para execução em container
@@ -32,12 +32,29 @@ npm install
 
 ## Scripts
 
-| Comando         | Descrição                                          |
-|-----------------|----------------------------------------------------|
-| `npm start`     | Servidor de desenvolvimento em http://localhost:4200 |
-| `npm test`      | Executa testes unitários (Karma + Jasmine)         |
-| `npm run build` | Build de produção em `dist/carlessopilatesfe`      |
-| `npm run watch` | Build contínuo em modo desenvolvimento             |
+| Comando          | Descrição                                          |
+|------------------|----------------------------------------------------|
+| `npm start`      | Servidor de desenvolvimento em http://localhost:4200 |
+| `npm test`       | Executa testes unitários (Karma + Jasmine)         |
+| `npm run test:ci`| Testes em Chrome headless, sem watch, com cobertura (usado na CI) |
+| `npm run lint`   | Análise estática com ESLint (angular-eslint)       |
+| `npm run build`  | Build de produção em `dist/carlessopilatesfe`      |
+| `npm run watch`  | Build contínuo em modo desenvolvimento             |
+
+---
+
+## Integração Contínua (CI)
+
+A cada `push` na `master` e a cada `pull_request`, o workflow
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa no GitHub Actions:
+
+- **Lint** — `npm run lint` (ESLint + angular-eslint)
+- **Testes unitários** — `npm run test:ci` em Chrome headless, publicando o relatório de cobertura como artifact
+- **Build de produção** — `npm run build`, respeitando os *budgets* de bundle e publicando `dist/` como artifact
+- **Build da imagem Docker** — apenas em merges na `master`, valida o `Dockerfile` (sem publicar imagem)
+
+As dependências npm e as GitHub Actions são atualizadas automaticamente via
+[Dependabot](.github/dependabot.yml).
 
 ---
 
