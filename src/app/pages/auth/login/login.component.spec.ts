@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
@@ -155,5 +155,55 @@ describe('LoginComponent', () => {
     expect(btn.textContent).toContain('Tema claro');
     expect(btn.getAttribute('aria-label')).toBe('Mudar para tema claro');
     expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('should render a link to the forgot-password page', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.login-link') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent).toContain('Esqueci minha senha');
+    expect(link.getAttribute('href')).toContain('/esqueci-senha');
+  });
+
+  it('should not show a reset confirmation banner without the query flag', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.login-aviso')).toBeNull();
+  });
+});
+
+describe('LoginComponent with reset confirmation', () => {
+  it('should show a confirmation banner when redefinicao=sucesso is present', async () => {
+    const authServiceSpy = jasmine.createSpyObj('AuthService', ['login', 'isAuthenticated']);
+    const stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>('StylePreferencesService', [
+      'toggleTheme',
+      'setTheme',
+      'setDensity',
+      'apply'
+    ]);
+    (stylePreferencesSpy as { current: { theme: StyleTheme; density: string } }).current = {
+      theme: 'light',
+      density: 'default'
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [LoginComponent, RouterTestingModule, HttpClientTestingModule],
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: StylePreferencesService, useValue: stylePreferencesSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({ redefinicao: 'sucesso' }) } }
+        }
+      ]
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.login-aviso')?.textContent).toContain('Senha redefinida com sucesso');
   });
 });

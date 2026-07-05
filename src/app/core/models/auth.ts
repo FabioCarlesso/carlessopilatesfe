@@ -24,3 +24,13 @@ export interface AlterarSenhaRequestDTO {
   novaSenha: string;
   confirmacaoNovaSenha: string;
 }
+
+export interface ForgotPasswordRequestDTO {
+  email: string;
+}
+
+export interface ResetPasswordRequestDTO {
+  token: string;
+  novaSenha: string;
+  confirmacaoNovaSenha: string;
+}
