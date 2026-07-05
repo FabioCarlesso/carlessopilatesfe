@@ -52,6 +52,29 @@ describe('AuthService', () => {
     expect(localStorage.getItem('accessToken')).toBe('token123');
   });
 
+  it('forgotPassword() should POST the email to the forgot-password endpoint', () => {
+    service.forgotPassword('user@carlessopilates.com').subscribe();
+
+    const req = httpMock.expectOne('/api/auth/forgot-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'user@carlessopilates.com' });
+    req.flush(null);
+  });
+
+  it('resetPassword() should POST the token and passwords to the reset-password endpoint', () => {
+    const dto = {
+      token: 'reset-token',
+      novaSenha: 'novaSenha123',
+      confirmacaoNovaSenha: 'novaSenha123'
+    };
+    service.resetPassword(dto).subscribe();
+
+    const req = httpMock.expectOne('/api/auth/reset-password');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(dto);
+    req.flush(null);
+  });
+
   it('should store user data on successful login', () => {
     service.login({ email: 'admin@carlessopilates.com', password: 'senha1234' }).subscribe();
 

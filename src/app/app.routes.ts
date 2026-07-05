@@ -21,6 +21,16 @@ export const routes: Routes = [
       import('./pages/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'esqueci-senha',
+    loadComponent: () =>
+      import('./pages/auth/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'resetar-senha',
+    loadComponent: () =>
+      import('./pages/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
+  {
     path: '403',
     loadComponent: () =>
       import('./pages/auth/forbidden/forbidden.component').then(m => m.ForbiddenComponent)

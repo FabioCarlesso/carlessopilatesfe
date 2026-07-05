@@ -2,13 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { AuthenticatedUser, LoginRequestDTO, LoginResponseDTO, UserRole } from '../models/auth';
+import {
+  AuthenticatedUser,
+  ForgotPasswordRequestDTO,
+  LoginRequestDTO,
+  LoginResponseDTO,
+  ResetPasswordRequestDTO,
+  UserRole
+} from '../models/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly apiUrl = '/api/auth/login';
+  private readonly forgotPasswordUrl = '/api/auth/forgot-password';
+  private readonly resetPasswordUrl = '/api/auth/reset-password';
   private readonly tokenKey = 'accessToken';
   private readonly currentUserKey = 'currentUser';
 
@@ -21,6 +30,15 @@ export class AuthService {
         localStorage.setItem(this.currentUserKey, JSON.stringify(res.user));
       })
     );
+  }
+
+  forgotPassword(email: string): Observable<void> {
+    const dto: ForgotPasswordRequestDTO = { email };
+    return this.http.post<void>(this.forgotPasswordUrl, dto);
+  }
+
+  resetPassword(dto: ResetPasswordRequestDTO): Observable<void> {
+    return this.http.post<void>(this.resetPasswordUrl, dto);
   }
 
   logout(): void {

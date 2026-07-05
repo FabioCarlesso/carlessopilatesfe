@@ -24,6 +24,8 @@ describe('app routes', () => {
       '',
       'perfil/alterar-senha',
       'login',
+      'esqueci-senha',
+      'resetar-senha',
       '403',
       'pacientes',
       'pacientes/novo',
@@ -132,6 +134,14 @@ describe('app routes', () => {
     expect(homeIndex).toBeLessThan(listIndex);
     expect(listIndex).toBeLessThan(novoIndex);
     expect(novoIndex).toBeLessThan(editarIndex);
+  });
+
+  it('should expose the password recovery routes without an auth guard', () => {
+    for (const path of ['login', 'esqueci-senha', 'resetar-senha']) {
+      const route = routes.find(r => r.path === path);
+      expect(route).withContext(`route ${path} should exist`).toBeTruthy();
+      expect(route!.canActivate).withContext(`route ${path} should be public`).toBeUndefined();
+    }
   });
 
   it('should protect every admin route with a canActivate guard on the parent', () => {

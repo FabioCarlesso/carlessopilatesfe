@@ -1,31 +1,37 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { StylePreferencesService } from '../../../core/services/style-preferences.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
   form: FormGroup;
   erro = '';
+  aviso = '';
   carregando = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private stylePreferences: StylePreferencesService
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+
+    if (this.route.snapshot.queryParamMap.get('redefinicao') === 'sucesso') {
+      this.aviso = 'Senha redefinida com sucesso. Faça login com a nova senha.';
+    }
   }
 
   // O tema é só preferência visual em localStorage (data-theme), sem dado
