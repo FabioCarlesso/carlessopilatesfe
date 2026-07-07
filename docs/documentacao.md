@@ -431,7 +431,7 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 
 **URL base no frontend:** `/api/pacientes`
 
-Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhost:8080` via `proxy.conf.json`. Em Docker, o Nginx redireciona `/api` para o valor de `BACKEND_URL`.
+Em desenvolvimento local, o Angular CLI redireciona `/api` para `http://localhost:8080` via `proxy.conf.json`. Em Docker, o Nginx redireciona `/api` para o valor de `BACKEND_URL`. Em produção (Vercel), o `vercel.json` reescreve `/api/*` para o backend público no Railway, removendo o prefixo `/api` — o mesmo comportamento dos ambientes anteriores.
 
 | Método            | Endpoint HTTP               | Descrição                        |
 |-------------------|-----------------------------|----------------------------------|
