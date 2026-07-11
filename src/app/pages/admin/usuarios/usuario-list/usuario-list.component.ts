@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
@@ -26,7 +26,7 @@ const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss'
 })
-export class UsuarioListComponent implements OnInit {
+export class UsuarioListComponent implements OnInit, OnDestroy {
   usuarios: UsuarioAdminResponseDTO[] = [];
   totalPages = 0;
   currentPage = 0;
@@ -35,9 +35,11 @@ export class UsuarioListComponent implements OnInit {
   readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
+  sucesso: string | null = null;
   confirmacao: Confirmacao | null = null;
   acaoEmAndamento = false;
   private currentUserId: number | null = null;
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly roleLabel = ROLE_LABEL;
 
@@ -49,6 +51,12 @@ export class UsuarioListComponent implements OnInit {
   ngOnInit(): void {
     this.currentUserId = this.auth.getCurrentUser()?.id ?? null;
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
   }
 
   carregar(retryCount = 0): void {
@@ -112,6 +120,7 @@ export class UsuarioListComponent implements OnInit {
     const onSuccess = () => {
       this.confirmacao = null;
       this.acaoEmAndamento = false;
+      this.exibirSucesso(this.mensagemSucesso(acao));
       this.carregar();
     };
 
@@ -165,6 +174,25 @@ export class UsuarioListComponent implements OnInit {
       case 'excluir':
         return 'Erro ao excluir usuário.';
     }
+  }
+
+  private mensagemSucesso(acao: ConfirmacaoAcao): string {
+    switch (acao) {
+      case 'inativar':
+        return 'Usuário inativado com sucesso.';
+      case 'ativar':
+        return 'Usuário reativado com sucesso.';
+      case 'excluir':
+        return 'Usuário excluído com sucesso.';
+    }
+  }
+
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
   }
 
   private normalizarPagina(pageNumber: number | undefined, fallback: number): number {
