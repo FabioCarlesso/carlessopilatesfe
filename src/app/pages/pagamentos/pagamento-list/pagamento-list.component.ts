@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -14,13 +14,15 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PagamentoListComponent implements OnInit {
+export class PagamentoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   pagamentos: PagamentoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
+  sucesso: string | null = null;
   pagarId: number | null = null;
   pagarForm!: FormGroup;
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel: Record<StatusPagamento, string> = {
     PENDENTE: 'Pendente',
@@ -44,6 +46,12 @@ export class PagamentoListComponent implements OnInit {
       return;
     }
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
   }
 
   carregar(): void {
@@ -71,6 +79,17 @@ export class PagamentoListComponent implements OnInit {
     return pagamento.id;
   }
 
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => {
+      this.sucesso = null;
+      this.cdr.markForCheck();
+    }, 4000);
+  }
+
   abrirPagar(id: number): void {
     this.pagarId = id;
     this.pagarForm.reset();
@@ -86,6 +105,7 @@ export class PagamentoListComponent implements OnInit {
     this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.pagarId = null;
+        this.exibirSucesso('Pagamento confirmado com sucesso.');
         this.carregar();
       },
       error: () => {

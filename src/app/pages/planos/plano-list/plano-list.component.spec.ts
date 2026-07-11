@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -84,6 +84,19 @@ describe('PlanoListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
   });
+
+  it('should show sucesso with role status after inativar and clear it after timeout', fakeAsync(() => {
+    serviceSpy.inativar.and.returnValue(of(undefined));
+    component.confirmarInativarId = 1;
+    component.inativar();
+    expect(component.sucesso).toBe('Plano inativado com sucesso.');
+    fixture.detectChanges();
+    const alert = fixture.nativeElement.querySelector('.alert-success');
+    expect(alert).toBeTruthy();
+    expect(alert.getAttribute('role')).toBe('status');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
 
   it('should set erro when inativar fails', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));

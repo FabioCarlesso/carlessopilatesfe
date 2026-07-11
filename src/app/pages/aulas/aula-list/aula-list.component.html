@@ -5,6 +5,7 @@
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 
 <div *ngIf="!loading && aulas.length === 0 && !erro" class="empty-state">

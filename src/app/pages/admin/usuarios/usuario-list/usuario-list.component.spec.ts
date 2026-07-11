@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { UsuarioListComponent } from './usuario-list.component';
@@ -263,6 +263,37 @@ describe('UsuarioListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledTimes(1);
     expect(component.confirmacao).toBeNull();
   });
+
+  it('should show sucesso with role status after inativar and clear it after timeout', fakeAsync(() => {
+    serviceSpy.inativar.and.returnValue(of(undefined));
+    component.confirmacao = { acao: 'inativar', usuario: mockUsuario };
+    component.executarConfirmacao();
+    expect(component.sucesso).toBe('Usuário inativado com sucesso.');
+    fixture.detectChanges();
+    const alert = fixture.nativeElement.querySelector('.alert-success');
+    expect(alert).toBeTruthy();
+    expect(alert.getAttribute('role')).toBe('status');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
+
+  it('should show sucesso after ativar', fakeAsync(() => {
+    serviceSpy.ativar.and.returnValue(of(undefined));
+    component.confirmacao = { acao: 'ativar', usuario: mockUsuarioInativo };
+    component.executarConfirmacao();
+    expect(component.sucesso).toBe('Usuário reativado com sucesso.');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
+
+  it('should show sucesso after excluir', fakeAsync(() => {
+    serviceSpy.excluir.and.returnValue(of(undefined));
+    component.confirmacao = { acao: 'excluir', usuario: mockUsuario };
+    component.executarConfirmacao();
+    expect(component.sucesso).toBe('Usuário excluído com sucesso.');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
 
   it('should set erro when inativar fails', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));
