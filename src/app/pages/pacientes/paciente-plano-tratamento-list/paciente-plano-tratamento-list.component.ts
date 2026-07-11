@@ -1,13 +1,5 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
-import {
-  AfterViewChecked,
-  Component,
-  DestroyRef,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlanoTratamentoResponseDTO, PLANO_TRATAMENTO_STATUS_LABEL } from '../../../core/models/plano-tratamento';
@@ -15,16 +7,15 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-paciente-plano-tratamento-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-plano-tratamento-list.component.html',
   styleUrl: './paciente-plano-tratamento-list.component.scss'
 })
-export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('confirmarButton') confirmarButton?: ElementRef<HTMLButtonElement>;
-
+export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
   planos: PlanoTratamentoResponseDTO[] = [];
@@ -33,9 +24,8 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy, 
   sucesso: string | null = null;
   confirmarAcaoId: number | null = null;
   acaoPendente: 'encerrar' | 'suspender' | null = null;
+  acaoEmAndamentoId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
-  private dialogFocusPending = false;
-  private previousFocusedElement: HTMLElement | null = null;
 
   readonly statusLabel = PLANO_TRATAMENTO_STATUS_LABEL;
 
@@ -53,13 +43,6 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy, 
       return;
     }
     this.carregar();
-  }
-
-  ngAfterViewChecked(): void {
-    if (this.dialogFocusPending && this.confirmarButton) {
-      this.confirmarButton.nativeElement.focus();
-      this.dialogFocusPending = false;
-    }
   }
 
   ngOnDestroy(): void {
@@ -106,28 +89,24 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy, 
   }
 
   confirmarAcao(id: number, acao: 'encerrar' | 'suspender'): void {
-    this.previousFocusedElement = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
+    if (this.acaoEmAndamentoId !== null) return;
+
     this.confirmarAcaoId = id;
     this.acaoPendente = acao;
-    this.dialogFocusPending = true;
   }
 
   cancelarAcao(): void {
     this.confirmarAcaoId = null;
     this.acaoPendente = null;
-    this.dialogFocusPending = false;
-    this.previousFocusedElement?.focus();
-    this.previousFocusedElement = null;
   }
 
   executarAcao(): void {
-    if (this.confirmarAcaoId === null || this.acaoPendente === null) return;
+    if (this.confirmarAcaoId === null || this.acaoPendente === null || this.acaoEmAndamentoId !== null) return;
 
     const id = this.confirmarAcaoId;
     const acao = this.acaoPendente;
     this.cancelarAcao();
+    this.acaoEmAndamentoId = id;
 
     const obs = acao === 'encerrar'
       ? this.planoTratamentoService.encerrar(id)
@@ -143,9 +122,11 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy, 
           clearTimeout(this.successTimer);
         }
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
+        this.acaoEmAndamentoId = null;
       },
       error: () => {
         this.erro = `Erro ao ${acao} plano de tratamento.`;
+        this.acaoEmAndamentoId = null;
       }
     });
   }

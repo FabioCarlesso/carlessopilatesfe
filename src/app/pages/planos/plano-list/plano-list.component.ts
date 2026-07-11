@@ -5,10 +5,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-plano-list',
-  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './plano-list.component.html',
   styleUrl: './plano-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,6 +21,7 @@ export class PlanoListComponent implements OnInit, OnDestroy {
   erro: string | null = null;
   sucesso: string | null = null;
   confirmarInativarId: number | null = null;
+  acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly tipoLabel = TIPO_LABEL;
@@ -69,19 +71,23 @@ export class PlanoListComponent implements OnInit, OnDestroy {
   }
 
   cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
   }
 
   inativar(): void {
-    if (this.confirmarInativarId === null) return;
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
+    this.acaoEmAndamento = true;
     this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.exibirSucesso('Plano inativado com sucesso.');
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao inativar plano.';
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.cdr.markForCheck();
       }

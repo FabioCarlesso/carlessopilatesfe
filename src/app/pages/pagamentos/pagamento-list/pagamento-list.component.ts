@@ -6,10 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -22,6 +23,7 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   pagarId: number | null = null;
   pagarForm!: FormGroup;
+  acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel: Record<StatusPagamento, string> = {
@@ -96,20 +98,24 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   }
 
   cancelarPagar(): void {
+    if (this.acaoEmAndamento) return;
     this.pagarId = null;
   }
 
   confirmarPagar(): void {
-    if (this.pagarForm.invalid || this.pagarId === null) return;
+    if (this.pagarForm.invalid || this.pagarId === null || this.acaoEmAndamento) return;
     const { dataPagamento } = this.pagarForm.value;
+    this.acaoEmAndamento = true;
     this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.pagarId = null;
         this.exibirSucesso('Pagamento confirmado com sucesso.');
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao confirmar pagamento.';
+        this.acaoEmAndamento = false;
         this.pagarId = null;
         this.cdr.markForCheck();
       }

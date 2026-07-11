@@ -636,7 +636,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Navegação por página com botões anterior/próxima e janela de até 5 páginas visíveis
 - Colunas: Nome, E-mail, CPF, Telefone, Status, Ações
 - Ações: Ver, Editar, Inativar para ativos e Ativar para inativos
-- Diálogo de confirmação inline para ativação e inativação
+- Diálogo de confirmação (`ConfirmarDialogComponent`) para ativação e inativação
 - Tratamento de erros e estado de carregamento
 
 ### `PacienteFormComponent`
@@ -650,7 +650,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Exibição completa dos dados do paciente
 - Badge de status: Ativo (verde) / Inativo (vermelho)
 - Ações: Editar, Voltar; **Inativar** (se ativo) ou **Ativar** (se inativo)
-- Diálogos de confirmação para ativação e inativação
+- Diálogos de confirmação (`ConfirmarDialogComponent`) para ativação e inativação
 
 ### `PacienteSessaoListComponent`
 - Lista sessões de pilates/fisioterapia por paciente
@@ -695,7 +695,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Sincroniza `currentPage` e `pageSize` com `page.number` e `page.size` retornados pela API, com fallback para o estado local quando metadados estiverem ausentes
 - Colunas: Nome, E-mail, Contrato, % por Aula, Ações
 - Ações: Ver, Editar e Inativar
-- Diálogo de confirmação inline para inativação
+- Diálogo de confirmação (`ConfirmarDialogComponent`) para inativação
 - Tratamento de erros e estado de carregamento
 
 ### `AulaListComponent`
@@ -706,7 +706,13 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Exibe o nome do profissional vinculado em aulas realizadas quando retornado pela API
 
 ### `ConfirmarDialogComponent` _(shared)_
-- Componente gerado, ainda não integrado (diálogos implementados inline nos componentes)
+- Diálogo de confirmação reutilizável, usado por todas as telas que confirmam ações antes de disparar a requisição
+- Inputs: `titulo`, `mensagem`, `textoConfirmar`, `textoCancelar`, `variante` (`primaria` | `secundaria` | `perigo`), `processando`, `confirmarDesabilitado` e `fecharAoClicarFora` (padrão `true`; desligado apenas no diálogo de pagamento, que tem formulário)
+- Outputs: `confirmar` e `cancelar`
+- `<ng-content>` para conteúdo projetado quando a mensagem não é texto simples (ex.: nome em negrito, formulário de data no diálogo de pagamento)
+- Acessibilidade: `role="dialog"`, `aria-modal`, `aria-labelledby` (título), `aria-describedby` (corpo, cobrindo mensagem e conteúdo projetado), foco inicial no botão de confirmação, focus trap em Tab/Shift+Tab, fechamento por Esc e devolução do foco ao elemento disparador
+- Trava o scroll do conteúdo de fundo enquanto está aberto (classe `dialog-aberto` no `body`)
+- Enquanto `processando` está ativo, os botões ficam desabilitados e Esc não fecha o diálogo; todas as telas que confirmam ações bindam `processando` a um estado de ação em andamento, impedindo duplo disparo da requisição
 
 ---
 

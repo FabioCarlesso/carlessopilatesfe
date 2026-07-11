@@ -443,6 +443,11 @@ select.form-control,
   z-index: 999;
 }
 
+// Aplicada pelo ConfirmarDialogComponent enquanto o diálogo está aberto.
+body.dialog-aberto {
+  overflow: hidden;
+}
+
 .dialog {
   background: var(--bg-elev);
   border: 1px solid var(--border-subtle);

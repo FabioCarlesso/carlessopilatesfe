@@ -176,26 +176,3 @@
     flex-direction: column;
   }
 }
-
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 17, 25, .56);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.dialog {
-  background: var(--bg-elev);
-  border-radius: var(--r-lg);
-  padding: 2rem;
-  min-width: 300px;
-  box-shadow: var(--shadow-3);
-  text-align: center;
-
-  p { margin: 0 0 1.5rem; font-size: 1.1rem; }
-
-  .dialog-actions { display: flex; gap: 1rem; justify-content: center; }
-}

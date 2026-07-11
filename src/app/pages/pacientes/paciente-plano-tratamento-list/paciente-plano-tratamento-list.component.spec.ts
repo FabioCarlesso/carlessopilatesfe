@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { PlanoTratamentoResponseDTO } from '../../../core/models/plano-tratamento';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
@@ -216,4 +216,24 @@ describe('PacientePlanoTratamentoListComponent', () => {
     component.acaoPendente = 'suspender';
     expect(component.acaoLabel()).toBe('suspender');
   });
+
+  it('should block duplicate actions while the request is pending', async () => {
+    await setup([mockPlanoAtivo]);
+    const pending = new Subject<PlanoTratamentoResponseDTO>();
+    planoTratamentoServiceSpy.encerrar.and.returnValue(pending.asObservable());
+
+    component.confirmarAcao(1, 'encerrar');
+    component.executarAcao();
+    component.confirmarAcao(1, 'encerrar');
+    component.executarAcao();
+
+    expect(planoTratamentoServiceSpy.encerrar).toHaveBeenCalledTimes(1);
+    expect(component.acaoEmAndamentoId).toBe(1);
+
+    pending.next(mockPlanoEncerrado);
+    pending.complete();
+
+    expect(component.acaoEmAndamentoId).toBeNull();
+  });
+
 });

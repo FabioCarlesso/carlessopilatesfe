@@ -46,12 +46,11 @@
   </tbody>
 </table>
 
-<div class="dialog-overlay" *ngIf="confirmarInativarId !== null">
-  <div class="dialog">
-    <p>Confirma a inativação deste plano?</p>
-    <div class="dialog-actions">
-      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
-      <button class="btn btn-outline" (click)="cancelarInativar()">Cancelar</button>
-    </div>
-  </div>
-</div>
+<app-confirmar-dialog
+  *ngIf="confirmarInativarId !== null"
+  titulo="Confirmar inativação"
+  mensagem="Confirma a inativação deste plano?"
+  variante="perigo"
+  [processando]="acaoEmAndamento"
+  (confirmar)="inativar()"
+  (cancelar)="cancelarInativar()" />

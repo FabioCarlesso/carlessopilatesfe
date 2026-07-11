@@ -1,13 +1,5 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
-import {
-  AfterViewChecked,
-  Component,
-  DestroyRef,
-  ElementRef,
-  OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessaoResponseDTO, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
@@ -15,16 +7,15 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-paciente-sessao-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-sessao-list.component.html',
   styleUrl: './paciente-sessao-list.component.scss'
 })
-export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('confirmarButton') confirmarButton?: ElementRef<HTMLButtonElement>;
-
+export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
   sessoes: SessaoResponseDTO[] = [];
@@ -35,8 +26,6 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
   acaoPendente: 'realizar' | 'cancelar' | null = null;
   acaoEmAndamentoId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
-  private dialogFocusPending = false;
-  private previousFocusedElement: HTMLElement | null = null;
 
   readonly statusLabel = SESSAO_STATUS_LABEL;
   readonly tipoLabel = SESSAO_TIPO_LABEL;
@@ -55,13 +44,6 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
       return;
     }
     this.carregar();
-  }
-
-  ngAfterViewChecked(): void {
-    if (this.dialogFocusPending && this.confirmarButton) {
-      this.confirmarButton.nativeElement.focus();
-      this.dialogFocusPending = false;
-    }
   }
 
   ngOnDestroy(): void {
@@ -110,20 +92,13 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy, AfterView
   confirmarAcao(id: number, acao: 'realizar' | 'cancelar'): void {
     if (this.acaoEmAndamentoId !== null) return;
 
-    this.previousFocusedElement = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
     this.confirmarAcaoId = id;
     this.acaoPendente = acao;
-    this.dialogFocusPending = true;
   }
 
   cancelarAcao(): void {
     this.confirmarAcaoId = null;
     this.acaoPendente = null;
-    this.dialogFocusPending = false;
-    this.previousFocusedElement?.focus();
-    this.previousFocusedElement = null;
   }
 
   executarAcao(): void {

@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfissionalFiltro, ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TipoContrato, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 interface FiltroUI {
   nome: string;
@@ -17,7 +18,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,6 +33,7 @@ export class ProfissionalListComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
+  acaoEmAndamento = false;
   filtro: FiltroUI = {
     nome: '',
     email: '',
@@ -121,19 +123,23 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
   }
 
   inativar(): void {
-    if (this.confirmarInativarId === null) return;
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
 
+    this.acaoEmAndamento = true;
     this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao inativar profissional.';
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.cdr.markForCheck();
       }

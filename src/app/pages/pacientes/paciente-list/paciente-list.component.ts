@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 interface FiltroUI {
   nome: string;
@@ -16,7 +17,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,6 +35,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   confirmarInativarId: number | null = null;
   confirmarAtivarId: number | null = null;
+  acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   filtro: FiltroUI = {
     nome: '',
@@ -121,15 +123,18 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   }
 
   inativar(): void {
-    if (this.confirmarInativarId === null) return;
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
+    this.acaoEmAndamento = true;
     this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.exibirSucesso('Paciente inativado com sucesso.');
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao inativar paciente.';
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.cdr.markForCheck();
       }
@@ -137,15 +142,18 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   }
 
   ativar(): void {
-    if (this.confirmarAtivarId === null) return;
+    if (this.confirmarAtivarId === null || this.acaoEmAndamento) return;
+    this.acaoEmAndamento = true;
     this.service.ativar(this.confirmarAtivarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarAtivarId = null;
         this.exibirSucesso('Paciente ativado com sucesso.');
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao ativar paciente.';
+        this.acaoEmAndamento = false;
         this.confirmarAtivarId = null;
         this.cdr.markForCheck();
       }
@@ -153,6 +161,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   }
 
   cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
   }
 
@@ -168,6 +177,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   }
 
   cancelarAtivar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarAtivarId = null;
   }
 

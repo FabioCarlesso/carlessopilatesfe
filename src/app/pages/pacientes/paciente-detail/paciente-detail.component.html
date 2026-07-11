@@ -107,22 +107,22 @@
   </section>
 </div>
 
-<div class="dialog-overlay" *ngIf="confirmarAtivar">
-  <div class="dialog">
-    <p>Confirma a reativação de <strong>{{ paciente?.nome }}</strong>?</p>
-    <div class="dialog-actions">
-      <button class="btn btn-secondary" (click)="ativar()">Confirmar</button>
-      <button class="btn btn-outline" (click)="confirmarAtivar = false">Cancelar</button>
-    </div>
-  </div>
-</div>
+<app-confirmar-dialog
+  *ngIf="confirmarAtivar"
+  titulo="Confirmar reativação"
+  variante="secundaria"
+  [processando]="acaoEmAndamento"
+  (confirmar)="ativar()"
+  (cancelar)="confirmarAtivar = false">
+  <p>Confirma a reativação de <strong>{{ paciente?.nome }}</strong>?</p>
+</app-confirmar-dialog>
 
-<div class="dialog-overlay" *ngIf="confirmarInativar">
-  <div class="dialog">
-    <p>Confirma a inativação de <strong>{{ paciente?.nome }}</strong>?</p>
-    <div class="dialog-actions">
-      <button class="btn btn-danger" (click)="inativar()">Confirmar</button>
-      <button class="btn btn-outline" (click)="confirmarInativar = false">Cancelar</button>
-    </div>
-  </div>
-</div>
+<app-confirmar-dialog
+  *ngIf="confirmarInativar"
+  titulo="Confirmar inativação"
+  variante="perigo"
+  [processando]="acaoEmAndamento"
+  (confirmar)="inativar()"
+  (cancelar)="confirmarInativar = false">
+  <p>Confirma a inativação de <strong>{{ paciente?.nome }}</strong>?</p>
+</app-confirmar-dialog>

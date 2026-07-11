@@ -1,1 +1,41 @@
-<p>confirmar-dialog works!</p>
+<!--
+  O overlay é apenas um alvo de clique opcional para fechar o diálogo; pelo teclado
+  o fechamento acontece via Esc ou botão Cancelar, por isso as regras abaixo são dispensadas.
+-->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<div class="dialog-overlay" (click)="aoClicarNoOverlay()">
+  <div
+    #dialog
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="tituloId"
+    [attr.aria-describedby]="corpoId"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+    (keydown)="aoTeclar($event)">
+    <h2 class="dialog-title" [id]="tituloId">{{ titulo }}</h2>
+    <div [id]="corpoId">
+      <p *ngIf="mensagem">{{ mensagem }}</p>
+      <ng-content />
+    </div>
+    <div class="dialog-actions">
+      <button
+        #confirmarButton
+        type="button"
+        class="btn"
+        [ngClass]="classeConfirmar"
+        [disabled]="processando || confirmarDesabilitado"
+        (click)="emitirConfirmar()">
+        {{ textoConfirmar }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline"
+        [disabled]="processando"
+        (click)="emitirCancelar()">
+        {{ textoCancelar }}
+      </button>
+    </div>
+  </div>
+</div>

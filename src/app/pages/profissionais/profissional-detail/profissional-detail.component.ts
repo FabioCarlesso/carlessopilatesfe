@@ -4,10 +4,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [NgIf, DatePipe, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './profissional-detail.component.html',
   styleUrl: './profissional-detail.component.scss'
 })
@@ -17,6 +18,7 @@ export class ProfissionalDetailComponent implements OnInit {
   erro: string | null = null;
   confirmarAtivar = false;
   confirmarInativar = false;
+  acaoEmAndamento = false;
 
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
 
@@ -47,20 +49,30 @@ export class ProfissionalDetailComponent implements OnInit {
   }
 
   ativar(): void {
-    if (!this.profissional) return;
+    if (!this.profissional || this.acaoEmAndamento) return;
 
+    this.acaoEmAndamento = true;
     this.service.ativar(this.profissional.id).subscribe({
       next: () => this.router.navigate(['/profissionais']),
-      error: () => (this.erro = 'Erro ao ativar profissional.')
+      error: () => {
+        this.erro = 'Erro ao ativar profissional.';
+        this.acaoEmAndamento = false;
+        this.confirmarAtivar = false;
+      }
     });
   }
 
   inativar(): void {
-    if (!this.profissional) return;
+    if (!this.profissional || this.acaoEmAndamento) return;
 
+    this.acaoEmAndamento = true;
     this.service.inativar(this.profissional.id).subscribe({
       next: () => this.router.navigate(['/profissionais']),
-      error: () => (this.erro = 'Erro ao inativar profissional.')
+      error: () => {
+        this.erro = 'Erro ao inativar profissional.';
+        this.acaoEmAndamento = false;
+        this.confirmarInativar = false;
+      }
     });
   }
 }

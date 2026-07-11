@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PacienteListComponent } from './paciente-list.component';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -489,4 +489,33 @@ describe('PacienteListComponent', () => {
     expect(actionsGroup).withContext('buttons must be grouped for flexible wrapping').toBeTruthy();
     expect(actionsGroup?.querySelectorAll('.btn').length).toBe(3);
   });
+
+  it('should not fire a second inativar request while the action is in progress', () => {
+    const pending = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(pending.asObservable());
+
+    component.confirmarInativarId = 1;
+    component.inativar();
+    component.inativar();
+
+    expect(serviceSpy.inativar).toHaveBeenCalledTimes(1);
+    expect(component.acaoEmAndamento).toBeTrue();
+
+    pending.next();
+    pending.complete();
+
+    expect(component.acaoEmAndamento).toBeFalse();
+    expect(component.confirmarInativarId).toBeNull();
+  });
+
+  it('should not close the dialog while the action is in progress', () => {
+    serviceSpy.inativar.and.returnValue(new Subject<void>().asObservable());
+
+    component.confirmarInativarId = 1;
+    component.inativar();
+    component.cancelarInativar();
+
+    expect(component.confirmarInativarId).toBe(1);
+  });
+
 });

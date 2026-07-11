@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -127,4 +127,24 @@ describe('PagamentoListComponent', () => {
     expect(invalidComponent.erro).toBe('Identificador inválido.');
     expect(invalidServiceSpy.listar).not.toHaveBeenCalled();
   });
+
+  it('should not fire a second pagar request while the action is in progress', () => {
+    const pending = new Subject<PagamentoResponseDTO>();
+    serviceSpy.pagar.and.returnValue(pending.asObservable());
+
+    component.abrirPagar(1);
+    component.pagarForm.setValue({ dataPagamento: '2026-05-10' });
+    component.confirmarPagar();
+    component.confirmarPagar();
+
+    expect(serviceSpy.pagar).toHaveBeenCalledTimes(1);
+    expect(component.acaoEmAndamento).toBeTrue();
+
+    pending.next(mockPagamento);
+    pending.complete();
+
+    expect(component.acaoEmAndamento).toBeFalse();
+    expect(component.pagarId).toBeNull();
+  });
+
 });
