@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
@@ -93,6 +93,21 @@ describe('PagamentoListComponent', () => {
     expect(component.pagarId).toBeNull();
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
   });
+
+  it('should show sucesso with role status after pagar and clear it after timeout', fakeAsync(() => {
+    const pago = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
+    serviceSpy.pagar.and.returnValue(of(pago));
+    component.pagarId = 1;
+    component.pagarForm.setValue({ dataPagamento: '2026-05-05' });
+    component.confirmarPagar();
+    expect(component.sucesso).toBe('Pagamento confirmado com sucesso.');
+    fixture.detectChanges();
+    const alert = fixture.nativeElement.querySelector('.alert-success');
+    expect(alert).toBeTruthy();
+    expect(alert.getAttribute('role')).toBe('status');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
 
   it('should set erro when pagar fails', () => {
     serviceSpy.pagar.and.returnValue(throwError(() => new Error('fail')));

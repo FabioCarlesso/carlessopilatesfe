@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -22,7 +22,7 @@ interface FiltroUI {
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PacienteListComponent implements OnInit {
+export class PacienteListComponent implements OnInit, OnDestroy {
   pacientes: PacienteResponseDTO[] = [];
   totalElements = 0;
   totalPages = 0;
@@ -32,9 +32,11 @@ export class PacienteListComponent implements OnInit {
   readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
+  sucesso: string | null = null;
   confirmarInativarId: number | null = null;
   confirmarAtivarId: number | null = null;
   acaoEmAndamento = false;
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
   filtro: FiltroUI = {
     nome: '',
     email: '',
@@ -47,6 +49,12 @@ export class PacienteListComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
   }
 
   carregar(): void {
@@ -121,6 +129,7 @@ export class PacienteListComponent implements OnInit {
       next: () => {
         this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
+        this.exibirSucesso('Paciente inativado com sucesso.');
         this.carregar();
       },
       error: () => {
@@ -139,6 +148,7 @@ export class PacienteListComponent implements OnInit {
       next: () => {
         this.acaoEmAndamento = false;
         this.confirmarAtivarId = null;
+        this.exibirSucesso('Paciente ativado com sucesso.');
         this.carregar();
       },
       error: () => {
@@ -153,6 +163,17 @@ export class PacienteListComponent implements OnInit {
   cancelarInativar(): void {
     if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
+  }
+
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => {
+      this.sucesso = null;
+      this.cdr.markForCheck();
+    }, 4000);
   }
 
   cancelarAtivar(): void {

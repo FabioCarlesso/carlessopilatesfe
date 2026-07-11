@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,13 +14,15 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
   styleUrl: './plano-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PlanoListComponent implements OnInit {
+export class PlanoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   planos: PlanoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
+  sucesso: string | null = null;
   confirmarInativarId: number | null = null;
   acaoEmAndamento = false;
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly tipoLabel = TIPO_LABEL;
   readonly frequenciaLabel = FREQUENCIA_LABEL;
@@ -35,6 +37,12 @@ export class PlanoListComponent implements OnInit {
       return;
     }
     this.carregar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
   }
 
   carregar(): void {
@@ -74,6 +82,7 @@ export class PlanoListComponent implements OnInit {
       next: () => {
         this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
+        this.exibirSucesso('Plano inativado com sucesso.');
         this.carregar();
       },
       error: () => {
@@ -87,6 +96,17 @@ export class PlanoListComponent implements OnInit {
 
   trackByPlano(_: number, plano: PlanoResponseDTO): number {
     return plano.id;
+  }
+
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => {
+      this.sucesso = null;
+      this.cdr.markForCheck();
+    }, 4000);
   }
 
   diasFormatados(plano: PlanoResponseDTO): string {

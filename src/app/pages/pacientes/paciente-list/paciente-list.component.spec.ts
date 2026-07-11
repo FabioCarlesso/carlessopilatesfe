@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
@@ -137,6 +137,36 @@ describe('PacienteListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
   });
+
+  it('should show sucesso after inativar and clear it after timeout', fakeAsync(() => {
+    serviceSpy.inativar.and.returnValue(of(undefined));
+    component.confirmarInativarId = 1;
+    component.inativar();
+    expect(component.sucesso).toBe('Paciente inativado com sucesso.');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
+
+  it('should show sucesso after ativar and clear it after timeout', fakeAsync(() => {
+    serviceSpy.ativar.and.returnValue(of(undefined));
+    component.confirmarAtivarId = 1;
+    component.ativar();
+    expect(component.sucesso).toBe('Paciente ativado com sucesso.');
+    tick(4000);
+    expect(component.sucesso).toBeNull();
+  }));
+
+  it('should render sucesso message with role status', fakeAsync(() => {
+    serviceSpy.inativar.and.returnValue(of(undefined));
+    component.confirmarInativarId = 1;
+    component.inativar();
+    fixture.detectChanges();
+    const alert = fixture.nativeElement.querySelector('.alert-success');
+    expect(alert).toBeTruthy();
+    expect(alert.getAttribute('role')).toBe('status');
+    expect(alert.textContent).toContain('Paciente inativado com sucesso.');
+    tick(4000);
+  }));
 
   it('should set erro and clear id when inativar fails', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));

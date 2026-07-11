@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -123,6 +123,19 @@ describe('AulaListComponent', () => {
       expect(component.erro).toBe('Selecione um profissional para marcar a aula como realizada.');
       expect(serviceSpy.realizar).not.toHaveBeenCalled();
     });
+
+    it('should show sucesso with role status after realizar and clear it after timeout', fakeAsync(() => {
+      serviceSpy.realizar.and.returnValue(of({ ...mockAula, realizada: true }));
+      component.profissionalSelecionadoPorAula[1] = 5;
+      component.realizar(1);
+      expect(component.sucesso).toBe('Aula marcada como realizada.');
+      fixture.detectChanges();
+      const alert = fixture.nativeElement.querySelector('.alert-success');
+      expect(alert).toBeTruthy();
+      expect(alert.getAttribute('role')).toBe('status');
+      tick(4000);
+      expect(component.sucesso).toBeNull();
+    }));
 
     it('should set erro when realizar fails', () => {
       serviceSpy.realizar.and.returnValue(throwError(() => new Error('fail')));

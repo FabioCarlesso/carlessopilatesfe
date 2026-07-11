@@ -418,6 +418,12 @@ select.form-control,
     color: var(--c-warning);
     border-color: rgba(176, 136, 66, 0.24);
   }
+
+  &-success {
+    background: var(--c-success-bg);
+    color: var(--c-success);
+    border-color: rgba(90, 122, 94, 0.24);
+  }
 }
 
 .loading,

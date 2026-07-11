@@ -12,7 +12,7 @@
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success">{{ sucesso }}</div>
+<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 
 <form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">

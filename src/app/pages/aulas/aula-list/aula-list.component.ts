@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,7 +17,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AulaListComponent implements OnInit {
+export class AulaListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   pagamentoId: number | null = null;
   aulas: AulaResponseDTO[] = [];
@@ -25,7 +25,9 @@ export class AulaListComponent implements OnInit {
   profissionalSelecionadoPorAula: Record<number, number | null> = {};
   loading = false;
   erro: string | null = null;
+  sucesso: string | null = null;
   titulo = 'Aulas';
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private service: AulaService,
@@ -72,6 +74,12 @@ export class AulaListComponent implements OnInit {
       });
     } else {
       this.carregar();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
     }
   }
 
@@ -129,11 +137,25 @@ export class AulaListComponent implements OnInit {
     }
 
     this.service.realizar(id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.carregar(),
+      next: () => {
+        this.exibirSucesso('Aula marcada como realizada.');
+        this.carregar();
+      },
       error: () => {
         this.erro = 'Erro ao marcar aula como realizada.';
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => {
+      this.sucesso = null;
+      this.cdr.markForCheck();
+    }, 4000);
   }
 }
