@@ -76,6 +76,21 @@ describe('ConfirmarDialogComponent', () => {
     expect(document.body.classList.contains('dialog-aberto')).toBeFalse();
   });
 
+  it('should keep the body locked while another dialog is still open', () => {
+    const primeiro = TestBed.createComponent(ConfirmarDialogComponent);
+    const segundo = TestBed.createComponent(ConfirmarDialogComponent);
+    primeiro.detectChanges();
+    segundo.detectChanges();
+
+    expect(document.body.classList.contains('dialog-aberto')).toBeTrue();
+
+    primeiro.destroy();
+    expect(document.body.classList.contains('dialog-aberto')).toBeTrue();
+
+    segundo.destroy();
+    expect(document.body.classList.contains('dialog-aberto')).toBeFalse();
+  });
+
   it('should render title, message and confirm button with the variant class', () => {
     abrir();
 

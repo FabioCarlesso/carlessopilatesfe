@@ -28,8 +28,22 @@ const SELETOR_FOCAVEIS = [
   '[tabindex]'
 ].map(seletor => `${seletor}:not([tabindex="-1"])`).join(', ');
 
-// Enquanto um diálogo está aberto, o conteúdo atrás do overlay não deve rolar.
+// Enquanto um diálogo está aberto, o conteúdo atrás do overlay não deve rolar. O contador
+// evita que o fechamento de um diálogo libere o scroll com outro ainda aberto.
 const CLASSE_BODY_DIALOGO_ABERTO = 'dialog-aberto';
+let dialogosAbertos = 0;
+
+function travarScrollDoFundo(): void {
+  dialogosAbertos++;
+  document.body.classList.add(CLASSE_BODY_DIALOGO_ABERTO);
+}
+
+function liberarScrollDoFundo(): void {
+  dialogosAbertos = Math.max(0, dialogosAbertos - 1);
+  if (dialogosAbertos === 0) {
+    document.body.classList.remove(CLASSE_BODY_DIALOGO_ABERTO);
+  }
+}
 
 let proximoId = 0;
 
@@ -69,8 +83,11 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
     return CLASSE_POR_VARIANTE[this.variante];
   }
 
+  private scrollTravado = false;
+
   ngAfterViewInit(): void {
-    document.body.classList.add(CLASSE_BODY_DIALOGO_ABERTO);
+    travarScrollDoFundo();
+    this.scrollTravado = true;
 
     const confirmarButton = this.confirmarButton?.nativeElement;
     if (confirmarButton && !confirmarButton.disabled) {
@@ -83,7 +100,10 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    document.body.classList.remove(CLASSE_BODY_DIALOGO_ABERTO);
+    if (this.scrollTravado) {
+      liberarScrollDoFundo();
+      this.scrollTravado = false;
+    }
     this.elementoDisparador?.focus();
   }
 
