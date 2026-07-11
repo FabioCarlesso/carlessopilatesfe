@@ -55,6 +55,7 @@
   *ngIf="confirmarAtivar"
   titulo="Confirmar reativação"
   variante="secundaria"
+  [processando]="acaoEmAndamento"
   (confirmar)="ativar()"
   (cancelar)="confirmarAtivar = false">
   <p>Confirma a reativação de <strong>{{ profissional?.nome }}</strong>?</p>
@@ -64,6 +65,7 @@
   *ngIf="confirmarInativar"
   titulo="Confirmar inativação"
   variante="perigo"
+  [processando]="acaoEmAndamento"
   (confirmar)="inativar()"
   (cancelar)="confirmarInativar = false">
   <p>Confirma a inativação de <strong>{{ profissional?.nome }}</strong>?</p>

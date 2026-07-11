@@ -707,11 +707,12 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 
 ### `ConfirmarDialogComponent` _(shared)_
 - Diálogo de confirmação reutilizável, usado por todas as telas que confirmam ações antes de disparar a requisição
-- Inputs: `titulo`, `mensagem`, `textoConfirmar`, `textoCancelar`, `variante` (`primaria` | `secundaria` | `perigo`), `processando`, `confirmarDesabilitado` e `fecharAoClicarFora`
+- Inputs: `titulo`, `mensagem`, `textoConfirmar`, `textoCancelar`, `variante` (`primaria` | `secundaria` | `perigo`), `processando`, `confirmarDesabilitado` e `fecharAoClicarFora` (padrão `true`; desligado apenas no diálogo de pagamento, que tem formulário)
 - Outputs: `confirmar` e `cancelar`
 - `<ng-content>` para conteúdo projetado quando a mensagem não é texto simples (ex.: nome em negrito, formulário de data no diálogo de pagamento)
-- Acessibilidade: `role="dialog"`, `aria-modal`, `aria-labelledby`, foco inicial no botão de confirmação, focus trap em Tab/Shift+Tab, fechamento por Esc e devolução do foco ao elemento disparador
-- Enquanto `processando` está ativo, os botões ficam desabilitados e Esc não fecha o diálogo
+- Acessibilidade: `role="dialog"`, `aria-modal`, `aria-labelledby` (título), `aria-describedby` (corpo, cobrindo mensagem e conteúdo projetado), foco inicial no botão de confirmação, focus trap em Tab/Shift+Tab, fechamento por Esc e devolução do foco ao elemento disparador
+- Trava o scroll do conteúdo de fundo enquanto está aberto (classe `dialog-aberto` no `body`)
+- Enquanto `processando` está ativo, os botões ficam desabilitados e Esc não fecha o diálogo; todas as telas que confirmam ações bindam `processando` a um estado de ação em andamento, impedindo duplo disparo da requisição
 
 ---
 

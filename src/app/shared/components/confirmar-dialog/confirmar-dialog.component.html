@@ -10,12 +10,15 @@
     role="dialog"
     aria-modal="true"
     [attr.aria-labelledby]="tituloId"
+    [attr.aria-describedby]="corpoId"
     tabindex="-1"
     (click)="$event.stopPropagation()"
     (keydown)="aoTeclar($event)">
     <h2 class="dialog-title" [id]="tituloId">{{ titulo }}</h2>
-    <p *ngIf="mensagem">{{ mensagem }}</p>
-    <ng-content />
+    <div [id]="corpoId">
+      <p *ngIf="mensagem">{{ mensagem }}</p>
+      <ng-content />
+    </div>
     <div class="dialog-actions">
       <button
         #confirmarButton

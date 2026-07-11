@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { PacienteDetailComponent } from './paciente-detail.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -140,4 +140,17 @@ describe('PacienteDetailComponent', () => {
     expect(component.erro).toBe('Identificador inválido.');
     expect(serviceSpy.buscar).not.toHaveBeenCalled();
   });
+
+  it('should not fire a second inativar request while the action is in progress', () => {
+    setup(mockPacienteAtivo);
+    const pending = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(pending.asObservable());
+
+    component.inativar();
+    component.inativar();
+
+    expect(serviceSpy.inativar).toHaveBeenCalledTimes(1);
+    expect(component.acaoEmAndamento).toBeTrue();
+  });
+
 });

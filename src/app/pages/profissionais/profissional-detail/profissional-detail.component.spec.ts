@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ProfissionalDetailComponent } from './profissional-detail.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
@@ -102,4 +102,16 @@ describe('ProfissionalDetailComponent', () => {
     expect(invalidComponent.erro).toBe('Identificador inválido.');
     expect(invalidServiceSpy.buscar).not.toHaveBeenCalled();
   });
+
+  it('should not fire a second inativar request while the action is in progress', () => {
+    const pending = new Subject<void>();
+    serviceSpy.inativar.and.returnValue(pending.asObservable());
+
+    component.inativar();
+    component.inativar();
+
+    expect(serviceSpy.inativar).toHaveBeenCalledTimes(1);
+    expect(component.acaoEmAndamento).toBeTrue();
+  });
+
 });

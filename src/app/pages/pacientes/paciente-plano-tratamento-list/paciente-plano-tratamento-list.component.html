@@ -79,5 +79,6 @@
   titulo="Confirmar alteração de status"
   [mensagem]="'Confirma ' + acaoLabel() + ' este plano de tratamento?'"
   variante="perigo"
+  [processando]="acaoEmAndamentoId !== null"
   (confirmar)="executarAcao()"
   (cancelar)="cancelarAcao()" />

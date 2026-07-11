@@ -58,6 +58,24 @@ describe('ConfirmarDialogComponent', () => {
     expect(dialog()).toBeTruthy();
   });
 
+  it('should describe the dialog by its body, covering message and projected content', () => {
+    abrir();
+
+    const corpo = el().querySelector('.dialog > div[id]') as HTMLElement;
+    expect(dialog()?.getAttribute('aria-describedby')).toBe(corpo.id);
+    expect(corpo.textContent?.trim()).toBe('Confirma a inativação?');
+  });
+
+  it('should lock body scroll while open and release it when closed', () => {
+    abrir();
+    expect(document.body.classList.contains('dialog-aberto')).toBeTrue();
+
+    cancelarBtn().click();
+    fixture.detectChanges();
+
+    expect(document.body.classList.contains('dialog-aberto')).toBeFalse();
+  });
+
   it('should render title, message and confirm button with the variant class', () => {
     abrir();
 
@@ -178,6 +196,11 @@ describe('ConfirmarDialogComponent', () => {
     fixture.detectChanges();
 
     expect(host.aberto).toBeFalse();
+  });
+
+  it('should close on overlay click by default', () => {
+    const dialogFixture = TestBed.createComponent(ConfirmarDialogComponent);
+    expect(dialogFixture.componentInstance.fecharAoClicarFora).toBeTrue();
   });
 
   it('should not close when clicking inside the dialog content', () => {

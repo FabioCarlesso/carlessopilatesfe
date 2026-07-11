@@ -33,6 +33,7 @@ export class ProfissionalListComponent implements OnInit {
   loading = false;
   erro: string | null = null;
   confirmarInativarId: number | null = null;
+  acaoEmAndamento = false;
   filtro: FiltroUI = {
     nome: '',
     email: '',
@@ -122,19 +123,23 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
   }
 
   inativar(): void {
-    if (this.confirmarInativarId === null) return;
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
 
+    this.acaoEmAndamento = true;
     this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao inativar profissional.';
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.cdr.markForCheck();
       }

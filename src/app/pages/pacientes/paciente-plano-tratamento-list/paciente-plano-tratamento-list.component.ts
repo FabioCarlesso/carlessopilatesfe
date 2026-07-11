@@ -24,6 +24,7 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   confirmarAcaoId: number | null = null;
   acaoPendente: 'encerrar' | 'suspender' | null = null;
+  acaoEmAndamentoId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = PLANO_TRATAMENTO_STATUS_LABEL;
@@ -88,6 +89,8 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
   }
 
   confirmarAcao(id: number, acao: 'encerrar' | 'suspender'): void {
+    if (this.acaoEmAndamentoId !== null) return;
+
     this.confirmarAcaoId = id;
     this.acaoPendente = acao;
   }
@@ -98,11 +101,12 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
   }
 
   executarAcao(): void {
-    if (this.confirmarAcaoId === null || this.acaoPendente === null) return;
+    if (this.confirmarAcaoId === null || this.acaoPendente === null || this.acaoEmAndamentoId !== null) return;
 
     const id = this.confirmarAcaoId;
     const acao = this.acaoPendente;
     this.cancelarAcao();
+    this.acaoEmAndamentoId = id;
 
     const obs = acao === 'encerrar'
       ? this.planoTratamentoService.encerrar(id)
@@ -118,9 +122,11 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
           clearTimeout(this.successTimer);
         }
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
+        this.acaoEmAndamentoId = null;
       },
       error: () => {
         this.erro = `Erro ao ${acao} plano de tratamento.`;
+        this.acaoEmAndamentoId = null;
       }
     });
   }

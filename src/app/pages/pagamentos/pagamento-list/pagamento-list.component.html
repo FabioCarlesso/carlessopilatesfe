@@ -49,7 +49,9 @@
   *ngIf="pagarId !== null"
   titulo="Confirmar Pagamento"
   variante="primaria"
+  [processando]="acaoEmAndamento"
   [confirmarDesabilitado]="pagarForm.invalid"
+  [fecharAoClicarFora]="false"
   (confirmar)="confirmarPagar()"
   (cancelar)="cancelarPagar()">
   <form [formGroup]="pagarForm">

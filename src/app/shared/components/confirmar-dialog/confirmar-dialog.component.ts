@@ -19,8 +19,17 @@ const CLASSE_POR_VARIANTE: Record<ConfirmarDialogVariante, string> = {
   perigo: 'btn-danger'
 };
 
-const SELETOR_FOCAVEIS =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const SELETOR_FOCAVEIS = [
+  'button:not([disabled])',
+  'a[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]'
+].map(seletor => `${seletor}:not([tabindex="-1"])`).join(', ');
+
+// Enquanto um diálogo está aberto, o conteúdo atrás do overlay não deve rolar.
+const CLASSE_BODY_DIALOGO_ABERTO = 'dialog-aberto';
 
 let proximoId = 0;
 
@@ -38,7 +47,7 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   @Input() variante: ConfirmarDialogVariante = 'primaria';
   @Input() processando = false;
   @Input() confirmarDesabilitado = false;
-  @Input() fecharAoClicarFora = false;
+  @Input() fecharAoClicarFora = true;
 
   @Output() confirmar = new EventEmitter<void>();
   @Output() cancelar = new EventEmitter<void>();
@@ -46,8 +55,13 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dialog') private dialog?: ElementRef<HTMLElement>;
   @ViewChild('confirmarButton') private confirmarButton?: ElementRef<HTMLButtonElement>;
 
-  readonly tituloId = `confirmar-dialog-titulo-${proximoId++}`;
+  private readonly id = proximoId++;
+  readonly tituloId = `confirmar-dialog-titulo-${this.id}`;
+  readonly corpoId = `confirmar-dialog-corpo-${this.id}`;
 
+  // O componente é instanciado de forma síncrona no clique que abre o diálogo, então
+  // `document.activeElement` ainda é o elemento disparador. Abrir o diálogo a partir de um
+  // callback assíncrono capturaria `<body>` e o foco não teria para onde voltar ao fechar.
   private readonly elementoDisparador: HTMLElement | null =
     document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
@@ -56,6 +70,8 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    document.body.classList.add(CLASSE_BODY_DIALOGO_ABERTO);
+
     const confirmarButton = this.confirmarButton?.nativeElement;
     if (confirmarButton && !confirmarButton.disabled) {
       confirmarButton.focus();
@@ -67,6 +83,7 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.body.classList.remove(CLASSE_BODY_DIALOGO_ABERTO);
     this.elementoDisparador?.focus();
   }
 

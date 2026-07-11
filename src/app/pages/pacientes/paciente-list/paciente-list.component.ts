@@ -34,6 +34,7 @@ export class PacienteListComponent implements OnInit {
   erro: string | null = null;
   confirmarInativarId: number | null = null;
   confirmarAtivarId: number | null = null;
+  acaoEmAndamento = false;
   filtro: FiltroUI = {
     nome: '',
     email: '',
@@ -114,14 +115,17 @@ export class PacienteListComponent implements OnInit {
   }
 
   inativar(): void {
-    if (this.confirmarInativarId === null) return;
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
+    this.acaoEmAndamento = true;
     this.service.inativar(this.confirmarInativarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao inativar paciente.';
+        this.acaoEmAndamento = false;
         this.confirmarInativarId = null;
         this.cdr.markForCheck();
       }
@@ -129,14 +133,17 @@ export class PacienteListComponent implements OnInit {
   }
 
   ativar(): void {
-    if (this.confirmarAtivarId === null) return;
+    if (this.confirmarAtivarId === null || this.acaoEmAndamento) return;
+    this.acaoEmAndamento = true;
     this.service.ativar(this.confirmarAtivarId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.confirmarAtivarId = null;
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao ativar paciente.';
+        this.acaoEmAndamento = false;
         this.confirmarAtivarId = null;
         this.cdr.markForCheck();
       }
@@ -144,10 +151,12 @@ export class PacienteListComponent implements OnInit {
   }
 
   cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarInativarId = null;
   }
 
   cancelarAtivar(): void {
+    if (this.acaoEmAndamento) return;
     this.confirmarAtivarId = null;
   }
 

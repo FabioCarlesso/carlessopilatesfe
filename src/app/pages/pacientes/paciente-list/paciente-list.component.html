@@ -114,6 +114,7 @@
   titulo="Confirmar ativação"
   mensagem="Confirma a ativação do paciente?"
   variante="primaria"
+  [processando]="acaoEmAndamento"
   (confirmar)="ativar()"
   (cancelar)="cancelarAtivar()" />
 
@@ -122,5 +123,6 @@
   titulo="Confirmar inativação"
   mensagem="Confirma a inativação do paciente?"
   variante="perigo"
+  [processando]="acaoEmAndamento"
   (confirmar)="inativar()"
   (cancelar)="cancelarInativar()" />

@@ -22,6 +22,7 @@ export class PagamentoListComponent implements OnInit {
   erro: string | null = null;
   pagarId: number | null = null;
   pagarForm!: FormGroup;
+  acaoEmAndamento = false;
 
   readonly statusLabel: Record<StatusPagamento, string> = {
     PENDENTE: 'Pendente',
@@ -78,19 +79,23 @@ export class PagamentoListComponent implements OnInit {
   }
 
   cancelarPagar(): void {
+    if (this.acaoEmAndamento) return;
     this.pagarId = null;
   }
 
   confirmarPagar(): void {
-    if (this.pagarForm.invalid || this.pagarId === null) return;
+    if (this.pagarForm.invalid || this.pagarId === null || this.acaoEmAndamento) return;
     const { dataPagamento } = this.pagarForm.value;
+    this.acaoEmAndamento = true;
     this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
         this.pagarId = null;
         this.carregar();
       },
       error: () => {
         this.erro = 'Erro ao confirmar pagamento.';
+        this.acaoEmAndamento = false;
         this.pagarId = null;
         this.cdr.markForCheck();
       }
