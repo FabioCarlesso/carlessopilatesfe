@@ -6,10 +6,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

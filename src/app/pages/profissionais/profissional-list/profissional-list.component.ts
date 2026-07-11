@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfissionalFiltro, ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TipoContrato, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 interface FiltroUI {
   nome: string;
@@ -17,7 +18,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

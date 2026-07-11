@@ -74,15 +74,10 @@
   </div>
 </div>
 
-<div class="dialog-overlay" *ngIf="confirmarAcaoId !== null">
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirmarPlanoTratamentoTitulo">
-    <h2 id="confirmarPlanoTratamentoTitulo" class="dialog-title">
-      Confirmar alteração de status
-    </h2>
-    <p>Confirma {{ acaoLabel() }} este plano de tratamento?</p>
-    <div class="dialog-actions">
-      <button #confirmarButton class="btn btn-danger" (click)="executarAcao()">Confirmar</button>
-      <button class="btn btn-outline" (click)="cancelarAcao()">Cancelar</button>
-    </div>
-  </div>
-</div>
+<app-confirmar-dialog
+  *ngIf="confirmarAcaoId !== null"
+  titulo="Confirmar alteração de status"
+  [mensagem]="'Confirma ' + acaoLabel() + ' este plano de tratamento?'"
+  variante="perigo"
+  (confirmar)="executarAcao()"
+  (cancelar)="cancelarAcao()" />

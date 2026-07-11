@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 interface FiltroUI {
   nome: string;
@@ -16,7 +17,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

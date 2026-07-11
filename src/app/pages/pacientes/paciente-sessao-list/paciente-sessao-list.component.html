@@ -56,15 +56,11 @@
   </div>
 </div>
 
-<div class="dialog-overlay" *ngIf="confirmarAcaoId !== null">
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirmarSessaoTitulo">
-    <h2 id="confirmarSessaoTitulo" class="dialog-title">
-      Confirmar ação
-    </h2>
-    <p>Confirma {{ acaoLabel() }} esta sessão?</p>
-    <div class="dialog-actions">
-      <button #confirmarButton class="btn btn-danger" [disabled]="acaoEmAndamentoId !== null" (click)="executarAcao()">Confirmar</button>
-      <button class="btn btn-outline" (click)="cancelarAcao()">Cancelar</button>
-    </div>
-  </div>
-</div>
+<app-confirmar-dialog
+  *ngIf="confirmarAcaoId !== null"
+  titulo="Confirmar ação"
+  [mensagem]="'Confirma ' + acaoLabel() + ' esta sessão?'"
+  variante="perigo"
+  [processando]="acaoEmAndamentoId !== null"
+  (confirmar)="executarAcao()"
+  (cancelar)="cancelarAcao()" />

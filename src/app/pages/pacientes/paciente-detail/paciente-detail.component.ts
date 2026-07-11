@@ -4,10 +4,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-paciente-detail',
-  imports: [NgIf, DatePipe, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.scss'
 })

@@ -5,10 +5,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-plano-list',
-  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './plano-list.component.html',
   styleUrl: './plano-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

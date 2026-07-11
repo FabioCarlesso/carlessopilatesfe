@@ -45,18 +45,17 @@
   </tbody>
 </table>
 
-<div class="dialog-overlay" *ngIf="pagarId !== null">
-  <div class="dialog">
-    <h3>Confirmar Pagamento</h3>
-    <form [formGroup]="pagarForm">
-      <div class="form-group">
-        <label for="dataPagamento">Data do Pagamento *</label>
-        <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
-      </div>
-    </form>
-    <div class="dialog-actions">
-      <button class="btn btn-primary" (click)="confirmarPagar()" [disabled]="pagarForm.invalid">Confirmar</button>
-      <button class="btn btn-outline" (click)="cancelarPagar()">Cancelar</button>
+<app-confirmar-dialog
+  *ngIf="pagarId !== null"
+  titulo="Confirmar Pagamento"
+  variante="primaria"
+  [confirmarDesabilitado]="pagarForm.invalid"
+  (confirmar)="confirmarPagar()"
+  (cancelar)="cancelarPagar()">
+  <form [formGroup]="pagarForm">
+    <div class="form-group">
+      <label for="dataPagamento">Data do Pagamento *</label>
+      <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
     </div>
-  </div>
-</div>
+  </form>
+</app-confirmar-dialog>

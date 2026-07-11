@@ -1,6 +1,7 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ConfirmarDialogComponent } from '../../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ROLE_OPTIONS, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
@@ -22,7 +23,7 @@ const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [NgIf, NgFor, RouterLink],
+  imports: [NgIf, NgFor, RouterLink, ConfirmarDialogComponent],
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss'
 })
@@ -90,11 +91,6 @@ export class UsuarioListComponent implements OnInit {
   cancelarConfirmacao(): void {
     if (this.acaoEmAndamento) return;
     this.confirmacao = null;
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    if (this.confirmacao) this.cancelarConfirmacao();
   }
 
   executarConfirmacao(): void {

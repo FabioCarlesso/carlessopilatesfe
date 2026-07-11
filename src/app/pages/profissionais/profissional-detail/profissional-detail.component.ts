@@ -4,10 +4,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [NgIf, DatePipe, RouterLink],
+  imports: [NgIf, DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './profissional-detail.component.html',
   styleUrl: './profissional-detail.component.scss'
 })
