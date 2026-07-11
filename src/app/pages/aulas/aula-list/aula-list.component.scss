@@ -28,3 +28,25 @@
   background: var(--bg-elev);
   color: var(--text);
 }
+
+.field-hint {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.confirmacao-detalhes {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+
+  dt {
+    font-weight: 600;
+    color: var(--text-light);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
