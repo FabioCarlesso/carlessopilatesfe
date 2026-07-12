@@ -614,10 +614,17 @@ body.dialog-aberto {
     }
   }
 
-  .page-header,
-  .form-row {
+  .page-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  // Empilha os campos, mas mantém o alinhamento padrão `stretch`: com
+  // `align-items: flex-start` os `.form-group` (flex: 1) encolhem para a
+  // largura do conteúdo e os `.form-control` (width: 100%) ficam com ~207px
+  // em 375px em vez de ocupar toda a largura do card (issue #157).
+  .form-row {
+    flex-direction: column;
   }
 
   .container {
