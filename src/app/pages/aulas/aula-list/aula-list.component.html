@@ -12,55 +12,57 @@
   Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
 </div>
 
-<table *ngIf="aulas.length > 0" class="table">
-  <thead>
-    <tr>
-      <th>Data</th>
-      <th>Status</th>
-      <th>Profissional</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let aula of aulas; trackBy: trackByAula">
-      <td>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
-      <td>
-        <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
-          {{ aula.realizada ? 'Realizada' : 'Pendente' }}
-        </span>
-      </td>
-      <td>
-        <span *ngIf="aula.realizada">{{ aula.profissionalNome || '-' }}</span>
-        <select *ngIf="!aula.realizada" class="form-control form-control-sm"
-          [class.is-invalid]="selectInvalidoPorAula[aula.id]"
-          [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
-          [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
-          [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
-          [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
-          (ngModelChange)="aoSelecionarProfissional(aula.id)">
-          <option [ngValue]="null">Selecione</option>
-          <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
-            {{ profissional.nome }}
-          </option>
-        </select>
-        <div *ngIf="selectInvalidoPorAula[aula.id]" [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
-          Selecione um profissional para confirmar a aula.
-        </div>
-      </td>
-      <td>
-        <ng-container *ngIf="!aula.realizada">
-          <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
-            [disabled]="profissionais.length === 0 || acaoEmAndamento">
-            Marcar como Realizada
-          </button>
-          <div *ngIf="profissionais.length === 0" class="field-hint">
-            Cadastre um profissional ativo para confirmar aulas.
+<div *ngIf="aulas.length > 0" class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Profissional</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let aula of aulas; trackBy: trackByAula">
+        <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
+            {{ aula.realizada ? 'Realizada' : 'Pendente' }}
+          </span>
+        </td>
+        <td data-label="Profissional">
+          <span *ngIf="aula.realizada">{{ aula.profissionalNome || '-' }}</span>
+          <select *ngIf="!aula.realizada" class="form-control form-control-sm"
+            [class.is-invalid]="selectInvalidoPorAula[aula.id]"
+            [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
+            [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
+            [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
+            [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
+            (ngModelChange)="aoSelecionarProfissional(aula.id)">
+            <option [ngValue]="null">Selecione</option>
+            <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
+              {{ profissional.nome }}
+            </option>
+          </select>
+          <div *ngIf="selectInvalidoPorAula[aula.id]" [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
+            Selecione um profissional para confirmar a aula.
           </div>
-        </ng-container>
-      </td>
-    </tr>
-  </tbody>
-</table>
+        </td>
+        <td class="acoes-cell">
+          <ng-container *ngIf="!aula.realizada">
+            <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
+              [disabled]="profissionais.length === 0 || acaoEmAndamento">
+              Marcar como Realizada
+            </button>
+            <div *ngIf="profissionais.length === 0" class="field-hint">
+              Cadastre um profissional ativo para confirmar aulas.
+            </div>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <app-confirmar-dialog
   *ngIf="aulaEmConfirmacao as aula"
