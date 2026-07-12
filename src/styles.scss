@@ -110,39 +110,13 @@ a {
   &-collapse {
     display: contents;
   }
-
-  // Botão de disclosure do menu, visível apenas no mobile (ver media query).
-  &-toggle {
-    display: none;
-    align-items: center;
-    gap: var(--sp-2);
-    min-height: var(--btn-h-sm);
-    padding: 0 var(--sp-3);
-    background: transparent;
-    border: 1px solid rgba(240, 237, 232, 0.55);
-    border-radius: var(--r-md);
-    color: var(--c-cloud-dancer);
-    cursor: pointer;
-    font-size: var(--fs-body-sm);
-    font-weight: 500;
-    line-height: 1;
-
-    &:hover {
-      background: var(--c-cloud-dancer);
-      color: var(--c-horizonte);
-    }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: var(--shadow-focus);
-    }
-  }
 }
 
 .btn,
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -204,7 +178,8 @@ a {
 .btn-outline,
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   background: transparent;
   border-color: var(--border-default);
   color: var(--text-secondary);
@@ -217,7 +192,8 @@ a {
 
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   border-color: rgba(240, 237, 232, 0.55);
   color: var(--c-cloud-dancer);
   min-height: var(--btn-h-sm);
@@ -227,6 +203,12 @@ a {
     background: var(--c-cloud-dancer);
     color: var(--c-horizonte);
   }
+}
+
+// Botão de disclosure da navbar: reutiliza o estilo dos botões da barra
+// e fica oculto no desktop, revelado apenas no mobile (ver media query).
+.navbar-toggle {
+  display: none;
 }
 
 .btn-sm {
