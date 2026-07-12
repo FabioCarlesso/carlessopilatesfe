@@ -145,6 +145,12 @@ export class AulaListComponent implements OnInit, OnDestroy {
     return this.profissionais.find(profissional => profissional.id === profissionalId)?.nome ?? '';
   }
 
+  aoSelecionarProfissional(id: number): void {
+    if (!this.selectInvalidoPorAula[id]) return;
+    this.selectInvalidoPorAula[id] = false;
+    this.erro = null;
+  }
+
   solicitarRealizar(id: number): void {
     if (this.acaoEmAndamento) return;
 

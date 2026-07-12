@@ -703,7 +703,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Carrega profissionais ativos para seleção em aulas pendentes
 - Exige profissional selecionado antes de marcar uma aula como realizada
 - Abre o `ConfirmarDialogComponent` compartilhado antes do `PATCH /aulas/{id}/realizar`, exibindo a data da aula e o profissional selecionado (`acaoEmAndamento` bindado em `processando` evita duplo disparo)
-- Destaca o `select` da linha (`is-invalid`/`aria-invalid` + `invalid-feedback`) quando o usuário tenta confirmar sem escolher profissional
+- Destaca o `select` da linha (`is-invalid`/`aria-invalid` + `invalid-feedback` associado via `aria-describedby`) quando o usuário tenta confirmar sem escolher profissional, limpando o destaque e o erro assim que um profissional é selecionado
 - Exibe hint ("Cadastre um profissional ativo para confirmar aulas") junto ao botão desabilitado quando não há profissionais ativos
 - Define `aria-label` descritivo em cada `select` de profissional com a data da aula
 - Envia `profissionalId` como query param no `PATCH /aulas/{id}/realizar`

@@ -35,14 +35,15 @@
           [class.is-invalid]="selectInvalidoPorAula[aula.id]"
           [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
           [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
+          [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
           [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
-          (ngModelChange)="selectInvalidoPorAula[aula.id] = false">
+          (ngModelChange)="aoSelecionarProfissional(aula.id)">
           <option [ngValue]="null">Selecione</option>
           <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
             {{ profissional.nome }}
           </option>
         </select>
-        <div *ngIf="selectInvalidoPorAula[aula.id]" class="invalid-feedback">
+        <div *ngIf="selectInvalidoPorAula[aula.id]" [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
           Selecione um profissional para confirmar a aula.
         </div>
       </td>

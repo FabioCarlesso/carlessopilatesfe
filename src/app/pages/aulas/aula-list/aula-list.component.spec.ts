@@ -161,6 +161,28 @@ describe('AulaListComponent', () => {
       expect(serviceSpy.realizar).not.toHaveBeenCalled();
     });
 
+    it('should clear the invalid flag and erro when a profissional is selected', () => {
+      component.profissionalSelecionadoPorAula[1] = null;
+      component.solicitarRealizar(1);
+      expect(component.selectInvalidoPorAula[1]).toBeTrue();
+
+      component.aoSelecionarProfissional(1);
+      expect(component.selectInvalidoPorAula[1]).toBeFalse();
+      expect(component.erro).toBeNull();
+    });
+
+    it('should link the invalid feedback message to the select via aria-describedby', () => {
+      component.profissionalSelecionadoPorAula[1] = null;
+      component.solicitarRealizar(1);
+      fixture.detectChanges();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+      const feedback: HTMLElement = fixture.nativeElement.querySelector('.invalid-feedback');
+      expect(feedback).toBeTruthy();
+      expect(select.getAttribute('aria-invalid')).toBe('true');
+      expect(select.getAttribute('aria-describedby')).toBe(feedback.id);
+      expect(feedback.id).toBe('profissional-erro-1');
+    });
+
     it('should show sucesso with role status after realizar and clear it after timeout', fakeAsync(() => {
       serviceSpy.realizar.and.returnValue(of({ ...mockAula, realizada: true }));
       component.profissionalSelecionadoPorAula[1] = 5;
