@@ -104,6 +104,39 @@ a {
     align-items: center;
     gap: var(--sp-3);
   }
+
+  // Wrapper dos links + ações. No desktop não cria caixa própria
+  // (display: contents), preservando o layout de três colunas da navbar.
+  &-collapse {
+    display: contents;
+  }
+
+  // Botão de disclosure do menu, visível apenas no mobile (ver media query).
+  &-toggle {
+    display: none;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--btn-h-sm);
+    padding: 0 var(--sp-3);
+    background: transparent;
+    border: 1px solid rgba(240, 237, 232, 0.55);
+    border-radius: var(--r-md);
+    color: var(--c-cloud-dancer);
+    cursor: pointer;
+    font-size: var(--fs-body-sm);
+    font-weight: 500;
+    line-height: 1;
+
+    &:hover {
+      background: var(--c-cloud-dancer);
+      color: var(--c-horizonte);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus);
+    }
+  }
 }
 
 .btn,
@@ -544,23 +577,65 @@ body.dialog-aberto {
 }
 
 @media (max-width: 768px) {
+  // Navbar colapsável: barra fechada mantém apenas marca + botão do menu
+  // (~64px de altura). Os links e ações ficam num painel que expande abaixo.
   .navbar {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: var(--sp-4);
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    padding: 0 var(--sp-4);
   }
 
-  .navbar-menu,
-  .navbar-actions,
+  .navbar-toggle {
+    display: inline-flex;
+  }
+
+  .navbar-collapse {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+    width: 100%;
+    padding-bottom: var(--sp-4);
+  }
+
+  .navbar.is-open .navbar-collapse {
+    display: flex;
+  }
+
+  .navbar-menu {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0;
+
+    a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      width: 100%;
+      padding: 0 var(--sp-2);
+      font-size: var(--fs-body);
+    }
+  }
+
+  .navbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--sp-2);
+
+    .btn-alterar-senha,
+    .btn-tema,
+    .btn-sair {
+      width: 100%;
+      min-height: 44px;
+    }
+  }
+
   .page-header,
   .form-row {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .navbar-actions {
-    flex-wrap: wrap;
-    width: 100%;
   }
 
   .container {

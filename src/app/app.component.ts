@@ -14,11 +14,22 @@ export class AppComponent {
   readonly authService = inject(AuthService);
   private readonly stylePreferences = inject(StylePreferencesService);
 
+  menuAberto = false;
+
   get isDarkTheme(): boolean {
     return this.stylePreferences.current.theme === 'dark';
   }
 
+  toggleMenu(): void {
+    this.menuAberto = !this.menuAberto;
+  }
+
+  fecharMenu(): void {
+    this.menuAberto = false;
+  }
+
   sair(): void {
+    this.fecharMenu();
     this.authService.logout();
   }
 

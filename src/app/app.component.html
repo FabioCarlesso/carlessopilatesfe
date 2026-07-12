@@ -1,29 +1,41 @@
 @if (authService.isAuthenticated()) {
-  <nav class="navbar">
+  <nav class="navbar" [class.is-open]="menuAberto">
     <div class="navbar-brand">
-      <a routerLink="/">Carlesso Pilates</a>
+      <a routerLink="/" (click)="fecharMenu()">Carlesso Pilates</a>
     </div>
-    <ul class="navbar-menu">
-      <li><a routerLink="/">Início</a></li>
-      <li><a routerLink="/pacientes">Pacientes</a></li>
-      @if (authService.isAdmin()) {
-        <li><a routerLink="/profissionais">Profissionais</a></li>
-        <li><a routerLink="/relatorios">Relatórios</a></li>
-        <li><a routerLink="/admin">Administração</a></li>
-      }
-    </ul>
-    <div class="navbar-actions">
-      <a routerLink="/perfil/alterar-senha" class="btn-alterar-senha">Alterar senha</a>
-      <button
-        type="button"
-        class="btn-tema"
-        (click)="toggleTheme()"
-        [attr.aria-pressed]="isDarkTheme"
-        [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
-      >
-        {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
-      </button>
-      <button class="btn-sair" (click)="sair()">Sair</button>
+    <button
+      type="button"
+      class="navbar-toggle"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuAberto"
+      [attr.aria-label]="menuAberto ? 'Fechar menu' : 'Abrir menu'"
+      aria-controls="navbar-collapse"
+    >
+      <span aria-hidden="true">☰</span> Menu
+    </button>
+    <div class="navbar-collapse" id="navbar-collapse">
+      <ul class="navbar-menu">
+        <li><a routerLink="/" (click)="fecharMenu()">Início</a></li>
+        <li><a routerLink="/pacientes" (click)="fecharMenu()">Pacientes</a></li>
+        @if (authService.isAdmin()) {
+          <li><a routerLink="/profissionais" (click)="fecharMenu()">Profissionais</a></li>
+          <li><a routerLink="/relatorios" (click)="fecharMenu()">Relatórios</a></li>
+          <li><a routerLink="/admin" (click)="fecharMenu()">Administração</a></li>
+        }
+      </ul>
+      <div class="navbar-actions">
+        <a routerLink="/perfil/alterar-senha" class="btn-alterar-senha" (click)="fecharMenu()">Alterar senha</a>
+        <button
+          type="button"
+          class="btn-tema"
+          (click)="toggleTheme()"
+          [attr.aria-pressed]="isDarkTheme"
+          [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+        >
+          {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
+        </button>
+        <button class="btn-sair" (click)="sair()">Sair</button>
+      </div>
     </div>
   </nav>
 }
