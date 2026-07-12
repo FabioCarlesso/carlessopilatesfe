@@ -50,3 +50,77 @@
     margin: 0;
   }
 }
+
+// Abaixo de ~640px a tabela vira cards por aula (data + status, select em
+// largura total e botão em largura total), evitando o vazamento horizontal da
+// página no celular. Segue o mesmo padrão visual dos cards de Sessões.
+@media (max-width: 640px) {
+  .table-wrap {
+    overflow-x: visible;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .table {
+    box-shadow: none;
+    background: transparent;
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    tbody tr {
+      display: block;
+      padding: var(--sp-3);
+      margin-bottom: var(--sp-4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-1);
+    }
+
+    td {
+      display: block;
+      height: auto;
+      padding: var(--sp-2) 0;
+      border-bottom: none;
+    }
+
+    // Rótulo da coluna acima do valor, apenas nas células com data-label. A
+    // célula de ações não tem rótulo e fica vazia em aulas já realizadas.
+    td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 4px;
+      font-size: var(--fs-micro, 0.75rem);
+      font-weight: 600;
+      letter-spacing: var(--ls-caps-tight);
+      text-transform: uppercase;
+      color: var(--text-light);
+    }
+
+    // Sem padding próprio: em aulas pendentes o espaçamento acima do botão vem
+    // da célula anterior e o de baixo vem do padding do card; em aulas já
+    // realizadas a célula fica vazia e colapsa, sem sobra visual no card.
+    td.acoes-cell {
+      padding: 0;
+    }
+  }
+
+  .form-control-sm {
+    max-width: none;
+    width: 100%;
+  }
+
+  .btn-sm {
+    width: 100%;
+  }
+}

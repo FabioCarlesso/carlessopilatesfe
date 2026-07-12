@@ -89,6 +89,20 @@ describe('AulaListComponent', () => {
       expect(component.trackByAula(0, mockAula)).toBe(mockAula.id);
     });
 
+    it('should wrap the table in a scroll container to keep overflow inside the card', () => {
+      const table: HTMLTableElement = fixture.nativeElement.querySelector('table.table');
+      expect(table).toBeTruthy();
+      expect(table.parentElement?.classList.contains('table-wrap')).toBeTrue();
+    });
+
+    it('should label the data cells for the stacked mobile card layout', () => {
+      const cells = fixture.nativeElement.querySelectorAll('tbody td[data-label]');
+      const labels = Array.from(cells).map((cell) => (cell as HTMLElement).getAttribute('data-label'));
+      expect(labels).toContain('Data');
+      expect(labels).toContain('Status');
+      expect(labels).toContain('Profissional');
+    });
+
     it('should load aulas on init', () => {
       expect(serviceSpy.listarPorPaciente).toHaveBeenCalledWith(10);
       expect(profissionalServiceSpy.listar).toHaveBeenCalledWith(0, 100);
