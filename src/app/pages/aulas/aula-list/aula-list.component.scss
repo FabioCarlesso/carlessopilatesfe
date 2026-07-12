@@ -107,8 +107,11 @@
       color: var(--text-light);
     }
 
+    // Sem padding próprio: em aulas pendentes o espaçamento acima do botão vem
+    // da célula anterior e o de baixo vem do padding do card; em aulas já
+    // realizadas a célula fica vazia e colapsa, sem sobra visual no card.
     td.acoes-cell {
-      padding-top: 0;
+      padding: 0;
     }
   }
 
@@ -119,9 +122,5 @@
 
   .btn-sm {
     width: 100%;
-  }
-
-  .field-hint {
-    text-align: left;
   }
 }
