@@ -104,12 +104,19 @@ a {
     align-items: center;
     gap: var(--sp-3);
   }
+
+  // Wrapper dos links + ações. No desktop não cria caixa própria
+  // (display: contents), preservando o layout de três colunas da navbar.
+  &-collapse {
+    display: contents;
+  }
 }
 
 .btn,
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -171,7 +178,8 @@ a {
 .btn-outline,
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   background: transparent;
   border-color: var(--border-default);
   color: var(--text-secondary);
@@ -184,7 +192,8 @@ a {
 
 .btn-sair,
 .btn-tema,
-.btn-alterar-senha {
+.btn-alterar-senha,
+.navbar-toggle {
   border-color: rgba(240, 237, 232, 0.55);
   color: var(--c-cloud-dancer);
   min-height: var(--btn-h-sm);
@@ -194,6 +203,12 @@ a {
     background: var(--c-cloud-dancer);
     color: var(--c-horizonte);
   }
+}
+
+// Botão de disclosure da navbar: reutiliza o estilo dos botões da barra
+// e fica oculto no desktop, revelado apenas no mobile (ver media query).
+.navbar-toggle {
+  display: none;
 }
 
 .btn-sm {
@@ -544,23 +559,65 @@ body.dialog-aberto {
 }
 
 @media (max-width: 768px) {
+  // Navbar colapsável: barra fechada mantém apenas marca + botão do menu
+  // (~64px de altura). Os links e ações ficam num painel que expande abaixo.
   .navbar {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: var(--sp-4);
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    padding: 0 var(--sp-4);
   }
 
-  .navbar-menu,
-  .navbar-actions,
+  .navbar-toggle {
+    display: inline-flex;
+  }
+
+  .navbar-collapse {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-2);
+    width: 100%;
+    padding-bottom: var(--sp-4);
+  }
+
+  .navbar.is-open .navbar-collapse {
+    display: flex;
+  }
+
+  .navbar-menu {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0;
+
+    a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      width: 100%;
+      padding: 0 var(--sp-2);
+      font-size: var(--fs-body);
+    }
+  }
+
+  .navbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--sp-2);
+
+    .btn-alterar-senha,
+    .btn-tema,
+    .btn-sair {
+      width: 100%;
+      min-height: 44px;
+    }
+  }
+
   .page-header,
   .form-row {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .navbar-actions {
-    flex-wrap: wrap;
-    width: 100%;
   }
 
   .container {

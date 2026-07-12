@@ -156,6 +156,150 @@ describe('AppComponent', () => {
     expect(stylePreferencesSpy.toggleTheme).toHaveBeenCalled();
   });
 
+  it('should render the collapsed menu toggle wired to the collapse region', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggle = el.querySelector('.navbar-toggle');
+    const collapse = el.querySelector('.navbar-collapse');
+    expect(toggle).toBeTruthy();
+    expect(collapse).toBeTruthy();
+    expect(toggle?.getAttribute('aria-controls')).toBe('navbar-collapse');
+    expect(collapse?.getAttribute('id')).toBe('navbar-collapse');
+  });
+
+  it('should start with the menu closed and aria-expanded false', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggle = el.querySelector('.navbar-toggle');
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle?.getAttribute('aria-label')).toBe('Abrir menu');
+  });
+
+  it('should toggle the menu open and closed on toggle button click', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const toggle = el.querySelector('.navbar-toggle') as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-label')).toBe('Fechar menu');
+
+    toggle.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('should close the menu when a navigation link is clicked', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    (el.querySelector('.navbar-menu a[href="/pacientes"]') as HTMLAnchorElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+  });
+
+  it('should expose the menu, theme, alterar senha and logout inside the collapse region', async () => {
+    await setup(true, true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const collapse = fixture.nativeElement.querySelector('.navbar-collapse') as HTMLElement;
+    expect(collapse.querySelector('.navbar-menu a[href="/admin"]')).toBeTruthy();
+    expect(collapse.querySelector('.btn-alterar-senha')).toBeTruthy();
+    expect(collapse.querySelector('.btn-tema')).toBeTruthy();
+    expect(collapse.querySelector('.btn-sair')).toBeTruthy();
+  });
+
+  it('should close the menu when logging out', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    (el.querySelector('.btn-sair') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+    expect(authServiceSpy.logout).toHaveBeenCalled();
+  });
+
+  it('should close the menu when Escape is pressed', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+  });
+
+  it('should close the menu when clicking outside the navbar', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    (el.querySelector('main.container') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeNull();
+  });
+
+  it('should keep the menu open when clicking inside the navbar', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    (el.querySelector('.navbar-collapse') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+  });
+
+  it('should close the menu when the viewport grows to the desktop breakpoint', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+      fixture.detectChanges();
+      expect(el.querySelector('.navbar.is-open')).toBeNull();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
+    }
+  });
+
   it('should label the theme toggle to switch to dark while the light theme is active', async () => {
     await setup(true, false, 'light');
     const fixture = TestBed.createComponent(AppComponent);
