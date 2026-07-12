@@ -9,10 +9,11 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
   selector: 'app-aula-list',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -23,6 +24,9 @@ export class AulaListComponent implements OnInit, OnDestroy {
   aulas: AulaResponseDTO[] = [];
   profissionais: ProfissionalResponseDTO[] = [];
   profissionalSelecionadoPorAula: Record<number, number | null> = {};
+  selectInvalidoPorAula: Record<number, boolean> = {};
+  confirmarAulaId: number | null = null;
+  acaoEmAndamento = false;
   loading = false;
   erro: string | null = null;
   sucesso: string | null = null;
@@ -129,19 +133,67 @@ export class AulaListComponent implements OnInit, OnDestroy {
     return aula.id;
   }
 
-  realizar(id: number): void {
+  get aulaEmConfirmacao(): AulaResponseDTO | null {
+    if (this.confirmarAulaId === null) return null;
+    return this.aulas.find(aula => aula.id === this.confirmarAulaId) ?? null;
+  }
+
+  get profissionalEmConfirmacaoNome(): string {
+    const aula = this.aulaEmConfirmacao;
+    if (aula === null) return '';
+    const profissionalId = this.profissionalSelecionadoPorAula[aula.id];
+    return this.profissionais.find(profissional => profissional.id === profissionalId)?.nome ?? '';
+  }
+
+  aoSelecionarProfissional(id: number): void {
+    if (!this.selectInvalidoPorAula[id]) return;
+    this.selectInvalidoPorAula[id] = false;
+    this.erro = null;
+  }
+
+  solicitarRealizar(id: number): void {
+    if (this.acaoEmAndamento) return;
+
     const profissionalId = this.profissionalSelecionadoPorAula[id];
     if (!profissionalId) {
+      this.selectInvalidoPorAula[id] = true;
       this.erro = 'Selecione um profissional para marcar a aula como realizada.';
       return;
     }
 
+    this.selectInvalidoPorAula[id] = false;
+    this.erro = null;
+    this.confirmarAulaId = id;
+  }
+
+  cancelarConfirmacao(): void {
+    if (this.acaoEmAndamento) return;
+    this.confirmarAulaId = null;
+  }
+
+  confirmarRealizar(): void {
+    if (this.confirmarAulaId === null || this.acaoEmAndamento) return;
+
+    const id = this.confirmarAulaId;
+    const profissionalId = this.profissionalSelecionadoPorAula[id];
+    if (!profissionalId) {
+      this.selectInvalidoPorAula[id] = true;
+      this.erro = 'Selecione um profissional para marcar a aula como realizada.';
+      this.confirmarAulaId = null;
+      return;
+    }
+
+    this.acaoEmAndamento = true;
     this.service.realizar(id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.acaoEmAndamento = false;
+        this.confirmarAulaId = null;
         this.exibirSucesso('Aula marcada como realizada.');
         this.carregar();
       },
       error: () => {
+        this.acaoEmAndamento = false;
+        this.confirmarAulaId = null;
         this.erro = 'Erro ao marcar aula como realizada.';
         this.cdr.markForCheck();
       }

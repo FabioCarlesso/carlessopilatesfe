@@ -109,25 +109,85 @@ describe('AulaListComponent', () => {
       expect(component.erro).toBe('Erro ao carregar aulas.');
     });
 
-    it('should call realizar and reload on success', () => {
-      serviceSpy.realizar.and.returnValue(of({ ...mockAula, realizada: true }));
+    it('should open confirmation dialog before realizar', () => {
       component.profissionalSelecionadoPorAula[1] = 5;
-      component.realizar(1);
-      expect(serviceSpy.realizar).toHaveBeenCalledWith(1, 5);
-      expect(serviceSpy.listarPorPaciente).toHaveBeenCalledTimes(2);
+      component.solicitarRealizar(1);
+      expect(component.confirmarAulaId).toBe(1);
+      expect(serviceSpy.realizar).not.toHaveBeenCalled();
     });
 
-    it('should require profissional before realizar', () => {
-      component.profissionalSelecionadoPorAula[1] = null;
-      component.realizar(1);
-      expect(component.erro).toBe('Selecione um profissional para marcar a aula como realizada.');
+    it('should expose aula and profissional in confirmation', () => {
+      component.profissionalSelecionadoPorAula[1] = 5;
+      component.solicitarRealizar(1);
+      expect(component.aulaEmConfirmacao).toEqual(mockAula);
+      expect(component.profissionalEmConfirmacaoNome).toBe('Paula Mendes');
+    });
+
+    it('should render confirmation dialog with data and profissional', () => {
+      component.profissionalSelecionadoPorAula[1] = 5;
+      component.solicitarRealizar(1);
+      fixture.detectChanges();
+      const dialog = fixture.nativeElement.querySelector('app-confirmar-dialog');
+      expect(dialog).toBeTruthy();
+      expect(dialog.textContent).toContain('05/05/2026');
+      expect(dialog.textContent).toContain('Paula Mendes');
+    });
+
+    it('should call realizar and reload after confirming', () => {
+      serviceSpy.realizar.and.returnValue(of({ ...mockAula, realizada: true }));
+      component.profissionalSelecionadoPorAula[1] = 5;
+      component.solicitarRealizar(1);
+      component.confirmarRealizar();
+      expect(serviceSpy.realizar).toHaveBeenCalledWith(1, 5);
+      expect(serviceSpy.listarPorPaciente).toHaveBeenCalledTimes(2);
+      expect(component.confirmarAulaId).toBeNull();
+      expect(component.acaoEmAndamento).toBeFalse();
+    });
+
+    it('should close dialog when confirmation is cancelled', () => {
+      component.profissionalSelecionadoPorAula[1] = 5;
+      component.solicitarRealizar(1);
+      component.cancelarConfirmacao();
+      expect(component.confirmarAulaId).toBeNull();
       expect(serviceSpy.realizar).not.toHaveBeenCalled();
+    });
+
+    it('should flag the select and not open dialog when profissional is missing', () => {
+      component.profissionalSelecionadoPorAula[1] = null;
+      component.solicitarRealizar(1);
+      expect(component.erro).toBe('Selecione um profissional para marcar a aula como realizada.');
+      expect(component.selectInvalidoPorAula[1]).toBeTrue();
+      expect(component.confirmarAulaId).toBeNull();
+      expect(serviceSpy.realizar).not.toHaveBeenCalled();
+    });
+
+    it('should clear the invalid flag and erro when a profissional is selected', () => {
+      component.profissionalSelecionadoPorAula[1] = null;
+      component.solicitarRealizar(1);
+      expect(component.selectInvalidoPorAula[1]).toBeTrue();
+
+      component.aoSelecionarProfissional(1);
+      expect(component.selectInvalidoPorAula[1]).toBeFalse();
+      expect(component.erro).toBeNull();
+    });
+
+    it('should link the invalid feedback message to the select via aria-describedby', () => {
+      component.profissionalSelecionadoPorAula[1] = null;
+      component.solicitarRealizar(1);
+      fixture.detectChanges();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+      const feedback: HTMLElement = fixture.nativeElement.querySelector('.invalid-feedback');
+      expect(feedback).toBeTruthy();
+      expect(select.getAttribute('aria-invalid')).toBe('true');
+      expect(select.getAttribute('aria-describedby')).toBe(feedback.id);
+      expect(feedback.id).toBe('profissional-erro-1');
     });
 
     it('should show sucesso with role status after realizar and clear it after timeout', fakeAsync(() => {
       serviceSpy.realizar.and.returnValue(of({ ...mockAula, realizada: true }));
       component.profissionalSelecionadoPorAula[1] = 5;
-      component.realizar(1);
+      component.solicitarRealizar(1);
+      component.confirmarRealizar();
       expect(component.sucesso).toBe('Aula marcada como realizada.');
       fixture.detectChanges();
       const alert = fixture.nativeElement.querySelector('.alert-success');
@@ -140,8 +200,26 @@ describe('AulaListComponent', () => {
     it('should set erro when realizar fails', () => {
       serviceSpy.realizar.and.returnValue(throwError(() => new Error('fail')));
       component.profissionalSelecionadoPorAula[1] = 5;
-      component.realizar(1);
+      component.solicitarRealizar(1);
+      component.confirmarRealizar();
       expect(component.erro).toBe('Erro ao marcar aula como realizada.');
+      expect(component.confirmarAulaId).toBeNull();
+      expect(component.acaoEmAndamento).toBeFalse();
+    });
+
+    it('should set an aria-label on the profissional select', () => {
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+      expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');
+    });
+
+    it('should show a hint explaining the disabled button when there are no profissionais', () => {
+      component.profissionais = [];
+      fixture.detectChanges();
+      const hint = fixture.nativeElement.querySelector('.field-hint');
+      expect(hint).toBeTruthy();
+      expect(hint.textContent).toContain('Cadastre um profissional ativo para confirmar aulas');
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector('td .btn-secondary');
+      expect(button.disabled).toBeTrue();
     });
   });
 

@@ -32,19 +32,48 @@
       <td>
         <span *ngIf="aula.realizada">{{ aula.profissionalNome || '-' }}</span>
         <select *ngIf="!aula.realizada" class="form-control form-control-sm"
-          [(ngModel)]="profissionalSelecionadoPorAula[aula.id]">
+          [class.is-invalid]="selectInvalidoPorAula[aula.id]"
+          [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
+          [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
+          [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
+          [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
+          (ngModelChange)="aoSelecionarProfissional(aula.id)">
           <option [ngValue]="null">Selecione</option>
           <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
             {{ profissional.nome }}
           </option>
         </select>
+        <div *ngIf="selectInvalidoPorAula[aula.id]" [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
+          Selecione um profissional para confirmar a aula.
+        </div>
       </td>
       <td>
-        <button class="btn btn-secondary btn-sm" *ngIf="!aula.realizada" (click)="realizar(aula.id)"
-          [disabled]="profissionais.length === 0">
-          Marcar como Realizada
-        </button>
+        <ng-container *ngIf="!aula.realizada">
+          <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
+            [disabled]="profissionais.length === 0 || acaoEmAndamento">
+            Marcar como Realizada
+          </button>
+          <div *ngIf="profissionais.length === 0" class="field-hint">
+            Cadastre um profissional ativo para confirmar aulas.
+          </div>
+        </ng-container>
       </td>
     </tr>
   </tbody>
 </table>
+
+<app-confirmar-dialog
+  *ngIf="aulaEmConfirmacao as aula"
+  titulo="Confirmar aula realizada"
+  textoConfirmar="Marcar como Realizada"
+  [processando]="acaoEmAndamento"
+  (confirmar)="confirmarRealizar()"
+  (cancelar)="cancelarConfirmacao()">
+  <p>Confirma marcar como realizada a aula abaixo?</p>
+  <dl class="confirmacao-detalhes">
+    <dt>Data</dt>
+    <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</dd>
+    <dt>Profissional</dt>
+    <dd>{{ profissionalEmConfirmacaoNome }}</dd>
+  </dl>
+</app-confirmar-dialog>
