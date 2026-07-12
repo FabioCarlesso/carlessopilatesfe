@@ -43,7 +43,7 @@ jobs:
       - run: npm run test:ci
       - name: Upload coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/
@@ -62,7 +62,7 @@ jobs:
       # O build de producao valida os budgets configurados em angular.json.
       - run: npm run build
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/carlessopilatesfe/
