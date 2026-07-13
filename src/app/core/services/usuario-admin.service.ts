@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import { AlterarSenhaRequestDTO, AuthenticatedUser } from '../models/auth';
 import {
   RoleOption,
@@ -55,7 +56,10 @@ export class UsuarioAdminService {
     return this.http.get<RoleOption[]>(`${this.apiUrl}/roles`);
   }
 
+  // A tela de alteração de senha já exibe mensagem própria para 401/403.
   alterarSenha(dto: AlterarSenhaRequestDTO): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/me/senha`, dto);
+    return this.http.put<void>(`${this.apiUrl}/me/senha`, dto, {
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
   }
 }
