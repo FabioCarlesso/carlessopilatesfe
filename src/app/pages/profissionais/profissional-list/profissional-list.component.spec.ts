@@ -64,6 +64,12 @@ describe('ProfissionalListComponent', () => {
     expect(component.trackByProfissional(0, mockProfissional)).toBe(mockProfissional.id);
   });
 
+  it('should wrap the table in a scroll container to keep overflow inside the card', () => {
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table.table');
+    expect(table).toBeTruthy();
+    expect(table.parentElement?.classList.contains('table-wrap')).toBeTrue();
+  });
+
   it('should load profissionais on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
     expect(component.profissionais).toEqual([mockProfissional]);

@@ -54,6 +54,12 @@ describe('PagamentoListComponent', () => {
     expect(component.trackByPagamento(0, mockPagamento)).toBe(mockPagamento.id);
   });
 
+  it('should wrap the table in a scroll container to keep overflow inside the card', () => {
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table.table');
+    expect(table).toBeTruthy();
+    expect(table.parentElement?.classList.contains('table-wrap')).toBeTrue();
+  });
+
   it('should load pagamentos on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(10);
     expect(component.pagamentos).toEqual([mockPagamento]);

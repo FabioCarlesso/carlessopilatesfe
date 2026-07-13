@@ -12,54 +12,56 @@
   Nenhum usuário cadastrado.
 </div>
 
-<table *ngIf="!loading && usuarios.length > 0" class="table">
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>E-mail</th>
-      <th>Perfil</th>
-      <th>Status</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let u of usuarios">
-      <td>{{ u.name }}</td>
-      <td>{{ u.email }}</td>
-      <td>{{ roleLabel[u.role] }}</td>
-      <td>
-        <span *ngIf="u.active === true" class="status status--ativo">Ativo</span>
-        <span *ngIf="u.active === false" class="status status--inativo">Inativo</span>
-        <span *ngIf="u.active === undefined" class="status status--desconhecido">—</span>
-      </td>
-      <td class="acoes">
-        <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-        <button
-          *ngIf="u.active === true"
-          class="btn btn-sm btn-warning"
-          [disabled]="isUsuarioAtual(u)"
-          [title]="isUsuarioAtual(u) ? 'Você não pode inativar a própria conta' : ''"
-          (click)="confirmarAcao('inativar', u)">
-          Inativar
-        </button>
-        <button
-          *ngIf="u.active === false"
-          class="btn btn-sm btn-success"
-          (click)="confirmarAcao('ativar', u)">
-          Reativar
-        </button>
-        <button
-          *ngIf="u.active !== undefined"
-          class="btn btn-sm btn-danger"
-          [disabled]="isUsuarioAtual(u)"
-          [title]="isUsuarioAtual(u) ? 'Você não pode excluir a própria conta' : ''"
-          (click)="confirmarAcao('excluir', u)">
-          Excluir
-        </button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div *ngIf="!loading && usuarios.length > 0" class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Perfil</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of usuarios">
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ roleLabel[u.role] }}</td>
+        <td>
+          <span *ngIf="u.active === true" class="status status--ativo">Ativo</span>
+          <span *ngIf="u.active === false" class="status status--inativo">Inativo</span>
+          <span *ngIf="u.active === undefined" class="status status--desconhecido">—</span>
+        </td>
+        <td class="acoes">
+          <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+          <button
+            *ngIf="u.active === true"
+            class="btn btn-sm btn-warning"
+            [disabled]="isUsuarioAtual(u)"
+            [title]="isUsuarioAtual(u) ? 'Você não pode inativar a própria conta' : ''"
+            (click)="confirmarAcao('inativar', u)">
+            Inativar
+          </button>
+          <button
+            *ngIf="u.active === false"
+            class="btn btn-sm btn-success"
+            (click)="confirmarAcao('ativar', u)">
+            Reativar
+          </button>
+          <button
+            *ngIf="u.active !== undefined"
+            class="btn btn-sm btn-danger"
+            [disabled]="isUsuarioAtual(u)"
+            [title]="isUsuarioAtual(u) ? 'Você não pode excluir a própria conta' : ''"
+            (click)="confirmarAcao('excluir', u)">
+            Excluir
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de usuários">
   <button

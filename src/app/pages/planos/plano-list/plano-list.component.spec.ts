@@ -53,6 +53,12 @@ describe('PlanoListComponent', () => {
     expect(component.trackByPlano(0, mockPlano)).toBe(mockPlano.id);
   });
 
+  it('should wrap the table in a scroll container to keep overflow inside the card', () => {
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table.table');
+    expect(table).toBeTruthy();
+    expect(table.parentElement?.classList.contains('table-wrap')).toBeTrue();
+  });
+
   it('should load planos on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(10);
     expect(component.planos).toEqual([mockPlano]);
