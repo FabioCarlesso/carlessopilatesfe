@@ -265,6 +265,40 @@ describe('PacienteSessaoListComponent', () => {
       expect(component.reagendarForm.value.dataHora).toBe(mockSessaoAgendada.dataHora);
     });
 
+    it('should show the validation message right away when the session is already overdue', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+      fixture.detectChanges();
+
+      expect(component.reagendarForm.get('dataHora')!.touched).toBeTrue();
+      const mensagem: HTMLElement | null = fixture.nativeElement.querySelector('#reagendarDataHoraError');
+      expect(mensagem?.textContent).toContain('Informe uma data e hora futura.');
+    });
+
+    it('should keep the prefilled field untouched when the session is still in the future', async () => {
+      const futura = { ...mockSessaoAgendada, dataHora: dataHoraRelativa(60) };
+      await setup([futura]);
+
+      component.abrirReagendar(futura);
+      fixture.detectChanges();
+
+      expect(component.reagendarForm.get('dataHora')!.touched).toBeFalse();
+      expect(fixture.nativeElement.querySelector('#reagendarDataHoraError')).toBeNull();
+    });
+
+    it('should bind min on the input to the current date and time', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+      fixture.detectChanges();
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('#reagendarDataHora');
+      expect(input.min).toBe(component.reagendarMinDataHora);
+      // O formato de `datetime-local` descarta os segundos, então o valor fica até 1 min atrás.
+      expect(Date.now() - new Date(input.min).getTime()).toBeLessThan(60_000);
+    });
+
     it('should require a future dataHora', async () => {
       await setup([mockSessaoAgendada]);
       component.abrirReagendar(mockSessaoAgendada);

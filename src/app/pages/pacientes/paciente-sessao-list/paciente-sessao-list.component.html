@@ -82,6 +82,7 @@
     <div class="form-group">
       <label for="reagendarDataHora">Nova data e hora *</label>
       <input id="reagendarDataHora" type="datetime-local" formControlName="dataHora" class="form-control"
+        [min]="reagendarMinDataHora"
         aria-describedby="reagendarDataHoraError"
         [class.is-invalid]="campoReagendar('dataHora')?.invalid && campoReagendar('dataHora')?.touched" />
       <div id="reagendarDataHoraError" class="invalid-feedback"

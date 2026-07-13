@@ -23,6 +23,13 @@ function dataHoraFutura(control: AbstractControl): ValidationErrors | null {
   return dataHora.getTime() > Date.now() ? null : { dataHoraFutura: true };
 }
 
+/** Data/hora local no formato aceito pelo `input[type=datetime-local]` (sem segundos). */
+function formatarDataHoraLocal(data: Date): string {
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}`
+    + `T${pad(data.getHours())}:${pad(data.getMinutes())}`;
+}
+
 @Component({
   selector: 'app-paciente-sessao-list',
   imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent],
@@ -41,6 +48,7 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   acaoEmAndamentoId: number | null = null;
   reagendarId: number | null = null;
   reagendarForm!: FormGroup;
+  reagendarMinDataHora = '';
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = SESSAO_STATUS_LABEL;
@@ -158,7 +166,14 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
 
     this.reagendarId = sessao.id;
     this.erro = null;
+    this.reagendarMinDataHora = formatarDataHoraLocal(new Date());
     this.reagendarForm.reset({ dataHora: sessao.dataHora });
+
+    // Sessão atrasada abre o diálogo já com o horário passado no campo: sem marcar como
+    // touched, o botão de confirmação apareceria desabilitado sem nenhuma mensagem de erro.
+    if (this.reagendarForm.invalid) {
+      this.reagendarForm.markAllAsTouched();
+    }
   }
 
   cancelarReagendar(): void {
