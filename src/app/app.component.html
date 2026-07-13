@@ -41,5 +41,18 @@
 }
 
 <main class="container">
+  @if (notificacoes.notificacao(); as notificacao) {
+    <div class="alert alert-danger notificacao-global" role="alert">
+      <span>{{ notificacao.mensagem }}</span>
+      <button
+        type="button"
+        class="notificacao-fechar"
+        aria-label="Fechar mensagem"
+        (click)="notificacoes.limpar()"
+      >
+        ✕
+      </button>
+    </div>
+  }
   <router-outlet />
 </main>

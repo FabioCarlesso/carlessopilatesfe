@@ -1,6 +1,9 @@
 import { Component, HostListener, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
+import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService } from './core/services/style-preferences.service';
 
 // Acima deste breakpoint a navbar deixa de colapsar (ver media query em styles.scss).
@@ -15,9 +18,21 @@ const DESKTOP_MIN_WIDTH = 769;
 })
 export class AppComponent {
   readonly authService = inject(AuthService);
+  readonly notificacoes = inject(NotificacaoService);
   private readonly stylePreferences = inject(StylePreferencesService);
+  private readonly router = inject(Router);
 
   menuAberto = false;
+
+  constructor() {
+    // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
+    this.router.events
+      .pipe(
+        filter(evento => evento instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => this.notificacoes.limpar());
+  }
 
   get isDarkTheme(): boolean {
     return this.stylePreferences.current.theme === 'dark';

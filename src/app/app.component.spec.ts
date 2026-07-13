@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 import { AuthService } from './core/services/auth.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService, StyleTheme } from './core/services/style-preferences.service';
 
 describe('AppComponent', () => {
@@ -21,7 +23,14 @@ describe('AppComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      imports: [AppComponent, RouterTestingModule, HttpClientTestingModule],
+      imports: [
+        AppComponent,
+        RouterTestingModule.withRoutes([
+          { path: '', children: [] },
+          { path: 'outra-tela', children: [] }
+        ]),
+        HttpClientTestingModule
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: StylePreferencesService, useValue: stylePreferencesSpy }
@@ -318,5 +327,63 @@ describe('AppComponent', () => {
     expect(btn.textContent).toContain('Tema claro');
     expect(btn.getAttribute('aria-label')).toBe('Mudar para tema claro');
     expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('should not render the global notification banner when there is no notification', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.notificacao-global')).toBeNull();
+  });
+
+  it('should render the global notification message with role="alert"', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const notificacoes = TestBed.inject(NotificacaoService);
+    fixture.detectChanges();
+
+    notificacoes.erro('Acesso negado: você não tem permissão para realizar esta ação.');
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('.notificacao-global') as HTMLElement;
+    expect(banner).toBeTruthy();
+    expect(banner.getAttribute('role')).toBe('alert');
+    expect(banner.textContent).toContain('Acesso negado: você não tem permissão para realizar esta ação.');
+  });
+
+  it('should dismiss the global notification when the close button is clicked', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const notificacoes = TestBed.inject(NotificacaoService);
+    fixture.detectChanges();
+
+    notificacoes.erro('Acesso negado.');
+    fixture.detectChanges();
+
+    const fechar = fixture.nativeElement.querySelector('.notificacao-fechar') as HTMLButtonElement;
+    fechar.click();
+    fixture.detectChanges();
+
+    expect(notificacoes.notificacao()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.notificacao-global')).toBeNull();
+  });
+
+  it('should clear the global notification after a navigation completes', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const notificacoes = TestBed.inject(NotificacaoService);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    notificacoes.erro('Acesso negado.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.notificacao-global')).toBeTruthy();
+
+    await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+
+    expect(notificacoes.notificacao()).toBeNull();
+    expect(fixture.nativeElement.querySelector('.notificacao-global')).toBeNull();
   });
 });
