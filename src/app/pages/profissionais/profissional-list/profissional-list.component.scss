@@ -61,7 +61,14 @@
   flex-wrap: wrap;
 }
 
+// Largura mínima para o scroll horizontal ficar contido no .table-wrap
+// em vez de estourar a página no celular.
+.table {
+  min-width: 820px;
+}
+
 .acoes {
   display: flex;
   gap: .5rem;
+  white-space: nowrap;
 }

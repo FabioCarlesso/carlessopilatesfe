@@ -14,37 +14,39 @@
   Nenhum pagamento registrado.
 </div>
 
-<table *ngIf="pagamentos.length > 0" class="table">
-  <thead>
-    <tr>
-      <th>Status</th>
-      <th>Valor</th>
-      <th>Período</th>
-      <th>Vencimento</th>
-      <th>Pago em</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let p of pagamentos; trackBy: trackByPagamento">
-      <td>
-        <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
-          {{ statusLabel[p.status] }}
-        </span>
-      </td>
-      <td>{{ p.valor | currency:'BRL' }}</td>
-      <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
-      <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
-      <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
-      <td>
-        <button class="btn btn-secondary btn-sm" *ngIf="p.status === 'PENDENTE'" (click)="abrirPagar(p.id)">
-          Confirmar Pagamento
-        </button>
-        <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div *ngIf="pagamentos.length > 0" class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Valor</th>
+        <th>Período</th>
+        <th>Vencimento</th>
+        <th>Pago em</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of pagamentos; trackBy: trackByPagamento">
+        <td>
+          <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
+            {{ statusLabel[p.status] }}
+          </span>
+        </td>
+        <td>{{ p.valor | currency:'BRL' }}</td>
+        <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
+        <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
+        <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" *ngIf="p.status === 'PENDENTE'" (click)="abrirPagar(p.id)">
+            Confirmar Pagamento
+          </button>
+          <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <app-confirmar-dialog
   *ngIf="pagarId !== null"

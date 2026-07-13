@@ -76,6 +76,12 @@ describe('UsuarioListComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
+  it('should wrap the table in a scroll container to keep overflow inside the card', () => {
+    const table: HTMLTableElement = fixture.nativeElement.querySelector('table.table');
+    expect(table).toBeTruthy();
+    expect(table.parentElement?.classList.contains('table-wrap')).toBeTrue();
+  });
+
   it('should render the new user button linking to /admin/usuarios/novo', () => {
     const el = fixture.nativeElement as HTMLElement;
     const link = el.querySelector('a[href="/admin/usuarios/novo"]');
