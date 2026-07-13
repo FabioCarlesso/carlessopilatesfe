@@ -1,17 +1,38 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessaoResponseDTO, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
+function dataHoraFutura(control: AbstractControl): ValidationErrors | null {
+  const valor = control.value;
+  if (!valor) return null;
+
+  const dataHora = new Date(valor);
+  if (Number.isNaN(dataHora.getTime())) {
+    return { dataHoraFutura: true };
+  }
+
+  return dataHora.getTime() > Date.now() ? null : { dataHoraFutura: true };
+}
+
+/** Data/hora local no formato aceito pelo `input[type=datetime-local]` (sem segundos). */
+function formatarDataHoraLocal(data: Date): string {
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}`
+    + `T${pad(data.getHours())}:${pad(data.getMinutes())}`;
+}
+
 @Component({
   selector: 'app-paciente-sessao-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-sessao-list.component.html',
   styleUrl: './paciente-sessao-list.component.scss'
 })
@@ -25,6 +46,9 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   confirmarAcaoId: number | null = null;
   acaoPendente: 'realizar' | 'cancelar' | null = null;
   acaoEmAndamentoId: number | null = null;
+  reagendarId: number | null = null;
+  reagendarForm!: FormGroup;
+  reagendarMinDataHora = '';
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = SESSAO_STATUS_LABEL;
@@ -33,11 +57,16 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   constructor(
     private sessaoService: SessaoService,
     private pacienteService: PacienteService,
+    private fb: FormBuilder,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
+    this.reagendarForm = this.fb.group({
+      dataHora: ['', [Validators.required, dataHoraFutura]]
+    });
+
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
@@ -115,14 +144,10 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.sucesso = acao === 'realizar'
+        this.exibirSucesso(acao === 'realizar'
           ? 'Sessão marcada como realizada.'
-          : 'Sessão cancelada com sucesso.';
+          : 'Sessão cancelada com sucesso.');
         this.carregarSessoes();
-        if (this.successTimer !== null) {
-          clearTimeout(this.successTimer);
-        }
-        this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.acaoEmAndamentoId = null;
       },
       error: () => {
@@ -134,5 +159,65 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
 
   acaoLabel(): string {
     return this.acaoPendente === 'realizar' ? 'marcar como realizada' : 'cancelar';
+  }
+
+  abrirReagendar(sessao: SessaoResponseDTO): void {
+    if (this.acaoEmAndamentoId !== null) return;
+
+    this.reagendarId = sessao.id;
+    this.erro = null;
+    this.reagendarMinDataHora = formatarDataHoraLocal(new Date());
+    this.reagendarForm.reset({ dataHora: sessao.dataHora });
+
+    // Sessão atrasada abre o diálogo já com o horário passado no campo: sem marcar como
+    // touched, o botão de confirmação apareceria desabilitado sem nenhuma mensagem de erro.
+    if (this.reagendarForm.invalid) {
+      this.reagendarForm.markAllAsTouched();
+    }
+  }
+
+  cancelarReagendar(): void {
+    if (this.acaoEmAndamentoId !== null) return;
+    this.reagendarId = null;
+  }
+
+  confirmarReagendar(): void {
+    if (this.reagendarId === null || this.reagendarForm.invalid || this.acaoEmAndamentoId !== null) {
+      this.reagendarForm.markAllAsTouched();
+      return;
+    }
+
+    const id = this.reagendarId;
+    const dataHora: string = this.reagendarForm.value.dataHora;
+    this.acaoEmAndamentoId = id;
+    this.erro = null;
+
+    this.sessaoService.atualizar(id, { dataHora })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: sessao => {
+          this.sessoes = this.sessoes.map(atual => (atual.id === sessao.id ? sessao : atual));
+          this.acaoEmAndamentoId = null;
+          this.reagendarId = null;
+          this.exibirSucesso('Sessão reagendada com sucesso.');
+        },
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao reagendar sessão.');
+          this.acaoEmAndamentoId = null;
+          this.reagendarId = null;
+        }
+      });
+  }
+
+  campoReagendar(nome: string) {
+    return this.reagendarForm.get(nome);
+  }
+
+  private exibirSucesso(mensagem: string): void {
+    this.sucesso = mensagem;
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
   }
 }

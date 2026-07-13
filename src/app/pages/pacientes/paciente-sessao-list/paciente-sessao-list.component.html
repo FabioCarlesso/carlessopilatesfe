@@ -38,6 +38,9 @@
           class="btn btn-secondary btn-sm">Editar</a>
         <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
           class="btn btn-secondary btn-sm">Evolução</a>
+        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-secondary btn-sm"
+          [disabled]="acaoEmAndamentoId !== null"
+          (click)="abrirReagendar(sessao)">Reagendar</button>
         <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-success btn-sm"
           [disabled]="acaoEmAndamentoId !== null"
           (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>
@@ -64,3 +67,28 @@
   [processando]="acaoEmAndamentoId !== null"
   (confirmar)="executarAcao()"
   (cancelar)="cancelarAcao()" />
+
+<app-confirmar-dialog
+  *ngIf="reagendarId !== null"
+  titulo="Reagendar sessão"
+  textoConfirmar="Reagendar"
+  variante="primaria"
+  [processando]="acaoEmAndamentoId !== null"
+  [confirmarDesabilitado]="reagendarForm.invalid"
+  [fecharAoClicarFora]="false"
+  (confirmar)="confirmarReagendar()"
+  (cancelar)="cancelarReagendar()">
+  <form [formGroup]="reagendarForm">
+    <div class="form-group">
+      <label for="reagendarDataHora">Nova data e hora *</label>
+      <input id="reagendarDataHora" type="datetime-local" formControlName="dataHora" class="form-control"
+        [min]="reagendarMinDataHora"
+        aria-describedby="reagendarDataHoraError"
+        [class.is-invalid]="campoReagendar('dataHora')?.invalid && campoReagendar('dataHora')?.touched" />
+      <div id="reagendarDataHoraError" class="invalid-feedback"
+        *ngIf="campoReagendar('dataHora')?.touched && campoReagendar('dataHora')?.invalid">
+        Informe uma data e hora futura.
+      </div>
+    </div>
+  </form>
+</app-confirmar-dialog>

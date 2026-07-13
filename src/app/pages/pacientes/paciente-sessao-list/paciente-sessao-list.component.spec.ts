@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -41,6 +42,21 @@ const mockSessaoRealizada: SessaoResponseDTO = {
   dataHora: '2026-05-03T10:00:00'
 };
 
+const mockSessaoCancelada: SessaoResponseDTO = {
+  ...mockSessaoAgendada,
+  id: 3,
+  status: 'CANCELADA',
+  dataHora: '2026-05-04T10:00:00'
+};
+
+/** Data/hora no formato aceito por `datetime-local`, deslocada em minutos a partir de agora. */
+function dataHoraRelativa(minutos: number): string {
+  const data = new Date(Date.now() + minutos * 60_000);
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}`
+    + `T${pad(data.getHours())}:${pad(data.getMinutes())}`;
+}
+
 describe('PacienteSessaoListComponent', () => {
   let component: PacienteSessaoListComponent;
   let fixture: ComponentFixture<PacienteSessaoListComponent>;
@@ -55,7 +71,8 @@ describe('PacienteSessaoListComponent', () => {
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', [
       'listarPorPaciente',
       'realizar',
-      'cancelar'
+      'cancelar',
+      'atualizar'
     ]);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
@@ -217,6 +234,162 @@ describe('PacienteSessaoListComponent', () => {
 
       expect(sessaoServiceSpy.realizar).not.toHaveBeenCalled();
       expect(sessaoServiceSpy.cancelar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reagendar', () => {
+    function textosDosBotoes(): string[] {
+      return Array.from(
+        fixture.nativeElement.querySelectorAll('.sessao-acoes button') as NodeListOf<HTMLButtonElement>
+      ).map(botao => botao.textContent?.trim() ?? '');
+    }
+
+    it('should offer Reagendar for sessions with status AGENDADA', async () => {
+      await setup([mockSessaoAgendada]);
+
+      expect(textosDosBotoes()).toContain('Reagendar');
+    });
+
+    it('should not offer Reagendar for sessions already realizada or cancelada', async () => {
+      await setup([mockSessaoRealizada, mockSessaoCancelada]);
+
+      expect(textosDosBotoes()).not.toContain('Reagendar');
+    });
+
+    it('should open the dialog prefilled with the current dataHora', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+
+      expect(component.reagendarId).toBe(1);
+      expect(component.reagendarForm.value.dataHora).toBe(mockSessaoAgendada.dataHora);
+    });
+
+    it('should show the validation message right away when the session is already overdue', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+      fixture.detectChanges();
+
+      expect(component.reagendarForm.get('dataHora')!.touched).toBeTrue();
+      const mensagem: HTMLElement | null = fixture.nativeElement.querySelector('#reagendarDataHoraError');
+      expect(mensagem?.textContent).toContain('Informe uma data e hora futura.');
+    });
+
+    it('should keep the prefilled field untouched when the session is still in the future', async () => {
+      const futura = { ...mockSessaoAgendada, dataHora: dataHoraRelativa(60) };
+      await setup([futura]);
+
+      component.abrirReagendar(futura);
+      fixture.detectChanges();
+
+      expect(component.reagendarForm.get('dataHora')!.touched).toBeFalse();
+      expect(fixture.nativeElement.querySelector('#reagendarDataHoraError')).toBeNull();
+    });
+
+    it('should bind min on the input to the current date and time', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+      fixture.detectChanges();
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('#reagendarDataHora');
+      expect(input.min).toBe(component.reagendarMinDataHora);
+      // O formato de `datetime-local` descarta os segundos, então o valor fica até 1 min atrás.
+      expect(Date.now() - new Date(input.min).getTime()).toBeLessThan(60_000);
+    });
+
+    it('should require a future dataHora', async () => {
+      await setup([mockSessaoAgendada]);
+      component.abrirReagendar(mockSessaoAgendada);
+      const campo = component.reagendarForm.get('dataHora')!;
+
+      campo.setValue('');
+      expect(campo.hasError('required')).toBeTrue();
+
+      campo.setValue(dataHoraRelativa(-60));
+      expect(campo.hasError('dataHoraFutura')).toBeTrue();
+
+      campo.setValue(dataHoraRelativa(60));
+      expect(campo.valid).toBeTrue();
+    });
+
+    it('should not call the service while the form is invalid', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue('');
+      component.confirmarReagendar();
+
+      expect(sessaoServiceSpy.atualizar).not.toHaveBeenCalled();
+      expect(component.reagendarId).toBe(1);
+      expect(component.reagendarForm.get('dataHora')!.touched).toBeTrue();
+    });
+
+    it('should update the session row in place on success', async () => {
+      await setup([mockSessaoAgendada, mockSessaoRealizada]);
+      const novaDataHora = dataHoraRelativa(60);
+      const reagendada = { ...mockSessaoAgendada, dataHora: novaDataHora };
+      sessaoServiceSpy.atualizar.and.returnValue(of(reagendada));
+      sessaoServiceSpy.listarPorPaciente.calls.reset();
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue(novaDataHora);
+      component.confirmarReagendar();
+
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, { dataHora: novaDataHora });
+      expect(sessaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
+      expect(component.sessoes).toEqual([reagendada, mockSessaoRealizada]);
+      expect(component.reagendarId).toBeNull();
+      expect(component.acaoEmAndamentoId).toBeNull();
+      expect(component.sucesso).toBe('Sessão reagendada com sucesso.');
+    });
+
+    it('should show a friendly message and keep the original session on error', async () => {
+      await setup([mockSessaoAgendada]);
+      const novaDataHora = dataHoraRelativa(60);
+      sessaoServiceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400,
+        error: { dataHora: 'Já existe sessão neste horário.' }
+      })));
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue(novaDataHora);
+      component.confirmarReagendar();
+
+      expect(component.erro).toBe('Já existe sessão neste horário.');
+      expect(component.sessoes).toEqual([mockSessaoAgendada]);
+      expect(component.reagendarId).toBeNull();
+      expect(component.acaoEmAndamentoId).toBeNull();
+    });
+
+    it('should fall back to a default message when the API gives no detail', async () => {
+      await setup([mockSessaoAgendada]);
+      sessaoServiceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue(dataHoraRelativa(60));
+      component.confirmarReagendar();
+
+      expect(component.erro).toBe('Erro ao reagendar sessão.');
+    });
+
+    it('should ignore open and cancel while another action is pending', async () => {
+      await setup([mockSessaoAgendada]);
+      const pending = new Subject<SessaoResponseDTO>();
+      sessaoServiceSpy.atualizar.and.returnValue(pending.asObservable());
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue(dataHoraRelativa(60));
+      component.confirmarReagendar();
+      component.confirmarReagendar();
+      component.cancelarReagendar();
+
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledTimes(1);
+      expect(component.reagendarId).toBe(1);
+
+      pending.next(mockSessaoAgendada);
+      pending.complete();
     });
   });
 
