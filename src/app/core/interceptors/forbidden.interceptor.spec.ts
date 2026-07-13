@@ -116,6 +116,24 @@ describe('forbiddenInterceptor', () => {
     expect(notificacoes.notificacao()).toBeNull();
   });
 
+  it('should not handle 403 globally when there is no active session (e.g. login)', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    let errorStatus: number | undefined;
+
+    http.post('/api/auth/login', {}).subscribe({
+      error: err => errorStatus = err.status
+    });
+
+    httpMock.expectOne('/api/auth/login').flush(
+      { message: 'Forbidden' },
+      { status: 403, statusText: 'Forbidden' }
+    );
+
+    expect(errorStatus).toBe(403);
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(notificacoes.notificacao()).toBeNull();
+  });
+
   it('should ignore non-403 errors', () => {
     localStorage.setItem('accessToken', 'token123');
     const navigateSpy = spyOn(router, 'navigate');

@@ -1,4 +1,5 @@
 import { Component, HostListener, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
@@ -26,7 +27,10 @@ export class AppComponent {
   constructor() {
     // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
     this.router.events
-      .pipe(filter(evento => evento instanceof NavigationEnd))
+      .pipe(
+        filter(evento => evento instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
       .subscribe(() => this.notificacoes.limpar());
   }
 

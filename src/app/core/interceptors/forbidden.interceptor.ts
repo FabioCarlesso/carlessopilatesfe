@@ -2,6 +2,7 @@ import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 import { NotificacaoService } from '../services/notificacao.service';
 
 /**
@@ -20,8 +21,12 @@ export const MENSAGEM_ACESSO_NEGADO =
  *
  * - `GET`: considerado carregamento de dados de uma tela; leva o usuário para `/403`.
  * - Demais métodos: ação pontual; exibe mensagem padrão e mantém o usuário na tela.
+ *
+ * Sem sessão ativa (login, esqueci/redefinir senha) um `403` não significa "sem
+ * permissão", e sim "sem login": o erro é propagado para a própria tela tratar.
  */
 export const forbiddenInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
   const router = inject(Router);
   const notificacoes = inject(NotificacaoService);
 
@@ -30,6 +35,7 @@ export const forbiddenInterceptor: HttpInterceptorFn = (req, next) => {
       if (
         error instanceof HttpErrorResponse &&
         error.status === 403 &&
+        authService.isAuthenticated() &&
         !req.context.get(TRATA_403_LOCALMENTE)
       ) {
         if (req.method === 'GET') {
