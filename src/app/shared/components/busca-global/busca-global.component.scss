@@ -1,0 +1,94 @@
+.busca-global {
+  position: relative;
+  flex: 0 1 260px;
+  min-width: 160px;
+}
+
+.busca-global-campo {
+  width: 100%;
+  min-height: var(--btn-h-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid rgba(240, 237, 232, 0.55);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--c-cloud-dancer);
+  font-size: var(--fs-body-sm);
+
+  &::placeholder {
+    color: rgba(240, 237, 232, 0.7);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.busca-global-painel {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.busca-global-status {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.busca-global-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.busca-global-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  color: var(--text-primary);
+
+  &.is-ativo {
+    background: var(--bg-sunken);
+  }
+}
+
+.busca-global-item-nome {
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+}
+
+.busca-global-item-detalhe {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.busca-global-tag {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  padding: 0 var(--sp-2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+@media (max-width: 768px) {
+  .busca-global {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}

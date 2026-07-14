@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService } from './core/services/style-preferences.service';
+import { BuscaGlobalComponent } from './shared/components/busca-global/busca-global.component';
 
 // Acima deste breakpoint a navbar deixa de colapsar (ver media query em styles.scss).
 const DESKTOP_MIN_WIDTH = 769;
@@ -12,7 +13,7 @@ const DESKTOP_MIN_WIDTH = 769;
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, BuscaGlobalComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

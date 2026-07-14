@@ -1,0 +1,45 @@
+<div class="busca-global">
+  <input
+    #campoBusca
+    type="search"
+    class="busca-global-campo"
+    role="combobox"
+    placeholder="Buscar (atalho: /)"
+    aria-label="Buscar pacientes e profissionais"
+    autocomplete="off"
+    aria-haspopup="listbox"
+    [formControl]="termo"
+    [attr.aria-expanded]="aberto"
+    [attr.aria-controls]="listaId"
+    [attr.aria-activedescendant]="indiceAtivo >= 0 ? idOpcao(indiceAtivo) : null"
+    (focus)="aoFocar()"
+    (keydown)="aoTeclar($event)"
+  />
+
+  <div class="busca-global-painel" *ngIf="aberto">
+    <p class="busca-global-status" *ngIf="buscando" role="status">Buscando...</p>
+
+    <p class="busca-global-status" *ngIf="semResultados" role="status">Nenhum resultado encontrado.</p>
+
+    <ul class="busca-global-lista" [id]="listaId" role="listbox" *ngIf="!buscando && resultados.length > 0">
+      <li
+        *ngFor="let resultado of resultados; let i = index"
+        class="busca-global-item"
+        [class.is-ativo]="i === indiceAtivo"
+        [id]="idOpcao(i)"
+        role="option"
+        tabindex="-1"
+        [attr.aria-selected]="i === indiceAtivo"
+        (mouseenter)="indiceAtivo = i"
+        (click)="selecionar(resultado)"
+        (keydown.enter)="selecionar(resultado)"
+      >
+        <span class="busca-global-item-nome">{{ resultado.nome }}</span>
+        <span class="busca-global-item-detalhe">
+          <span class="busca-global-tag">{{ resultado.tipo === 'paciente' ? 'Paciente' : 'Profissional' }}</span>
+          {{ resultado.detalhe }}
+        </span>
+      </li>
+    </ul>
+  </div>
+</div>
