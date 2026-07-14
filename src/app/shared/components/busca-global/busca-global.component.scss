@@ -37,11 +37,37 @@
   overflow: hidden;
 }
 
+// A live region fica sempre no DOM; quando não há mensagem, sai da tela sem ser
+// removida (`display: none` impediria o anúncio pelos leitores de tela).
 .busca-global-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   margin: 0;
-  padding: var(--sp-3) var(--sp-4);
-  color: var(--text-secondary);
-  font-size: var(--fs-body-sm);
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+
+  &.is-visivel {
+    position: absolute;
+    top: calc(100% + var(--sp-2));
+    left: 0;
+    right: 0;
+    z-index: 20;
+    width: auto;
+    height: auto;
+    padding: var(--sp-3) var(--sp-4);
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+  }
 }
 
 .busca-global-lista {

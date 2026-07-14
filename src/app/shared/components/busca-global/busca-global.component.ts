@@ -12,7 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -26,6 +26,13 @@ export interface BuscaGlobalResultado {
   detalhe: string;
 }
 
+// Uma falha de rede não pode ser confundida com "não existe": cada ramo devolve o erro
+// em vez de uma lista vazia, e a UI distingue os dois estados.
+interface BuscaParcial {
+  resultados: BuscaGlobalResultado[];
+  falhou: boolean;
+}
+
 // Termos muito curtos trariam praticamente a base inteira; o debounce evita uma
 // requisição por tecla digitada.
 const TAMANHO_MINIMO_TERMO = 2;
@@ -37,6 +44,8 @@ const ROTA_POR_TIPO: Record<BuscaGlobalTipo, string> = {
   paciente: '/pacientes',
   profissional: '/profissionais'
 };
+
+const VAZIO: BuscaParcial = { resultados: [], falhou: false };
 
 @Component({
   selector: 'app-busca-global',
@@ -53,6 +62,7 @@ export class BuscaGlobalComponent implements OnInit {
 
   resultados: BuscaGlobalResultado[] = [];
   buscando = false;
+  erro = false;
   aberto = false;
   indiceAtivo = -1;
   private termoBuscado = '';
@@ -78,22 +88,26 @@ export class BuscaGlobalComponent implements OnInit {
 
           if (termo.length < TAMANHO_MINIMO_TERMO) {
             this.buscando = false;
+            this.erro = false;
             this.cdr.markForCheck();
-            return of([] as BuscaGlobalResultado[]);
+            return of(VAZIO);
           }
 
           this.buscando = true;
+          this.erro = false;
           this.aberto = true;
           this.cdr.markForCheck();
           return this.buscar(termo);
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(resultados => {
+      .subscribe(({ resultados, falhou }) => {
         this.resultados = resultados;
+        // Com resultados parciais preferimos mostrá-los a bloquear a tela com o erro.
+        this.erro = falhou && resultados.length === 0;
         this.buscando = false;
         this.indiceAtivo = -1;
-        this.aberto = this.termoBuscado.length >= TAMANHO_MINIMO_TERMO;
+        this.aberto = this.termoValido;
         this.cdr.markForCheck();
       });
   }
@@ -103,7 +117,14 @@ export class BuscaGlobalComponent implements OnInit {
   }
 
   get semResultados(): boolean {
-    return this.aberto && !this.buscando && this.termoValido && this.resultados.length === 0;
+    return this.aberto && !this.buscando && !this.erro && this.termoValido && this.resultados.length === 0;
+  }
+
+  get mensagemStatus(): string {
+    if (this.buscando) return 'Buscando...';
+    if (this.erro) return 'Não foi possível buscar agora. Tente novamente.';
+    if (this.semResultados) return 'Nenhum resultado encontrado.';
+    return '';
   }
 
   idOpcao(indice: number): string {
@@ -118,6 +139,9 @@ export class BuscaGlobalComponent implements OnInit {
 
   aoTeclar(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
+      // O AppComponent fecha a navbar colapsada em `document:keydown.escape`; sem parar a
+      // propagação, o Esc que dispensa o dropdown fecharia o menu inteiro no mobile.
+      event.stopPropagation();
       this.fechar();
       return;
     }
@@ -178,6 +202,7 @@ export class BuscaGlobalComponent implements OnInit {
     this.termo.setValue('');
     this.resultados = [];
     this.buscando = false;
+    this.erro = false;
     this.fechar();
   }
 
@@ -192,50 +217,57 @@ export class BuscaGlobalComponent implements OnInit {
     );
   }
 
-  private buscar(termo: string) {
+  private buscar(termo: string): Observable<BuscaParcial> {
+    // Sem `ativo` no filtro a API devolve apenas registros ativos, mesmo padrão das
+    // listagens de pacientes e profissionais.
     const pacientes$ = this.pacienteService.listar(0, TAMANHO_PAGINA, this.filtroPaciente(termo)).pipe(
-      map(page =>
-        (page.content ?? []).map<BuscaGlobalResultado>(paciente => ({
-          tipo: 'paciente',
+      map(page => ({
+        resultados: (page.content ?? []).map<BuscaGlobalResultado>(paciente => ({
+          tipo: 'paciente' as const,
           id: paciente.id,
           nome: paciente.nome,
           detalhe: paciente.cpf
-        }))
-      ),
-      catchError(() => of([] as BuscaGlobalResultado[]))
+        })),
+        falhou: false
+      })),
+      catchError(() => of({ resultados: [], falhou: true } as BuscaParcial))
     );
 
     // Profissionais são restritos a ADMIN no backend; para os demais perfis a
     // requisição sequer é disparada, evitando um 403 e o redirecionamento global.
-    const somenteDigitos = this.apenasDigitos(termo);
-    const profissionais$ =
-      this.authService.isAdmin() && !somenteDigitos
+    // O endpoint também não filtra por CPF, então termos numéricos ficam de fora.
+    const profissionais$: Observable<BuscaParcial> =
+      this.authService.isAdmin() && !this.pareceCpf(termo)
         ? this.profissionalService.listar(0, TAMANHO_PAGINA, { nome: termo }).pipe(
-            map(page =>
-              (page.content ?? []).map<BuscaGlobalResultado>(profissional => ({
-                tipo: 'profissional',
+            map(page => ({
+              resultados: (page.content ?? []).map<BuscaGlobalResultado>(profissional => ({
+                tipo: 'profissional' as const,
                 id: profissional.id,
                 nome: profissional.nome,
                 detalhe: profissional.email
-              }))
-            ),
-            catchError(() => of([] as BuscaGlobalResultado[]))
+              })),
+              falhou: false
+            })),
+            catchError(() => of({ resultados: [], falhou: true } as BuscaParcial))
           )
-        : of([] as BuscaGlobalResultado[]);
+        : of(VAZIO);
 
     return combineLatest([pacientes$, profissionais$]).pipe(
-      map(([pacientes, profissionais]) => [...pacientes, ...profissionais])
+      map(([pacientes, profissionais]) => ({
+        resultados: [...pacientes.resultados, ...profissionais.resultados],
+        falhou: pacientes.falhou || profissionais.falhou
+      }))
     );
   }
 
-  // Termo numérico (com ou sem máscara) é tratado como CPF; o restante, como nome.
+  // O filtro `cpf` da API é `LIKE %termo%` sobre o valor gravado, que o cadastro guarda
+  // exatamente como digitado (com ou sem máscara). Por isso o termo vai como veio: normalizar
+  // para só dígitos faria "12345678901" deixar de casar com um "123.456.789-01" gravado.
   private filtroPaciente(termo: string): PacienteFiltro {
-    const digitos = this.apenasDigitos(termo);
-    return digitos ? { cpf: digitos } : { nome: termo };
+    return this.pareceCpf(termo) ? { cpf: termo } : { nome: termo };
   }
 
-  private apenasDigitos(termo: string): string | null {
-    const digitos = termo.replace(/[.\-\s]/g, '');
-    return /^\d+$/.test(digitos) ? digitos : null;
+  private pareceCpf(termo: string): boolean {
+    return /^[\d.\-\s]+$/.test(termo) && /\d/.test(termo);
   }
 }

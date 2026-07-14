@@ -309,6 +309,22 @@ describe('AppComponent', () => {
     }
   });
 
+  it('should render the global search inside the navbar actions', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.navbar-actions app-busca-global')).toBeTruthy();
+  });
+
+  it('should not render the global search when not authenticated', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-busca-global')).toBeNull();
+  });
+
   it('should label the theme toggle to switch to dark while the light theme is active', async () => {
     await setup(true, false, 'light');
     const fixture = TestBed.createComponent(AppComponent);

@@ -16,12 +16,14 @@
     (keydown)="aoTeclar($event)"
   />
 
-  <div class="busca-global-painel" *ngIf="aberto">
-    <p class="busca-global-status" *ngIf="buscando" role="status">Buscando...</p>
+  <!-- Live region fixa no DOM: leitores de tela só anunciam a mudança de um `aria-live`
+       que já existia antes da atualização. -->
+  <p class="busca-global-status" [class.is-visivel]="aberto && !!mensagemStatus" aria-live="polite">
+    {{ mensagemStatus }}
+  </p>
 
-    <p class="busca-global-status" *ngIf="semResultados" role="status">Nenhum resultado encontrado.</p>
-
-    <ul class="busca-global-lista" [id]="listaId" role="listbox" *ngIf="!buscando && resultados.length > 0">
+  <div class="busca-global-painel" *ngIf="aberto && !buscando && resultados.length > 0">
+    <ul class="busca-global-lista" [id]="listaId" role="listbox">
       <li
         *ngFor="let resultado of resultados; let i = index"
         class="busca-global-item"
