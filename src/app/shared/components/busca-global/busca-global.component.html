@@ -1,0 +1,47 @@
+<div class="busca-global">
+  <input
+    #campoBusca
+    type="search"
+    class="busca-global-campo"
+    role="combobox"
+    placeholder="Buscar (atalho: /)"
+    aria-label="Buscar pacientes e profissionais"
+    autocomplete="off"
+    aria-haspopup="listbox"
+    [formControl]="termo"
+    [attr.aria-expanded]="aberto"
+    [attr.aria-controls]="listaId"
+    [attr.aria-activedescendant]="indiceAtivo >= 0 ? idOpcao(indiceAtivo) : null"
+    (focus)="aoFocar()"
+    (keydown)="aoTeclar($event)"
+  />
+
+  <!-- Live region fixa no DOM: leitores de tela só anunciam a mudança de um `aria-live`
+       que já existia antes da atualização. -->
+  <p class="busca-global-status" [class.is-visivel]="aberto && !!mensagemStatus" aria-live="polite">
+    {{ mensagemStatus }}
+  </p>
+
+  <div class="busca-global-painel" *ngIf="aberto && !buscando && resultados.length > 0">
+    <ul class="busca-global-lista" [id]="listaId" role="listbox">
+      <li
+        *ngFor="let resultado of resultados; let i = index"
+        class="busca-global-item"
+        [class.is-ativo]="i === indiceAtivo"
+        [id]="idOpcao(i)"
+        role="option"
+        tabindex="-1"
+        [attr.aria-selected]="i === indiceAtivo"
+        (mouseenter)="indiceAtivo = i"
+        (click)="selecionar(resultado)"
+        (keydown.enter)="selecionar(resultado)"
+      >
+        <span class="busca-global-item-nome">{{ resultado.nome }}</span>
+        <span class="busca-global-item-detalhe">
+          <span class="busca-global-tag">{{ resultado.tipo === 'paciente' ? 'Paciente' : 'Profissional' }}</span>
+          <span class="busca-global-item-texto">{{ resultado.detalhe }}</span>
+        </span>
+      </li>
+    </ul>
+  </div>
+</div>

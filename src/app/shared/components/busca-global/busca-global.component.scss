@@ -1,0 +1,137 @@
+.busca-global {
+  position: relative;
+  flex: 0 1 260px;
+  min-width: 160px;
+}
+
+.busca-global-campo {
+  width: 100%;
+  min-height: var(--btn-h-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid rgba(240, 237, 232, 0.55);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--c-cloud-dancer);
+  font-size: var(--fs-body-sm);
+
+  &::placeholder {
+    color: rgba(240, 237, 232, 0.7);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.busca-global-painel {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  // O painel é ancorado à direita e pode ser mais largo que o campo: nomes e e-mails
+  // não cabem nos 260px do input e vazariam em scroll horizontal.
+  right: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(360px, 90vw);
+  z-index: 20;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+// A live region fica sempre no DOM; quando não há mensagem, sai da tela sem ser
+// removida (`display: none` impediria o anúncio pelos leitores de tela).
+.busca-global-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+
+  &.is-visivel {
+    position: absolute;
+    top: calc(100% + var(--sp-2));
+    left: 0;
+    right: 0;
+    z-index: 20;
+    width: auto;
+    height: auto;
+    padding: var(--sp-3) var(--sp-4);
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+  }
+}
+
+.busca-global-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.busca-global-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  color: var(--text-primary);
+
+  &.is-ativo {
+    background: var(--bg-sunken);
+  }
+}
+
+.busca-global-item-nome {
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.busca-global-item-detalhe {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+
+}
+
+// E-mails longos truncam em vez de esticar o painel ou vazar em scroll horizontal.
+.busca-global-item-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.busca-global-tag {
+  flex: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  padding: 0 var(--sp-2);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+@media (max-width: 768px) {
+  .busca-global {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
