@@ -27,8 +27,12 @@
 .busca-global-painel {
   position: absolute;
   top: calc(100% + var(--sp-2));
-  left: 0;
+  // O painel é ancorado à direita e pode ser mais largo que o campo: nomes e e-mails
+  // não cabem nos 260px do input e vazariam em scroll horizontal.
   right: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(360px, 90vw);
   z-index: 20;
   background: var(--bg-elev);
   border: 1px solid var(--border-subtle);
@@ -94,17 +98,30 @@
 .busca-global-item-nome {
   font-size: var(--fs-body-sm);
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .busca-global-item-detalhe {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  min-width: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+
+}
+
+// E-mails longos truncam em vez de esticar o painel ou vazar em scroll horizontal.
+.busca-global-item-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .busca-global-tag {
+  flex: none;
   border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
   padding: 0 var(--sp-2);

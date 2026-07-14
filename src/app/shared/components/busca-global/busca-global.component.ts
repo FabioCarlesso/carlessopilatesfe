@@ -183,7 +183,10 @@ export class BuscaGlobalComponent implements OnInit {
     if (!atalhoCtrlK && !atalhoBarra) return;
 
     event.preventDefault();
-    this.campoBusca?.nativeElement.focus();
+    // O foco é adiado de propósito: focar ainda dentro do keydown faz o caractere da própria
+    // tecla ("/") ser inserido no campo recém-focado. Adiando, a tecla se resolve no elemento
+    // que tinha o foco (nunca um campo de texto, pela guarda acima) e o campo abre vazio.
+    setTimeout(() => this.campoBusca?.nativeElement.focus());
   }
 
   @HostListener('document:click', ['$event'])

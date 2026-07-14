@@ -284,14 +284,22 @@ describe('BuscaGlobalComponent', () => {
     expect(component.aberto).toBeTrue();
   }));
 
-  it('deve focar o campo com o atalho "/"', fakeAsync(() => {
+  it('deve focar o campo com o atalho "/" sem digitar a barra no campo', fakeAsync(() => {
     setup();
     const campo = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
     const focus = spyOn(campo, 'focus');
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+    const evento = new KeyboardEvent('keydown', { key: '/', cancelable: true });
+    document.dispatchEvent(evento);
 
+    // O `preventDefault` impede a inserção do caractere e o foco é adiado para fora do
+    // keydown — focar durante o evento faria a própria "/" cair dentro do campo.
+    expect(evento.defaultPrevented).toBeTrue();
+    expect(focus).not.toHaveBeenCalled();
+
+    tick();
     expect(focus).toHaveBeenCalled();
+    expect(component.termo.value).toBe('');
   }));
 
   it('deve focar o campo com o atalho Ctrl+K', fakeAsync(() => {
@@ -300,6 +308,7 @@ describe('BuscaGlobalComponent', () => {
     const focus = spyOn(campo, 'focus');
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+    tick();
 
     expect(focus).toHaveBeenCalled();
   }));
