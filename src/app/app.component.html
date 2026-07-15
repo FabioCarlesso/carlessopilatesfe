@@ -15,12 +15,48 @@
     </button>
     <div class="navbar-collapse" id="navbar-collapse">
       <ul class="navbar-menu">
-        <li><a routerLink="/" (click)="fecharMenu()">Início</a></li>
-        <li><a routerLink="/pacientes" (click)="fecharMenu()">Pacientes</a></li>
+        <li>
+          <a
+            routerLink="/"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            ariaCurrentWhenActive="page"
+            (click)="fecharMenu()"
+          >Início</a>
+        </li>
+        <li>
+          <a
+            routerLink="/pacientes"
+            routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
+            (click)="fecharMenu()"
+          >Pacientes</a>
+        </li>
         @if (authService.isAdmin()) {
-          <li><a routerLink="/profissionais" (click)="fecharMenu()">Profissionais</a></li>
-          <li><a routerLink="/relatorios" (click)="fecharMenu()">Relatórios</a></li>
-          <li><a routerLink="/admin" (click)="fecharMenu()">Administração</a></li>
+          <li>
+            <a
+              routerLink="/profissionais"
+              routerLinkActive="is-active"
+              ariaCurrentWhenActive="page"
+              (click)="fecharMenu()"
+            >Profissionais</a>
+          </li>
+          <li>
+            <a
+              routerLink="/relatorios"
+              routerLinkActive="is-active"
+              ariaCurrentWhenActive="page"
+              (click)="fecharMenu()"
+            >Relatórios</a>
+          </li>
+          <li>
+            <a
+              routerLink="/admin"
+              routerLinkActive="is-active"
+              ariaCurrentWhenActive="page"
+              (click)="fecharMenu()"
+            >Administração</a>
+          </li>
         }
       </ul>
       <div class="navbar-actions">
