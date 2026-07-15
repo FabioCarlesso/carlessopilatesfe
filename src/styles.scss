@@ -630,8 +630,12 @@ body.dialog-aberto {
 
   // Alvos de toque adequados (≥ 44px) para uso em tablet: botões de ação de
   // linha das tabelas e controles de paginação, que no desktop usam 32px.
+  // Cobre tanto as ações agrupadas em `.acoes` quanto as postas direto na
+  // célula `.acoes-cell` (ex.: aula-list, sem `.acoes` interno).
   .table .acoes .btn,
-  .table .acoes .btn-sm {
+  .table .acoes .btn-sm,
+  .table .acoes-cell .btn,
+  .table .acoes-cell .btn-sm {
     min-height: 44px;
   }
 
