@@ -309,6 +309,26 @@ describe('AppComponent', () => {
     }
   });
 
+  it('should keep the menu open when the viewport stays within the tablet breakpoint', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 1000, configurable: true });
+      window.dispatchEvent(new Event('resize'));
+      fixture.detectChanges();
+      expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
+    }
+  });
+
   it('should render the global search inside the navbar actions', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(AppComponent);

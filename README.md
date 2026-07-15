@@ -162,6 +162,10 @@ No Angular, os tokens foram migrados para `src/styles/_tokens.scss` e importados
 
 Componentes globais como botões, inputs, cards, badges, tabelas, paginação, alertas e diálogos consomem tokens semânticos de cor, tipografia, raio, sombra e densidade.
 
+### Responsividade
+
+O layout é pensado também para uso em tablet na recepção. A navbar colapsa num menu (botão ☰) em telas `≤1024px`, cobrindo a faixa de tablet (retrato e paisagem) em que os links e ações não caberiam na barra — o breakpoint é compartilhado com a constante `DESKTOP_MIN_WIDTH` do `AppComponent`, que fecha o menu ao voltar para o desktop. As tabelas rolam horizontalmente dentro do contêiner (`.table-responsive`/`.table-wrap`) sem gerar scroll da página, os formulários passam de múltiplas colunas para uma coluna em `≤768px`, e botões de ação de linha e paginação usam alvo de toque de `≥44px` em `≤1024px`. Tema e densidade são preservados em todas as larguras.
+
 ### Tema claro/escuro
 
 O `StylePreferencesService` persiste a preferência de tema e densidade em `localStorage` (chave `carlesso.style-preferences`). No primeiro acesso, sem preferência salva, o tema inicial segue `prefers-color-scheme` do sistema operacional; depois disso a escolha do usuário tem prioridade e permanece após recarregar a página ou reabrir o sistema no mesmo navegador. A navbar e a tela de login expõem o botão **Tema claro/Tema escuro**, permitindo alternar o tema via `StylePreferencesService.toggleTheme()` antes ou depois da autenticação, com `aria-label` e `aria-pressed` para acessibilidade. O dark mode é definido inteiramente pelos tokens em `[data-theme="dark"]` — ao ajustar tokens, mantenha `src/styles/_tokens.scss` e `assets/tokens.css` em sincronia.

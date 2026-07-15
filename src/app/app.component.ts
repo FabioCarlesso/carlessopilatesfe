@@ -8,7 +8,8 @@ import { StylePreferencesService } from './core/services/style-preferences.servi
 import { BuscaGlobalComponent } from './shared/components/busca-global/busca-global.component';
 
 // Acima deste breakpoint a navbar deixa de colapsar (ver media query em styles.scss).
-const DESKTOP_MIN_WIDTH = 769;
+// Inclui a faixa de tablet (≤ 1024px), onde os links + ações não cabem na barra.
+const DESKTOP_MIN_WIDTH = 1025;
 
 @Component({
   selector: 'app-root',

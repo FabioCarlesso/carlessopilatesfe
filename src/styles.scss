@@ -568,7 +568,11 @@ body.dialog-aberto {
   }
 }
 
-@media (max-width: 768px) {
+// Faixa de tablet + mobile (≤ 1024px): a navbar completa (marca + até 5 links +
+// busca + 3 ações) não cabe na barra e transborda/sobrepõe. Colapsa num painel
+// acionado pelo botão do menu. O breakpoint acompanha DESKTOP_MIN_WIDTH em
+// app.component.ts, que fecha o menu ao voltar para o layout desktop.
+@media (max-width: 1024px) {
   // Navbar colapsável: barra fechada mantém apenas marca + botão do menu
   // (~64px de altura). Os links e ações ficam num painel que expande abaixo.
   .navbar {
@@ -624,6 +628,24 @@ body.dialog-aberto {
     }
   }
 
+  // Alvos de toque adequados (≥ 44px) para uso em tablet: botões de ação de
+  // linha das tabelas e controles de paginação, que no desktop usam 32px.
+  // Cobre tanto as ações agrupadas em `.acoes` quanto as postas direto na
+  // célula `.acoes-cell` (ex.: aula-list, sem `.acoes` interno).
+  .table .acoes .btn,
+  .table .acoes .btn-sm,
+  .table .acoes-cell .btn,
+  .table .acoes-cell .btn-sm {
+    min-height: 44px;
+  }
+
+  .pagination button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;

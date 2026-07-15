@@ -129,7 +129,9 @@
   letter-spacing: .04em;
 }
 
-@media (max-width: 768px) {
+// Dentro do painel colapsado da navbar (tablet + mobile, ≤ 1024px) a busca
+// ocupa a largura total em vez dos 260px fixos do layout de barra.
+@media (max-width: 1024px) {
   .busca-global {
     flex: 1 1 auto;
     width: 100%;
