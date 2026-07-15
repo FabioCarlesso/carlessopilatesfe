@@ -1,6 +1,6 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
@@ -13,7 +13,7 @@ const DESKTOP_MIN_WIDTH = 769;
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, BuscaGlobalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BuscaGlobalComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

@@ -96,6 +96,16 @@ a {
       &:hover {
         color: var(--c-cloud-dancer);
       }
+
+      // Seção atual da navegação. Cores literais (não tokens) para manter o
+      // contraste sobre o fundo fixo --c-horizonte da navbar em ambos os temas.
+      &.is-active {
+        color: #f6f4f0;
+        font-weight: 600;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 6px;
+      }
     }
   }
 

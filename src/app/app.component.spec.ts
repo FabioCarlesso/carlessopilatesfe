@@ -385,6 +385,81 @@ describe('AppComponent', () => {
     expect(fixture.nativeElement.querySelector('.notificacao-global')).toBeNull();
   });
 
+  function setupComRotas() {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
+    authServiceSpy.isAuthenticated.and.returnValue(true);
+    authServiceSpy.isAdmin.and.returnValue(false);
+
+    stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
+      'StylePreferencesService',
+      ['toggleTheme', 'setTheme', 'setDensity', 'apply'],
+      { current: { theme: 'light', density: 'default' } }
+    );
+
+    TestBed.configureTestingModule({
+      imports: [
+        AppComponent,
+        RouterTestingModule.withRoutes([
+          { path: '', children: [] },
+          { path: 'pacientes', children: [] },
+          { path: 'pacientes/:pacienteId/sessoes', children: [] }
+        ]),
+        HttpClientTestingModule
+      ],
+      providers: [
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: StylePreferencesService, useValue: stylePreferencesSpy }
+      ]
+    }).compileComponents();
+  }
+
+  it('should mark the current section link active with aria-current="page"', async () => {
+    await setupComRotas();
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    await router.navigateByUrl('/pacientes');
+    fixture.detectChanges();
+
+    const pacientes = fixture.nativeElement.querySelector('.navbar-menu a[href="/pacientes"]') as HTMLElement;
+    expect(pacientes.classList).toContain('is-active');
+    expect(pacientes.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('should activate Início only on the exact root route', async () => {
+    await setupComRotas();
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/');
+    fixture.detectChanges();
+    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/"]') as HTMLElement;
+    expect(inicio.classList).toContain('is-active');
+    expect(inicio.getAttribute('aria-current')).toBe('page');
+
+    await router.navigateByUrl('/pacientes');
+    fixture.detectChanges();
+    expect(inicio.classList).not.toContain('is-active');
+    expect(inicio.hasAttribute('aria-current')).toBe(false);
+  });
+
+  it('should keep the Pacientes link active on child routes', async () => {
+    await setupComRotas();
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    await router.navigateByUrl('/pacientes/12/sessoes');
+    fixture.detectChanges();
+
+    const pacientes = fixture.nativeElement.querySelector('.navbar-menu a[href="/pacientes"]') as HTMLElement;
+    expect(pacientes.classList).toContain('is-active');
+    expect(pacientes.getAttribute('aria-current')).toBe('page');
+
+    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/"]') as HTMLElement;
+    expect(inicio.classList).not.toContain('is-active');
+  });
+
   it('should clear the global notification after a navigation completes', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(AppComponent);
