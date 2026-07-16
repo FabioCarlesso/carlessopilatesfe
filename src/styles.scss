@@ -662,4 +662,17 @@ body.dialog-aberto {
   .container {
     margin: var(--sp-5) auto;
   }
+
+  // O Safari iOS aplica zoom automático ao focar campos cuja fonte é menor que
+  // 16px. No desktop os campos usam --fs-body (14px); no mobile subimos para
+  // 16px para evitar o zoom, sem restringir o zoom do usuário no meta viewport
+  // (issue #160). Cobre os campos globais; login e filtros têm overrides
+  // próprios nos respectivos componentes.
+  .form-control,
+  .input,
+  .select,
+  .textarea,
+  .form-control-sm {
+    font-size: 16px;
+  }
 }
