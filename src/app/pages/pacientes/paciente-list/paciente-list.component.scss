@@ -92,19 +92,23 @@
 
 .acoes-header,
 .acoes-cell {
-  width: 224px;
-  min-width: 224px;
+  width: 248px;
+  min-width: 248px;
 }
 
 .acoes-cell {
   display: table-cell;
 }
 
+// Mantém os botões de ação (Ver/Editar/Inativar/Ativar) em uma única linha para
+// que o "Inativar" não quebre e aumente a altura da linha (issue #91). A tabela
+// já tem min-width e rola horizontalmente no mobile via `.table-wrap`.
 .acoes {
   display: flex;
   align-items: center;
   gap: .5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .status-badge {
