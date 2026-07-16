@@ -479,15 +479,22 @@ describe('PacienteListComponent', () => {
     expect(select.value).toBe('20');
   });
 
-  it('should render patient actions inside a wrapped actions group', () => {
-    fixture.detectChanges();
+  it('should render patient actions on a single line (no line wrapping)', () => {
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      fixture.detectChanges();
 
-    const actionsCell = fixture.nativeElement.querySelector('td.acoes-cell') as HTMLTableCellElement;
-    const actionsGroup = actionsCell?.querySelector('.acoes[aria-label="Ações do paciente"]');
+      const actionsCell = fixture.nativeElement.querySelector('td.acoes-cell') as HTMLTableCellElement;
+      const actionsGroup = actionsCell?.querySelector('.acoes[aria-label="Ações do paciente"]') as HTMLElement;
 
-    expect(actionsCell).withContext('actions must stay in a table cell').toBeTruthy();
-    expect(actionsGroup).withContext('buttons must be grouped for flexible wrapping').toBeTruthy();
-    expect(actionsGroup?.querySelectorAll('.btn').length).toBe(3);
+      expect(actionsCell).withContext('actions must stay in a table cell').toBeTruthy();
+      expect(actionsGroup).withContext('buttons must be grouped in the actions container').toBeTruthy();
+      expect(actionsGroup?.querySelectorAll('.btn').length).toBe(3);
+      // issue #91: os botões (inclusive "Inativar") não podem quebrar linha.
+      expect(getComputedStyle(actionsGroup).flexWrap).toBe('nowrap');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should not fire a second inativar request while the action is in progress', () => {
