@@ -127,3 +127,11 @@
     cursor: not-allowed;
   }
 }
+
+// O Safari iOS aplica zoom automático ao focar campos com fonte menor que 16px.
+// No mobile os inputs sobem para 16px para evitar o zoom (issue #160).
+@media (max-width: 768px) {
+  .form-group input {
+    font-size: 16px;
+  }
+}

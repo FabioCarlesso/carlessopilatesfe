@@ -41,6 +41,13 @@
     background: var(--bg-elev);
     color: var(--text-primary);
     font: inherit;
+
+    // O Safari iOS aplica zoom automático ao focar campos com fonte menor que
+    // 16px. Os filtros herdam --fs-body (14px) do body; no mobile subimos para
+    // 16px para evitar o zoom (issue #160).
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
   }
 
   input::placeholder {
