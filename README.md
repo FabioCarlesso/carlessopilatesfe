@@ -164,7 +164,7 @@ Componentes globais como botões, inputs, cards, badges, tabelas, paginação, a
 
 ### Responsividade
 
-O layout é pensado também para uso em tablet na recepção. A navbar colapsa num menu (botão ☰) em telas `≤1024px`, cobrindo a faixa de tablet (retrato e paisagem) em que os links e ações não caberiam na barra — o breakpoint é compartilhado com a constante `DESKTOP_MIN_WIDTH` do `AppComponent`, que fecha o menu ao voltar para o desktop. As tabelas rolam horizontalmente dentro do contêiner (`.table-responsive`/`.table-wrap`) sem gerar scroll da página, os formulários passam de múltiplas colunas para uma coluna em `≤768px`, e botões de ação de linha e paginação usam alvo de toque de `≥44px` em `≤1024px`. Tema e densidade são preservados em todas as larguras.
+O layout é pensado também para uso em tablet na recepção. A navbar colapsa num menu (botão ☰) em telas `≤1024px`, cobrindo a faixa de tablet (retrato e paisagem) em que os links e ações não caberiam na barra — o breakpoint é compartilhado com a constante `DESKTOP_MIN_WIDTH` do `AppComponent`, que fecha o menu ao voltar para o desktop. As tabelas rolam horizontalmente dentro do contêiner (`.table-responsive`/`.table-wrap`) sem gerar scroll da página, os formulários passam de múltiplas colunas para uma coluna em `≤768px`, e botões de ação de linha e paginação usam alvo de toque de `≥44px` em `≤1024px`. Em `≤768px` a paginação das listagens (pacientes, profissionais e usuários) passa a um formato compacto de uma única linha — **Anterior / Página X de N / Próxima** —, ocultando a janela de páginas numeradas (mantida no desktop `≥769px`) para evitar quebra em várias linhas no mobile. Tema e densidade são preservados em todas as larguras.
 
 ### Tema claro/escuro
 

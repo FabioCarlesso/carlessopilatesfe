@@ -348,7 +348,7 @@ describe('ProfissionalListComponent', () => {
     (component as unknown as { cdr: ChangeDetectorRef }).cdr.markForCheck();
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination .page-number');
     expect(buttons.length).toBe(5);
   });
 

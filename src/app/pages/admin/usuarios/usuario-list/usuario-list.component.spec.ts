@@ -389,7 +389,7 @@ describe('UsuarioListComponent', () => {
 
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('.pagination button');
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination .page-number');
     expect(buttons.length).toBe(5);
   });
 
@@ -549,7 +549,7 @@ describe('UsuarioListComponent', () => {
     component.visiblePages = component.pages();
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('.pagination button') as NodeListOf<HTMLButtonElement>;
+    const buttons = fixture.nativeElement.querySelectorAll('.pagination .page-number') as NodeListOf<HTMLButtonElement>;
     expect(buttons[0].getAttribute('aria-label')).toBe('Página 1');
     expect(buttons[1].getAttribute('aria-current')).toBe('page');
     expect(buttons[0].getAttribute('aria-current')).toBeNull();

@@ -424,6 +424,21 @@ select.form-control,
       cursor: not-allowed;
     }
   }
+
+  // Resumo "Página X de N" e botões Anterior/Próxima usados apenas na paginação
+  // compacta do mobile (issue #161). No desktop ficam ocultos e a janela de
+  // páginas numeradas (.page-number) segue sendo exibida normalmente.
+  .page-status {
+    display: none;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    font-weight: 600;
+  }
+
+  .page-nav-mobile {
+    display: none;
+  }
 }
 
 .alert {
@@ -646,6 +661,28 @@ body.dialog-aberto {
 }
 
 @media (max-width: 768px) {
+  // Paginação compacta no mobile: em telas estreitas (ex.: 375px/414px) a janela
+  // de até 7 botões quebrava em várias linhas. Aqui ocultamos os números e
+  // mostramos apenas "Anterior / Página X de N / Próxima" numa única linha, com
+  // os controles Anterior/Próxima nas extremidades (issue #161). A janela de 5
+  // páginas do desktop (≥769px) permanece inalterada.
+  .pagination {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+
+    .page-number {
+      display: none;
+    }
+
+    .page-status {
+      display: inline-flex;
+    }
+
+    .page-nav-mobile {
+      display: inline-flex;
+    }
+  }
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
