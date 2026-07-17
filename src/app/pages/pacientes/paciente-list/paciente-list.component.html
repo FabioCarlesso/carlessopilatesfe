@@ -96,10 +96,12 @@
     </table>
   </div>
 
-  <div class="pagination" *ngIf="totalPages > 1">
+  <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de pacientes">
     <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
+    <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
     <button
       type="button"
+      class="page-number"
       *ngFor="let p of pages()"
       [class.active]="p === currentPage"
       [attr.aria-current]="p === currentPage ? 'page' : null"

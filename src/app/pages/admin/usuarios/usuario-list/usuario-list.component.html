@@ -65,12 +65,30 @@
 
 <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de usuários">
   <button
+    type="button"
+    class="page-nav-mobile"
+    aria-label="Página anterior"
+    [disabled]="currentPage === 0"
+    (click)="pagina(currentPage - 1)">
+    Anterior
+  </button>
+  <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+  <button
     *ngFor="let p of visiblePages"
+    class="page-number"
     [class.active]="p === currentPage"
     [attr.aria-label]="'Página ' + (p + 1)"
     [attr.aria-current]="p === currentPage ? 'page' : null"
     (click)="pagina(p)">
     {{ p + 1 }}
+  </button>
+  <button
+    type="button"
+    class="page-nav-mobile"
+    aria-label="Próxima página"
+    [disabled]="currentPage === totalPages - 1"
+    (click)="pagina(currentPage + 1)">
+    Próxima
   </button>
 </div>
 

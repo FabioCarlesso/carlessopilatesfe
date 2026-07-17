@@ -181,6 +181,17 @@
   }
 }
 
+@media (max-width: 768px) {
+  // Na paginação compacta do mobile (issue #161) mostramos apenas
+  // "Anterior / Página X de N / Próxima". O `justify-content: center` acima
+  // venceria a regra global (`.pagination { justify-content: space-between }`)
+  // por especificidade, agrupando os controles no centro; aqui garantimos que
+  // Anterior/Próxima fiquem nas extremidades, alinhando com as demais listagens.
+  .pagination {
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 640px) {
   .pagination-summary {
     align-items: flex-start;
