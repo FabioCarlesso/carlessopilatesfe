@@ -6,10 +6,11 @@
 }
 .badge-ativo { background: var(--c-success-bg); color: var(--c-success); }
 .badge-inativo { background: var(--c-danger-bg); color: var(--c-danger); }
-.btn-sm { padding: 4px 10px; font-size: 0.85rem; }
 
 // Largura mínima para o scroll horizontal ficar contido no .table-wrap
 // em vez de estourar a página no celular.
 .table { min-width: 900px; }
-.acoes-col { display: flex; gap: 6px; white-space: nowrap; }
+// Gap alinhado ao --sp-2 (8px) usado nos demais contêineres de ação de linha,
+// espaçamento mínimo recomendado entre alvos de toque vizinhos (issue #162).
+.acoes-col { display: flex; gap: var(--sp-2); white-space: nowrap; }
 .empty-state { color: var(--text-light); margin-top: 2rem; text-align: center; }
