@@ -643,14 +643,21 @@ body.dialog-aberto {
     }
   }
 
-  // Alvos de toque adequados (≥ 44px) para uso em tablet: botões de ação de
-  // linha das tabelas e controles de paginação, que no desktop usam 32px.
-  // Cobre tanto as ações agrupadas em `.acoes` quanto as postas direto na
-  // célula `.acoes-cell` (ex.: aula-list, sem `.acoes` interno).
+  // Alvos de toque adequados (≥ 44px) para todos os botões de ação de linha
+  // (issue #162): `.btn-sm` aparece tanto em tabelas (`.acoes`/`.acoes-cell`)
+  // quanto nos cards de sessões, planos de tratamento, reavaliações, NFSEs,
+  // pagamentos e planos — contêineres com nomes próprios que não seriam
+  // cobertos por um seletor restrito a `.table .acoes`/`.acoes-cell`. Por
+  // isso o alvo é a própria classe `.btn-sm`, sem depender do contêiner. O
+  // padding horizontal maior aumenta a área de toque efetiva, mantendo o
+  // `gap` de --sp-2 (8px) já usado entre botões vizinhos.
+  .btn-sm {
+    min-height: 44px;
+    padding: 0 var(--sp-4);
+  }
+
   .table .acoes .btn,
-  .table .acoes .btn-sm,
-  .table .acoes-cell .btn,
-  .table .acoes-cell .btn-sm {
+  .table .acoes-cell .btn {
     min-height: 44px;
   }
 
