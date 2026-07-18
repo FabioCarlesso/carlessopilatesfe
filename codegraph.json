@@ -1,0 +1,8 @@
+{
+  "exclude": [
+    "assets/",
+    "docs/documentacao.html",
+    "nginx/",
+    "public/"
+  ]
+}
