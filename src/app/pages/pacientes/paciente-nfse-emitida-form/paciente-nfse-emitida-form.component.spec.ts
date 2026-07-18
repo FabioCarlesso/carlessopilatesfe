@@ -136,6 +136,16 @@ describe('PacienteNfseEmitidaFormComponent', () => {
     expect(competencia.getAttribute('inputmode')).toBe('numeric');
   });
 
+  it('should mask competencia as MM/AAAA from digits typed on a numeric keyboard', async () => {
+    await setup();
+
+    component.form.get('competencia')?.setValue('052026');
+    component.formatarCompetencia();
+
+    expect(component.form.get('competencia')?.value).toBe('05/2026');
+    expect(component.campo('competencia')?.valid).toBeTrue();
+  });
+
   it('should reject competencia outside MM/AAAA format', async () => {
     await setup();
 

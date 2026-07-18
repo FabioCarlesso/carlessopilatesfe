@@ -60,6 +60,15 @@ describe('NfseRelatorioComponent', () => {
     expect(competencia.getAttribute('inputmode')).toBe('numeric');
   });
 
+  it('should mask competencia as MM/AAAA from digits typed on a numeric keyboard', () => {
+    component.form.get('competencia')?.setValue('042026');
+
+    component.formatarCompetencia();
+
+    expect(component.form.get('competencia')?.value).toBe('04/2026');
+    expect(component.form.get('competencia')?.valid).toBeTrue();
+  });
+
   it('should not request report when form is invalid', () => {
     component.form.setValue({ competencia: '13/2026', notaAnteriorEmitida: null });
 

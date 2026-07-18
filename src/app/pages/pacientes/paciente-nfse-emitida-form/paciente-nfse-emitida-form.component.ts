@@ -10,6 +10,7 @@ import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service'
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { formatCompetencia } from '../../../shared/utils/competencia-mask';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-form',
@@ -116,6 +117,16 @@ export class PacienteNfseEmitidaFormComponent implements OnInit {
 
   campo(nome: string) {
     return this.form.get(nome);
+  }
+
+  formatarCompetencia(): void {
+    const controle = this.form.get('competencia');
+    if (!controle) return;
+
+    const formatado = formatCompetencia(controle.value);
+    if (formatado !== controle.value) {
+      controle.setValue(formatado);
+    }
   }
 
   salvar(): void {
