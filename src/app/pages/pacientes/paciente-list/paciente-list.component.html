@@ -19,12 +19,12 @@
 
   <label>
     CPF
-    <input type="text" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
+    <input type="text" inputmode="numeric" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
   </label>
 
   <label>
     Telefone
-    <input type="text" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
+    <input type="tel" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
   </label>
 
   <label>

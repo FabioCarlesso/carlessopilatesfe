@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { RelatorioNfseFormatoExportacao, RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
+import { formatCompetencia } from '../../../shared/utils/competencia-mask';
 
 @Component({
   selector: 'app-nfse-relatorio',
@@ -34,6 +35,16 @@ export class NfseRelatorioComponent implements OnInit {
       ]],
       notaAnteriorEmitida: [null]
     });
+  }
+
+  formatarCompetencia(): void {
+    const controle = this.form.get('competencia');
+    if (!controle) return;
+
+    const formatado = formatCompetencia(controle.value);
+    if (formatado !== controle.value) {
+      controle.setValue(formatado);
+    }
   }
 
   consultar(): void {

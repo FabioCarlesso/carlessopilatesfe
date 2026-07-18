@@ -12,10 +12,12 @@
       <input
         id="competencia"
         type="text"
+        inputmode="numeric"
         formControlName="competencia"
         class="form-control"
         placeholder="MM/AAAA"
         maxlength="7"
+        (input)="formatarCompetencia()"
         [class.is-invalid]="form.get('competencia')?.invalid && form.get('competencia')?.touched" />
       <div *ngIf="form.get('competencia')?.invalid && form.get('competencia')?.touched" class="invalid-feedback">
         Informe a competência no formato MM/AAAA.
