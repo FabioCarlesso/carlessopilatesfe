@@ -1,24 +1,21 @@
+// Desconta as margens verticais de `main.container` para não gerar scroll
+// residual, mesmo padrão de forbidden.component.scss. `dvh` acompanha a
+// barra de URL no mobile; `vh` fica como fallback (issue #165).
 .login-container {
-  position: relative;
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  flex-direction: column;
+  min-height: calc(100vh - (var(--gutter) * 2));
+  min-height: calc(100dvh - (var(--gutter) * 2));
   padding: 1.5rem 1rem;
   background: var(--bg-app);
 }
 
-// Em telas muito baixas (ex.: mobile em paisagem), reserva espaço no topo
-// para o toggle de tema não sobrepor o card ao centralizar (issue #165).
-@media (max-height: 500px) {
-  .login-container {
-    padding-top: 4rem;
-  }
-}
-
+// O toggle fica no fluxo (e não absoluto) para nunca sobrepor o card em
+// telas baixas. O `margin: auto` do card o centraliza no espaço restante
+// e permite scroll natural quando o conteúdo não cabe (issue #165).
 .login-theme-toggle {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  align-self: flex-end;
+  flex: none;
 }
 
 .login-card {
