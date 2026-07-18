@@ -43,6 +43,34 @@ npm install
 
 ---
 
+## CodeGraph (contexto para agentes de IA)
+
+O projeto é indexado pelo [CodeGraph](https://github.com/colbymchenry/codegraph), que mantém um grafo semântico do código (símbolos, chamadas e dependências) para que agentes de IA respondam perguntas de arquitetura em uma única consulta, em vez de explorar arquivo por arquivo.
+
+A configuração é versionada e não exige instalação global:
+
+- [`.mcp.json`](.mcp.json) — registra o servidor MCP `codegraph` (via `npx`, versão fixada) para o Claude Code do projeto.
+- [`codegraph.json`](codegraph.json) — exclui do índice o que não é código da aplicação: `assets/` (protótipos HTML/JSX do Design System), `docs/documentacao.html`, `nginx/` e `public/`. O `.gitignore` já é respeitado por padrão, então `node_modules`, `dist` e `coverage` ficam de fora automaticamente.
+- O índice é gravado em `.codegraph/` (ignorado pelo Git) e sincroniza sozinho a cada alteração de arquivo.
+
+Para gerar o índice pela primeira vez após clonar o repositório:
+
+```bash
+npx @colbymchenry/codegraph init
+```
+
+Comandos úteis fora do agente:
+
+```bash
+npx @colbymchenry/codegraph status                       # estatísticas do índice
+npx @colbymchenry/codegraph explore "fluxo de login"     # símbolos, código e call paths
+npx @colbymchenry/codegraph impact AuthService           # o que é afetado ao alterar um símbolo
+```
+
+O CodeGraph é ferramenta de apoio ao desenvolvimento: não entra no bundle, no Docker nem na CI.
+
+---
+
 ## Integração Contínua (CI)
 
 A cada `push` na `master` e a cada `pull_request`, o workflow
