@@ -104,6 +104,27 @@ describe('PacienteFormComponent', () => {
     it('campo() should return the matching AbstractControl', () => {
       expect(component.campo('nome')).toBe(component.form.get('nome'));
     });
+
+    it('should expose mobile-friendly keyboard/autocomplete attributes on inputs', () => {
+      const el = fixture.nativeElement as HTMLElement;
+
+      const nome = el.querySelector('#nome') as HTMLInputElement;
+      expect(nome.getAttribute('autocomplete')).toBe('name');
+
+      const email = el.querySelector('#email') as HTMLInputElement;
+      expect(email.getAttribute('autocomplete')).toBe('email');
+
+      const cpf = el.querySelector('#cpf') as HTMLInputElement;
+      expect(cpf.getAttribute('inputmode')).toBe('numeric');
+
+      const telefone = el.querySelector('#telefone') as HTMLInputElement;
+      expect(telefone.getAttribute('type')).toBe('tel');
+      expect(telefone.getAttribute('autocomplete')).toBe('tel');
+
+      const cep = el.querySelector('#cep') as HTMLInputElement;
+      expect(cep.getAttribute('inputmode')).toBe('numeric');
+      expect(cep.getAttribute('autocomplete')).toBe('postal-code');
+    });
   });
 
   describe('in edit mode (id present in route)', () => {

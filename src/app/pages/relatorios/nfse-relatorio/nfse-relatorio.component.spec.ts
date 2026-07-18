@@ -55,6 +55,11 @@ describe('NfseRelatorioComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should expose numeric inputmode on the competencia field', () => {
+    const competencia = fixture.nativeElement.querySelector('#competencia') as HTMLInputElement;
+    expect(competencia.getAttribute('inputmode')).toBe('numeric');
+  });
+
   it('should not request report when form is invalid', () => {
     component.form.setValue({ competencia: '13/2026', notaAnteriorEmitida: null });
 

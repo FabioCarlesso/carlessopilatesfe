@@ -129,6 +129,13 @@ describe('PacienteNfseEmitidaFormComponent', () => {
     expect(component.form.touched).toBeTrue();
   });
 
+  it('should expose numeric inputmode on the competencia field', async () => {
+    await setup();
+
+    const competencia = fixture.nativeElement.querySelector('#competencia') as HTMLInputElement;
+    expect(competencia.getAttribute('inputmode')).toBe('numeric');
+  });
+
   it('should reject competencia outside MM/AAAA format', async () => {
     await setup();
 

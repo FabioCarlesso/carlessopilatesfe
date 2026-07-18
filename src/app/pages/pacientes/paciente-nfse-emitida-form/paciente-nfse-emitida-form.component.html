@@ -16,7 +16,7 @@
   <div class="form-row">
     <div class="form-group form-group-sm">
       <label for="competencia">Competência *</label>
-      <input id="competencia" type="text" formControlName="competencia" class="form-control"
+      <input id="competencia" type="text" inputmode="numeric" formControlName="competencia" class="form-control"
         placeholder="MM/AAAA" maxlength="7"
         aria-describedby="competenciaError"
         [class.is-invalid]="campo('competencia')?.invalid && campo('competencia')?.touched" />

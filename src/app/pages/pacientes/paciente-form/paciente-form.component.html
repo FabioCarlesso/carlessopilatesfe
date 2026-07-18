@@ -11,7 +11,7 @@
 
   <div class="form-group">
     <label for="nome">Nome *</label>
-    <input id="nome" formControlName="nome" type="text" class="form-control"
+    <input id="nome" formControlName="nome" type="text" autocomplete="name" class="form-control"
       [class.is-invalid]="campo('nome')?.invalid && campo('nome')?.touched" />
     <div class="invalid-feedback" *ngIf="campo('nome')?.errors?.['required'] && campo('nome')?.touched">
       Nome é obrigatório.
@@ -24,7 +24,7 @@
   <div class="form-row">
     <div class="form-group">
       <label for="email">E-mail *</label>
-      <input id="email" formControlName="email" type="email" class="form-control"
+      <input id="email" formControlName="email" type="email" autocomplete="email" class="form-control"
         [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
       <div class="invalid-feedback" *ngIf="campo('email')?.touched && campo('email')?.invalid">
         E-mail inválido.
@@ -32,7 +32,7 @@
     </div>
     <div class="form-group">
       <label for="cpf">CPF *</label>
-      <input id="cpf" formControlName="cpf" type="text" class="form-control"
+      <input id="cpf" formControlName="cpf" type="text" inputmode="numeric" class="form-control"
         [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
       <div class="invalid-feedback" *ngIf="campo('cpf')?.touched && campo('cpf')?.invalid">
         CPF é obrigatório.
@@ -43,7 +43,7 @@
   <div class="form-row">
     <div class="form-group">
       <label for="telefone">Telefone</label>
-      <input id="telefone" formControlName="telefone" type="text" class="form-control" />
+      <input id="telefone" formControlName="telefone" type="tel" autocomplete="tel" class="form-control" />
     </div>
     <div class="form-group">
       <label for="dataNascimento">Data de Nascimento</label>
@@ -79,7 +79,7 @@
       </div>
       <div class="form-group flex-1">
         <label for="cep">CEP</label>
-        <input id="cep" formControlName="cep" type="text" class="form-control" />
+        <input id="cep" formControlName="cep" type="text" inputmode="numeric" autocomplete="postal-code" class="form-control" />
       </div>
     </div>
   </div>
