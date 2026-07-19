@@ -111,6 +111,21 @@ describe('AulaListComponent', () => {
       expect(component.loading).toBeFalse();
     });
 
+    it('should show the paciente name from the DTO as subtitle in the header', () => {
+      expect(component.subtitulo).toBe('Ana Silva');
+      const subtitle: HTMLElement = fixture.nativeElement.querySelector('.page-header .page-subtitle');
+      expect(subtitle).toBeTruthy();
+      expect(subtitle.textContent?.trim()).toBe('Ana Silva');
+    });
+
+    it('should fall back to the generic title when there are no aulas', () => {
+      serviceSpy.listarPorPaciente.and.returnValue(of([]));
+      component.carregar();
+      fixture.detectChanges();
+      expect(component.subtitulo).toBeNull();
+      expect(fixture.nativeElement.querySelector('.page-subtitle')).toBeNull();
+    });
+
     it('should set erro when profissionais fail to load', () => {
       profissionalServiceSpy.listar.and.returnValue(throwError(() => new Error('fail')));
       component.carregarProfissionais();
@@ -273,6 +288,13 @@ describe('AulaListComponent', () => {
       expect(profissionalServiceSpy.listar).toHaveBeenCalledWith(0, 100);
       expect(component.pacienteId).toBe(10);
       expect(component.titulo).toBe('Aulas do Pagamento');
+    });
+
+    it('should show the payment reference and paciente name as subtitle', () => {
+      expect(component.subtitulo).toBe('Pagamento #1 · Ana Silva');
+      const subtitle: HTMLElement = fixture.nativeElement.querySelector('.page-header .page-subtitle');
+      expect(subtitle).toBeTruthy();
+      expect(subtitle.textContent?.trim()).toBe('Pagamento #1 · Ana Silva');
     });
 
     it('should set erro when buscar payment fails', () => {

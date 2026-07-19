@@ -65,6 +65,21 @@ describe('PagamentoListComponent', () => {
     expect(component.pagamentos).toEqual([mockPagamento]);
   });
 
+  it('should show the paciente name from the DTO as subtitle in the header', () => {
+    expect(component.pacienteNome).toBe('Ana Silva');
+    const subtitle: HTMLElement = fixture.nativeElement.querySelector('.page-header .page-subtitle');
+    expect(subtitle).toBeTruthy();
+    expect(subtitle.textContent?.trim()).toBe('Ana Silva');
+  });
+
+  it('should fall back to the generic title when there are no pagamentos', () => {
+    serviceSpy.listar.and.returnValue(of([]));
+    component.carregar();
+    fixture.detectChanges();
+    expect(component.pacienteNome).toBeNull();
+    expect(fixture.nativeElement.querySelector('.page-subtitle')).toBeNull();
+  });
+
   it('should set erro when listar fails', () => {
     serviceSpy.listar.and.returnValue(throwError(() => new Error('fail')));
     component.carregar();

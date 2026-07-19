@@ -3,6 +3,7 @@ import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PlanoService } from '../../../core/services/plano.service';
+import { PacienteService } from '../../../core/services/paciente.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -16,6 +17,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 })
 export class PlanoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
+  pacienteNome: string | null = null;
   planos: PlanoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
@@ -28,7 +30,7 @@ export class PlanoListComponent implements OnInit, OnDestroy {
   readonly frequenciaLabel = FREQUENCIA_LABEL;
   readonly diasLabel = DIAS_SEMANA_LABEL;
 
-  constructor(private service: PlanoService, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
+  constructor(private service: PlanoService, private pacienteService: PacienteService, private route: ActivatedRoute, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -36,7 +38,20 @@ export class PlanoListComponent implements OnInit, OnDestroy {
       this.erro = 'Identificador inválido.';
       return;
     }
+    this.carregarNomePaciente();
     this.carregar();
+  }
+
+  private carregarNomePaciente(): void {
+    if (this.pacienteId === null) return;
+    this.pacienteService.buscar(this.pacienteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: paciente => {
+        this.pacienteNome = paciente.nome;
+        this.cdr.markForCheck();
+      },
+      // Falha ao carregar o nome não bloqueia a listagem (issue #143): mantém o título genérico.
+      error: () => { this.pacienteNome = null; }
+    });
   }
 
   ngOnDestroy(): void {

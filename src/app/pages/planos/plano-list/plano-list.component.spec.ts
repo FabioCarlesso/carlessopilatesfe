@@ -6,7 +6,9 @@ import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PlanoListComponent } from './plano-list.component';
 import { PlanoService } from '../../../core/services/plano.service';
+import { PacienteService } from '../../../core/services/paciente.service';
 import { PlanoResponseDTO } from '../../../core/models/plano';
+import { PacienteResponseDTO } from '../../../core/models/paciente';
 
 const mockPlano: PlanoResponseDTO = {
   id: 1, pacienteId: 10, tipo: 'MENSAL', valor: 250,
@@ -14,19 +16,28 @@ const mockPlano: PlanoResponseDTO = {
   diasSemana: ['MONDAY', 'WEDNESDAY'], ativo: true
 };
 
+const mockPaciente: PacienteResponseDTO = {
+  id: 10, nome: 'Ana Silva', email: 'ana@example.com', cpf: '123.456.789-00',
+  telefone: '(11) 90000-0000', dataNascimento: '1990-01-01', endereco: null, ativo: true
+};
+
 describe('PlanoListComponent', () => {
   let component: PlanoListComponent;
   let fixture: ComponentFixture<PlanoListComponent>;
   let serviceSpy: jasmine.SpyObj<PlanoService>;
+  let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
 
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('PlanoService', ['listar', 'inativar']);
     serviceSpy.listar.and.returnValue(of([mockPlano]));
+    pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+    pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
 
     await TestBed.configureTestingModule({
       imports: [PlanoListComponent, RouterTestingModule],
       providers: [
         { provide: PlanoService, useValue: serviceSpy },
+        { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '10' } } } }
       ]
     }).compileComponents();
@@ -63,6 +74,25 @@ describe('PlanoListComponent', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(10);
     expect(component.planos).toEqual([mockPlano]);
     expect(component.loading).toBeFalse();
+  });
+
+  it('should show the paciente name as subtitle in the header', () => {
+    expect(pacienteServiceSpy.buscar).toHaveBeenCalledWith(10);
+    expect(component.pacienteNome).toBe('Ana Silva');
+    const subtitle: HTMLElement = fixture.nativeElement.querySelector('.page-header .page-subtitle');
+    expect(subtitle).toBeTruthy();
+    expect(subtitle.textContent?.trim()).toBe('Ana Silva');
+  });
+
+  it('should keep the generic title when the paciente name fails to load', () => {
+    pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
+    component.pacienteNome = null;
+    component.ngOnInit();
+    fixture.detectChanges();
+    expect(component.pacienteNome).toBeNull();
+    expect(component.erro).toBeNull();
+    expect(component.planos).toEqual([mockPlano]);
+    expect(fixture.nativeElement.querySelector('.page-subtitle')).toBeNull();
   });
 
   it('should set erro when listar fails', () => {
@@ -118,13 +148,15 @@ describe('PlanoListComponent', () => {
 
   it('should not load planos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PlanoService', ['listar', 'inativar']);
+    const invalidPacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
+    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidPacienteServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
 
     invalidComponent.ngOnInit();
 
     expect(invalidComponent.erro).toBe('Identificador inválido.');
     expect(invalidServiceSpy.listar).not.toHaveBeenCalled();
+    expect(invalidPacienteServiceSpy.buscar).not.toHaveBeenCalled();
   });
 
   it('should not fire a second inativar request while the action is in progress', () => {
