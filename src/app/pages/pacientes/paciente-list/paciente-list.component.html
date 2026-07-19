@@ -6,7 +6,18 @@
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
 <div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
 
-<form class="filters" (ngSubmit)="buscar()">
+<button
+  type="button"
+  class="filtros-toggle"
+  (click)="alternarFiltros()"
+  [attr.aria-expanded]="filtrosAbertos"
+  aria-controls="filtros-pacientes">
+  <span>Filtros</span>
+  <span *ngIf="filtrosAtivos() > 0" class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  <span class="filtros-caret" aria-hidden="true">▾</span>
+</button>
+
+<form id="filtros-pacientes" class="filters" [class.filtros-recolhidos]="!filtrosAbertos" (ngSubmit)="buscar()">
   <label>
     Nome
     <input type="text" name="nome" [(ngModel)]="filtro.nome" placeholder="Nome do paciente">

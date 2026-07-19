@@ -370,4 +370,63 @@ describe('ProfissionalListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
   });
 
+  it('should start with the filters panel collapsed (issue #163)', () => {
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should toggle the filters panel open and closed', () => {
+    component.alternarFiltros();
+    expect(component.filtrosAbertos).toBeTrue();
+    component.alternarFiltros();
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should collapse the filters panel when buscar is called', () => {
+    component.filtrosAbertos = true;
+    component.buscar();
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should count active filters ignoring the default status', () => {
+    expect(component.filtrosAtivos()).toBe(0);
+
+    component.filtro = { nome: 'Paula', email: '', tipoContrato: '', percentualPagamentoAula: null, status: 'ativos' };
+    expect(component.filtrosAtivos()).toBe(1);
+
+    component.filtro = { nome: ' Paula ', email: 'a@b.com', tipoContrato: 'PJ', percentualPagamentoAula: 45, status: 'inativos' };
+    expect(component.filtrosAtivos()).toBe(5);
+  });
+
+  it('should render the filters toggle bound to the panel with aria attributes', () => {
+    const toggle = fixture.nativeElement.querySelector('.filtros-toggle') as HTMLButtonElement;
+    const form = fixture.nativeElement.querySelector('form.filters') as HTMLFormElement;
+
+    expect(toggle).withContext('filters toggle button must be present').toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBe('filtros-profissionais');
+    // O botão não deve ter aria-label próprio: ele sobrescreveria o nome
+    // acessível e esconderia a contagem do badge dos leitores de tela (issue #163).
+    expect(toggle.hasAttribute('aria-label')).toBeFalse();
+    expect(form.id).toBe('filtros-profissionais');
+    expect(form.classList).toContain('filtros-recolhidos');
+  });
+
+  it('should reflect the open state and active-filter badge in the template', () => {
+    component.filtro = { nome: 'Paula', email: 'a@b.com', tipoContrato: '', percentualPagamentoAula: null, status: 'ativos' };
+    component.alternarFiltros();
+    (component as unknown as { cdr: ChangeDetectorRef }).cdr.markForCheck();
+    fixture.detectChanges();
+
+    const toggle = fixture.nativeElement.querySelector('.filtros-toggle') as HTMLButtonElement;
+    const badge = fixture.nativeElement.querySelector('.filtros-badge') as HTMLElement;
+    const form = fixture.nativeElement.querySelector('form.filters') as HTMLFormElement;
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(form.classList).not.toContain('filtros-recolhidos');
+    expect(badge).withContext('badge must show the active-filter count').toBeTruthy();
+    expect(badge.textContent?.trim()).toBe('2');
+    // A contagem fica no nome acessível do botão via aria-label do badge (issue #163).
+    expect(badge.getAttribute('aria-label')).toBe('2 filtros ativos');
+  });
+
 });

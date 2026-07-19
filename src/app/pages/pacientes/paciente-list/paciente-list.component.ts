@@ -36,6 +36,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   confirmarInativarId: number | null = null;
   confirmarAtivarId: number | null = null;
   acaoEmAndamento = false;
+  filtrosAbertos = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   filtro: FiltroUI = {
     nome: '',
@@ -87,7 +88,25 @@ export class PacienteListComponent implements OnInit, OnDestroy {
 
   buscar(): void {
     this.currentPage = 0;
+    // No mobile, recolhe o painel após aplicar para que o primeiro resultado
+    // apareça na primeira dobra (issue #163). No desktop o painel está sempre
+    // visível via CSS, então o estado não tem efeito visual.
+    this.filtrosAbertos = false;
     this.carregar();
+  }
+
+  alternarFiltros(): void {
+    this.filtrosAbertos = !this.filtrosAbertos;
+  }
+
+  filtrosAtivos(): number {
+    let count = 0;
+    if (this.filtro.nome.trim()) count++;
+    if (this.filtro.email.trim()) count++;
+    if (this.filtro.cpf.trim()) count++;
+    if (this.filtro.telefone.trim()) count++;
+    if (this.filtro.status !== 'ativos') count++;
+    return count;
   }
 
   limparFiltros(): void {

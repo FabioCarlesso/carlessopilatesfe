@@ -63,6 +63,26 @@
   flex-wrap: wrap;
 }
 
+// Botão de disclosure dos filtros (issue #163): só existe no mobile. No desktop
+// fica oculto e o painel permanece sempre aberto, mantendo o layout inalterado.
+.filtros-toggle {
+  display: none;
+}
+
+.filtros-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 .35rem;
+  border-radius: 999px;
+  background: var(--c-horizonte);
+  color: var(--c-cloud-dancer);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
 .table {
   width: 100%;
   min-width: 820px;
@@ -182,6 +202,38 @@
 }
 
 @media (max-width: 768px) {
+  // Filtros recolhíveis no mobile (issue #163): o botão aparece e o painel
+  // fica oculto por padrão, subindo a listagem para a primeira dobra.
+  .filtros-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 44px;
+    padding: .5rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-elev);
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-1);
+  }
+
+  .filtros-caret {
+    margin-left: auto;
+    transition: transform .2s ease;
+  }
+
+  .filtros-toggle[aria-expanded="true"] .filtros-caret {
+    transform: rotate(180deg);
+  }
+
+  .filters.filtros-recolhidos {
+    display: none;
+  }
+
   // Na paginação compacta do mobile (issue #161) mostramos apenas
   // "Anterior / Página X de N / Próxima". O `justify-content: center` acima
   // venceria a regra global (`.pagination { justify-content: space-between }`)
