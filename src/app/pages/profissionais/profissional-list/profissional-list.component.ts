@@ -7,6 +7,7 @@ import { ProfissionalFiltro, ProfissionalService } from '../../../core/services/
 import { ProfissionalResponseDTO, TipoContrato, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 
 interface FiltroUI {
   nome: string;
@@ -18,17 +19,19 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfissionalListComponent implements OnInit {
   profissionais: ProfissionalResponseDTO[] = [];
+  totalElements = 0;
   totalPages = 0;
   currentPage = 0;
   pageSize = 10;
   visiblePages: number[] = [];
+  readonly pageSizeOptions = [5, 10, 20, 50];
   readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
@@ -66,6 +69,7 @@ export class ProfissionalListComponent implements OnInit {
         }
 
         this.profissionais = page.content;
+        this.totalElements = meta.totalElements ?? this.totalElements;
         this.totalPages = totalPages;
         this.currentPage = this.normalizarPagina(meta.number, this.currentPage);
         this.pageSize = this.normalizarTamanhoPagina(meta.size, this.pageSize);
@@ -171,6 +175,14 @@ export class ProfissionalListComponent implements OnInit {
     this.carregar();
   }
 
+  alterarTamanhoPagina(size: number): void {
+    if (!this.pageSizeOptions.includes(size) || size === this.pageSize) return;
+
+    this.pageSize = size;
+    this.currentPage = 0;
+    this.carregar();
+  }
+
   trackByProfissional(_: number, profissional: ProfissionalResponseDTO): number {
     return profissional.id;
   }
@@ -189,6 +201,9 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   private normalizarTamanhoPagina(size: number | undefined, fallback: number): number {
-    return typeof size === 'number' && Number.isInteger(size) && size > 0 ? size : fallback;
+    // Restringe às opções expostas no seletor (mesmo padrão de paciente-list): um `size`
+    // fora de `pageSizeOptions` deixaria o `<select>` sem opção correspondente, exibindo a
+    // primeira e dessincronizando do tamanho real da página.
+    return typeof size === 'number' && this.pageSizeOptions.includes(size) ? size : fallback;
   }
 }
