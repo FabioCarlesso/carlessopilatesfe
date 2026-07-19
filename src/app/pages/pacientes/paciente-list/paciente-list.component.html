@@ -11,7 +11,6 @@
   class="filtros-toggle"
   (click)="alternarFiltros()"
   [attr.aria-expanded]="filtrosAbertos"
-  [attr.aria-label]="filtrosAbertos ? 'Recolher filtros' : 'Expandir filtros'"
   aria-controls="filtros-pacientes">
   <span>Filtros</span>
   <span *ngIf="filtrosAtivos() > 0" class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>

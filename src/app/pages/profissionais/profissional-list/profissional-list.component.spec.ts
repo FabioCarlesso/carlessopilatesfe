@@ -404,6 +404,9 @@ describe('ProfissionalListComponent', () => {
     expect(toggle).withContext('filters toggle button must be present').toBeTruthy();
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(toggle.getAttribute('aria-controls')).toBe('filtros-profissionais');
+    // O botão não deve ter aria-label próprio: ele sobrescreveria o nome
+    // acessível e esconderia a contagem do badge dos leitores de tela (issue #163).
+    expect(toggle.hasAttribute('aria-label')).toBeFalse();
     expect(form.id).toBe('filtros-profissionais');
     expect(form.classList).toContain('filtros-recolhidos');
   });
@@ -422,6 +425,8 @@ describe('ProfissionalListComponent', () => {
     expect(form.classList).not.toContain('filtros-recolhidos');
     expect(badge).withContext('badge must show the active-filter count').toBeTruthy();
     expect(badge.textContent?.trim()).toBe('2');
+    // A contagem fica no nome acessível do botão via aria-label do badge (issue #163).
+    expect(badge.getAttribute('aria-label')).toBe('2 filtros ativos');
   });
 
 });
