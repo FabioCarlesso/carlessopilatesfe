@@ -1,5 +1,8 @@
 <div class="page-header">
-  <h1>Planos do Paciente</h1>
+  <div>
+    <h1>Planos do Paciente</h1>
+    <p *ngIf="pacienteNome" class="page-subtitle">{{ pacienteNome }}</p>
+  </div>
   <div class="acoes">
     <a [routerLink]="['/planos/novo', pacienteId]" class="btn btn-primary">Novo Plano</a>
     <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>

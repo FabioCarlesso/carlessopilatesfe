@@ -31,6 +31,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
   erro: string | null = null;
   sucesso: string | null = null;
   titulo = 'Aulas';
+  subtitulo: string | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -68,6 +69,10 @@ export class AulaListComponent implements OnInit, OnDestroy {
       this.pagamentoService.buscar(this.pagamentoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: pagamento => {
           this.pacienteId = pagamento.pacienteId;
+          // Referência do pagamento + nome do paciente no cabeçalho (issue #143).
+          this.subtitulo = pagamento.pacienteNome
+            ? `Pagamento #${pagamento.id} · ${pagamento.pacienteNome}`
+            : `Pagamento #${pagamento.id}`;
           this.carregar();
         },
         error: () => {
@@ -114,6 +119,11 @@ export class AulaListComponent implements OnInit, OnDestroy {
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: aulas => {
         this.aulas = aulas;
+        // Rota por paciente: nome vem do DTO da aula (issue #143). Na rota por pagamento o
+        // subtítulo já foi definido com a referência do pagamento e não deve ser sobrescrito.
+        if (this.pagamentoId === null) {
+          this.subtitulo = aulas[0]?.pacienteNome ?? null;
+        }
         this.profissionalSelecionadoPorAula = aulas.reduce<Record<number, number | null>>((acc, aula) => {
           acc[aula.id] = aula.profissionalId ?? null;
           return acc;

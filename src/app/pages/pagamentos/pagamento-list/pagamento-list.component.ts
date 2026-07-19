@@ -17,6 +17,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 })
 export class PagamentoListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
+  pacienteNome: string | null = null;
   pagamentos: PagamentoResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
@@ -66,6 +67,8 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
     this.service.listar(this.pacienteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: pagamentos => {
         this.pagamentos = pagamentos;
+        // Nome do paciente vem do próprio DTO (issue #143); lista vazia mantém o título genérico.
+        this.pacienteNome = pagamentos[0]?.pacienteNome ?? null;
         this.loading = false;
         this.cdr.markForCheck();
       },

@@ -1,5 +1,8 @@
 <div class="page-header">
-  <h1>Pagamentos do Paciente</h1>
+  <div>
+    <h1>Pagamentos do Paciente</h1>
+    <p *ngIf="pacienteNome" class="page-subtitle">{{ pacienteNome }}</p>
+  </div>
   <div class="acoes">
     <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
     <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
