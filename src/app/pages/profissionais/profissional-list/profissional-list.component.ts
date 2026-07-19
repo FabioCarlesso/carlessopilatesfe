@@ -201,6 +201,9 @@ export class ProfissionalListComponent implements OnInit {
   }
 
   private normalizarTamanhoPagina(size: number | undefined, fallback: number): number {
-    return typeof size === 'number' && Number.isInteger(size) && size > 0 ? size : fallback;
+    // Restringe às opções expostas no seletor (mesmo padrão de paciente-list): um `size`
+    // fora de `pageSizeOptions` deixaria o `<select>` sem opção correspondente, exibindo a
+    // primeira e dessincronizando do tamanho real da página.
+    return typeof size === 'number' && this.pageSizeOptions.includes(size) ? size : fallback;
   }
 }

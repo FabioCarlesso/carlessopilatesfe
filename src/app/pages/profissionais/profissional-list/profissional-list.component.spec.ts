@@ -149,6 +149,19 @@ describe('ProfissionalListComponent', () => {
     expect(component.visiblePages).toEqual([0, 1, 2]);
   });
 
+  it('should ignore unsupported page sizes returned by the API', () => {
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockProfissional],
+      page: { totalElements: 1, totalPages: 1, size: 17, number: 0 }
+    }));
+    component.pageSize = 10;
+
+    component.carregar();
+
+    expect(component.pageSize).toBe(10);
+    expect(component.pageSizeOptions).toContain(component.pageSize);
+  });
+
   it('should keep currentPage and pageSize when API omits pagination metadata', () => {
     const response = {
       content: [mockProfissional],
