@@ -525,4 +525,57 @@ describe('PacienteListComponent', () => {
     expect(component.confirmarInativarId).toBe(1);
   });
 
+  it('should start with the filters panel collapsed (issue #163)', () => {
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should toggle the filters panel open and closed', () => {
+    component.alternarFiltros();
+    expect(component.filtrosAbertos).toBeTrue();
+    component.alternarFiltros();
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should collapse the filters panel when buscar is called', () => {
+    component.filtrosAbertos = true;
+    component.buscar();
+    expect(component.filtrosAbertos).toBeFalse();
+  });
+
+  it('should count active filters ignoring the default status', () => {
+    expect(component.filtrosAtivos()).toBe(0);
+
+    component.filtro = { nome: 'Ana', email: '', cpf: '', telefone: '', status: 'ativos' };
+    expect(component.filtrosAtivos()).toBe(1);
+
+    component.filtro = { nome: ' Ana ', email: 'a@b.com', cpf: '123', telefone: '11', status: 'inativos' };
+    expect(component.filtrosAtivos()).toBe(5);
+  });
+
+  it('should render the filters toggle bound to the panel with aria attributes', () => {
+    const toggle = fixture.nativeElement.querySelector('.filtros-toggle') as HTMLButtonElement;
+    const form = fixture.nativeElement.querySelector('form.filters') as HTMLFormElement;
+
+    expect(toggle).withContext('filters toggle button must be present').toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-controls')).toBe('filtros-pacientes');
+    expect(form.id).toBe('filtros-pacientes');
+    expect(form.classList).toContain('filtros-recolhidos');
+  });
+
+  it('should reflect the open state and active-filter badge in the template', () => {
+    component.filtro = { nome: 'Ana', email: 'a@b.com', cpf: '', telefone: '', status: 'ativos' };
+    component.alternarFiltros();
+    fixture.detectChanges();
+
+    const toggle = fixture.nativeElement.querySelector('.filtros-toggle') as HTMLButtonElement;
+    const badge = fixture.nativeElement.querySelector('.filtros-badge') as HTMLElement;
+    const form = fixture.nativeElement.querySelector('form.filters') as HTMLFormElement;
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(form.classList).not.toContain('filtros-recolhidos');
+    expect(badge).withContext('badge must show the active-filter count').toBeTruthy();
+    expect(badge.textContent?.trim()).toBe('2');
+  });
+
 });
