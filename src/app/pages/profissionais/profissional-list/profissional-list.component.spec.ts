@@ -73,10 +73,60 @@ describe('ProfissionalListComponent', () => {
   it('should load profissionais on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
     expect(component.profissionais).toEqual([mockProfissional]);
+    expect(component.totalElements).toBe(1);
     expect(component.totalPages).toBe(2);
     expect(component.currentPage).toBe(0);
     expect(component.pageSize).toBe(10);
     expect(component.visiblePages).toEqual([0, 1]);
+  });
+
+  it('should sync totalElements with API metadata', () => {
+    const response: ProfissionalPage = {
+      content: [mockProfissional],
+      page: { totalElements: 41, totalPages: 3, size: 20, number: 2 }
+    };
+
+    serviceSpy.listar.and.returnValue(of(response));
+    component.carregar();
+
+    expect(component.totalElements).toBe(41);
+  });
+
+  it('should reset to first page and reload when page size changes', () => {
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockProfissional],
+      page: { totalElements: 1, totalPages: 1, size: 20, number: 0 }
+    }));
+    component.currentPage = 2;
+
+    component.alterarTamanhoPagina(20);
+
+    expect(component.pageSize).toBe(20);
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20, defaultFiltro);
+  });
+
+  it('should ignore unsupported or unchanged page size', () => {
+    serviceSpy.listar.calls.reset();
+
+    component.alterarTamanhoPagina(10);
+    component.alterarTamanhoPagina(15);
+
+    expect(component.pageSize).toBe(10);
+    expect(serviceSpy.listar).not.toHaveBeenCalled();
+  });
+
+  it('should render the pagination summary with total and page-size selector', () => {
+    const summary = fixture.nativeElement.querySelector('app-pagination-summary');
+    expect(summary).withContext('pagination summary must be present').toBeTruthy();
+
+    const text = fixture.nativeElement.querySelector('.pagination-summary span');
+    expect(text.textContent?.trim()).toBe('Exibindo 1-1 de 1 profissionais');
+
+    const select = fixture.nativeElement.querySelector('.pagination-summary select') as HTMLSelectElement;
+    expect(select).withContext('page size select must be present').toBeTruthy();
+    expect(select.value).toBe('10');
   });
 
   it('should sync currentPage and pageSize with API metadata', () => {

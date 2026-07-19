@@ -71,9 +71,47 @@ describe('UsuarioListComponent', () => {
   it('should load usuarios on init', () => {
     expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
     expect(component.usuarios).toEqual([mockUsuario, mockUsuarioInativo]);
+    expect(component.totalElements).toBe(2);
     expect(component.totalPages).toBe(1);
     expect(component.currentPage).toBe(0);
     expect(component.loading).toBeFalse();
+  });
+
+  it('should reset to first page and reload when page size changes', () => {
+    serviceSpy.listar.calls.reset();
+    serviceSpy.listar.and.returnValue(of({
+      content: [mockUsuario, mockUsuarioInativo],
+      page: { totalElements: 2, totalPages: 1, size: 20, number: 0 }
+    }));
+    component.currentPage = 2;
+
+    component.alterarTamanhoPagina(20);
+
+    expect(component.pageSize).toBe(20);
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20);
+  });
+
+  it('should ignore unsupported or unchanged page size', () => {
+    serviceSpy.listar.calls.reset();
+
+    component.alterarTamanhoPagina(10);
+    component.alterarTamanhoPagina(15);
+
+    expect(component.pageSize).toBe(10);
+    expect(serviceSpy.listar).not.toHaveBeenCalled();
+  });
+
+  it('should render the pagination summary with total and page-size selector', () => {
+    const summary = fixture.nativeElement.querySelector('app-pagination-summary');
+    expect(summary).withContext('pagination summary must be present').toBeTruthy();
+
+    const text = fixture.nativeElement.querySelector('.pagination-summary span');
+    expect(text.textContent?.trim()).toBe('Exibindo 1-2 de 2 usuários');
+
+    const select = fixture.nativeElement.querySelector('.pagination-summary select') as HTMLSelectElement;
+    expect(select).withContext('page size select must be present').toBeTruthy();
+    expect(select.value).toBe('10');
   });
 
   it('should wrap the table in a scroll container to keep overflow inside the card', () => {

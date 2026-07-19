@@ -62,32 +62,42 @@
   Nenhum profissional ativo cadastrado.
 </div>
 
-<div *ngIf="profissionais.length > 0" class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>E-mail</th>
-        <th>Contrato</th>
-        <th>% por Aula</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of profissionais; trackBy: trackByProfissional">
-        <td>{{ p.nome }}</td>
-        <td>{{ p.email }}</td>
-        <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>
-        <td>{{ p.percentualPagamentoAula }}%</td>
-        <td class="acoes">
-          <a [routerLink]="['/profissionais', p.id]" class="btn btn-sm btn-outline">Ver</a>
-          <a [routerLink]="['/profissionais', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-          <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<ng-container *ngIf="profissionais.length > 0">
+  <app-pagination-summary
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [totalElements]="totalElements"
+    itemLabel="profissionais"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageSizeChange)="alterarTamanhoPagina($event)" />
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Contrato</th>
+          <th>% por Aula</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of profissionais; trackBy: trackByProfissional">
+          <td>{{ p.nome }}</td>
+          <td>{{ p.email }}</td>
+          <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>
+          <td>{{ p.percentualPagamentoAula }}%</td>
+          <td class="acoes">
+            <a [routerLink]="['/profissionais', p.id]" class="btn btn-sm btn-outline">Ver</a>
+            <a [routerLink]="['/profissionais', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+            <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-container>
 
 <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de profissionais">
   <button

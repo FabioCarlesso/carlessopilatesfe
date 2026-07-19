@@ -12,18 +12,27 @@
   Nenhum usuário cadastrado.
 </div>
 
-<div *ngIf="!loading && usuarios.length > 0" class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>E-mail</th>
-        <th>Perfil</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
+<ng-container *ngIf="!loading && usuarios.length > 0">
+  <app-pagination-summary
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [totalElements]="totalElements"
+    itemLabel="usuários"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageSizeChange)="alterarTamanhoPagina($event)" />
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Perfil</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
       <tr *ngFor="let u of usuarios">
         <td>{{ u.name }}</td>
         <td>{{ u.email }}</td>
@@ -60,8 +69,9 @@
         </td>
       </tr>
     </tbody>
-  </table>
-</div>
+    </table>
+  </div>
+</ng-container>
 
 <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de usuários">
   <button

@@ -1,0 +1,10 @@
+<div class="pagination-summary">
+  <span>Exibindo {{ pageStart() }}-{{ pageEnd() }} de {{ totalElements }} {{ itemLabel }}</span>
+
+  <label>
+    Itens por página
+    <select #pageSizeSelect (change)="aoAlterarTamanho(pageSizeSelect.value)">
+      <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="size === pageSize">{{ size }}</option>
+    </select>
+  </label>
+</div>

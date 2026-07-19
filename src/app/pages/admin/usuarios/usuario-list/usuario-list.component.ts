@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConfirmarDialogComponent } from '../../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { PaginationSummaryComponent } from '../../../../shared/components/pagination-summary/pagination-summary.component';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ROLE_OPTIONS, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
@@ -23,16 +24,18 @@ const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [NgIf, NgFor, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent],
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss'
 })
 export class UsuarioListComponent implements OnInit, OnDestroy {
   usuarios: UsuarioAdminResponseDTO[] = [];
+  totalElements = 0;
   totalPages = 0;
   currentPage = 0;
   pageSize = 10;
   visiblePages: number[] = [];
+  readonly pageSizeOptions = [5, 10, 20, 50];
   readonly maxVisiblePages = 5;
   loading = false;
   erro: string | null = null;
@@ -74,6 +77,7 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         }
 
         this.usuarios = page.content;
+        this.totalElements = meta.totalElements ?? this.totalElements;
         this.totalPages = totalPages;
         this.currentPage = this.normalizarPagina(meta.number, this.currentPage);
         this.pageSize = this.normalizarTamanhoPagina(meta.size, this.pageSize);
@@ -136,6 +140,14 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
   pagina(p: number): void {
     if (p < 0 || p >= this.totalPages || p === this.currentPage) return;
     this.currentPage = p;
+    this.carregar();
+  }
+
+  alterarTamanhoPagina(size: number): void {
+    if (!this.pageSizeOptions.includes(size) || size === this.pageSize) return;
+
+    this.pageSize = size;
+    this.currentPage = 0;
     this.carregar();
   }
 
