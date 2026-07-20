@@ -33,6 +33,7 @@ describe('app routes', () => {
       'pacientes/:pacienteId/anamnese',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova',
+      'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/:id/marcar',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural',
       'pacientes/:pacienteId/sessoes/nova',
       'pacientes/:pacienteId/sessoes/:id/editar',
@@ -74,6 +75,7 @@ describe('app routes', () => {
     const anamneseIndex = paths.indexOf('pacientes/:pacienteId/anamnese');
     const avaliacaoIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica');
     const posturalNovaIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova');
+    const posturalMarcarIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/:id/marcar');
     const posturalIndex = paths.indexOf('pacientes/:pacienteId/avaliacao-fisioterapeutica/postural');
     const sessoesNovaIndex = paths.indexOf('pacientes/:pacienteId/sessoes/nova');
     const sessoesEditarIndex = paths.indexOf('pacientes/:pacienteId/sessoes/:id/editar');
@@ -97,7 +99,8 @@ describe('app routes', () => {
     expect(editarIndex).toBeLessThan(anamneseIndex);
     expect(anamneseIndex).toBeLessThan(avaliacaoIndex);
     expect(avaliacaoIndex).toBeLessThan(posturalNovaIndex);
-    expect(posturalNovaIndex).toBeLessThan(posturalIndex);
+    expect(posturalNovaIndex).toBeLessThan(posturalMarcarIndex);
+    expect(posturalMarcarIndex).toBeLessThan(posturalIndex);
     expect(posturalIndex).toBeLessThan(sessoesNovaIndex);
     expect(sessoesNovaIndex).toBeLessThan(sessoesEditarIndex);
     expect(sessoesEditarIndex).toBeLessThan(sessoesEvolucaoIndex);

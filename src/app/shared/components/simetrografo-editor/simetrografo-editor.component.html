@@ -1,0 +1,147 @@
+<div class="editor">
+  <div class="editor__foto">
+    <div class="barra-acoes" role="toolbar" aria-label="Ferramentas de marcação">
+      <button type="button" class="btn-ferramenta" (click)="aproximar()" [disabled]="zoom >= zoomMaximo" aria-label="Aproximar">
+        Zoom +
+      </button>
+      <button type="button" class="btn-ferramenta" (click)="afastar()" [disabled]="zoom <= zoomMinimo" aria-label="Afastar">
+        Zoom −
+      </button>
+      <button type="button" class="btn-ferramenta" (click)="reenquadrar()" [disabled]="zoom === zoomMinimo && panX === 0 && panY === 0">
+        Reenquadrar
+      </button>
+      <button type="button" class="btn-ferramenta" [class.ativo]="gradeVisivel" [attr.aria-pressed]="gradeVisivel" (click)="alternarGrade()">
+        Grade
+      </button>
+      <button type="button" class="btn-ferramenta" [class.ativo]="prumoVisivel" [attr.aria-pressed]="prumoVisivel" (click)="alternarPrumo()">
+        Prumo
+      </button>
+      <button type="button" class="btn-ferramenta" (click)="desfazer()" [disabled]="!podeDesfazer">
+        Desfazer
+      </button>
+    </div>
+
+    <div class="controle-grade" *ngIf="gradeVisivel">
+      <label for="divisoes-grade">Espaçamento da grade</label>
+      <input
+        id="divisoes-grade"
+        type="range"
+        min="4"
+        max="24"
+        step="1"
+        [value]="divisoesGrade"
+        (input)="ajustarDivisoes($event)"
+        aria-describedby="divisoes-grade-valor" />
+      <span id="divisoes-grade-valor" class="controle-grade__valor">{{ divisoesGrade }} divisões</span>
+    </div>
+
+    <div
+      #viewport
+      class="viewport"
+      [class.viewport--leitura]="somenteLeitura"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)">
+      <div class="palco" [style.transform]="transformPalco">
+        <img
+          #foto
+          class="palco__foto"
+          [src]="fotoUrl"
+          [alt]="'Foto da análise postural — ' + vistaLabel[vista]"
+          draggable="false"
+          (load)="onImagemCarregada()" />
+
+        <svg
+          *ngIf="larguraNatural > 0"
+          class="palco__overlay"
+          [attr.viewBox]="viewBox"
+          aria-hidden="true"
+          focusable="false">
+          <g *ngIf="gradeVisivel" class="grade">
+            <line
+              *ngFor="let x of linhasVerticais"
+              [attr.x1]="x"
+              [attr.y1]="0"
+              [attr.x2]="x"
+              [attr.y2]="alturaNatural"
+              [attr.stroke-width]="espessuraGrade" />
+            <line
+              *ngFor="let y of linhasHorizontais"
+              [attr.x1]="0"
+              [attr.y1]="y"
+              [attr.x2]="larguraNatural"
+              [attr.y2]="y"
+              [attr.stroke-width]="espessuraGrade" />
+          </g>
+
+          <g *ngIf="prumoVisivel">
+            <line
+              class="prumo"
+              [attr.x1]="prumoX * larguraNatural"
+              [attr.y1]="0"
+              [attr.x2]="prumoX * larguraNatural"
+              [attr.y2]="alturaNatural"
+              [attr.stroke-width]="espessuraLinha"
+              [attr.stroke-dasharray]="espessuraLinha * 4 + ' ' + espessuraLinha * 3" />
+            <circle
+              *ngIf="!somenteLeitura"
+              class="prumo__alca"
+              [attr.cx]="prumoX * larguraNatural"
+              [attr.cy]="prumoAlcaY"
+              [attr.r]="raioPonto"
+              [attr.stroke-width]="espessuraLinha" />
+          </g>
+
+          <g *ngFor="let ponto of pontos" class="ponto">
+            <circle
+              [attr.cx]="ponto.x * larguraNatural"
+              [attr.cy]="ponto.y * alturaNatural"
+              [attr.r]="raioPonto"
+              [attr.stroke-width]="espessuraLinha" />
+            <circle
+              class="ponto__centro"
+              [attr.cx]="ponto.x * larguraNatural"
+              [attr.cy]="ponto.y * alturaNatural"
+              [attr.r]="raioPonto * 0.22" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <p class="dica" *ngIf="!somenteLeitura">
+      Toque para marcar o ponto indicado e arraste um ponto já marcado para corrigir. A linha de prumo se move pela alça na base da foto. Arraste a foto para deslocar e use pinça ou os botões de zoom para aproximar.
+    </p>
+  </div>
+
+  <aside class="painel">
+    <h3 class="painel__titulo">Pontos — {{ vistaLabel[vista] }}</h3>
+    <p class="painel__progresso">{{ totalMarcados }} de {{ sequencia.length }} marcados</p>
+
+    <p class="painel__instrucao" role="status">{{ instrucao }}</p>
+
+    <ul class="checklist">
+      <li
+        *ngFor="let def of sequencia"
+        class="checklist__item"
+        [class.checklist__item--marcado]="estaMarcado(def.codigo)"
+        [class.checklist__item--proximo]="ehProximo(def.codigo)">
+        <span class="checklist__estado" aria-hidden="true">
+          {{ estaMarcado(def.codigo) ? 'OK' : ehProximo(def.codigo) ? '»' : '--' }}
+        </span>
+        <span class="checklist__label">{{ def.label }}</span>
+        <span class="visually-hidden">
+          {{ estaMarcado(def.codigo) ? 'marcado' : ehProximo(def.codigo) ? 'próximo a marcar' : 'pendente' }}
+        </span>
+        <button
+          *ngIf="estaMarcado(def.codigo) && !somenteLeitura"
+          type="button"
+          class="checklist__refazer"
+          (click)="remarcar(def.codigo)"
+          [attr.aria-label]="'Refazer marcação de ' + def.label">
+          Refazer
+        </button>
+      </li>
+    </ul>
+  </aside>
+</div>

@@ -41,6 +41,12 @@
         </div>
 
         <div class="analise-acoes">
+          <a
+            *ngIf="analise.temFoto && pacienteId !== null"
+            [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', analise.id, 'marcar']"
+            class="btn btn-primary btn-sm">
+            {{ analise.status === 'CONCLUIDA' ? 'Ver marcação' : 'Marcar pontos' }}
+          </a>
           <button
             type="button"
             class="btn btn-outline btn-sm"

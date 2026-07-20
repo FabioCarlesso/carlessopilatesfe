@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import {
   AvaliacaoPosturalFotoResponseDTO,
   AvaliacaoPosturalRequestDTO,
-  AvaliacaoPosturalResponseDTO
+  AvaliacaoPosturalResponseDTO,
+  AvaliacaoPosturalUpdateDTO
 } from '../models/avaliacao-postural';
 
 @Injectable({
@@ -23,6 +24,15 @@ export class AvaliacaoPosturalService {
     return this.http.get<AvaliacaoPosturalResponseDTO[]>(
       `${this.apiUrl}/avaliacao-fisioterapeutica/${avaliacaoFisioterapeuticaId}`
     );
+  }
+
+  buscarPorId(id: number): Observable<AvaliacaoPosturalResponseDTO> {
+    return this.http.get<AvaliacaoPosturalResponseDTO>(`${this.apiUrl}/${id}`);
+  }
+
+  /** Salva a marcação em rascunho; a API recalcula as métricas e as devolve na resposta. */
+  atualizar(id: number, dto: AvaliacaoPosturalUpdateDTO): Observable<AvaliacaoPosturalResponseDTO> {
+    return this.http.put<AvaliacaoPosturalResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
   enviarFoto(id: number, foto: File): Observable<AvaliacaoPosturalFotoResponseDTO> {
