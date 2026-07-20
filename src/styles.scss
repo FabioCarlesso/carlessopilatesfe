@@ -480,6 +480,10 @@ select.form-control,
   display: flex;
   align-items: center;
   justify-content: center;
+  // Respiro lateral em qualquer largura: garante margem entre o diálogo e as
+  // bordas da viewport mesmo em telas estreitas (~320px). Com box-sizing:
+  // border-box o padding não estoura o overlay fixo (issue #166).
+  padding: var(--sp-4);
   z-index: 999;
 }
 
@@ -493,7 +497,10 @@ body.dialog-aberto {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-lg);
   padding: var(--sp-6);
-  min-width: 320px;
+  // Em telas mais largas mantém os 320px de largura mínima; abaixo de ~340px
+  // recua para caber na viewport descontando o padding do overlay (2×16px),
+  // evitando que o conteúdo encoste/estoure as bordas (issue #166).
+  min-width: min(320px, calc(100vw - 32px));
   box-shadow: var(--shadow-3);
 
   p {
@@ -718,5 +725,18 @@ body.dialog-aberto {
   .textarea,
   .form-control-sm {
     font-size: 16px;
+  }
+
+  // Ações dos diálogos no mobile: os botões crescem para dividir a linha e,
+  // quando não cabem lado a lado (rótulos longos em ~320px), quebram para
+  // ocupar a largura toda empilhados. O min-height garante alvo de toque
+  // confortável (≥ 44px) com o teclado fechado (issue #166).
+  .dialog-actions {
+    flex-wrap: wrap;
+
+    .btn {
+      flex: 1 1 auto;
+      min-height: 44px;
+    }
   }
 }
