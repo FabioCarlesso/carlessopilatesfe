@@ -93,6 +93,15 @@
               [attr.stroke-width]="espessuraLinha" />
           </g>
 
+          <line
+            *ngFor="let linha of linhasReferencia"
+            class="linha-referencia"
+            [attr.x1]="linha.x1"
+            [attr.y1]="linha.y1"
+            [attr.x2]="linha.x2"
+            [attr.y2]="linha.y2"
+            [attr.stroke-width]="espessuraLinha" />
+
           <g *ngFor="let ponto of pontos" class="ponto">
             <circle
               [attr.cx]="ponto.x * larguraNatural"
@@ -115,6 +124,10 @@
   </div>
 
   <aside class="painel">
+    <!-- Projeção do painel de medidas: fica ao lado da foto, acima do checklist,
+         para que os números acompanhem a marcação sem exigir rolagem. -->
+    <ng-content />
+
     <h3 class="painel__titulo">Pontos — {{ vistaLabel[vista] }}</h3>
     <p class="painel__progresso">{{ totalMarcados }} de {{ sequencia.length }} marcados</p>
 

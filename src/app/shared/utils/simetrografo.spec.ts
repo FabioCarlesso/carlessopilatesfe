@@ -234,8 +234,19 @@ describe('simetrografo - payload do rascunho', () => {
     expect(montarPayloadRascunho(estado, 0.75)).toEqual({
       landmarks: [{ codigo: 'OLHO_ESQ', x: 0.45, y: 0.12 }],
       linhaPrumoX: 0.502,
+      observacoes: '',
       proporcaoImagem: 0.75
     });
+  });
+
+  it('envia as observações clínicas junto com a marcação', () => {
+    const payload = montarPayloadRascunho(estado, 0.75, '  Ombro direito mais baixo.  ');
+    expect(payload.observacoes).toBe('Ombro direito mais baixo.');
+  });
+
+  it('envia texto vazio quando as observações são apagadas', () => {
+    // A API ignora campos nulos: `null` deixaria a observação anterior gravada.
+    expect(montarPayloadRascunho(estado, 0.75, '   ').observacoes).toBe('');
   });
 
   it('nunca envia métricas — a API as recalcula a cada salvamento', () => {
@@ -257,6 +268,7 @@ describe('simetrografo - payload do rascunho', () => {
     expect(montarPayloadRascunho({ landmarks: [], linhaPrumoX: null }, 0.75)).toEqual({
       landmarks: [],
       linhaPrumoX: null,
+      observacoes: '',
       proporcaoImagem: 0.75
     });
   });

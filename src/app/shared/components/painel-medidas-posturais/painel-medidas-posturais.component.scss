@@ -1,0 +1,78 @@
+.medidas {
+  margin-bottom: var(--sp-5);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.medidas__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.medidas__origem {
+  margin: var(--sp-1) 0 var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.medidas__lista {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+}
+
+.medidas__label {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.medidas__valor {
+  margin: 0;
+  text-align: right;
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  /* Números alinham entre si conforme os valores mudam durante a marcação. */
+  font-variant-numeric: tabular-nums;
+
+  /* Tokens de texto do Design System: legíveis nos temas claro e escuro. */
+  &--assimetrica {
+    color: var(--c-danger-text);
+  }
+
+  &--simetrica {
+    color: var(--c-success-text);
+  }
+
+  &--pendente {
+    color: var(--text-muted);
+  }
+}
+
+.medidas__direcao {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: var(--ls-caps-tight);
+}
+
+.medidas__nota {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  line-height: var(--lh-normal);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

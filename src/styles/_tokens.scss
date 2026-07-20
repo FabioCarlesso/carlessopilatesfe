@@ -23,6 +23,15 @@
   --c-info: #355978;
   --c-info-bg: #dde5ed;
 
+  /*
+   * Variantes de texto de `--c-success`/`--c-danger` para uso sobre superfícies
+   * elevadas. Existem à parte porque as originais também servem de fundo (ex.:
+   * `.btn-danger`, com texto branco): clareá-las para o tema escuro estragaria
+   * o contraste desses fundos. No tema claro são idênticas às originais.
+   */
+  --c-success-text: var(--c-success);
+  --c-danger-text: var(--c-danger);
+
   --bg-app: var(--c-cloud-dancer);
   --bg-paper: var(--c-cloud-dancer-3);
   --bg-elev: #ffffff;
@@ -151,4 +160,8 @@
   --c-warning-bg: #2b2419;
   --c-danger-bg: #2c1d1d;
   --c-info-bg: #1a2330;
+
+  /* Clareadas para o fundo escuro: as originais ficam em ~2:1 sobre `--bg-elev`. */
+  --c-success-text: #6da372;
+  --c-danger-text: #d97070;
 }

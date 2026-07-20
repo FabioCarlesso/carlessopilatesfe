@@ -435,4 +435,39 @@ describe('SimetrografoEditorComponent', () => {
       expect(component.proporcaoImagem).toBeNull();
     });
   });
+
+  describe('linhas de referência', () => {
+    it('desenha a linha apenas quando os dois pontos do par estão marcados', () => {
+      component.pontos = [{ codigo: 'OMBRO_ESQ', x: 0.4, y: 0.25 }];
+      expect(component.linhasReferencia.length).toBe(0);
+
+      component.pontos = [...component.pontos, { codigo: 'OMBRO_DIR', x: 0.6, y: 0.3 }];
+
+      expect(component.linhasReferencia).toEqual([
+        { x1: 0.4 * 1080, y1: 0.25 * 1440, x2: 0.6 * 1080, y2: 0.3 * 1440 }
+      ]);
+    });
+
+    it('acompanha a correção de um ponto por arraste', () => {
+      component.pontos = [
+        { codigo: 'OMBRO_ESQ', x: 0.4, y: 0.25 },
+        { codigo: 'OMBRO_DIR', x: 0.6, y: 0.3 }
+      ];
+
+      component.onPointerDown(pointerEvent('pointerdown', 340, 290));
+      component.onPointerMove(pointerEvent('pointermove', 340, 370));
+
+      expect(component.linhasReferencia[0].y2).toBeCloseTo(0.4 * 1440, 5);
+    });
+
+    it('não desenha linhas nas vistas laterais, que têm um ponto por região', () => {
+      component.vista = 'LADO_DIREITO';
+      component.pontos = [
+        { codigo: 'OMBRO', x: 0.5, y: 0.25 },
+        { codigo: 'QUADRIL', x: 0.52, y: 0.5 }
+      ];
+
+      expect(component.linhasReferencia.length).toBe(0);
+    });
+  });
 });

@@ -205,14 +205,20 @@ export class HistoricoEdicao {
  * Monta o corpo do `PUT /api/avaliacoes-posturais/{id}`. A proporção da imagem
  * (largura/altura natural) acompanha o salvamento porque a API depende dela
  * para calcular os ângulos corretamente.
+ *
+ * As observações vão sempre como texto — inclusive vazio. A API só altera os
+ * campos não nulos que recebe, então enviar `null` deixaria uma observação
+ * antiga gravada mesmo depois de a fisioterapeuta apagá-la na tela.
  */
 export function montarPayloadRascunho(
   estado: EstadoMarcacao,
-  proporcaoImagem: number | null
+  proporcaoImagem: number | null,
+  observacoes = ''
 ): AvaliacaoPosturalUpdateDTO {
   const payload: AvaliacaoPosturalUpdateDTO = {
     landmarks: estado.landmarks.map(l => ({ codigo: l.codigo, x: l.x, y: l.y })),
-    linhaPrumoX: estado.linhaPrumoX
+    linhaPrumoX: estado.linhaPrumoX,
+    observacoes: observacoes.trim()
   };
 
   if (proporcaoImagem !== null && proporcaoImagem > 0) {

@@ -16,3 +16,22 @@
   color: var(--c-warning);
   font-size: var(--fs-caption);
 }
+
+.observacoes {
+  display: block;
+  margin-top: var(--sp-5);
+
+  label {
+    display: block;
+    margin-bottom: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 500;
+  }
+}
+
+.observacoes__dica {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
