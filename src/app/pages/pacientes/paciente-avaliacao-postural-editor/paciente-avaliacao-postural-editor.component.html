@@ -12,10 +12,19 @@
     <button
       *ngIf="!somenteLeitura && fotoUrl"
       type="button"
-      class="btn btn-primary"
-      [disabled]="salvando"
+      class="btn btn-outline"
+      [disabled]="salvando || concluindo"
       (click)="salvarRascunho()">
       {{ salvando ? 'Salvando...' : 'Salvar rascunho' }}
+    </button>
+    <button
+      *ngIf="!somenteLeitura && fotoUrl"
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!podeConcluir"
+      [title]="pontosCompletos ? '' : 'Marque todos os pontos da vista para concluir.'"
+      (click)="concluir()">
+      {{ concluindo ? 'Concluindo...' : 'Concluir análise' }}
     </button>
     <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">
       Voltar
@@ -24,6 +33,7 @@
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="aviso" class="alert alert-warning" role="status">{{ aviso }}</div>
 <div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 
@@ -43,4 +53,24 @@
   [linhaPrumoX]="prumoInicial"
   [somenteLeitura]="somenteLeitura"
   (marcacaoAlterada)="onMarcacaoAlterada($event)"
-  (imagemMedida)="onImagemMedida($event)" />
+  (imagemMedida)="onImagemMedida($event)">
+  <app-painel-medidas-posturais
+    [metricas]="metricasExibidas"
+    [landmarks]="landmarksAtuais"
+    [previa]="exibindoPrevia" />
+</app-simetrografo-editor>
+
+<section *ngIf="!loading && !parametroInvalido && analise" class="observacoes">
+  <label for="observacoes-analise">Observações clínicas</label>
+  <textarea
+    id="observacoes-analise"
+    class="form-control"
+    rows="4"
+    placeholder="Registre o que observou nesta análise."
+    [value]="observacoes"
+    [disabled]="somenteLeitura"
+    (input)="onObservacoesAlteradas($event)"></textarea>
+  <p *ngIf="!somenteLeitura" class="observacoes__dica">
+    Salvas junto com a marcação ao salvar o rascunho ou concluir a análise.
+  </p>
+</section>

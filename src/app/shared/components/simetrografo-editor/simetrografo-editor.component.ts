@@ -36,6 +36,7 @@ import {
   paraTela,
   proximoPendente
 } from '../../utils/simetrografo';
+import { PARES_REFERENCIA } from '../../utils/metricas-posturais';
 
 /** Deslocamento em px a partir do qual o gesto deixa de ser toque e vira arraste/pan. */
 const LIMIAR_ARRASTE_PX = 6;
@@ -196,6 +197,28 @@ export class SimetrografoEditorComponent implements OnChanges {
    */
   get prumoAlcaY(): number {
     return this.alturaNatural - this.raioPonto * 1.6;
+  }
+
+  /**
+   * Segmentos que ligam cada par já marcado, em unidades da imagem. Um par só
+   * entra quando os dois pontos existem; nas vistas laterais, que têm um ponto
+   * por região, a lista fica naturalmente vazia.
+   */
+  get linhasReferencia(): { x1: number; y1: number; x2: number; y2: number }[] {
+    const porCodigo = new Map(this.pontos.map(p => [p.codigo, p]));
+
+    return PARES_REFERENCIA.flatMap(par => {
+      const a = porCodigo.get(par.esquerdo);
+      const b = porCodigo.get(par.direito);
+      if (!a || !b) return [];
+
+      return [{
+        x1: a.x * this.larguraNatural,
+        y1: a.y * this.alturaNatural,
+        x2: b.x * this.larguraNatural,
+        y2: b.y * this.alturaNatural
+      }];
+    });
   }
 
   estaMarcado(codigo: CodigoLandmark): boolean {

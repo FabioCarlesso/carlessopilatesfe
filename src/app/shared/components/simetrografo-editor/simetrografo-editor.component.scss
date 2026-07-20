@@ -155,6 +155,12 @@
   stroke: #e04545;
 }
 
+/* Linhas que ligam os pares marcados. Como as cores do overlay ficam sobre a
+   foto (fundo neutro em ambos os temas), são fixas — não seguem os tokens. */
+.linha-referencia {
+  stroke: #4da3ff;
+}
+
 .ponto circle {
   fill: none;
   stroke: #ffd23f;

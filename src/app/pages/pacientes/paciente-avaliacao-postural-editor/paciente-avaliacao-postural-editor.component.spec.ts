@@ -2,7 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { PacienteAvaliacaoPosturalEditorComponent } from './paciente-avaliacao-postural-editor.component';
-import { AvaliacaoPosturalResponseDTO } from '../../../core/models/avaliacao-postural';
+import {
+  AvaliacaoPosturalResponseDTO,
+  LandmarkDTO,
+  MetricasPosturaisDTO
+} from '../../../core/models/avaliacao-postural';
 
 const mockRascunho: AvaliacaoPosturalResponseDTO = {
   id: 10,
@@ -117,7 +121,8 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual({
         landmarks: [{ codigo: 'OLHO_ESQ', x: 0.45, y: 0.12 }],
-        linhaPrumoX: 0.48
+        linhaPrumoX: 0.48,
+        observacoes: ''
       });
       req.flush({ ...mockRascunho, linhaPrumoX: 0.48 });
 
@@ -154,7 +159,12 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       component.salvarRascunho();
 
       const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
-      expect(req.request.body).toEqual({ landmarks: [], linhaPrumoX: 0.5, proporcaoImagem: 0.75 });
+      expect(req.request.body).toEqual({
+        landmarks: [],
+        linhaPrumoX: 0.5,
+        observacoes: '',
+        proporcaoImagem: 0.75
+      });
       req.flush(mockRascunho);
     });
 
@@ -207,6 +217,248 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
     const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
     expect((req.request.body as { linhaPrumoX: number }).linhaPrumoX).toBe(0.5);
     req.flush(mockRascunho);
+  });
+
+  describe('medidas calculadas', () => {
+    /** Métricas como a API as devolve para `mockRascunho`. */
+    const metricasApi: MetricasPosturaisDTO = {
+      inclinacaoCabecaGraus: 7.59,
+      desnivelOmbrosGraus: 6.34,
+      desnivelQuadrilGraus: null,
+      desnivelJoelhosGraus: null,
+      desvioPrumoNormalizado: 0.002,
+      desvioPrumoCm: null
+    };
+
+    /** Marcação completa de uma vista frontal, com ombros desnivelados. */
+    const marcacaoCompleta: LandmarkDTO[] = [
+      { codigo: 'OLHO_ESQ', x: 0.45, y: 0.12 },
+      { codigo: 'OLHO_DIR', x: 0.55, y: 0.13 },
+      { codigo: 'OMBRO_ESQ', x: 0.38, y: 0.25 },
+      { codigo: 'OMBRO_DIR', x: 0.62, y: 0.27 },
+      { codigo: 'QUADRIL_ESQ', x: 0.42, y: 0.5 },
+      { codigo: 'QUADRIL_DIR', x: 0.58, y: 0.5 },
+      { codigo: 'JOELHO_ESQ', x: 0.43, y: 0.7 },
+      { codigo: 'JOELHO_DIR', x: 0.57, y: 0.7 },
+      { codigo: 'TORNOZELO_ESQ', x: 0.44, y: 0.92 },
+      { codigo: 'TORNOZELO_DIR', x: 0.56, y: 0.92 }
+    ];
+
+    /** Análise sem proporção salva e sem métricas, para exercitar a prévia local. */
+    const analiseSemProporcao: AvaliacaoPosturalResponseDTO = {
+      ...mockRascunho,
+      proporcaoImagem: null,
+      metricas: null,
+      landmarks: [
+        { codigo: 'OMBRO_ESQ', x: 0.4, y: 0.2 },
+        { codigo: 'OMBRO_DIR', x: 0.6, y: 0.3 }
+      ]
+    };
+
+    /** Recarrega a tela com a análise acima, sem a foto ter sido medida. */
+    function criarSemProporcao(): void {
+      component.carregar();
+      httpMock.expectOne('/api/avaliacoes-posturais/10').flush(analiseSemProporcao);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(new Blob(['b'], { type: 'image/jpeg' }));
+    }
+
+    beforeEach(() => {
+      criar();
+      httpMock.expectOne('/api/avaliacoes-posturais/10').flush(mockRascunho);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(new Blob(['b'], { type: 'image/jpeg' }));
+    });
+
+    it('mostra as métricas da API enquanto não há alterações pendentes', () => {
+      component.analise = { ...mockRascunho, metricas: metricasApi };
+
+      expect(component.exibindoPrevia).toBeFalse();
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(6.34);
+    });
+
+    it('troca para a prévia local assim que um ponto é movido', () => {
+      component.onImagemMedida(0.75);
+      component.onMarcacaoAlterada({
+        landmarks: [
+          { codigo: 'OMBRO_ESQ', x: 0.38, y: 0.25 },
+          { codigo: 'OMBRO_DIR', x: 0.62, y: 0.27 }
+        ],
+        linhaPrumoX: 0.502
+      });
+
+      expect(component.exibindoPrevia).toBeTrue();
+      // Mesma trigonometria do backend: conferido contra a resposta da API.
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(6.34);
+      expect(component.metricasExibidas?.desvioPrumoNormalizado).toBe(0.002);
+    });
+
+    it('só habilita concluir com todos os pontos obrigatórios da vista', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta.slice(0, 8), linhaPrumoX: 0.5 });
+      expect(component.pontosCompletos).toBeFalse();
+      expect(component.podeConcluir).toBeFalse();
+
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      expect(component.podeConcluir).toBeTrue();
+    });
+
+    it('salva a marcação antes de concluir, para gravar o que está na tela', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.observacoes = 'Ombro direito mais baixo.';
+      component.concluir();
+
+      const put = httpMock.expectOne(
+        req => req.url === '/api/avaliacoes-posturais/10' && req.method === 'PUT'
+      );
+      expect((put.request.body as { observacoes: string }).observacoes).toBe('Ombro direito mais baixo.');
+      put.flush({ ...mockRascunho, landmarks: marcacaoCompleta });
+
+      const patch = httpMock.expectOne('/api/avaliacoes-posturais/10/concluir');
+      expect(patch.request.method).toBe('PATCH');
+      patch.flush({ ...mockRascunho, status: 'CONCLUIDA', landmarks: marcacaoCompleta });
+
+      expect(component.somenteLeitura).toBeTrue();
+      expect(component.alteracoesPendentes).toBeFalse();
+      expect(component.sucesso).toContain('concluída');
+    });
+
+    it('exibe a mensagem do 422 quando a API recusa a conclusão', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir').flush(
+        { erro: 'Pontos obrigatórios não marcados: [JOELHO_DIR]' },
+        { status: 422, statusText: 'Unprocessable Entity' }
+      );
+
+      expect(component.erro).toBe('Pontos obrigatórios não marcados: [JOELHO_DIR]');
+      expect(component.concluindo).toBeFalse();
+      expect(component.somenteLeitura).toBeFalse();
+    });
+
+    it('não conclui quando o PUT prévio falha', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(
+        { erro: 'Coordenada fora de [0,1]' },
+        { status: 400, statusText: 'Bad Request' }
+      );
+
+      httpMock.expectNone('/api/avaliacoes-posturais/10/concluir');
+      expect(component.erro).toBe('Coordenada fora de [0,1]');
+      expect(component.concluindo).toBeFalse();
+    });
+
+    it('avisa quando ajustes feitos durante a conclusão ficaram de fora do prontuário', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      const put = httpMock.expectOne(req => req.method === 'PUT');
+      put.flush({ ...mockRascunho, landmarks: marcacaoCompleta });
+
+      // A fisioterapeuta corrige um ponto entre o PUT e o PATCH: essa edição não
+      // entrou no registro e, com a análise imutável, não tem mais como entrar.
+      component.onMarcacaoAlterada({
+        landmarks: [...marcacaoCompleta.slice(0, 9), { codigo: 'TORNOZELO_DIR', x: 0.51, y: 0.93 }],
+        linhaPrumoX: 0.5
+      });
+
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir').flush({
+        ...mockRascunho,
+        status: 'CONCLUIDA',
+        landmarks: marcacaoCompleta
+      });
+
+      // Canal de aviso, e não de erro: a conclusão em si deu certo.
+      expect(component.aviso).toContain('não entraram no prontuário');
+      expect(component.erro).toBeNull();
+      expect(component.sucesso).toBeNull();
+    });
+
+    it('descarta o aviso de rascunho salvo ao iniciar a conclusão', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.salvarRascunho();
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      expect(component.sucesso).toContain('Rascunho salvo');
+
+      // Sem isso, o "Rascunho salvo" ficaria no ar somando-se ao desfecho da conclusão.
+      component.concluir();
+      expect(component.sucesso).toBeNull();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir')
+        .flush({ ...mockRascunho, status: 'CONCLUIDA' });
+    });
+
+    it('realinha a marcação exibida com a que foi gravada ao concluir', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      // A API é a fonte da verdade: a tela não pode divergir do prontuário.
+      const gravados: LandmarkDTO[] = [{ codigo: 'OLHO_ESQ', x: 0.1, y: 0.1 }];
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir').flush({
+        ...mockRascunho,
+        status: 'CONCLUIDA',
+        linhaPrumoX: 0.47,
+        landmarks: gravados
+      });
+
+      expect(component.landmarksIniciais).toEqual(gravados);
+      expect(component.landmarksAtuais).toEqual(gravados);
+      expect(component.prumoInicial).toBe(0.47);
+    });
+
+    it('não anuncia prévia só porque as observações foram digitadas', () => {
+      component.analise = { ...mockRascunho, metricas: metricasApi };
+      component.observacoes = 'Paciente relatou dor lombar.';
+      component.onObservacoesAlteradas({
+        target: { value: 'Paciente relatou dor lombar.' }
+      } as unknown as Event);
+
+      // As medidas não dependem do texto: seguem sendo as confirmadas pela API.
+      expect(component.alteracoesPendentes).toBeTrue();
+      expect(component.marcacaoPendente).toBeFalse();
+      expect(component.exibindoPrevia).toBeFalse();
+      expect(component.metricasExibidas).toBe(metricasApi);
+    });
+
+    it('recalcula a prévia quando a resposta da API muda a proporção da foto', () => {
+      criarSemProporcao();
+
+      // Sem proporção, a prévia assume foto quadrada: atan(0,1/0,2) = 26,57°.
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(26.57);
+
+      // Salva sem tocar na marcação; a API devolve a análise já com a proporção.
+      component.salvarRascunho();
+      httpMock.expectOne('/api/avaliacoes-posturais/10')
+        .flush({ ...analiseSemProporcao, proporcaoImagem: 0.5 });
+
+      // Com proporção 0,5 o Δx real cai pela metade e o ângulo vai a 45°: a
+      // prévia memoizada não pode sobreviver à troca da análise.
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(45);
+    });
+
+    it('mantém a mesma referência da prévia entre verificações, para não sujar o painel OnPush', () => {
+      component.onImagemMedida(0.75);
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+
+      expect(component.metricasExibidas).toBe(component.metricasExibidas);
+
+      const antes = component.metricasExibidas;
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta.slice(0, 4), linhaPrumoX: 0.5 });
+      expect(component.metricasExibidas).not.toBe(antes);
+    });
+
+    it('envia as observações apagadas como texto vazio, que a API grava', () => {
+      // `null` seria ignorado pela API e deixaria a observação anterior gravada.
+      component.observacoes = '   ';
+      component.salvarRascunho();
+
+      const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+      expect((req.request.body as { observacoes: string }).observacoes).toBe('');
+      req.flush(mockRascunho);
+    });
   });
 
   describe('análise concluída', () => {

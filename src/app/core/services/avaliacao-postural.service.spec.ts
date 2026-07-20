@@ -110,6 +110,16 @@ describe('AvaliacaoPosturalService', () => {
     req.flush(blobEsperado);
   });
 
+  it('should PATCH /api/avaliacoes-posturais/:id/concluir', () => {
+    const concluidaEsperada = { ...mockAnalise, status: 'CONCLUIDA' as const };
+
+    service.concluir(10).subscribe(a => expect(a).toEqual(concluidaEsperada));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10/concluir');
+    expect(req.request.method).toBe('PATCH');
+    req.flush(concluidaEsperada);
+  });
+
   it('should PATCH /api/avaliacoes-posturais/:id/cancelar', () => {
     const canceladaEsperada = { ...mockAnalise, status: 'RASCUNHO' as const };
 

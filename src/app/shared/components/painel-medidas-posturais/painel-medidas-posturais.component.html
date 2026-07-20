@@ -1,0 +1,34 @@
+<section class="medidas" aria-labelledby="medidas-titulo">
+  <h3 id="medidas-titulo" class="medidas__titulo">Medidas</h3>
+
+  <p class="medidas__origem" role="status">
+    {{ previa ? 'Prévia — salve para confirmar com a API.' : 'Valores confirmados pela API.' }}
+  </p>
+
+  <dl class="medidas__lista">
+    <ng-container *ngFor="let medida of medidas">
+      <dt class="medidas__label">{{ medida.label }}</dt>
+      <dd
+        class="medidas__valor"
+        [class.medidas__valor--assimetrica]="medida.assimetrica"
+        [class.medidas__valor--simetrica]="medida.texto && !medida.assimetrica"
+        [class.medidas__valor--pendente]="!medida.texto">
+        <ng-container *ngIf="medida.texto; else pendente">
+          {{ medida.texto }}
+          <span *ngIf="medida.direcao" class="medidas__direcao">{{ medida.direcao }}</span>
+          <span class="visually-hidden">
+            {{ medida.assimetrica ? 'fora da simetria esperada' : 'dentro da simetria esperada' }}
+          </span>
+        </ng-container>
+        <ng-template #pendente>
+          <span aria-hidden="true">—</span>
+          <span class="visually-hidden">pendente, pontos ainda não marcados</span>
+        </ng-template>
+      </dd>
+    </ng-container>
+  </dl>
+
+  <p class="medidas__nota">
+    Destaque a partir de {{ limiar }}°. Medidas em centímetros dependem de calibração da foto.
+  </p>
+</section>
