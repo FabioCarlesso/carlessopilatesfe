@@ -1,0 +1,80 @@
+<div class="page-header">
+  <div>
+    <h1>Nova Análise Postural</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && !parametroInvalido">
+  <div *ngIf="avaliacaoFisioterapeuticaId === null" class="card sem-avaliacao">
+    <p>É necessário cadastrar a avaliação fisioterapêutica do paciente antes de iniciar uma análise postural.</p>
+    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-primary">
+      Cadastrar avaliação fisioterapêutica
+    </a>
+  </div>
+
+  <form *ngIf="avaliacaoFisioterapeuticaId !== null" [formGroup]="form" (ngSubmit)="continuar()" class="form-card postural-form">
+    <h2 class="form-section-title">1. Escolha a vista</h2>
+    <div class="vista-grid" role="group" aria-label="Escolha a vista da foto" aria-describedby="vistaError">
+      <button
+        type="button"
+        *ngFor="let opcao of vistaOptions"
+        class="vista-card"
+        [class.selecionada]="campo('vista')?.value === opcao.valor"
+        [disabled]="vistaIndisponivel(opcao.valor) || analiseCriadaId !== null"
+        [attr.aria-pressed]="campo('vista')?.value === opcao.valor"
+        (click)="selecionarVista(opcao.valor)">
+        <span>{{ opcao.label }}</span>
+        <span class="vista-indisponivel" *ngIf="vistaIndisponivel(opcao.valor)">Já existe análise</span>
+      </button>
+    </div>
+    <div id="vistaError" class="invalid-feedback" *ngIf="campo('vista')?.touched && campo('vista')?.invalid">
+      Selecione a vista da foto.
+    </div>
+
+    <h2 class="form-section-title">2. Envie a foto</h2>
+    <div
+      class="dropzone"
+      [class.tem-foto]="!!previewUrl"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event)">
+      <ng-container *ngIf="!previewUrl">
+        <p>Arraste a foto aqui ou</p>
+        <button type="button" class="btn btn-secondary" (click)="inputArquivo.click()" [disabled]="comprimindo">
+          {{ comprimindo ? 'Processando...' : 'Tirar foto / Escolher arquivo' }}
+        </button>
+      </ng-container>
+
+      <div class="preview" *ngIf="previewUrl">
+        <img [src]="previewUrl" alt="Pré-visualização da foto comprimida" />
+        <p class="tamanho-info">Foto comprimida: {{ tamanhoComprimidoKb }} KB</p>
+        <button type="button" class="btn btn-outline btn-sm" (click)="removerFoto()" [disabled]="analiseCriadaId !== null">Remover foto</button>
+      </div>
+
+      <input
+        #inputArquivo
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="input-arquivo-oculto"
+        (change)="onArquivoSelecionado($event)" />
+    </div>
+
+    <p class="dica-posicionamento">
+      Oriente o paciente: em pé, parede lisa ao fundo, celular na vertical e nivelado.
+    </p>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="enviando || comprimindo">
+        {{ enviando ? 'Enviando...' : 'Continuar' }}
+      </button>
+      <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>

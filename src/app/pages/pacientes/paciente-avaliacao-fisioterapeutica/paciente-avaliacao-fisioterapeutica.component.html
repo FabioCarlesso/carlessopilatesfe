@@ -4,6 +4,7 @@
     <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
   </div>
   <div class="acoes">
+    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-secondary">Postural</a>
     <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar</a>
     <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Voltar</a>
   </div>
