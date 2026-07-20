@@ -136,6 +136,18 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
     return this.fotoUrls.get(id) ?? null;
   }
 
+  /** Libera o object URL de uma análise que saiu da lista, sem esperar o `ngOnDestroy`. */
+  private descartarFoto(id: number): void {
+    const url = this.fotoUrls.get(id);
+    if (url) {
+      URL.revokeObjectURL(url);
+      this.fotoUrls.delete(id);
+    }
+    if (this.fotoAbertaId === id) {
+      this.fotoAbertaId = null;
+    }
+  }
+
   confirmarCancelar(id: number): void {
     if (this.acaoEmAndamentoId !== null) return;
     this.confirmarCancelarId = id;
@@ -163,6 +175,7 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
       .subscribe({
         next: () => {
           this.analises = this.analises.filter(a => a.id !== id);
+          this.descartarFoto(id);
           this.acaoEmAndamentoId = null;
           if (this.successTimer !== null) {
             clearTimeout(this.successTimer);

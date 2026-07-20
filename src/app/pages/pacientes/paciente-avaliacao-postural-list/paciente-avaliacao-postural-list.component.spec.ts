@@ -197,6 +197,43 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     expect(component.sucesso).toBe('Análise cancelada com sucesso.');
   });
 
+  it('should revoke the cached photo object URL of a cancelled analysis', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:foto-10');
+    const revokeSpy = spyOn(URL, 'revokeObjectURL');
+    component.alternarFoto(mockAnaliseFrente);
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(new Blob(['img']));
+    expect(component.fotoUrl(10)).toBe('blob:foto-10');
+
+    component.confirmarCancelar(10);
+    component.executarCancelamento();
+    httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar').flush({ ...mockAnaliseFrente, status: 'RASCUNHO' });
+
+    expect(revokeSpy).toHaveBeenCalledWith('blob:foto-10');
+    expect(component.fotoUrl(10)).toBeNull();
+    expect(component.fotoAbertaId).toBeNull();
+  });
+
+  it('should disable every cancel button while an action is in progress', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    fixture.detectChanges();
+    const botaoCancelar = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('.analise-acoes .btn-danger');
+    expect(botaoCancelar().disabled).toBe(false);
+
+    component.confirmarCancelar(10);
+    component.executarCancelamento();
+    fixture.detectChanges();
+
+    expect(botaoCancelar().disabled).toBe(true);
+
+    httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar').flush({ ...mockAnaliseFrente, status: 'RASCUNHO' });
+  });
+
   it('should show an error message when cancelling fails and keep the analysis in the list', () => {
     criarComponente();
     carregarComAnalises();
