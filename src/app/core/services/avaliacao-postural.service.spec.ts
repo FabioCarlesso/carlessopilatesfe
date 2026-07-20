@@ -86,4 +86,14 @@ describe('AvaliacaoPosturalService', () => {
     expect(req.request.responseType).toBe('blob');
     req.flush(blobEsperado);
   });
+
+  it('should PATCH /api/avaliacoes-posturais/:id/cancelar', () => {
+    const canceladaEsperada = { ...mockAnalise, status: 'RASCUNHO' as const };
+
+    service.cancelar(10).subscribe(a => expect(a).toEqual(canceladaEsperada));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar');
+    expect(req.request.method).toBe('PATCH');
+    req.flush(canceladaEsperada);
+  });
 });

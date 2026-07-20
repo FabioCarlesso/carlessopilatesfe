@@ -183,6 +183,60 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
     expect(component.arquivoComprimido).toBeTruthy();
   });
 
+  it('should process a file chosen via the file input and reset its value', async () => {
+    criarComponente();
+    carregarComAnalisesExistentes();
+    mockarCompressao();
+
+    const inputArquivo = { value: 'C:\\fakepath\\foto.png', files: [criarArquivoOriginal()] } as unknown as HTMLInputElement;
+    const changeEvent = { target: inputArquivo } as unknown as Event;
+
+    await component.onArquivoSelecionado(changeEvent);
+
+    expect(component.arquivoComprimido).toBeTruthy();
+    expect(inputArquivo.value).toBe('');
+  });
+
+  it('should do nothing when the file input change fires without a selected file', async () => {
+    criarComponente();
+    carregarComAnalisesExistentes();
+    mockarCompressao();
+
+    const inputArquivo = { value: '', files: null } as unknown as HTMLInputElement;
+    const changeEvent = { target: inputArquivo } as unknown as Event;
+
+    await component.onArquivoSelecionado(changeEvent);
+
+    expect(component.arquivoComprimido).toBeNull();
+    expect(compressorSpy.comprimir).not.toHaveBeenCalled();
+  });
+
+  it('should allow replacing the photo after a failed upload without recreating the analysis', async () => {
+    criarComponente();
+    carregarComAnalisesExistentes();
+    mockarCompressao();
+
+    component.selecionarVista('FRENTE');
+    await component.processarArquivo(criarArquivoOriginal());
+
+    component.continuar();
+    httpMock.expectOne('/api/avaliacoes-posturais').flush(mockAnaliseFrente);
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush('erro', { status: 500, statusText: 'Erro' });
+
+    expect(component.analiseCriadaId).toBe(10);
+
+    component.removerFoto();
+    expect(component.arquivoComprimido).toBeNull();
+
+    await component.processarArquivo(criarArquivoOriginal('outra-foto.png'));
+    component.continuar();
+
+    httpMock.expectNone('/api/avaliacoes-posturais');
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(mockFoto);
+
+    expect(component.enviando).toBe(false);
+  });
+
   it('should require a vista before continuing', () => {
     criarComponente();
     carregarComAnalisesExistentes();

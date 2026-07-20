@@ -37,6 +37,10 @@
     <div id="vistaError" class="invalid-feedback" *ngIf="campo('vista')?.touched && campo('vista')?.invalid">
       Selecione a vista da foto.
     </div>
+    <p class="field-hint" *ngIf="analiseCriadaId !== null">
+      Análise já criada para esta vista. Para trocar a foto, selecione outra abaixo; para escolher outra vista, cancele esta análise na
+      <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']">listagem</a>.
+    </p>
 
     <h2 class="form-section-title">2. Envie a foto</h2>
     <div
@@ -54,7 +58,7 @@
       <div class="preview" *ngIf="previewUrl">
         <img [src]="previewUrl" alt="Pré-visualização da foto comprimida" />
         <p class="tamanho-info">Foto comprimida: {{ tamanhoComprimidoKb }} KB</p>
-        <button type="button" class="btn btn-outline btn-sm" (click)="removerFoto()" [disabled]="analiseCriadaId !== null">Remover foto</button>
+        <button type="button" class="btn btn-outline btn-sm" (click)="removerFoto()" [disabled]="enviando">Remover foto</button>
       </div>
 
       <input

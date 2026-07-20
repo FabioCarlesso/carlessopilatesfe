@@ -10,6 +10,12 @@
   align-items: flex-start;
 }
 
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  margin-bottom: var(--sp-4);
+}
+
 .vista-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

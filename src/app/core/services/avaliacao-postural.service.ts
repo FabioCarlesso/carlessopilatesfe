@@ -34,4 +34,8 @@ export class AvaliacaoPosturalService {
   baixarFoto(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/foto`, { responseType: 'blob' });
   }
+
+  cancelar(id: number): Observable<AvaliacaoPosturalResponseDTO> {
+    return this.http.patch<AvaliacaoPosturalResponseDTO>(`${this.apiUrl}/${id}/cancelar`, {});
+  }
 }

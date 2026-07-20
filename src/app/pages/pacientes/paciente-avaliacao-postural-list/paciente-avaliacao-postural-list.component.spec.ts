@@ -149,4 +149,78 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     expect(component.erro).toBeTruthy();
     expect(component.fotoAbertaId).toBeNull();
   });
+
+  function carregarComAnalises(): void {
+    fixture.detectChanges();
+    httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([mockAnaliseFrente]);
+  }
+
+  it('should open the cancel confirmation for an analysis', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    component.confirmarCancelar(10);
+
+    expect(component.confirmarCancelarId).toBe(10);
+    expect(component.vistaEmConfirmacao()).toBe('Frente');
+  });
+
+  it('should close the cancel confirmation without calling the API', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    component.confirmarCancelar(10);
+    component.fecharConfirmacaoCancelar();
+
+    expect(component.confirmarCancelarId).toBeNull();
+    httpMock.expectNone('/api/avaliacoes-posturais/10/cancelar');
+  });
+
+  it('should cancel the analysis, remove it from the list and show a success message', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    component.confirmarCancelar(10);
+    component.executarCancelamento();
+
+    expect(component.confirmarCancelarId).toBeNull();
+    expect(component.acaoEmAndamentoId).toBe(10);
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar');
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ ...mockAnaliseFrente, status: 'RASCUNHO' });
+
+    expect(component.analises).toEqual([]);
+    expect(component.acaoEmAndamentoId).toBeNull();
+    expect(component.sucesso).toBe('Análise cancelada com sucesso.');
+  });
+
+  it('should show an error message when cancelling fails and keep the analysis in the list', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    component.confirmarCancelar(10);
+    component.executarCancelamento();
+
+    httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar').flush('erro', { status: 500, statusText: 'Erro' });
+
+    expect(component.erro).toBeTruthy();
+    expect(component.analises).toEqual([mockAnaliseFrente]);
+    expect(component.acaoEmAndamentoId).toBeNull();
+  });
+
+  it('should not open a second confirmation while an action is in progress', () => {
+    criarComponente();
+    carregarComAnalises();
+
+    component.confirmarCancelar(10);
+    component.executarCancelamento();
+    component.confirmarCancelar(10);
+
+    expect(component.confirmarCancelarId).toBeNull();
+
+    httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar').flush({ ...mockAnaliseFrente, status: 'RASCUNHO' });
+  });
 });
