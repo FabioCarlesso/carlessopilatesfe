@@ -24,11 +24,13 @@ import {
   PASSO_ZOOM,
   PontoTela,
   RetanguloImagem,
+  PRUMO_PADRAO,
   ZOOM_MAXIMO,
   ZOOM_MINIMO,
   definirLandmark,
   distancia,
   landmarkMaisProximo,
+  limitarPan,
   limitarZoom,
   paraNormalizado,
   paraTela,
@@ -69,12 +71,14 @@ export class SimetrografoEditorComponent implements OnChanges {
   @Input() somenteLeitura = false;
 
   @Output() marcacaoAlterada = new EventEmitter<EstadoMarcacao>();
+  /** Razão largura/altura da foto, assim que medida — a API precisa dela para os ângulos. */
+  @Output() imagemMedida = new EventEmitter<number>();
 
   @ViewChild('foto') fotoRef?: ElementRef<HTMLImageElement>;
   @ViewChild('viewport') viewportRef?: ElementRef<HTMLElement>;
 
   pontos: LandmarkDTO[] = [];
-  prumoX = 0.5;
+  prumoX = PRUMO_PADRAO;
 
   zoom = ZOOM_MINIMO;
   panX = 0;
@@ -106,7 +110,7 @@ export class SimetrografoEditorComponent implements OnChanges {
     }
     if (changes['linhaPrumoX']) {
       // Sem prumo salvo, começa no centro da foto — a fisioterapeuta ajusta arrastando.
-      this.prumoX = this.linhaPrumoX ?? 0.5;
+      this.prumoX = this.linhaPrumoX ?? PRUMO_PADRAO;
     }
     if (changes['vista'] || changes['fotoUrl']) {
       this.historico.limpar();
@@ -194,27 +198,25 @@ export class SimetrografoEditorComponent implements OnChanges {
     return this.alturaNatural - this.raioPonto * 1.6;
   }
 
-  marcado(codigo: CodigoLandmark): LandmarkDTO | undefined {
-    return this.pontos.find(p => p.codigo === codigo);
-  }
-
   estaMarcado(codigo: CodigoLandmark): boolean {
-    return this.marcado(codigo) !== undefined;
+    return this.pontos.some(p => p.codigo === codigo);
   }
 
   ehProximo(codigo: CodigoLandmark): boolean {
     return !this.somenteLeitura && this.proximo?.codigo === codigo;
   }
 
-  rotuloDoPonto(codigo: CodigoLandmark): string {
-    return this.sequencia.find(def => def.codigo === codigo)?.label ?? codigo;
-  }
-
   onImagemCarregada(): void {
     const img = this.fotoRef?.nativeElement;
     if (!img) return;
+
     this.larguraNatural = img.naturalWidth;
     this.alturaNatural = img.naturalHeight;
+
+    const proporcao = this.proporcaoImagem;
+    if (proporcao !== null) {
+      this.imagemMedida.emit(proporcao);
+    }
   }
 
   // ---------------------------------------------------------------- zoom / pan
@@ -247,15 +249,34 @@ export class SimetrografoEditorComponent implements OnChanges {
       const local = { x: alvo.x - rect.left, y: alvo.y - rect.top };
       const noPalco = { x: (local.x - this.panX) / this.zoom, y: (local.y - this.panY) / this.zoom };
 
-      this.panX = local.x - noPalco.x * limitado;
-      this.panY = local.y - noPalco.y * limitado;
+      this.zoom = limitado;
+      this.aplicarPan(local.x - noPalco.x * limitado, local.y - noPalco.y * limitado);
+      return;
     }
 
     this.zoom = limitado;
-    if (this.zoom === ZOOM_MINIMO) {
-      this.panX = 0;
-      this.panY = 0;
+  }
+
+  /** Aplica o deslocamento já limitado à área visível. */
+  private aplicarPan(x: number, y: number): void {
+    const viewport = this.viewportRef?.nativeElement;
+    const img = this.fotoRef?.nativeElement;
+
+    if (!viewport || !img) {
+      this.panX = x;
+      this.panY = y;
+      return;
     }
+
+    // `offset*`/`client*` são medidas de layout, imunes ao transform do palco —
+    // ao contrário do `getBoundingClientRect()`, que ficaria defasado enquanto o
+    // Angular ainda não aplicou o novo zoom ao DOM.
+    const areaVisivel = { width: viewport.clientWidth, height: viewport.clientHeight };
+    const conteudo = { width: img.offsetWidth * this.zoom, height: img.offsetHeight * this.zoom };
+    const limitado = limitarPan({ x, y }, areaVisivel, conteudo);
+
+    this.panX = limitado.x;
+    this.panY = limitado.y;
   }
 
   alternarGrade(): void {
@@ -332,8 +353,10 @@ export class SimetrografoEditorComponent implements OnChanges {
     }
 
     if (this.modo === 'pan') {
-      this.panX = this.panInicial.x + (ponto.x - this.inicioPonteiro.x);
-      this.panY = this.panInicial.y + (ponto.y - this.inicioPonteiro.y);
+      this.aplicarPan(
+        this.panInicial.x + (ponto.x - this.inicioPonteiro.x),
+        this.panInicial.y + (ponto.y - this.inicioPonteiro.y)
+      );
       return;
     }
 

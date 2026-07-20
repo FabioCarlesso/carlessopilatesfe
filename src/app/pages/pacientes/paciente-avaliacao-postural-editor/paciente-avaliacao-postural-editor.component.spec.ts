@@ -148,6 +148,44 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       expect(component.alteracoesPendentes).toBeTrue();
     });
 
+    it('inclui a proporção da imagem depois que o editor mede a foto', () => {
+      component.onImagemMedida(0.75);
+      component.onMarcacaoAlterada({ landmarks: [], linhaPrumoX: 0.5 });
+      component.salvarRascunho();
+
+      const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+      expect(req.request.body).toEqual({ landmarks: [], linhaPrumoX: 0.5, proporcaoImagem: 0.75 });
+      req.flush(mockRascunho);
+    });
+
+    it('preserva marcações feitas enquanto o PUT está em voo', () => {
+      component.onMarcacaoAlterada({ landmarks: [], linhaPrumoX: 0.5 });
+      component.salvarRascunho();
+
+      const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+      // A fisioterapeuta continua marcando antes de a resposta chegar.
+      component.onMarcacaoAlterada({
+        landmarks: [{ codigo: 'OLHO_ESQ', x: 0.4, y: 0.1 }],
+        linhaPrumoX: 0.5
+      });
+      req.flush(mockRascunho);
+
+      expect(component.alteracoesPendentes).toBeTrue();
+    });
+
+    it('não realimenta o editor com a resposta do salvamento', () => {
+      const iniciais = component.landmarksIniciais;
+
+      component.onMarcacaoAlterada({ landmarks: [], linhaPrumoX: 0.5 });
+      component.salvarRascunho();
+      httpMock.expectOne('/api/avaliacoes-posturais/10').flush({
+        ...mockRascunho,
+        landmarks: [{ codigo: 'TORNOZELO_DIR', x: 0.9, y: 0.9 }]
+      });
+
+      expect(component.landmarksIniciais).toBe(iniciais);
+    });
+
     it('ignora salvamentos concorrentes enquanto um PUT está em andamento', () => {
       component.onMarcacaoAlterada({ landmarks: [], linhaPrumoX: 0.5 });
       component.salvarRascunho();
@@ -156,6 +194,19 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
       req.flush(mockRascunho);
     });
+  });
+
+  it('salva a linha de prumo centralizada que a tela mostra quando a análise não tem uma salva', () => {
+    criar();
+    httpMock.expectOne('/api/avaliacoes-posturais/10').flush({ ...mockRascunho, linhaPrumoX: null });
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(new Blob(['b'], { type: 'image/jpeg' }));
+
+    // Sem tocar em nada: o editor exibe o prumo no centro, e é isso que precisa ser gravado.
+    component.salvarRascunho();
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+    expect((req.request.body as { linhaPrumoX: number }).linhaPrumoX).toBe(0.5);
+    req.flush(mockRascunho);
   });
 
   describe('análise concluída', () => {

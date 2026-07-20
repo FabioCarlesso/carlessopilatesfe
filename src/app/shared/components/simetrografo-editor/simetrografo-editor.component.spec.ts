@@ -32,7 +32,18 @@ describe('SimetrografoEditorComponent', () => {
       component as unknown as { rectImagem: () => typeof RECT_IMAGEM },
       'rectImagem'
     ).and.returnValue(RECT_IMAGEM);
+
+    // A imagem não decodifica no headless: fixa as medidas de layout de que o
+    // limite de deslocamento depende (viewport 400x800, foto ocupando-o inteiro).
+    medir(component.viewportRef!.nativeElement, 'clientWidth', 400);
+    medir(component.viewportRef!.nativeElement, 'clientHeight', 800);
+    medir(component.fotoRef!.nativeElement, 'offsetWidth', 400);
+    medir(component.fotoRef!.nativeElement, 'offsetHeight', 800);
   });
+
+  function medir(el: Element, propriedade: string, valor: number): void {
+    Object.defineProperty(el, propriedade, { value: valor, configurable: true });
+  }
 
   /** Posição vertical, em px de tela, da alça de arraste do prumo. */
   function alcaTelaY(): number {
@@ -69,12 +80,14 @@ describe('SimetrografoEditorComponent', () => {
     });
 
     it('trata arraste longo como pan, sem marcar ponto', () => {
+      component.zoom = 2;
+
       component.onPointerDown(pointerEvent('pointerdown', 300, 450));
-      component.onPointerMove(pointerEvent('pointermove', 380, 450));
-      component.onPointerUp(pointerEvent('pointerup', 380, 450));
+      component.onPointerMove(pointerEvent('pointermove', 220, 450));
+      component.onPointerUp(pointerEvent('pointerup', 220, 450));
 
       expect(component.pontos).toEqual([]);
-      expect(component.panX).toBe(80);
+      expect(component.panX).toBe(-80);
     });
 
     it('anuncia a conclusão quando todos os pontos da vista foram marcados', () => {
@@ -209,6 +222,79 @@ describe('SimetrografoEditorComponent', () => {
     });
   });
 
+  describe('pinça (dois dedos)', () => {
+    /** Encosta dois dedos separados por `separacao` px na vertical. */
+    function encostarDoisDedos(separacao: number): void {
+      component.onPointerDown(pointerEvent('pointerdown', 300, 450, 1));
+      component.onPointerDown(pointerEvent('pointerdown', 300, 450 + separacao, 2));
+    }
+
+    it('amplia proporcionalmente ao afastamento dos dedos', () => {
+      encostarDoisDedos(100);
+      component.onPointerMove(pointerEvent('pointermove', 300, 650, 2));
+
+      expect(component.zoom).toBe(2);
+    });
+
+    it('reduz ao aproximar os dedos', () => {
+      component.zoom = 4;
+      encostarDoisDedos(200);
+      component.onPointerMove(pointerEvent('pointermove', 300, 550, 2));
+
+      expect(component.zoom).toBe(2);
+    });
+
+    it('respeita os limites de zoom', () => {
+      encostarDoisDedos(10);
+      component.onPointerMove(pointerEvent('pointermove', 300, 5000, 2));
+
+      expect(component.zoom).toBe(component.zoomMaximo);
+    });
+
+    it('não marca ponto durante a pinça', () => {
+      encostarDoisDedos(100);
+      component.onPointerMove(pointerEvent('pointermove', 300, 650, 2));
+      component.onPointerUp(pointerEvent('pointerup', 300, 650, 2));
+      component.onPointerUp(pointerEvent('pointerup', 300, 450, 1));
+
+      expect(component.pontos).toEqual([]);
+    });
+
+    it('segue como pan quando um dos dedos é levantado, sem saltar a imagem', () => {
+      component.zoom = 2;
+      encostarDoisDedos(100);
+      component.onPointerUp(pointerEvent('pointerup', 300, 550, 2));
+
+      const panAntes = component.panX;
+      component.onPointerMove(pointerEvent('pointermove', 260, 450, 1));
+
+      expect(component.panX).toBe(panAntes - 40);
+    });
+  });
+
+  describe('limite de deslocamento', () => {
+    it('não deixa arrastar a foto para fora da área visível', () => {
+      component.zoom = 2;
+
+      component.onPointerDown(pointerEvent('pointerdown', 300, 450));
+      component.onPointerMove(pointerEvent('pointermove', 9999, 9999));
+
+      expect(component.panX).toBe(0);
+      expect(component.panY).toBe(0);
+    });
+
+    it('trava o arraste na borda oposta da foto ampliada', () => {
+      component.zoom = 2;
+
+      component.onPointerDown(pointerEvent('pointerdown', 300, 450));
+      component.onPointerMove(pointerEvent('pointermove', -9999, -9999));
+
+      // Foto de 800x1600 num viewport de 400x800: sobra -400 / -800.
+      expect(component.panX).toBe(-400);
+      expect(component.panY).toBe(-800);
+    });
+  });
+
   describe('grade e prumo', () => {
     it('alterna a visibilidade da grade e do prumo', () => {
       expect(component.gradeVisivel).toBeTrue();
@@ -267,11 +353,13 @@ describe('SimetrografoEditorComponent', () => {
     });
 
     it('continua permitindo navegar pela foto com pan', () => {
-      component.onPointerDown(pointerEvent('pointerdown', 300, 450));
-      component.onPointerMove(pointerEvent('pointermove', 350, 500));
+      component.zoom = 2;
 
-      expect(component.panX).toBe(50);
-      expect(component.panY).toBe(50);
+      component.onPointerDown(pointerEvent('pointerdown', 300, 450));
+      component.onPointerMove(pointerEvent('pointermove', 250, 400));
+
+      expect(component.panX).toBe(-50);
+      expect(component.panY).toBe(-50);
     });
 
     it('avisa que a marcação está bloqueada', () => {

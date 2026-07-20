@@ -82,14 +82,28 @@
 .viewport {
   position: relative;
   overflow: hidden;
+  /* Encolhe até a foto e centraliza, em vez de deixar faixa morta ao lado dela.
+     Centralizar o viewport (e não o palco dentro dele) preserva a origem que a
+     ancoragem do zoom assume: o palco continua no canto superior esquerdo. */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
   /* Área da foto é neutra em ambos os temas, para não alterar a percepção da imagem. */
   background: #1b1b1b;
-  /* O componente trata pan e pinça: o navegador não deve rolar nem dar zoom junto. */
+  /*
+   * O componente trata pan e pinça, então o navegador não deve rolar nem dar
+   * zoom junto. Isso só é aceitável porque a foto inteira cabe aqui dentro
+   * (`max-height` abaixo): se ela ultrapassasse a dobra, o arraste sobre a
+   * imagem faria pan em vez de rolar a página e partes da foto — como a alça do
+   * prumo, na base — ficariam inalcançáveis em tablet.
+   */
   touch-action: none;
   user-select: none;
   cursor: crosshair;
+  /* Elimina a folga de baseline abaixo do palco inline-block. */
+  line-height: 0;
 
   &--leitura {
     cursor: grab;
@@ -98,16 +112,22 @@
 
 .palco {
   position: relative;
-  display: block;
+  /* Encolhe até a foto para que o overlay SVG (inset: 0) cubra exatamente a imagem. */
+  display: inline-block;
+  vertical-align: top;
   transform-origin: top left;
   will-change: transform;
 }
 
 .palco__foto {
   display: block;
-  width: 100%;
-  height: auto;
-  /* Sem esta trava a imagem some do fluxo antes do `load` medir o natural size. */
+  /*
+   * Fotos posturais são verticais (3:4): limitar pela altura é o que as mantém
+   * na dobra. O desconto cobre o cabeçalho da página e a barra de ferramentas
+   * acima; o piso evita que a foto fique inútil em telas muito baixas.
+   */
+  max-height: max(300px, calc(100vh - 21rem));
+  width: auto;
   max-width: 100%;
   pointer-events: none;
   -webkit-user-drag: none;

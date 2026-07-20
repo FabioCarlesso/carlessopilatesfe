@@ -39,7 +39,8 @@
   *ngIf="!loading && !parametroInvalido && analise && fotoUrl"
   [fotoUrl]="fotoUrl"
   [vista]="analise.vista"
-  [landmarks]="analise.landmarks"
-  [linhaPrumoX]="analise.linhaPrumoX"
+  [landmarks]="landmarksIniciais"
+  [linhaPrumoX]="prumoInicial"
   [somenteLeitura]="somenteLeitura"
-  (marcacaoAlterada)="onMarcacaoAlterada($event)" />
+  (marcacaoAlterada)="onMarcacaoAlterada($event)"
+  (imagemMedida)="onImagemMedida($event)" />

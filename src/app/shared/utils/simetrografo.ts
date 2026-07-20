@@ -34,6 +34,13 @@ export const ZOOM_MINIMO = 1;
 export const ZOOM_MAXIMO = 6;
 export const PASSO_ZOOM = 0.5;
 
+/**
+ * Posição inicial da linha de prumo quando a análise ainda não tem uma salva.
+ * Compartilhada entre o editor (que a exibe) e a página (que a persiste), para
+ * que o valor mostrado e o salvo nunca divirjam.
+ */
+export const PRUMO_PADRAO = 0.5;
+
 /** Casas decimais das coordenadas enviadas à API — evita ruído de ponto flutuante no payload. */
 const CASAS_DECIMAIS = 4;
 
@@ -74,6 +81,32 @@ export function paraTela(ponto: PontoNormalizado, rect: RetanguloImagem): PontoT
 
 export function distancia(a: PontoTela, b: PontoTela): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/** Dimensões de uma área na tela, em pixels. */
+export interface Dimensoes {
+  width: number;
+  height: number;
+}
+
+/**
+ * Limita o deslocamento para que a foto não seja arrastada inteiramente para
+ * fora da área visível: quando ampliada, suas bordas param no limite do
+ * viewport; quando cabe inteira, ela permanece dentro dele.
+ *
+ * Considera o palco com `transform-origin` no canto superior esquerdo, então
+ * `conteudo` são as dimensões já multiplicadas pelo zoom.
+ */
+export function limitarPan(pan: PontoTela, viewport: Dimensoes, conteudo: Dimensoes): PontoTela {
+  const limitarEixo = (valor: number, disponivel: number, ocupado: number): number => {
+    const folga = disponivel - ocupado;
+    return Math.min(Math.max(valor, Math.min(0, folga)), Math.max(0, folga));
+  };
+
+  return {
+    x: limitarEixo(pan.x, viewport.width, conteudo.width),
+    y: limitarEixo(pan.y, viewport.height, conteudo.height)
+  };
 }
 
 /**

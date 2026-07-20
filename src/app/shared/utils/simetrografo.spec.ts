@@ -7,6 +7,7 @@ import {
   definirLandmark,
   distancia,
   landmarkMaisProximo,
+  limitarPan,
   limitarZoom,
   montarPayloadRascunho,
   paraNormalizado,
@@ -64,6 +65,33 @@ describe('simetrografo - limites de zoom', () => {
     expect(limitarZoom(0.1)).toBe(ZOOM_MINIMO);
     expect(limitarZoom(99)).toBe(ZOOM_MAXIMO);
     expect(limitarZoom(2.5)).toBe(2.5);
+  });
+});
+
+describe('simetrografo - limites de deslocamento', () => {
+  const viewport = { width: 400, height: 800 };
+
+  it('impede arrastar a foto ampliada para fora da área visível', () => {
+    const conteudo = { width: 800, height: 1600 };
+
+    // Nenhuma folga à esquerda/topo: o canto não passa do zero.
+    expect(limitarPan({ x: 200, y: 300 }, viewport, conteudo)).toEqual({ x: 0, y: 0 });
+    // Nem além da borda oposta: 400 - 800 = -400.
+    expect(limitarPan({ x: -9999, y: -9999 }, viewport, conteudo)).toEqual({ x: -400, y: -800 });
+  });
+
+  it('mantém deslocamentos válidos intactos', () => {
+    expect(limitarPan({ x: -100, y: -200 }, viewport, { width: 800, height: 1600 })).toEqual({
+      x: -100,
+      y: -200
+    });
+  });
+
+  it('mantém a foto dentro do viewport quando ela cabe inteira', () => {
+    const conteudo = { width: 300, height: 600 };
+
+    expect(limitarPan({ x: -50, y: -50 }, viewport, conteudo)).toEqual({ x: 0, y: 0 });
+    expect(limitarPan({ x: 9999, y: 9999 }, viewport, conteudo)).toEqual({ x: 100, y: 200 });
   });
 });
 

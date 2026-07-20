@@ -1,9 +1,10 @@
 import { NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   AvaliacaoPosturalResponseDTO,
+  LandmarkDTO,
   STATUS_AVALIACAO_POSTURAL_LABEL,
   VISTA_POSTURAL_LABEL
 } from '../../../core/models/avaliacao-postural';
@@ -11,7 +12,7 @@ import { AvaliacaoPosturalService } from '../../../core/services/avaliacao-postu
 import { SimetrografoEditorComponent } from '../../../shared/components/simetrografo-editor/simetrografo-editor.component';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
-import { EstadoMarcacao, montarPayloadRascunho } from '../../../shared/utils/simetrografo';
+import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../shared/utils/simetrografo';
 
 /**
  * Tela 2 do simetrógrafo virtual: carrega a análise e a foto autenticada e
@@ -24,12 +25,18 @@ import { EstadoMarcacao, montarPayloadRascunho } from '../../../shared/utils/sim
   styleUrl: './paciente-avaliacao-postural-editor.component.scss'
 })
 export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestroy {
-  @ViewChild(SimetrografoEditorComponent) editor?: SimetrografoEditorComponent;
-
   pacienteId: number | null = null;
   analiseId: number | null = null;
   analise: AvaliacaoPosturalResponseDTO | null = null;
   fotoUrl: string | null = null;
+
+  /**
+   * Marcação com que o editor é inicializado. Fixada na carga e nunca
+   * reatribuída a partir da resposta do salvamento: realimentar o editor
+   * descartaria, sem aviso, os pontos marcados enquanto o `PUT` estava em voo.
+   */
+  landmarksIniciais: LandmarkDTO[] = [];
+  prumoInicial: number | null = null;
 
   loading = false;
   salvando = false;
@@ -42,6 +49,10 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
   readonly statusLabel = STATUS_AVALIACAO_POSTURAL_LABEL;
 
   private estado: EstadoMarcacao = { landmarks: [], linhaPrumoX: null };
+  private proporcaoImagem: number | null = null;
+  /** Conta as edições recebidas do editor, para detectar alterações feitas durante o `PUT`. */
+  private revisao = 0;
+  private revisaoEnviada = 0;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -87,7 +98,15 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
       .subscribe({
         next: analise => {
           this.analise = analise;
-          this.estado = { landmarks: [...analise.landmarks], linhaPrumoX: analise.linhaPrumoX };
+          this.landmarksIniciais = [...analise.landmarks];
+          this.prumoInicial = analise.linhaPrumoX;
+          // O prumo exibido cai no padrão quando a análise não tem um salvo; o
+          // estado precisa refletir isso, senão salvar sem tocar na linha
+          // gravaria `null` enquanto a tela mostra a linha centralizada.
+          this.estado = {
+            landmarks: [...analise.landmarks],
+            linhaPrumoX: analise.linhaPrumoX ?? PRUMO_PADRAO
+          };
           this.alteracoesPendentes = false;
 
           if (!analise.temFoto) {
@@ -125,8 +144,13 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
 
   onMarcacaoAlterada(estado: EstadoMarcacao): void {
     this.estado = estado;
+    this.revisao++;
     this.alteracoesPendentes = true;
     this.sucesso = null;
+  }
+
+  onImagemMedida(proporcao: number): void {
+    this.proporcaoImagem = proporcao;
   }
 
   salvarRascunho(): void {
@@ -135,14 +159,16 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     this.salvando = true;
     this.erro = null;
 
-    const payload = montarPayloadRascunho(this.estado, this.editor?.proporcaoImagem ?? null);
+    const payload = montarPayloadRascunho(this.estado, this.proporcaoImagem);
+    this.revisaoEnviada = this.revisao;
 
     this.posturalService.atualizar(this.analiseId, payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: analise => {
           this.analise = analise;
-          this.alteracoesPendentes = false;
+          // Marcações feitas enquanto o PUT estava em voo continuam pendentes.
+          this.alteracoesPendentes = this.revisao !== this.revisaoEnviada;
           this.salvando = false;
           this.notificarSucesso('Rascunho salvo com sucesso.');
         },
