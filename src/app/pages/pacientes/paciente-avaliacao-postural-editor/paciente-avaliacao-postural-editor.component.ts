@@ -54,6 +54,12 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
   concluindo = false;
   parametroInvalido = false;
   erro: string | null = null;
+  /**
+   * Ressalva sobre uma operação que deu certo — hoje, a conclusão que deixou
+   * ajustes de fora. Canal próprio para não pintar de vermelho o que não falhou,
+   * e persistente, ao contrário do aviso de sucesso.
+   */
+  aviso: string | null = null;
   sucesso: string | null = null;
   alteracoesPendentes = false;
   /**
@@ -177,6 +183,7 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
 
     this.loading = true;
     this.erro = null;
+    this.aviso = null;
 
     this.posturalService.buscarPorId(this.analiseId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -285,6 +292,9 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     const id = this.analiseId;
     this.concluindo = true;
     this.erro = null;
+    this.aviso = null;
+    // Um "Rascunho salvo" ainda no ar se somaria ao desfecho da conclusão.
+    this.sucesso = null;
 
     this.persistir(id)
       .pipe(
@@ -327,7 +337,7 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     this.concluindo = false;
 
     if (ajustesDescartados) {
-      this.erro =
+      this.aviso =
         'Análise concluída. Os ajustes feitos enquanto ela era gravada não entraram no prontuário — a tela mostra o que ficou registrado.';
       return;
     }
@@ -345,6 +355,9 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
 
   private aplicarResposta(analise: AvaliacaoPosturalResponseDTO): void {
     this.analise = analise;
+    // A prévia deriva da análise (proporção e calibração entram no cálculo):
+    // trocá-la invalida o que estava memoizado, mesmo sem editar a marcação.
+    this.previaLocal = null;
     // Edições feitas enquanto o PUT estava em voo continuam pendentes.
     this.alteracoesPendentes = this.revisao.total !== this.revisaoEnviada.total;
     this.marcacaoPendente = this.revisao.marcacao !== this.revisaoEnviada.marcacao;

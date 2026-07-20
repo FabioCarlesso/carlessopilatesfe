@@ -31,6 +31,8 @@
    */
   --c-success-text: var(--c-success);
   --c-danger-text: var(--c-danger);
+  /* Âmbar escurecido: o original rende só 2,7:1 sobre `--c-warning-bg` no tema claro. */
+  --c-warning-text: #7a5c1e;
 
   --bg-app: var(--c-cloud-dancer);
   --bg-paper: var(--c-cloud-dancer-3);
@@ -164,4 +166,6 @@
   /* Clareadas para o fundo escuro: as originais ficam em ~2:1 sobre `--bg-elev`. */
   --c-success-text: #6da372;
   --c-danger-text: #d97070;
+  /* No escuro o âmbar original já rende 4,7:1 sobre `--c-warning-bg`. */
+  --c-warning-text: var(--c-warning);
 }

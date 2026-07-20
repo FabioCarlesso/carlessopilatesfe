@@ -33,6 +33,7 @@
 </div>
 
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="aviso" class="alert alert-warning" role="status">{{ aviso }}</div>
 <div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 

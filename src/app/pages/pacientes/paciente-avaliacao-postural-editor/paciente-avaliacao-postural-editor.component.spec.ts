@@ -244,6 +244,24 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       { codigo: 'TORNOZELO_DIR', x: 0.56, y: 0.92 }
     ];
 
+    /** Análise sem proporção salva e sem métricas, para exercitar a prévia local. */
+    const analiseSemProporcao: AvaliacaoPosturalResponseDTO = {
+      ...mockRascunho,
+      proporcaoImagem: null,
+      metricas: null,
+      landmarks: [
+        { codigo: 'OMBRO_ESQ', x: 0.4, y: 0.2 },
+        { codigo: 'OMBRO_DIR', x: 0.6, y: 0.3 }
+      ]
+    };
+
+    /** Recarrega a tela com a análise acima, sem a foto ter sido medida. */
+    function criarSemProporcao(): void {
+      component.carregar();
+      httpMock.expectOne('/api/avaliacoes-posturais/10').flush(analiseSemProporcao);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(new Blob(['b'], { type: 'image/jpeg' }));
+    }
+
     beforeEach(() => {
       criar();
       httpMock.expectOne('/api/avaliacoes-posturais/10').flush(mockRascunho);
@@ -351,8 +369,25 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
         landmarks: marcacaoCompleta
       });
 
-      expect(component.erro).toContain('não entraram no prontuário');
+      // Canal de aviso, e não de erro: a conclusão em si deu certo.
+      expect(component.aviso).toContain('não entraram no prontuário');
+      expect(component.erro).toBeNull();
       expect(component.sucesso).toBeNull();
+    });
+
+    it('descarta o aviso de rascunho salvo ao iniciar a conclusão', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.salvarRascunho();
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      expect(component.sucesso).toContain('Rascunho salvo');
+
+      // Sem isso, o "Rascunho salvo" ficaria no ar somando-se ao desfecho da conclusão.
+      component.concluir();
+      expect(component.sucesso).toBeNull();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir')
+        .flush({ ...mockRascunho, status: 'CONCLUIDA' });
     });
 
     it('realinha a marcação exibida com a que foi gravada ao concluir', () => {
@@ -386,6 +421,22 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       expect(component.marcacaoPendente).toBeFalse();
       expect(component.exibindoPrevia).toBeFalse();
       expect(component.metricasExibidas).toBe(metricasApi);
+    });
+
+    it('recalcula a prévia quando a resposta da API muda a proporção da foto', () => {
+      criarSemProporcao();
+
+      // Sem proporção, a prévia assume foto quadrada: atan(0,1/0,2) = 26,57°.
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(26.57);
+
+      // Salva sem tocar na marcação; a API devolve a análise já com a proporção.
+      component.salvarRascunho();
+      httpMock.expectOne('/api/avaliacoes-posturais/10')
+        .flush({ ...analiseSemProporcao, proporcaoImagem: 0.5 });
+
+      // Com proporção 0,5 o Δx real cai pela metade e o ângulo vai a 45°: a
+      // prévia memoizada não pode sobreviver à troca da análise.
+      expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(45);
     });
 
     it('mantém a mesma referência da prévia entre verificações, para não sujar o painel OnPush', () => {
