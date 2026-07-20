@@ -160,6 +160,8 @@ src/app/
 │   ├── paciente-detail/            # Visualização detalhada
 │   ├── paciente-anamnese/          # Cadastro e edição da anamnese
 │   ├── paciente-avaliacao-fisioterapeutica/ # Cadastro e edição da avaliação fisioterapêutica
+│   ├── paciente-avaliacao-postural-list/ # Listagem das análises posturais (aba Postural)
+│   ├── paciente-avaliacao-postural-form/ # Nova análise postural: vista e upload de foto
 │   ├── paciente-sessao-list/       # Listagem de sessões de pilates/fisioterapia
 │   ├── paciente-sessao-form/       # Cadastro e edição de sessão
 │   ├── paciente-evolucao-sessao/   # Cadastro e edição da evolução clínica da sessão
@@ -174,7 +176,9 @@ src/app/
 │   └── usuarios/
 │       ├── usuario-list/           # Listagem de usuários
 │       └── usuario-form/           # Cadastro/edição de usuários
-└── shared/components/              # Componentes reutilizáveis
+├── shared/components/               # Componentes reutilizáveis
+├── shared/services/                 # Serviços utilitários injetáveis (ex.: compressão de imagem)
+└── shared/utils/                    # Funções utilitárias puras
 src/styles/
 └── _tokens.scss                    # Tokens do Design System Carlesso
 assets/                             # Referências estáticas do Design System
@@ -218,6 +222,7 @@ Arquivos de teste:
 - `src/app/app.routes.spec.ts`
 - `src/app/app.component.spec.ts`
 - `src/app/core/services/avaliacao-fisioterapeutica.service.spec.ts`
+- `src/app/core/services/avaliacao-postural.service.spec.ts`
 - `src/app/core/services/dashboard.service.spec.ts`
 - `src/app/core/services/paciente.service.spec.ts`
 - `src/app/core/services/plano-tratamento.service.spec.ts`
@@ -237,6 +242,8 @@ Arquivos de teste:
 - `src/app/pages/pacientes/paciente-reavaliacao-list/paciente-reavaliacao-list.component.spec.ts`
 - `src/app/pages/pacientes/paciente-reavaliacao-form/paciente-reavaliacao-form.component.spec.ts`
 - `src/app/pages/pacientes/paciente-avaliacao-fisioterapeutica/paciente-avaliacao-fisioterapeutica.component.spec.ts`
+- `src/app/pages/pacientes/paciente-avaliacao-postural-list/paciente-avaliacao-postural-list.component.spec.ts`
+- `src/app/pages/pacientes/paciente-avaliacao-postural-form/paciente-avaliacao-postural-form.component.spec.ts`
 - `src/app/pages/profissionais/profissional-list/profissional-list.component.spec.ts`
 - `src/app/pages/profissionais/profissional-form/profissional-form.component.spec.ts`
 - `src/app/pages/profissionais/profissional-detail/profissional-detail.component.spec.ts`
@@ -250,6 +257,8 @@ Arquivos de teste:
 - `src/app/core/services/nfse-emitida.service.spec.ts`
 - `src/app/shared/components/busca-global/busca-global.component.spec.ts`
 - `src/app/shared/utils/api-error.spec.ts`
+- `src/app/shared/utils/image-compressor.spec.ts`
+- `src/app/shared/services/image-compressor.service.spec.ts`
 - `src/app/pages/auth/login/login.component.spec.ts`
 - `src/app/pages/auth/forgot-password/forgot-password.component.spec.ts`
 - `src/app/pages/auth/reset-password/reset-password.component.spec.ts`
@@ -272,7 +281,7 @@ Arquivos de teste:
 | Módulo | Descrição |
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
-| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica, planos de tratamento, sessões de pilates/fisioterapia, evolução clínica da sessão e reavaliações periódicas |
+| **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica (com aba Postural do Simetrógrafo Virtual: nova análise por vista com upload de foto comprimida), planos de tratamento, sessões de pilates/fisioterapia, evolução clínica da sessão e reavaliações periódicas |
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT, filtros por nome, e-mail, contrato, % por aula e status, e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API; acesso restrito a `ADMIN` |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
@@ -296,6 +305,8 @@ Arquivos de teste:
 | `/pacientes/:id/editar` | Formulário de edição                        |
 | `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | Cadastro e edição da avaliação fisioterapêutica do paciente |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Listagem das análises posturais da avaliação fisioterapêutica do paciente |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova` | Nova análise postural: seleção de vista e upload de foto comprimida |
 | `/pacientes/:pacienteId/sessoes` | Lista de sessões de pilates/fisioterapia do paciente |
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de sessão |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | Edição de sessão |
@@ -332,6 +343,8 @@ Na listagem de pacientes, os filtros enviam os parâmetros `nome`, `email`, `cpf
 A tela de anamnese do paciente fica em `/pacientes/:pacienteId/anamnese`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta a anamnese existente por `GET /api/anamneses/paciente/{pacienteId}`. Quando a API retorna `404` para a anamnese, o formulário permanece em modo de cadastro e envia `POST /api/anamneses` com `pacienteId`. Quando já existe registro, a tela preenche o formulário e salva alterações via `PUT /api/anamneses/{id}`. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam valores apenas com espaços.
 
 A tela de avaliação fisioterapêutica do paciente fica em `/pacientes/:pacienteId/avaliacao-fisioterapeutica`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e consulta as avaliações por `GET /api/avaliacoes-fisioterapeuticas/paciente/{pacienteId}`. O backend retorna uma lista ordenada por data da avaliação e ID em ordem decrescente; a tela edita a avaliação mais recente quando a lista possui itens e permanece em modo de cadastro quando a lista vem vazia. O cadastro envia `POST /api/avaliacoes-fisioterapeuticas` com `pacienteId`; a edição usa `PUT /api/avaliacoes-fisioterapeuticas/{id}`. Os campos `dataAvaliacao`, `queixaFuncional`, `escalaDor` e `diagnosticoFisioterapeutico` são obrigatórios, com `escalaDor` entre 0 e 10 e textos obrigatórios rejeitando valores apenas com espaços.
+
+A aba **Postural** ("Simetrógrafo Virtual") fica em `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural`, dentro do fluxo da avaliação fisioterapêutica do paciente (não é um cadastro separado). A listagem (`PacienteAvaliacaoPosturalListComponent`) resolve a avaliação fisioterapêutica mais recente do paciente e lista as análises posturais existentes (`GET /api/avaliacoes-posturais/avaliacao-fisioterapeutica/{avaliacaoId}`) com vista, status e data; cada análise com foto oferece **Ver foto**, que baixa a imagem como `Blob` autenticado e exibe via `URL.createObjectURL` — a foto nunca é referenciada por `<img src>` direto para a API. Toda análise oferece **Cancelar análise** (`PATCH /api/avaliacoes-posturais/{id}/cancelar`, com confirmação em `ConfirmarDialogComponent`), que libera a vista para uma nova análise — o caminho de recuperação para uma análise `RASCUNHO` cujo upload de foto falhou e ficaria presa sem essa ação. Em `/postural/nova` (`PacienteAvaliacaoPosturalFormComponent`), a fisioterapeuta escolhe a vista (Frente, Costas, Lado direito ou Lado esquerdo; vistas com análise ativa aparecem desabilitadas com "Já existe análise" — regra de 1 análise por vista, com `409` tratado defensivamente) e envia a foto por arraste, seleção de arquivo ou câmera (`accept="image/*" capture="environment"`). A foto é comprimida no navegador antes do upload (redimensionada a ~1080px no maior lado, JPEG qualidade 0,85, bem abaixo do limite de 2 MB da API) pelo utilitário `shared/utils/image-compressor.ts`, chamado através do `ImageCompressorService` injetável. O botão **Continuar** cria a análise (`POST /api/avaliacoes-posturais`) e envia a foto (`PUT /api/avaliacoes-posturais/{id}/foto`, multipart), retornando à listagem `/postural` em caso de sucesso; falha em qualquer etapa mantém a tela com a mensagem do backend, preservando a análise já criada para reenviar apenas a foto (com um novo arquivo, se necessário — **Remover foto** permanece habilitado) na tentativa seguinte, sem recriá-la. O editor de marcação da foto (grade, prumo, pontos) e a tela de resultados são issues futuras — por ora, o destino após concluir é a própria listagem.
 
 A tela de sessões do paciente fica em `/pacientes/:pacienteId/sessoes`, valida o identificador numérico antes de chamar a API, carrega a identificação do paciente por `GET /api/pacientes/{id}` e lista as sessões por `GET /api/sessoes/paciente/{pacienteId}`. O cadastro usa `POST /api/sessoes` com `pacienteId`; a edição usa `GET /api/sessoes/{id}` e `PUT /api/sessoes/{id}`, validando que a sessão retornada pertence ao paciente da rota antes de exibir o formulário. A listagem permite marcar sessões agendadas como realizadas por `PATCH /api/sessoes/{id}/realizar` e cancelar sessões agendadas por `PATCH /api/sessoes/{id}/cancelar`, com confirmação antes da ação. Sessões agendadas também oferecem a ação rápida **Reagendar**, que abre um diálogo com a nova data/hora (obrigatória e futura, pré-preenchida com o horário atual da sessão e com `min` no seletor nativo; quando a sessão está atrasada, o campo já abre com a mensagem de validação visível em vez de apenas desabilitar a confirmação) e envia apenas `dataHora` em `PUT /api/sessoes/{id}`, atualizando a linha da listagem com a resposta da API sem recarregar a lista inteira; erros da API são exibidos com a mensagem devolvida pelo backend (via `extrairMensagemErro`) e mantêm a sessão original. Os campos de tela `dataHora`, `tipo` e `duracao` são obrigatórios; o `SessaoService` traduz esses campos para o contrato da API (`data`, `horario` e `duracaoMinutos`) e converte a resposta de volta para `dataHora` e `duracao` usados pela UI. A duração deve ficar entre 1 e 480 minutos, e o ID opcional do profissional deve ser um inteiro positivo.
 

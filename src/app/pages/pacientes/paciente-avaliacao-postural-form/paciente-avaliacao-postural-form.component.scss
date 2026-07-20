@@ -1,0 +1,116 @@
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.sem-avaliacao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: flex-start;
+}
+
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  margin-bottom: var(--sp-4);
+}
+
+.vista-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+.vista-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 64px;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+
+  &.selecionada {
+    border-color: var(--c-horizonte);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    background: var(--bg-sunken);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+}
+
+.vista-indisponivel {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps-tight);
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  border: 2px dashed var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-sunken);
+  text-align: center;
+  margin-bottom: var(--sp-2);
+
+  &.tem-foto {
+    border-style: solid;
+    background: var(--bg-elev);
+  }
+}
+
+.input-arquivo-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+
+  img {
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border-subtle);
+  }
+}
+
+.tamanho-info {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.dica-posicionamento {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+  margin: var(--sp-4) 0 0;
+}
+
+@media (max-width: 768px) {
+  .vista-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
