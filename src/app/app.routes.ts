@@ -74,6 +74,13 @@ export const routes: Routes = [
         .then(m => m.PacienteAvaliacaoPosturalFormComponent)
   },
   {
+    path: 'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/:id/marcar',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-avaliacao-postural-editor/paciente-avaliacao-postural-editor.component')
+        .then(m => m.PacienteAvaliacaoPosturalEditorComponent)
+  },
+  {
     path: 'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural',
     canActivate: [authGuard],
     loadComponent: () =>

@@ -1,0 +1,46 @@
+<div class="page-header">
+  <div>
+    <h1>Marcação postural</h1>
+    <p *ngIf="analise" class="page-subtitle">
+      {{ vistaLabel[analise.vista] }}
+      <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
+        {{ statusLabel[analise.status] }}
+      </span>
+    </p>
+  </div>
+  <div class="acoes">
+    <button
+      *ngIf="!somenteLeitura && fotoUrl"
+      type="button"
+      class="btn btn-primary"
+      [disabled]="salvando"
+      (click)="salvarRascunho()">
+      {{ salvando ? 'Salvando...' : 'Salvar rascunho' }}
+    </button>
+    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">
+      Voltar
+    </a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="somenteLeitura && !loading" class="alert alert-success">
+  Análise concluída: a marcação é imutável e está aberta somente para consulta.
+</div>
+
+<p *ngIf="alteracoesPendentes && !somenteLeitura" class="aviso-pendente" role="status">
+  Há alterações não salvas nesta marcação.
+</p>
+
+<app-simetrografo-editor
+  *ngIf="!loading && !parametroInvalido && analise && fotoUrl"
+  [fotoUrl]="fotoUrl"
+  [vista]="analise.vista"
+  [landmarks]="landmarksIniciais"
+  [linhaPrumoX]="prumoInicial"
+  [somenteLeitura]="somenteLeitura"
+  (marcacaoAlterada)="onMarcacaoAlterada($event)"
+  (imagemMedida)="onImagemMedida($event)" />

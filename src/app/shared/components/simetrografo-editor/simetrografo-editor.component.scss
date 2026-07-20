@@ -1,0 +1,289 @@
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.editor__foto {
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ controles */
+
+.barra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.btn-ferramenta {
+  /* Alvo de toque confortável em tablet. */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  &.ativo {
+    border-color: var(--c-horizonte);
+    background: var(--c-info-bg);
+    color: var(--text-brand);
+  }
+
+  &:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.controle-grade {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+
+  input[type='range'] {
+    flex: 1 1 160px;
+    max-width: 240px;
+    min-height: 44px;
+    accent-color: var(--c-horizonte);
+  }
+}
+
+.controle-grade__valor {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- área da foto */
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  /* Encolhe até a foto e centraliza, em vez de deixar faixa morta ao lado dela.
+     Centralizar o viewport (e não o palco dentro dele) preserva a origem que a
+     ancoragem do zoom assume: o palco continua no canto superior esquerdo. */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  /* Área da foto é neutra em ambos os temas, para não alterar a percepção da imagem. */
+  background: #1b1b1b;
+  /*
+   * O componente trata pan e pinça, então o navegador não deve rolar nem dar
+   * zoom junto. Isso só é aceitável porque a foto inteira cabe aqui dentro
+   * (`max-height` abaixo): se ela ultrapassasse a dobra, o arraste sobre a
+   * imagem faria pan em vez de rolar a página e partes da foto — como a alça do
+   * prumo, na base — ficariam inalcançáveis em tablet.
+   */
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+  /* Elimina a folga de baseline abaixo do palco inline-block. */
+  line-height: 0;
+
+  &--leitura {
+    cursor: grab;
+  }
+}
+
+.palco {
+  position: relative;
+  /* Encolhe até a foto para que o overlay SVG (inset: 0) cubra exatamente a imagem. */
+  display: inline-block;
+  vertical-align: top;
+  transform-origin: top left;
+  will-change: transform;
+}
+
+.palco__foto {
+  display: block;
+  /*
+   * Fotos posturais são verticais (3:4): limitar pela altura é o que as mantém
+   * na dobra. O desconto cobre o cabeçalho da página e a barra de ferramentas
+   * acima; o piso evita que a foto fique inútil em telas muito baixas.
+   */
+  max-height: max(300px, calc(100vh - 21rem));
+  width: auto;
+  max-width: 100%;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.palco__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.grade line {
+  stroke: rgba(255, 255, 255, 0.45);
+}
+
+.prumo {
+  stroke: #e04545;
+}
+
+/* Alça na base da linha: único ponto de arraste do prumo, para não competir com a marcação. */
+.prumo__alca {
+  fill: rgba(224, 69, 69, 0.35);
+  stroke: #e04545;
+}
+
+.ponto circle {
+  fill: none;
+  stroke: #ffd23f;
+}
+
+.ponto__centro {
+  fill: #ffd23f;
+  stroke: none;
+}
+
+.dica {
+  margin-top: var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+}
+
+/* -------------------------------------------------------------- painel lateral */
+
+.painel {
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-1);
+}
+
+.painel__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.painel__progresso {
+  margin: var(--sp-1) 0 var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.painel__instrucao {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--c-info-bg);
+  color: var(--text-brand);
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  line-height: var(--lh-normal);
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+
+  &--marcado {
+    color: var(--text-primary);
+  }
+
+  &--proximo {
+    background: var(--bg-sunken);
+    color: var(--text-brand);
+    font-weight: 600;
+  }
+}
+
+.checklist__estado {
+  flex: 0 0 24px;
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: var(--ls-caps-tight);
+}
+
+.checklist__item--marcado .checklist__estado {
+  color: var(--c-success);
+}
+
+.checklist__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.checklist__refazer {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-micro);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Tablet e telas menores: painel abaixo da foto. */
+@media (max-width: 1024px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

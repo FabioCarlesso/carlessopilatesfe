@@ -64,6 +64,29 @@ describe('AvaliacaoPosturalService', () => {
     req.flush([mockAnalise]);
   });
 
+  it('should GET /api/avaliacoes-posturais/:id', () => {
+    service.buscarPorId(10).subscribe(a => expect(a).toEqual(mockAnalise));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockAnalise);
+  });
+
+  it('should PUT marcação to /api/avaliacoes-posturais/:id', () => {
+    const dto = {
+      landmarks: [{ codigo: 'OLHO_ESQ' as const, x: 0.45, y: 0.12 }],
+      linhaPrumoX: 0.502,
+      proporcaoImagem: 0.75
+    };
+
+    service.atualizar(10, dto).subscribe(a => expect(a).toEqual(mockAnalise));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(dto);
+    req.flush(mockAnalise);
+  });
+
   it('should PUT multipart form data to /api/avaliacoes-posturais/:id/foto', () => {
     const arquivo = new File(['conteudo'], 'foto.jpg', { type: 'image/jpeg' });
 
