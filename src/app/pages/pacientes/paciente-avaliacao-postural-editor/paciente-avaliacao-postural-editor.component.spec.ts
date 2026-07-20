@@ -2,7 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { PacienteAvaliacaoPosturalEditorComponent } from './paciente-avaliacao-postural-editor.component';
-import { AvaliacaoPosturalResponseDTO, LandmarkDTO } from '../../../core/models/avaliacao-postural';
+import {
+  AvaliacaoPosturalResponseDTO,
+  LandmarkDTO,
+  MetricasPosturaisDTO
+} from '../../../core/models/avaliacao-postural';
 
 const mockRascunho: AvaliacaoPosturalResponseDTO = {
   id: 10,
@@ -216,6 +220,16 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
   });
 
   describe('medidas calculadas', () => {
+    /** Métricas como a API as devolve para `mockRascunho`. */
+    const metricasApi: MetricasPosturaisDTO = {
+      inclinacaoCabecaGraus: 7.59,
+      desnivelOmbrosGraus: 6.34,
+      desnivelQuadrilGraus: null,
+      desnivelJoelhosGraus: null,
+      desvioPrumoNormalizado: 0.002,
+      desvioPrumoCm: null
+    };
+
     /** Marcação completa de uma vista frontal, com ombros desnivelados. */
     const marcacaoCompleta: LandmarkDTO[] = [
       { codigo: 'OLHO_ESQ', x: 0.45, y: 0.12 },
@@ -237,17 +251,7 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
     });
 
     it('mostra as métricas da API enquanto não há alterações pendentes', () => {
-      component.analise = {
-        ...mockRascunho,
-        metricas: {
-          inclinacaoCabecaGraus: 7.59,
-          desnivelOmbrosGraus: 6.34,
-          desnivelQuadrilGraus: null,
-          desnivelJoelhosGraus: null,
-          desvioPrumoNormalizado: 0.002,
-          desvioPrumoCm: null
-        }
-      };
+      component.analise = { ...mockRascunho, metricas: metricasApi };
 
       expect(component.exibindoPrevia).toBeFalse();
       expect(component.metricasExibidas?.desnivelOmbrosGraus).toBe(6.34);
@@ -325,6 +329,74 @@ describe('PacienteAvaliacaoPosturalEditorComponent', () => {
       httpMock.expectNone('/api/avaliacoes-posturais/10/concluir');
       expect(component.erro).toBe('Coordenada fora de [0,1]');
       expect(component.concluindo).toBeFalse();
+    });
+
+    it('avisa quando ajustes feitos durante a conclusão ficaram de fora do prontuário', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      const put = httpMock.expectOne(req => req.method === 'PUT');
+      put.flush({ ...mockRascunho, landmarks: marcacaoCompleta });
+
+      // A fisioterapeuta corrige um ponto entre o PUT e o PATCH: essa edição não
+      // entrou no registro e, com a análise imutável, não tem mais como entrar.
+      component.onMarcacaoAlterada({
+        landmarks: [...marcacaoCompleta.slice(0, 9), { codigo: 'TORNOZELO_DIR', x: 0.51, y: 0.93 }],
+        linhaPrumoX: 0.5
+      });
+
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir').flush({
+        ...mockRascunho,
+        status: 'CONCLUIDA',
+        landmarks: marcacaoCompleta
+      });
+
+      expect(component.erro).toContain('não entraram no prontuário');
+      expect(component.sucesso).toBeNull();
+    });
+
+    it('realinha a marcação exibida com a que foi gravada ao concluir', () => {
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+      component.concluir();
+
+      httpMock.expectOne(req => req.method === 'PUT').flush(mockRascunho);
+      // A API é a fonte da verdade: a tela não pode divergir do prontuário.
+      const gravados: LandmarkDTO[] = [{ codigo: 'OLHO_ESQ', x: 0.1, y: 0.1 }];
+      httpMock.expectOne('/api/avaliacoes-posturais/10/concluir').flush({
+        ...mockRascunho,
+        status: 'CONCLUIDA',
+        linhaPrumoX: 0.47,
+        landmarks: gravados
+      });
+
+      expect(component.landmarksIniciais).toEqual(gravados);
+      expect(component.landmarksAtuais).toEqual(gravados);
+      expect(component.prumoInicial).toBe(0.47);
+    });
+
+    it('não anuncia prévia só porque as observações foram digitadas', () => {
+      component.analise = { ...mockRascunho, metricas: metricasApi };
+      component.observacoes = 'Paciente relatou dor lombar.';
+      component.onObservacoesAlteradas({
+        target: { value: 'Paciente relatou dor lombar.' }
+      } as unknown as Event);
+
+      // As medidas não dependem do texto: seguem sendo as confirmadas pela API.
+      expect(component.alteracoesPendentes).toBeTrue();
+      expect(component.marcacaoPendente).toBeFalse();
+      expect(component.exibindoPrevia).toBeFalse();
+      expect(component.metricasExibidas).toBe(metricasApi);
+    });
+
+    it('mantém a mesma referência da prévia entre verificações, para não sujar o painel OnPush', () => {
+      component.onImagemMedida(0.75);
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta, linhaPrumoX: 0.5 });
+
+      expect(component.metricasExibidas).toBe(component.metricasExibidas);
+
+      const antes = component.metricasExibidas;
+      component.onMarcacaoAlterada({ landmarks: marcacaoCompleta.slice(0, 4), linhaPrumoX: 0.5 });
+      expect(component.metricasExibidas).not.toBe(antes);
     });
 
     it('envia as observações apagadas como texto vazio, que a API grava', () => {

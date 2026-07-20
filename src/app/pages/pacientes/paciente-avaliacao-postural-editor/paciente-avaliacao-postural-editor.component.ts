@@ -38,8 +38,10 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
 
   /**
    * Marcação com que o editor é inicializado. Fixada na carga e nunca
-   * reatribuída a partir da resposta do salvamento: realimentar o editor
-   * descartaria, sem aviso, os pontos marcados enquanto o `PUT` estava em voo.
+   * reatribuída a partir da resposta de um salvamento de rascunho: realimentar o
+   * editor descartaria, sem aviso, os pontos marcados enquanto o `PUT` estava em
+   * voo. A exceção é a conclusão — a partir dela a análise é imutável, e a tela
+   * precisa mostrar exatamente o que ficou no prontuário (ver `aplicarConclusao`).
    */
   landmarksIniciais: LandmarkDTO[] = [];
   prumoInicial: number | null = null;
@@ -54,15 +56,27 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
   erro: string | null = null;
   sucesso: string | null = null;
   alteracoesPendentes = false;
+  /**
+   * Só a marcação está pendente — observações não entram. As medidas dependem
+   * apenas dos pontos e do prumo, então digitar uma observação não pode fazer o
+   * painel anunciar que os números viraram prévia.
+   */
+  marcacaoPendente = false;
 
   readonly vistaLabel = VISTA_POSTURAL_LABEL;
   readonly statusLabel = STATUS_AVALIACAO_POSTURAL_LABEL;
 
   private estado: EstadoMarcacao = { landmarks: [], linhaPrumoX: null };
   private proporcaoImagem: number | null = null;
-  /** Conta as edições recebidas do editor, para detectar alterações feitas durante o `PUT`. */
-  private revisao = 0;
-  private revisaoEnviada = 0;
+  /**
+   * Contadores de edição. `total` detecta alterações feitas enquanto o `PUT`
+   * estava em voo; `marcacao` conta só as que mudam os pontos ou o prumo, e por
+   * isso governa se as métricas em tela ainda são prévia local.
+   */
+  private revisao = { total: 0, marcacao: 0 };
+  private revisaoEnviada = { total: 0, marcacao: 0 };
+  /** Memoiza a prévia por revisão da marcação: sem isso o getter devolveria um objeto novo a cada verificação. */
+  private previaLocal: { revisao: number; metricas: MetricasPosturaisDTO | null } | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -103,19 +117,19 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
   }
 
   /**
-   * Medidas exibidas no painel. Enquanto houver alterações não salvas, mostra a
-   * prévia local para dar retorno imediato à marcação; salvo, prevalecem as
-   * métricas devolvidas pela API, que são a fonte da verdade.
+   * Medidas exibidas no painel. Enquanto a marcação tiver alterações não salvas,
+   * mostra a prévia local para dar retorno imediato ao ajuste dos pontos; salva,
+   * prevalecem as métricas devolvidas pela API, que são a fonte da verdade.
    */
   get metricasExibidas(): MetricasPosturaisDTO | null {
-    if (this.alteracoesPendentes) {
+    if (this.marcacaoPendente) {
       return this.metricasLocais();
     }
     return this.analise?.metricas ?? this.metricasLocais();
   }
 
   get exibindoPrevia(): boolean {
-    return this.alteracoesPendentes || !this.analise?.metricas;
+    return this.marcacaoPendente || !this.analise?.metricas;
   }
 
   /** A API só conclui com todos os pontos obrigatórios da vista marcados. */
@@ -136,16 +150,26 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     );
   }
 
+  /**
+   * Prévia local memoizada pela revisão da marcação. O resultado é lido por um
+   * getter de template, avaliado a cada verificação: recalcular devolveria um
+   * objeto novo toda vez e marcaria o painel `OnPush` como sujo sem necessidade.
+   */
   private metricasLocais(): MetricasPosturaisDTO | null {
     if (!this.analise) return null;
+    if (this.previaLocal?.revisao === this.revisao.marcacao) {
+      return this.previaLocal.metricas;
+    }
 
-    return calcularMetricas(
+    const metricas = calcularMetricas(
       this.analise.vista,
       this.estado.landmarks,
       this.estado.linhaPrumoX,
       this.proporcaoImagem ?? this.analise.proporcaoImagem,
       this.analise.calibracaoCmPorUnidade
     );
+    this.previaLocal = { revisao: this.revisao.marcacao, metricas };
+    return metricas;
   }
 
   carregar(): void {
@@ -170,6 +194,8 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
             linhaPrumoX: analise.linhaPrumoX ?? PRUMO_PADRAO
           };
           this.alteracoesPendentes = false;
+          this.marcacaoPendente = false;
+          this.previaLocal = null;
 
           if (!analise.temFoto) {
             this.erro = 'Esta análise ainda não tem foto enviada.';
@@ -206,18 +232,23 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
 
   onMarcacaoAlterada(estado: EstadoMarcacao): void {
     this.estado = estado;
-    this.revisao++;
+    this.revisao = { total: this.revisao.total + 1, marcacao: this.revisao.marcacao + 1 };
     this.alteracoesPendentes = true;
+    this.marcacaoPendente = true;
     this.sucesso = null;
   }
 
   onImagemMedida(proporcao: number): void {
     this.proporcaoImagem = proporcao;
+    // A proporção entra no cálculo dos ângulos e chega depois da carga: a prévia
+    // memoizada antes dela assumiria foto quadrada.
+    this.previaLocal = null;
   }
 
   onObservacoesAlteradas(event: Event): void {
     this.observacoes = (event.target as HTMLTextAreaElement).value;
-    this.revisao++;
+    // Não conta como revisão de marcação: as medidas não dependem deste texto.
+    this.revisao = { ...this.revisao, total: this.revisao.total + 1 };
     this.alteracoesPendentes = true;
     this.sucesso = null;
   }
@@ -228,17 +259,19 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     this.salvando = true;
     this.erro = null;
 
-    this.persistir().subscribe({
-      next: analise => {
-        this.aplicarResposta(analise);
-        this.salvando = false;
-        this.notificarSucesso('Rascunho salvo com sucesso.');
-      },
-      error: err => {
-        this.erro = extrairMensagemErro(err, 'Erro ao salvar o rascunho da marcação.');
-        this.salvando = false;
-      }
-    });
+    this.persistir(this.analiseId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: analise => {
+          this.aplicarResposta(analise);
+          this.salvando = false;
+          this.notificarSucesso('Rascunho salvo com sucesso.');
+        },
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao salvar o rascunho da marcação.');
+          this.salvando = false;
+        }
+      });
   }
 
   /**
@@ -253,20 +286,14 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
     this.concluindo = true;
     this.erro = null;
 
-    this.persistir()
+    this.persistir(id)
       .pipe(
         tap(analise => this.aplicarResposta(analise)),
         switchMap(() => this.posturalService.concluir(id)),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: analise => {
-          this.analise = analise;
-          this.observacoes = analise.observacoes ?? '';
-          this.alteracoesPendentes = false;
-          this.concluindo = false;
-          this.notificarSucesso('Análise concluída e gravada no prontuário.');
-        },
+        next: analise => this.aplicarConclusao(analise),
         error: err => {
           this.erro = extrairMensagemErro(err, 'Erro ao concluir a análise postural.');
           this.concluindo = false;
@@ -274,19 +301,53 @@ export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestr
       });
   }
 
-  /** `PUT` da marcação atual, com a revisão registrada para detectar edições em voo. */
-  private persistir(): Observable<AvaliacaoPosturalResponseDTO> {
-    const payload = montarPayloadRascunho(this.estado, this.proporcaoImagem, this.observacoes);
-    this.revisaoEnviada = this.revisao;
+  /**
+   * Fecha a análise na tela. Como ela passa a ser imutável, a marcação exibida é
+   * realinhada com a que foi gravada — ao contrário do rascunho, onde
+   * realimentar o editor descartaria pontos marcados durante o `PUT`; aqui,
+   * divergir do prontuário é que seria errado.
+   *
+   * Ajustes feitos entre o `PUT` e o `PATCH` não entraram no registro e não têm
+   * mais como entrar: avisamos em vez de descartá-los em silêncio.
+   */
+  private aplicarConclusao(analise: AvaliacaoPosturalResponseDTO): void {
+    const ajustesDescartados = this.revisao.total !== this.revisaoEnviada.total;
 
-    return this.posturalService.atualizar(this.analiseId!, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef));
+    this.analise = analise;
+    this.observacoes = analise.observacoes ?? '';
+    this.landmarksIniciais = [...analise.landmarks];
+    this.prumoInicial = analise.linhaPrumoX;
+    this.estado = {
+      landmarks: [...analise.landmarks],
+      linhaPrumoX: analise.linhaPrumoX ?? PRUMO_PADRAO
+    };
+    this.alteracoesPendentes = false;
+    this.marcacaoPendente = false;
+    this.previaLocal = null;
+    this.concluindo = false;
+
+    if (ajustesDescartados) {
+      this.erro =
+        'Análise concluída. Os ajustes feitos enquanto ela era gravada não entraram no prontuário — a tela mostra o que ficou registrado.';
+      return;
+    }
+    this.notificarSucesso('Análise concluída e gravada no prontuário.');
+  }
+
+  /** `PUT` da marcação atual, com a revisão registrada para detectar edições em voo. */
+  private persistir(id: number): Observable<AvaliacaoPosturalResponseDTO> {
+    const payload = montarPayloadRascunho(this.estado, this.proporcaoImagem, this.observacoes);
+    // Cópia, e não a mesma referência: os contadores são comparados campo a campo.
+    this.revisaoEnviada = { ...this.revisao };
+
+    return this.posturalService.atualizar(id, payload);
   }
 
   private aplicarResposta(analise: AvaliacaoPosturalResponseDTO): void {
     this.analise = analise;
-    // Marcações feitas enquanto o PUT estava em voo continuam pendentes.
-    this.alteracoesPendentes = this.revisao !== this.revisaoEnviada;
+    // Edições feitas enquanto o PUT estava em voo continuam pendentes.
+    this.alteracoesPendentes = this.revisao.total !== this.revisaoEnviada.total;
+    this.marcacaoPendente = this.revisao.marcacao !== this.revisaoEnviada.marcacao;
   }
 
   private notificarSucesso(mensagem: string): void {
