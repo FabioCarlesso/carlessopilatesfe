@@ -2,6 +2,7 @@ import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { NotaFiscalEmitidaResponseDTO } from '../../../core/models/nfse-emitida';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service';
@@ -12,7 +13,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-list',
-  imports: [NgIf, NgFor, CurrencyPipe, LocalDatePipe, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-nfse-emitida-list.component.html',
   styleUrl: './paciente-nfse-emitida-list.component.scss'
 })

@@ -2,6 +2,7 @@ import { NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { ReavaliacaoResponseDTO } from '../../../core/models/reavaliacao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
@@ -11,7 +12,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-paciente-reavaliacao-list',
-  imports: [NgIf, NgFor, LocalDatePipe, RouterLink],
+  imports: [NgIf, NgFor, LocalDatePipe, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-reavaliacao-list.component.html',
   styleUrl: './paciente-reavaliacao-list.component.scss'
 })

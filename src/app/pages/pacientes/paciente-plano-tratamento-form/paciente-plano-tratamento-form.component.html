@@ -1,3 +1,10 @@
+<app-breadcrumb *ngIf="pacienteId" [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Planos de Tratamento', link: ['/pacientes', pacienteId, 'plano-tratamento'] },
+  { label: modoEdicao ? 'Editar' : 'Novo' }
+]"></app-breadcrumb>
+
 <div class="page-header">
   <div>
     <h1>{{ modoEdicao ? 'Editar' : 'Novo' }} Plano de Tratamento</h1>

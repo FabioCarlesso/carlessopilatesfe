@@ -262,6 +262,7 @@ Arquivos de teste:
 - `src/app/pages/pacientes/paciente-nfse-emitida-form/paciente-nfse-emitida-form.component.spec.ts`
 - `src/app/core/services/nfse-emitida.service.spec.ts`
 - `src/app/shared/components/busca-global/busca-global.component.spec.ts`
+- `src/app/shared/components/breadcrumb/breadcrumb.component.spec.ts`
 - `src/app/shared/utils/api-error.spec.ts`
 - `src/app/shared/utils/image-compressor.spec.ts`
 - `src/app/shared/services/image-compressor.service.spec.ts`

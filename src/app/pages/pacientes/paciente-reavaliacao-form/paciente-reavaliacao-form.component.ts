@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
 import {
   ReavaliacaoRequestDTO,
@@ -16,7 +17,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
   styleUrl: './paciente-reavaliacao-form.component.scss'
 })

@@ -1,11 +1,16 @@
+<app-breadcrumb *ngIf="pacienteId" [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Anamnese' }
+]"></app-breadcrumb>
+
 <div class="page-header">
   <div>
     <h1>Anamnese</h1>
     <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
   </div>
   <div class="acoes">
-    <a *ngIf="paciente" [routerLink]="['/pacientes', paciente.id]" class="btn btn-outline">Voltar</a>
-    <a *ngIf="!paciente" routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
   </div>
 </div>
 

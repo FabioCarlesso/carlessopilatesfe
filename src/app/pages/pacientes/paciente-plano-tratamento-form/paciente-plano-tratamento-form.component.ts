@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
 import {
   PlanoTratamentoRequestDTO,
@@ -18,7 +19,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-plano-tratamento-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-plano-tratamento-form.component.html',
   styleUrl: './paciente-plano-tratamento-form.component.scss'
 })

@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin } from 'rxjs';
 import { VISTA_POSTURAL_OPTIONS, VistaPostural } from '../../../core/models/avaliacao-postural';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -15,7 +16,7 @@ import { ImageCompressorService } from '../../../shared/services/image-compresso
 
 @Component({
   selector: 'app-paciente-avaliacao-postural-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-form.component.html',
   styleUrl: './paciente-avaliacao-postural-form.component.scss'
 })

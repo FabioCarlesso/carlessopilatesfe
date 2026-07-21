@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
 import { NotaFiscalEmitidaRequestDTO, NotaFiscalEmitidaResponseDTO } from '../../../core/models/nfse-emitida';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -14,7 +15,7 @@ import { formatCompetencia } from '../../../shared/utils/competencia-mask';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-nfse-emitida-form.component.html',
   styleUrl: './paciente-nfse-emitida-form.component.scss'
 })

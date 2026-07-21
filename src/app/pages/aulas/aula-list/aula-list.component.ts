@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDe
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -13,7 +14,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 
 @Component({
   selector: 'app-aula-list',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

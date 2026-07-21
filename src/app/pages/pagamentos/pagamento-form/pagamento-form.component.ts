@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
@@ -9,7 +10,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-pagamento-form',
-  imports: [NgIf, NgFor, CurrencyPipe, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgFor, CurrencyPipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './pagamento-form.component.html',
   styleUrl: './pagamento-form.component.scss'
 })

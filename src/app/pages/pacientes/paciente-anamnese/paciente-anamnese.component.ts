@@ -4,6 +4,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
 import { AnamneseResponseDTO } from '../../../core/models/anamnese';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -13,7 +14,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-anamnese',
-  imports: [NgIf, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-anamnese.component.html',
   styleUrl: './paciente-anamnese.component.scss'
 })

@@ -3,6 +3,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { SessaoResponseDTO, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { SessaoService } from '../../../core/services/sessao.service';
@@ -32,7 +33,7 @@ function formatarDataHoraLocal(data: Date): string {
 
 @Component({
   selector: 'app-paciente-sessao-list',
-  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-sessao-list.component.html',
   styleUrl: './paciente-sessao-list.component.scss'
 })

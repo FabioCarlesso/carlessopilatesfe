@@ -2,6 +2,7 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { PlanoTratamentoResponseDTO, PLANO_TRATAMENTO_STATUS_LABEL } from '../../../core/models/plano-tratamento';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
@@ -11,7 +12,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 
 @Component({
   selector: 'app-paciente-plano-tratamento-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-plano-tratamento-list.component.html',
   styleUrl: './paciente-plano-tratamento-list.component.scss'
 })
