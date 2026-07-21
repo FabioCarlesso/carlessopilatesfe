@@ -4,6 +4,7 @@ import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
 import {
   EvolucaoSessaoRequestDTO,
@@ -19,7 +20,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
-  imports: [NgIf, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-evolucao-sessao.component.html',
   styleUrl: './paciente-evolucao-sessao.component.scss'
 })

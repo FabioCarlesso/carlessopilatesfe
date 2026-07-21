@@ -2,6 +2,7 @@ import { NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { Observable, switchMap, tap } from 'rxjs';
 import {
   AvaliacaoPosturalResponseDTO,
@@ -26,7 +27,7 @@ import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../sh
  */
 @Component({
   selector: 'app-paciente-avaliacao-postural-editor',
-  imports: [NgIf, RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent],
+  imports: [NgIf, RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-editor.component.html',
   styleUrl: './paciente-avaliacao-postural-editor.component.scss'
 })

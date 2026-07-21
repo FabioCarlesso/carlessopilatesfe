@@ -1,3 +1,11 @@
+<app-breadcrumb *ngIf="pacienteId !== null" [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Avaliação Fisioterapêutica', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica'] },
+  { label: 'Análise Postural', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural'] },
+  { label: 'Nova' }
+]"></app-breadcrumb>
+
 <div class="page-header">
   <div>
     <h1>Nova Análise Postural</h1>

@@ -1,3 +1,9 @@
+<app-breadcrumb *ngIf="pacienteId" [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: pacienteNome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Pagamentos' }
+]"></app-breadcrumb>
+
 <div class="page-header">
   <div>
     <h1>Pagamentos do Paciente</h1>
@@ -5,7 +11,7 @@
   </div>
   <div class="acoes">
     <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
-    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar ao Paciente</a>
+    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
   </div>
 </div>
 
