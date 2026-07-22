@@ -94,6 +94,11 @@ describe('PacienteSessaoFormComponent', () => {
       expect(component.form.get('dataHora')?.value).toBe('');
     });
 
+    it('should keep tipo and profissionalId editable', () => {
+      expect(component.form.get('tipo')?.enabled).toBeTrue();
+      expect(component.form.get('profissionalId')?.enabled).toBeTrue();
+    });
+
     it('should not submit when required fields are missing', () => {
       component.salvar();
 
@@ -192,24 +197,46 @@ describe('PacienteSessaoFormComponent', () => {
       expect(component.form.get('status')?.value).toBe('AGENDADA');
     });
 
-    it('should call atualizar with updated data on save', () => {
+    it('should disable tipo, profissionalId and status', () => {
+      expect(component.form.get('tipo')?.disabled).toBeTrue();
+      expect(component.form.get('profissionalId')?.disabled).toBeTrue();
+      expect(component.form.get('status')?.disabled).toBeTrue();
+      expect(component.form.get('dataHora')?.enabled).toBeTrue();
+      expect(component.form.get('duracao')?.enabled).toBeTrue();
+      expect(component.form.get('observacoes')?.enabled).toBeTrue();
+    });
+
+    it('should render tipo, profissionalId and status as disabled controls', () => {
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector<HTMLSelectElement>('#tipo')?.disabled).toBeTrue();
+      expect(el.querySelector<HTMLSelectElement>('#status')?.disabled).toBeTrue();
+      expect(el.querySelector<HTMLInputElement>('#profissionalId')?.disabled).toBeTrue();
+    });
+
+    it('should call atualizar only with dataHora, duracao and observacoes', () => {
       const updated = { ...mockSessao, duracao: 45 };
       sessaoServiceSpy.atualizar.and.returnValue(of(updated));
       component.form.patchValue({ duracao: 45 });
 
       component.salvar();
 
-      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(
-        1,
-        jasmine.objectContaining({
-          dataHora: '2026-05-10T10:00',
-          tipo: 'PILATES',
-          duracao: 45,
-          status: 'AGENDADA'
-        })
-      );
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, {
+        dataHora: '2026-05-10T10:00',
+        duracao: 45,
+        observacoes: null
+      });
       expect(component.sucesso).toBe('Sessão atualizada com sucesso.');
       expect(component.salvando).toBeFalse();
+    });
+
+    it('should not send tipo, profissionalId or status even if their values change', () => {
+      sessaoServiceSpy.atualizar.and.returnValue(of(mockSessao));
+      component.form.patchValue({ tipo: 'FISIOTERAPIA', profissionalId: 7, status: 'REALIZADA' });
+
+      component.salvar();
+
+      const dto = sessaoServiceSpy.atualizar.calls.mostRecent().args[1] as unknown as Record<string, unknown>;
+      expect(Object.keys(dto).sort()).toEqual(['dataHora', 'duracao', 'observacoes']);
     });
 
     it('should set erro when update fails', () => {
