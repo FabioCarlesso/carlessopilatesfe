@@ -25,10 +25,10 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>E-mail</th>
-          <th>Perfil</th>
-          <th>Status</th>
+          <th app-sortable campo="name" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Nome</th>
+          <th app-sortable campo="email" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">E-mail</th>
+          <th app-sortable campo="role" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Perfil</th>
+          <th app-sortable campo="active" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Status</th>
           <th>Ações</th>
         </tr>
       </thead>

@@ -26,8 +26,8 @@ export class ProfissionalService {
 
   constructor(private http: HttpClient) {}
 
-  listar(page = 0, size = 10, filtro: ProfissionalFiltro = {}): Observable<ProfissionalPage> {
-    let params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+  listar(page = 0, size = 10, filtro: ProfissionalFiltro = {}, sort = 'nome'): Observable<ProfissionalPage> {
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
 
     Object.entries(filtro).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {

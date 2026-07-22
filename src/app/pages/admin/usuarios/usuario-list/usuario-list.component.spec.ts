@@ -69,7 +69,7 @@ describe('UsuarioListComponent', () => {
   });
 
   it('should load usuarios on init', () => {
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, 'name,asc');
     expect(component.usuarios).toEqual([mockUsuario, mockUsuarioInativo]);
     expect(component.totalElements).toBe(2);
     expect(component.totalPages).toBe(1);
@@ -89,7 +89,7 @@ describe('UsuarioListComponent', () => {
 
     expect(component.pageSize).toBe(20);
     expect(component.currentPage).toBe(0);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20, 'name,asc');
   });
 
   it('should ignore unsupported or unchanged page size', () => {
@@ -193,7 +193,7 @@ describe('UsuarioListComponent', () => {
     component.pageSize = 10;
     component.carregar();
 
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, 'name,asc');
     expect(component.currentPage).toBe(2);
     expect(component.pageSize).toBe(20);
     expect(component.totalPages).toBe(3);
@@ -244,7 +244,7 @@ describe('UsuarioListComponent', () => {
     component.pagina(1);
 
     expect(component.currentPage).toBe(1);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, 'name,asc');
   });
 
   it('should ignore invalid or current page when pagina is called', () => {
@@ -605,5 +605,44 @@ describe('UsuarioListComponent', () => {
     expect(buttons[0].getAttribute('aria-label')).toBe('Página 1');
     expect(buttons[1].getAttribute('aria-current')).toBe('page');
     expect(buttons[0].getAttribute('aria-current')).toBeNull();
+  });
+
+  it('should start ordered by name asc (issue #151)', () => {
+    expect(component.ordenacao).toEqual({ campo: 'name', direcao: 'asc' });
+  });
+
+  it('should sort ascending by a new column, resetting to page 0', () => {
+    serviceSpy.listar.calls.reset();
+    component.currentPage = 2;
+
+    component.ordenar('email');
+
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, 'email,asc');
+  });
+
+  it('should toggle asc → desc → back to default (name asc) on repeated clicks', () => {
+    component.ordenar('role');
+    expect(component.ordenacao).toEqual({ campo: 'role', direcao: 'asc' });
+
+    component.ordenar('role');
+    expect(component.ordenacao).toEqual({ campo: 'role', direcao: 'desc' });
+
+    component.ordenar('role');
+    expect(component.ordenacao).toEqual({ campo: 'name', direcao: 'asc' });
+  });
+
+  it('should render sortable headers with aria-sort reflecting the active column', () => {
+    const headers = fixture.nativeElement.querySelectorAll('th[app-sortable]') as NodeListOf<HTMLTableCellElement>;
+    // Nome, E-mail, Perfil e Status são ordenáveis.
+    expect(headers.length).toBe(4);
+    expect(headers[0].getAttribute('aria-sort')).toBe('ascending');
+
+    component.ordenar('active');
+    fixture.detectChanges();
+
+    expect(headers[0].getAttribute('aria-sort')).toBe('none');
+    expect(headers[3].getAttribute('aria-sort')).toBe('ascending');
   });
 });

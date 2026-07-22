@@ -71,7 +71,7 @@ describe('ProfissionalListComponent', () => {
   });
 
   it('should load profissionais on init', () => {
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro, 'nome,asc');
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.totalElements).toBe(1);
     expect(component.totalPages).toBe(2);
@@ -104,7 +104,7 @@ describe('ProfissionalListComponent', () => {
 
     expect(component.pageSize).toBe(20);
     expect(component.currentPage).toBe(0);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 20, defaultFiltro, 'nome,asc');
   });
 
   it('should ignore unsupported or unchanged page size', () => {
@@ -142,7 +142,7 @@ describe('ProfissionalListComponent', () => {
     component.pageSize = 10;
     component.carregar();
 
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro, 'nome,asc');
     expect(component.currentPage).toBe(2);
     expect(component.pageSize).toBe(20);
     expect(component.totalPages).toBe(3);
@@ -205,7 +205,7 @@ describe('ProfissionalListComponent', () => {
       tipoContrato: 'PJ',
       percentualPagamentoAula: 45,
       ativo: false
-    });
+    }, 'nome,asc');
   });
 
   it('should omit contrato and percentual when not informed and ativo when status is todos', () => {
@@ -220,7 +220,7 @@ describe('ProfissionalListComponent', () => {
 
     component.buscar();
 
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, { nome: '', email: '' });
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, { nome: '', email: '' }, 'nome,asc');
   });
 
   it('should reset to first page when buscar is called', () => {
@@ -250,7 +250,7 @@ describe('ProfissionalListComponent', () => {
       status: 'ativos'
     });
     expect(component.currentPage).toBe(0);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro, 'nome,asc');
   });
 
   it('should set confirmarInativarId when confirmarInativar is called', () => {
@@ -301,8 +301,8 @@ describe('ProfissionalListComponent', () => {
 
     expect(component.currentPage).toBe(14);
     expect(serviceSpy.listar).toHaveBeenCalledTimes(3);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(15, 10, defaultFiltro);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(14, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(15, 10, defaultFiltro, 'nome,asc');
+    expect(serviceSpy.listar).toHaveBeenCalledWith(14, 10, defaultFiltro, 'nome,asc');
     expect(component.profissionais).toEqual([mockProfissional]);
     expect(component.visiblePages.length).toBeGreaterThan(0);
     expect(component.loading).toBeFalse();
@@ -362,7 +362,7 @@ describe('ProfissionalListComponent', () => {
     component.pagina(1);
 
     expect(component.currentPage).toBe(1);
-    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, defaultFiltro, 'nome,asc');
   });
 
   it('should ignore invalid or current page when pagina is called', () => {
@@ -490,6 +490,46 @@ describe('ProfissionalListComponent', () => {
     expect(badge.textContent?.trim()).toBe('2');
     // A contagem fica no nome acessível do botão via aria-label do badge (issue #163).
     expect(badge.getAttribute('aria-label')).toBe('2 filtros ativos');
+  });
+
+  it('should start ordered by nome asc (issue #151)', () => {
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+  });
+
+  it('should sort ascending by a new column, resetting to page 0 and keeping the filter', () => {
+    serviceSpy.listar.calls.reset();
+    component.currentPage = 3;
+
+    component.ordenar('percentualPagamentoAula');
+
+    expect(component.ordenacao).toEqual({ campo: 'percentualPagamentoAula', direcao: 'asc' });
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, defaultFiltro, 'percentualPagamentoAula,asc');
+  });
+
+  it('should toggle asc → desc → back to default (nome asc) on repeated clicks', () => {
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
+
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'desc' });
+
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+  });
+
+  it('should render sortable headers with aria-sort reflecting the active column', () => {
+    const headers = fixture.nativeElement.querySelectorAll('th[app-sortable]') as NodeListOf<HTMLTableCellElement>;
+    // Nome, E-mail, Contrato e % por Aula são ordenáveis.
+    expect(headers.length).toBe(4);
+    expect(headers[0].getAttribute('aria-sort')).toBe('ascending');
+
+    component.ordenar('tipoContrato');
+    (component as unknown as { cdr: ChangeDetectorRef }).cdr.markForCheck();
+    fixture.detectChanges();
+
+    expect(headers[0].getAttribute('aria-sort')).toBe('none');
+    expect(headers[2].getAttribute('aria-sort')).toBe('ascending');
   });
 
 });

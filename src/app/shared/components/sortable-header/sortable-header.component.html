@@ -1,0 +1,4 @@
+<button type="button" class="sort-header" [class.ativo]="ativo" (click)="aoClicar()">
+  <span class="sort-label"><ng-content></ng-content></span>
+  <span class="sort-arrow" [class.neutro]="!ativo" aria-hidden="true">{{ seta }}</span>
+</button>

@@ -75,11 +75,11 @@
     <table class="table paciente-table">
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>E-mail</th>
+          <th app-sortable campo="nome" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Nome</th>
+          <th app-sortable campo="email" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">E-mail</th>
           <th>CPF</th>
           <th>Telefone</th>
-          <th>Status</th>
+          <th app-sortable campo="ativo" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Status</th>
           <th class="acoes-header">Ações</th>
         </tr>
       </thead>

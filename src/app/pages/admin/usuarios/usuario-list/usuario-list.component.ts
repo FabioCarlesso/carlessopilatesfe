@@ -3,6 +3,8 @@ import { NgFor, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConfirmarDialogComponent } from '../../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { PaginationSummaryComponent } from '../../../../shared/components/pagination-summary/pagination-summary.component';
+import { SortableHeaderComponent } from '../../../../shared/components/sortable-header/sortable-header.component';
+import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../../core/models/ordenacao';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ROLE_OPTIONS, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
@@ -24,7 +26,7 @@ const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [NgIf, NgFor, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent],
+  imports: [NgIf, NgFor, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss'
 })
@@ -42,6 +44,8 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   confirmacao: Confirmacao | null = null;
   acaoEmAndamento = false;
+  readonly ordenacaoPadrao: Ordenacao = { campo: 'name', direcao: 'asc' };
+  ordenacao: Ordenacao = { ...this.ordenacaoPadrao };
   private currentUserId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -66,7 +70,7 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
   carregar(retryCount = 0): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, toSortParam(this.ordenacao)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         const totalPages = meta.totalPages ?? this.totalPages;
@@ -135,6 +139,13 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         this.service.excluir(usuario.id).subscribe({ next: onSuccess, error: onError });
         break;
     }
+  }
+
+  ordenar(campo: string): void {
+    this.ordenacao = proximaOrdenacao(this.ordenacao, campo, this.ordenacaoPadrao);
+    // Trocar a ordenação volta para a primeira página; filtros não se aplicam a esta listagem.
+    this.currentPage = 0;
+    this.carregar();
   }
 
   pagina(p: number): void {

@@ -81,7 +81,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should populate pacientes and totalPages on success', () => {
@@ -208,7 +208,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should ignore invalid or current page when pagina is called', () => {
@@ -237,7 +237,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
 
     component.proximaPagina();
     expect(component.currentPage).toBe(1);
@@ -247,7 +247,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should reset to first page and reload when page size changes', () => {
@@ -263,7 +263,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should ignore unsupported or unchanged page size', () => {
@@ -298,14 +298,14 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
     expect(serviceSpy.listar).toHaveBeenCalledWith(1, 10, {
       nome: '',
       email: '',
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should reset page and reload with trimmed filters when buscar is called', () => {
@@ -327,7 +327,7 @@ describe('PacienteListComponent', () => {
       cpf: '12345678900',
       telefone: '11999999999',
       ativo: false
-    });
+    }, 'nome,asc');
   });
 
   it('should omit ativo param when status is todos', () => {
@@ -371,7 +371,7 @@ describe('PacienteListComponent', () => {
       cpf: '',
       telefone: '',
       ativo: true
-    });
+    }, 'nome,asc');
   });
 
   it('should return array of page indices from pages()', () => {
@@ -581,6 +581,67 @@ describe('PacienteListComponent', () => {
     expect(badge.textContent?.trim()).toBe('2');
     // A contagem fica no nome acessível do botão via aria-label do badge (issue #163).
     expect(badge.getAttribute('aria-label')).toBe('2 filtros ativos');
+  });
+
+  it('should start ordered by nome asc (issue #151)', () => {
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+  });
+
+  it('should sort ascending when a new column header is clicked, resetting to page 0', () => {
+    serviceSpy.listar.calls.reset();
+    component.currentPage = 2;
+
+    component.ordenar('email');
+
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
+    expect(component.currentPage).toBe(0);
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: '',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: true
+    }, 'email,asc');
+  });
+
+  it('should toggle asc → desc → back to default (nome asc) on repeated clicks', () => {
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
+
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'desc' });
+
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+  });
+
+  it('should preserve active filters when ordering changes', () => {
+    component.filtro = { nome: ' Ana ', email: '', cpf: '', telefone: '', status: 'inativos' };
+
+    component.ordenar('email');
+
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, {
+      nome: 'Ana',
+      email: '',
+      cpf: '',
+      telefone: '',
+      ativo: false
+    }, 'email,asc');
+  });
+
+  it('should render sortable headers with aria-sort reflecting the active column', () => {
+    const headers = fixture.nativeElement.querySelectorAll('th[app-sortable]') as NodeListOf<HTMLTableCellElement>;
+    // Nome, E-mail e Status são ordenáveis (CPF e Telefone não).
+    expect(headers.length).toBe(3);
+
+    const nome = headers[0];
+    expect(nome.getAttribute('aria-sort')).toBe('ascending');
+
+    component.ordenar('email');
+    fixture.detectChanges();
+
+    expect(nome.getAttribute('aria-sort')).toBe('none');
+    expect(headers[1].getAttribute('aria-sort')).toBe('ascending');
   });
 
 });
