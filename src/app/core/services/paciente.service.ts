@@ -24,8 +24,8 @@ export class PacienteService {
 
   constructor(private http: HttpClient) {}
 
-  listar(page = 0, size = 10, filtro: PacienteFiltro = {}): Observable<Page<PacienteResponseDTO>> {
-    let params = new HttpParams().set('page', page).set('size', size).set('sort', 'nome');
+  listar(page = 0, size = 10, filtro: PacienteFiltro = {}, sort = 'nome'): Observable<Page<PacienteResponseDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
 
     Object.entries(filtro).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {

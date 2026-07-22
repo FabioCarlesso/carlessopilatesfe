@@ -6,8 +6,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProfissionalFiltro, ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TipoContrato, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { PageMetadata } from '../../../core/models/paciente';
+import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/ordenacao';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
+import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 
 interface FiltroUI {
   nome: string;
@@ -19,7 +21,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -38,6 +40,8 @@ export class ProfissionalListComponent implements OnInit {
   confirmarInativarId: number | null = null;
   acaoEmAndamento = false;
   filtrosAbertos = false;
+  readonly ordenacaoPadrao: Ordenacao = { campo: 'nome', direcao: 'asc' };
+  ordenacao: Ordenacao = { ...this.ordenacaoPadrao };
   filtro: FiltroUI = {
     nome: '',
     email: '',
@@ -58,7 +62,7 @@ export class ProfissionalListComponent implements OnInit {
   carregar(retryCount = 0): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro(), toSortParam(this.ordenacao)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         const totalPages = meta.totalPages ?? this.totalPages;
@@ -87,6 +91,9 @@ export class ProfissionalListComponent implements OnInit {
 
   buscar(): void {
     this.currentPage = 0;
+    // Buscar/Limpar voltam à ordenação padrão (nome asc); nova referência para
+    // os cabeçalhos OnPush refletirem a mudança.
+    this.ordenacao = { ...this.ordenacaoPadrao };
     // No mobile, recolhe o painel após aplicar para que o primeiro resultado
     // apareça na primeira dobra (issue #163). No desktop o painel está sempre
     // visível via CSS, então o estado não tem efeito visual.
@@ -96,6 +103,14 @@ export class ProfissionalListComponent implements OnInit {
 
   alternarFiltros(): void {
     this.filtrosAbertos = !this.filtrosAbertos;
+  }
+
+  ordenar(campo: string): void {
+    // Nova referência para que o cabeçalho OnPush reflita a coluna/direção ativa.
+    this.ordenacao = proximaOrdenacao(this.ordenacao, campo, this.ordenacaoPadrao);
+    // Trocar a ordenação volta para a primeira página; `carregar` reaplica o filtro ativo.
+    this.currentPage = 0;
+    this.carregar();
   }
 
   filtrosAtivos(): number {

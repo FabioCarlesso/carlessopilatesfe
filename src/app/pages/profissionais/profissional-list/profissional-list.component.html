@@ -75,10 +75,10 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>E-mail</th>
-          <th>Contrato</th>
-          <th>% por Aula</th>
+          <th app-sortable campo="nome" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Nome</th>
+          <th app-sortable campo="email" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">E-mail</th>
+          <th app-sortable campo="tipoContrato" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Contrato</th>
+          <th app-sortable campo="percentualPagamentoAula" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">% por Aula</th>
           <th>Ações</th>
         </tr>
       </thead>

@@ -25,7 +25,10 @@ module.exports = tseslint.config(
       "@angular-eslint/component-selector": [
         "error",
         {
-          type: "element",
+          // "attribute" habilita componentes aplicados a elementos nativos que
+          // exigem a tag correta (ex.: cabecalho ordenavel `th[app-sortable]`,
+          // issue #151), preservando a semantica da tabela e o `aria-sort` no th.
+          type: ["element", "attribute"],
           prefix: "app",
           style: "kebab-case",
         },

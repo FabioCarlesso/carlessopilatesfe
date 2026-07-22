@@ -5,7 +5,9 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
+import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/ordenacao';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 
 interface FiltroUI {
   nome: string;
@@ -17,7 +19,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, SortableHeaderComponent],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -37,6 +39,8 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   confirmarAtivarId: number | null = null;
   acaoEmAndamento = false;
   filtrosAbertos = false;
+  readonly ordenacaoPadrao: Ordenacao = { campo: 'nome', direcao: 'asc' };
+  ordenacao: Ordenacao = { ...this.ordenacaoPadrao };
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   filtro: FiltroUI = {
     nome: '',
@@ -61,7 +65,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   carregar(): void {
     this.loading = true;
     this.erro = null;
-    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.listar(this.currentPage, this.pageSize, this.montarFiltro(), toSortParam(this.ordenacao)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {
         const meta = page.page ?? ({} as Partial<PageMetadata>);
         if ((meta.totalPages ?? 0) > 0 && this.currentPage >= (meta.totalPages ?? 0)) {
@@ -88,6 +92,9 @@ export class PacienteListComponent implements OnInit, OnDestroy {
 
   buscar(): void {
     this.currentPage = 0;
+    // Buscar/Limpar voltam à ordenação padrão (nome asc); nova referência para
+    // os cabeçalhos OnPush refletirem a mudança.
+    this.ordenacao = { ...this.ordenacaoPadrao };
     // No mobile, recolhe o painel após aplicar para que o primeiro resultado
     // apareça na primeira dobra (issue #163). No desktop o painel está sempre
     // visível via CSS, então o estado não tem efeito visual.
@@ -97,6 +104,14 @@ export class PacienteListComponent implements OnInit, OnDestroy {
 
   alternarFiltros(): void {
     this.filtrosAbertos = !this.filtrosAbertos;
+  }
+
+  ordenar(campo: string): void {
+    // Nova referência para que o cabeçalho OnPush reflita a coluna/direção ativa.
+    this.ordenacao = proximaOrdenacao(this.ordenacao, campo, this.ordenacaoPadrao);
+    // Trocar a ordenação volta para a primeira página; `carregar` reaplica o filtro ativo.
+    this.currentPage = 0;
+    this.carregar();
   }
 
   filtrosAtivos(): number {

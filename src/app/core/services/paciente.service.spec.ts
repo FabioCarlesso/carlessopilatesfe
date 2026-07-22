@@ -62,6 +62,14 @@ describe('PacienteService', () => {
       req.flush({ ...mockPage, page: { ...mockPage.page, size: 5, number: 2 } });
     });
 
+    it('should pass a custom sort param (issue #151)', () => {
+      service.listar(0, 10, {}, 'email,desc').subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/pacientes');
+      expect(req.request.params.get('sort')).toBe('email,desc');
+      req.flush(mockPage);
+    });
+
     it('should pass filter params when provided', () => {
       service.listar(0, 10, {
         nome: 'Ana',

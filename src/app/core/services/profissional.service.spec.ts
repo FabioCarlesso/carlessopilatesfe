@@ -107,6 +107,14 @@ describe('ProfissionalService', () => {
     req.flush(mockPage);
   });
 
+  it('should pass a custom sort param (issue #151)', () => {
+    service.listar(0, 10, {}, 'percentualPagamentoAula,desc').subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/profissionais');
+    expect(req.request.params.get('sort')).toBe('percentualPagamentoAula,desc');
+    req.flush(mockPage);
+  });
+
   it('should pass filter params when provided', () => {
     service.listar(0, 10, {
       nome: 'Paula',
