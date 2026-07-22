@@ -101,7 +101,6 @@ describe('SessaoService', () => {
     const dto: SessaoUpdateDTO = {
       dataHora: '2026-05-10T11:30',
       duracao: 45,
-      status: 'REALIZADA',
       observacoes: 'Ajuste de carga'
     };
 
@@ -113,9 +112,17 @@ describe('SessaoService', () => {
       data: '2026-05-10',
       horario: '11:30:00',
       duracaoMinutos: 45,
-      status: 'REALIZADA',
       observacoes: 'Ajuste de carga'
     });
+    req.flush(mockSessaoApi);
+  });
+
+  it('should not send status, tipo or profissionalId in the PUT body', () => {
+    service.atualizar(1, { dataHora: '2026-05-10T11:30', duracao: 45, observacoes: null }).subscribe();
+
+    const req = httpMock.expectOne('/api/sessoes/1');
+    expect(Object.keys(req.request.body).sort())
+      .toEqual(['data', 'duracaoMinutos', 'horario', 'observacoes']);
     req.flush(mockSessaoApi);
   });
 

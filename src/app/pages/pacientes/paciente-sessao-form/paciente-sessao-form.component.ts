@@ -71,6 +71,14 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.modoEdicao) {
+      // O PUT /api/sessoes/{id} não persiste tipo, profissional nem status:
+      // ficam somente informativos na edição.
+      this.form.get('tipo')?.disable();
+      this.form.get('profissionalId')?.disable();
+      this.form.get('status')?.disable();
+    }
+
     this.carregar();
   }
 
@@ -141,26 +149,22 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     this.erro = null;
     this.sucesso = null;
 
-    const valor = this.form.value;
+    const valor = this.form.getRawValue();
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
-    const profissionalId = valor.profissionalId ? Number(valor.profissionalId) : null;
-
-    const baseDto = {
-      dataHora: valor.dataHora,
-      tipo: valor.tipo as SessaoTipo,
-      duracao: Number(valor.duracao),
-      profissionalId,
-      observacoes: opt(valor.observacoes)
-    };
 
     const updateDto: SessaoUpdateDTO = {
-      ...baseDto,
-      status: valor.status as SessaoStatus
+      dataHora: valor.dataHora,
+      duracao: Number(valor.duracao),
+      observacoes: opt(valor.observacoes)
     };
 
     const createDto: SessaoRequestDTO = {
       pacienteId: this.pacienteId,
-      ...baseDto
+      dataHora: valor.dataHora,
+      tipo: valor.tipo as SessaoTipo,
+      duracao: Number(valor.duracao),
+      profissionalId: valor.profissionalId ? Number(valor.profissionalId) : null,
+      observacoes: opt(valor.observacoes)
     };
 
     const sessaoAtual = this.sessao;

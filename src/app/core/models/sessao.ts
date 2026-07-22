@@ -10,13 +10,14 @@ export interface SessaoRequestDTO {
   observacoes?: string | null;
 }
 
+// O PUT /api/sessoes/{id} só aplica data, horário, duração e observações.
+// Tipo, profissional e status não são alterados por esse endpoint: tipo e
+// profissional são definidos apenas na criação e o status muda pelas ações
+// PATCH /realizar e PATCH /cancelar.
 export interface SessaoUpdateDTO {
   dataHora?: string | null;
-  tipo?: SessaoTipo | null;
   duracao?: number | null;
-  profissionalId?: number | null;
   observacoes?: string | null;
-  status?: SessaoStatus | null;
 }
 
 export interface SessaoResponseDTO {

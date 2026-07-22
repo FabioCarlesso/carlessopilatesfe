@@ -468,11 +468,11 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 | `listarPorPaciente(pacienteId)` | `GET /sessoes/paciente/{pacienteId}` | Lista sessões do paciente |
 | `buscar(id)` | `GET /sessoes/{id}` | Busca sessão por ID |
 | `criar(dto)` | `POST /sessoes` | Cria sessão vinculada ao paciente |
-| `atualizar(id, dto)` | `PUT /sessoes/{id}` | Atualiza dados e status da sessão |
+| `atualizar(id, dto)` | `PUT /sessoes/{id}` | Atualiza data/hora, duração e observações da sessão |
 | `realizar(id)` | `PATCH /sessoes/{id}/realizar` | Marca sessão agendada como realizada |
 | `cancelar(id)` | `PATCH /sessoes/{id}/cancelar` | Cancela sessão agendada |
 
-O model usado pelos componentes centraliza a data e hora em `dataHora` e a duração em `duracao`. O contrato atual da API de sessões usa `data`, `horario` e `duracaoMinutos`; por isso o `SessaoService` faz a tradução no `POST`/`PUT` e normaliza as respostas para o formato consumido pela UI.
+O model usado pelos componentes centraliza a data e hora em `dataHora` e a duração em `duracao`. O contrato atual da API de sessões usa `data`, `horario` e `duracaoMinutos`; por isso o `SessaoService` faz a tradução no `POST`/`PUT` e normaliza as respostas para o formato consumido pela UI. O `PUT` aceita apenas `data`, `horario`, `duracaoMinutos` e `observacoes`: o `SessaoUpdateDTO` reflete esse contrato (`dataHora`, `duracao`, `observacoes`) e o serviço não envia `status`, `tipo` nem `profissionalId` na atualização. A mudança de status é feita exclusivamente pelos `PATCH /sessoes/{id}/realizar` e `PATCH /sessoes/{id}/cancelar`, que validam a transição a partir de `AGENDADA`.
 
 ### `EvolucaoSessaoService`
 Arquivo: `src/app/core/services/evolucao-sessao.service.ts`
@@ -665,6 +665,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Em edição, valida que a sessão retornada pertence ao paciente da rota antes de preencher o formulário
 - Reactive Form com data/hora, tipo, duração, profissional opcional, observações e status
 - Valida duração entre 1 e 480 minutos e profissional opcional como inteiro positivo
+- Em edição, **tipo**, **profissional** e **status** ficam desabilitados (apenas informativos), pois o `PUT /sessoes/{id}` não os persiste; tipo e profissional são definidos no cadastro e o status muda pelas ações Realizar/Cancelar da listagem
 
 ### `PacienteEvolucaoSessaoComponent`
 - Modo duplo: cadastro e edição da evolução vinculada a uma sessão

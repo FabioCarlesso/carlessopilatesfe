@@ -25,12 +25,15 @@
 
   <div class="form-row">
     <div class="form-group">
-      <label for="tipo">Tipo *</label>
+      <label for="tipo">Tipo{{ modoEdicao ? '' : ' *' }}</label>
       <select id="tipo" formControlName="tipo" class="form-control"
-        aria-describedby="tipoError"
+        [attr.aria-describedby]="modoEdicao ? 'tipoHint' : 'tipoError'"
         [class.is-invalid]="campo('tipo')?.invalid && campo('tipo')?.touched">
         <option *ngFor="let t of tipos" [value]="t">{{ tipoLabel[t] }}</option>
       </select>
+      <div id="tipoHint" class="field-hint" *ngIf="modoEdicao">
+        Definido no agendamento e não alterável na edição.
+      </div>
       <div id="tipoError" class="invalid-feedback"
         *ngIf="campo('tipo')?.touched && campo('tipo')?.invalid">
         Tipo é obrigatório.
@@ -38,15 +41,12 @@
     </div>
 
     <div class="form-group" *ngIf="modoEdicao">
-      <label for="status">Status *</label>
-      <select id="status" formControlName="status" class="form-control"
-        aria-describedby="statusError"
-        [class.is-invalid]="campo('status')?.invalid && campo('status')?.touched">
+      <label for="status">Status</label>
+      <select id="status" formControlName="status" class="form-control" aria-describedby="statusHint">
         <option *ngFor="let s of statuses" [value]="s">{{ statusLabel[s] }}</option>
       </select>
-      <div id="statusError" class="invalid-feedback"
-        *ngIf="campo('status')?.touched && campo('status')?.invalid">
-        Status é obrigatório.
+      <div id="statusHint" class="field-hint">
+        Alterado pelas ações Realizar e Cancelar na listagem de sessões.
       </div>
     </div>
   </div>
@@ -79,9 +79,12 @@
   <div class="form-group">
     <label for="profissionalId">ID do profissional responsável</label>
     <input id="profissionalId" type="number" formControlName="profissionalId" class="form-control"
-      min="1" step="1" placeholder="Opcional"
-      aria-describedby="profissionalIdError"
+      min="1" step="1" [attr.placeholder]="modoEdicao ? null : 'Opcional'"
+      [attr.aria-describedby]="modoEdicao ? 'profissionalIdHint' : 'profissionalIdError'"
       [class.is-invalid]="campo('profissionalId')?.invalid && campo('profissionalId')?.touched" />
+    <div id="profissionalIdHint" class="field-hint" *ngIf="modoEdicao">
+      Definido no agendamento e não alterável na edição.
+    </div>
     <div id="profissionalIdError" class="invalid-feedback"
       *ngIf="campo('profissionalId')?.touched && campo('profissionalId')?.invalid">
       ID do profissional deve ser um número inteiro positivo.

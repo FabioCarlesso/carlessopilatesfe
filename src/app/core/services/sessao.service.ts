@@ -17,7 +17,6 @@ interface SessaoApiUpdateDTO {
   data?: string;
   horario?: string;
   duracaoMinutos?: number | null;
-  status?: string | null;
   observacoes?: string | null;
 }
 
@@ -93,7 +92,6 @@ export class SessaoService {
   private toApiUpdate(dto: SessaoUpdateDTO): SessaoApiUpdateDTO {
     const result: SessaoApiUpdateDTO = {
       duracaoMinutos: dto.duracao,
-      status: dto.status,
       observacoes: dto.observacoes
     };
     if (dto.dataHora) {
