@@ -91,6 +91,9 @@ export class ProfissionalListComponent implements OnInit {
 
   buscar(): void {
     this.currentPage = 0;
+    // Buscar/Limpar voltam à ordenação padrão (nome asc); nova referência para
+    // os cabeçalhos OnPush refletirem a mudança.
+    this.ordenacao = { ...this.ordenacaoPadrao };
     // No mobile, recolhe o painel após aplicar para que o primeiro resultado
     // apareça na primeira dobra (issue #163). No desktop o painel está sempre
     // visível via CSS, então o estado não tem efeito visual.

@@ -629,6 +629,27 @@ describe('PacienteListComponent', () => {
     }, 'email,asc');
   });
 
+  it('should reset ordering to default (nome asc) when buscar is called', () => {
+    component.ordenar('email');
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'desc' });
+
+    serviceSpy.listar.calls.reset();
+    component.buscar();
+
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+    expect(serviceSpy.listar.calls.mostRecent().args[3]).toBe('nome,asc');
+  });
+
+  it('should reset ordering to default when limparFiltros is called', () => {
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
+
+    component.limparFiltros();
+
+    expect(component.ordenacao).toEqual({ campo: 'nome', direcao: 'asc' });
+  });
+
   it('should render sortable headers with aria-sort reflecting the active column', () => {
     const headers = fixture.nativeElement.querySelectorAll('th[app-sortable]') as NodeListOf<HTMLTableCellElement>;
     // Nome, E-mail e Status são ordenáveis (CPF e Telefone não).
