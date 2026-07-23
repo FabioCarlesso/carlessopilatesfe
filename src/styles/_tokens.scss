@@ -51,6 +51,15 @@
   --border-strong: rgba(20, 31, 45, 0.28);
   --border-brand: var(--c-horizonte);
 
+  /*
+   * Seta (chevron) dos selects. É um token — e não uma `url()` fixa na regra —
+   * porque a cor vive dentro do data URI e não há como interpolar `var()` ali:
+   * o tema escuro sobrescreve o token inteiro. O desenho traz `width`/`height`
+   * além do `viewBox` para não depender só do `background-size` da regra
+   * (issue #200). Stroke = `--text-secondary` do tema, 8,2:1 sobre `--bg-elev`.
+   */
+  --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23455157' fill='none' stroke-width='1.5'/></svg>");
+
   --font-display: 'Italiana', 'Cormorant Garamond', serif;
   --font-body: 'Montserrat', 'Helvetica Neue', system-ui, sans-serif;
   --font-aux: 'Cormorant Garamond', 'Italiana', serif;
@@ -153,6 +162,11 @@
   --border-subtle: rgba(240, 237, 232, 0.07);
   --border-default: rgba(240, 237, 232, 0.13);
   --border-strong: rgba(240, 237, 232, 0.28);
+
+  /* Mesmo desenho com o stroke do `--text-secondary` escuro: o grafite do tema
+   * claro fica em ~2:1 sobre `--bg-elev` aqui, abaixo do mínimo de 3:1 da WCAG
+   * 1.4.11 para componentes de interface. Com #b9bcc1 são 8,4:1. */
+  --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23b9bcc1' fill='none' stroke-width='1.5'/></svg>");
 
   --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);

@@ -61,6 +61,10 @@
   --border-strong: rgba(20, 31, 45, 0.28);
   --border-brand: var(--c-horizonte);
 
+  /* Seta dos selects. Token porque a cor mora dentro do data URI e `url()` não
+     aceita `var()`: o tema escuro troca o token inteiro (issue #200). */
+  --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23455157' fill='none' stroke-width='1.5'/></svg>");
+
   /* === TIPOGRAFIA === */
   /* Display — substituto de Dream Avenue (Didone alta classe). 
      Em produção: trocar por @font-face Dream Avenue */
@@ -156,6 +160,10 @@
   --text-muted: #7d858e;
   --text-on-dark: #ebe8e2;
   --text-brand: #a8bcca;
+
+  /* O grafite do tema claro rende ~2:1 sobre `--bg-elev` escuro, abaixo dos
+     3:1 da WCAG 1.4.11 para componentes de interface (issue #200). */
+  --select-chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23b9bcc1' fill='none' stroke-width='1.5'/></svg>");
 
   --border-subtle: rgba(240, 237, 232, 0.07);
   --border-default: rgba(240, 237, 232, 0.13);
@@ -316,9 +324,13 @@ input, select, textarea { font-family: inherit; }
 
 .select {
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23455157' fill='none' stroke-width='1.5'/></svg>");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 14px center;
+  /* Obrigatório: o SVG do data URI tem proporção intrínseca mas nenhum tamanho
+     intrínseco. Sem isto o CSS ajusta a seta por *contain* à altura do campo e
+     ela vira 60×40px (issue #200). */
+  background-size: 12px 8px;
   padding-right: 36px;
 }
 

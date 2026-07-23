@@ -32,33 +32,12 @@
     font-weight: 600;
   }
 
-  input,
-  select {
-    min-height: 38px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-md);
-    padding: .45rem .6rem;
-    background: var(--bg-elev);
-    color: var(--text-primary);
-    font: inherit;
-
-    // O Safari iOS aplica zoom automático ao focar campos com fonte menor que
-    // 16px. Os filtros herdam --fs-body (14px) do body; no mobile subimos para
-    // 16px para evitar o zoom (issue #160).
-    @media (max-width: 768px) {
-      font-size: 16px;
-    }
-  }
-
+  // Os campos são os `.form-control` globais (altura por densidade, borda,
+  // foco, seta do select e o salto para 16px no mobile do issue #160). A cópia
+  // local que existia aqui apagava a seta pela shorthand `background` e
+  // encurtava o `padding-right` reservado para ela (issue #200).
   input::placeholder {
     color: var(--text-muted);
-  }
-
-  input:focus,
-  select:focus {
-    outline: none;
-    border-color: var(--c-horizonte);
-    box-shadow: var(--shadow-focus);
   }
 }
 

@@ -393,6 +393,73 @@ describe('UsuarioFormComponent', () => {
     expect(serviceSpy.atualizar).not.toHaveBeenCalled();
   });
 
+  // O SVG do data URI não tem tamanho intrínseco: sem `background-size` o CSS
+  // ajusta a seta por *contain* à altura do campo e ela vira 60×40px (issue
+  // #200). O guard falha com `Expected 'auto' to be '12px 8px'` no CSS antigo.
+  it('should size the select chevron at 12x8px regardless of the field height (issue #200)', async () => {
+    const { fixture } = await setup('42');
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLElement;
+      const estilo = getComputedStyle(select);
+
+      expect(estilo.backgroundSize).toBe('12px 8px');
+      expect(estilo.backgroundImage).not.toBe('none');
+      expect(estilo.paddingRight).toBe('36px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // A regra `:disabled` do campo global usava a shorthand `background`, que
+  // redefine todas as propriedades de fundo e zerava o `background-image` —
+  // com `appearance: none` já aplicado, o select desabilitado ficava sem seta
+  // nenhuma (issue #200).
+  it('should keep the chevron on a disabled select (issue #200)', async () => {
+    const { fixture, component } = await setup('42');
+    component.form.get('role')?.disable();
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLSelectElement;
+      const estilo = getComputedStyle(select);
+
+      expect(select.disabled).toBeTrue();
+      expect(estilo.backgroundImage).not.toBe('none');
+      expect(estilo.backgroundSize).toBe('12px 8px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // O stroke vive dentro do data URI e não aceita `var()`, então o tema escuro
+  // troca o token inteiro: o grafite do tema claro rende ~2:1 sobre `--bg-elev`
+  // escuro, abaixo dos 3:1 da WCAG 1.4.11 para componentes (issue #200).
+  it('should swap the chevron token for the light stroke in dark theme (issue #200)', async () => {
+    const { fixture } = await setup('42');
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLElement;
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(select).backgroundImage).toContain('455157');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(select).backgroundImage).toContain('b9bcc1');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should render link back to user list', async () => {
     const { fixture } = await setup(null);
 

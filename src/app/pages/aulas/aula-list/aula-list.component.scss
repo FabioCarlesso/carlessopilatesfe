@@ -21,12 +21,13 @@
   }
 }
 
+// Só a largura e o corpo da fonte: o `padding` local roubava o espaço da seta
+// e a shorthand `background` zerava o `background-image` herdado do global,
+// deixando o select sem seta nenhuma — `appearance: none` já tinha removido a
+// nativa (issue #200).
 .form-control-sm {
   max-width: 240px;
-  padding: 4px 8px;
   font-size: 0.9rem;
-  background: var(--bg-elev);
-  color: var(--text);
 }
 
 .field-hint {

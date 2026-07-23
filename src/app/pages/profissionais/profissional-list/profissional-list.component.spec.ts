@@ -474,6 +474,30 @@ describe('ProfissionalListComponent', () => {
     expect(form.classList).toContain('filtros-recolhidos');
   });
 
+  // Os selects dos filtros não usavam `.form-control`: exibiam a seta nativa do
+  // sistema e o SCSS local redeclarava o campo com a shorthand `background`,
+  // que apagaria a seta global (issue #200).
+  it('should style the filter selects with the global form-control chevron (issue #200)', () => {
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const selects = (fixture.nativeElement as HTMLElement)
+        .querySelectorAll('form.filters select') as NodeListOf<HTMLSelectElement>;
+
+      expect(selects.length).toBe(2);
+      selects.forEach(select => {
+        const estilo = getComputedStyle(select);
+
+        expect(select.classList).toContain('form-control');
+        expect(estilo.appearance).toBe('none');
+        expect(estilo.backgroundImage).not.toBe('none');
+        expect(estilo.backgroundSize).toBe('12px 8px');
+      });
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should reflect the open state and active-filter badge in the template', () => {
     component.filtro = { nome: 'Paula', email: 'a@b.com', tipoContrato: '', percentualPagamentoAula: null, status: 'ativos' };
     component.alternarFiltros();
