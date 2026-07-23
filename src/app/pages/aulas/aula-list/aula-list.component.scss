@@ -21,13 +21,14 @@
   }
 }
 
-// Só a largura e o corpo da fonte: o `padding` local roubava o espaço da seta
-// e a shorthand `background` zerava o `background-image` herdado do global,
-// deixando o select sem seta nenhuma — `appearance: none` já tinha removido a
-// nativa (issue #200).
+// Só a largura: o `padding` local roubava o espaço da seta e a shorthand
+// `background` zerava o `background-image` herdado do global, deixando o select
+// sem seta nenhuma — `appearance: none` já tinha removido a nativa. O
+// `font-size` local também saiu: vencia por especificidade a regra global que
+// sobe os campos para 16px no mobile e reabria o zoom do Safari iOS que a
+// issue #160 fechou (issue #200).
 .form-control-sm {
   max-width: 240px;
-  font-size: 0.9rem;
 }
 
 .field-hint {

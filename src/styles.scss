@@ -275,10 +275,7 @@ a {
   margin-bottom: var(--sp-4);
 }
 
-.form-control,
-.input,
-.select,
-.textarea {
+.form-control {
   min-height: var(--input-h);
   padding: 0 14px;
   border: 1px solid var(--border-default);
@@ -308,19 +305,14 @@ a {
   }
 }
 
-textarea.form-control,
-.textarea {
+textarea.form-control {
   min-height: 96px;
   padding: var(--sp-3) 14px;
   line-height: var(--lh-normal);
   resize: vertical;
 }
 
-// `.select` é a variante utilitária de `.form-control` para selects, irmã de
-// `.input`/`.textarea` na regra de campo acima. Nenhum template usa as três
-// hoje, mas remover só `.select` deixaria a utilitária sem seta.
-select.form-control,
-.select {
+select.form-control {
   appearance: none;
   background-image: var(--select-chevron);
   background-repeat: no-repeat;
@@ -740,9 +732,6 @@ body.dialog-aberto {
   // (issue #160). Cobre os campos globais; login e filtros têm overrides
   // próprios nos respectivos componentes.
   .form-control,
-  .input,
-  .select,
-  .textarea,
   .form-control-sm {
     font-size: 16px;
   }

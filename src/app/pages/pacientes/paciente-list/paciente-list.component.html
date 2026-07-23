@@ -60,16 +60,13 @@
 </div>
 
 <ng-container *ngIf="pacientes.length > 0">
-  <div class="pagination-summary">
-    <span>Exibindo {{ pageStart() }}-{{ pageEnd() }} de {{ totalElements }} pacientes</span>
-
-    <label>
-      Itens por página
-      <select #pageSizeSelect class="form-control" (change)="alterarTamanhoPagina(pageSizeSelect.value)">
-        <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="size === pageSize">{{ size }}</option>
-      </select>
-    </label>
-  </div>
+  <app-pagination-summary
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [totalElements]="totalElements"
+    itemLabel="pacientes"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageSizeChange)="alterarTamanhoPagina($event)" />
 
   <div class="table-wrap paciente-table-wrap">
     <table class="table paciente-table">
