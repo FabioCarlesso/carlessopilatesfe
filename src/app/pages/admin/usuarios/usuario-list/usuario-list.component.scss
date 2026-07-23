@@ -51,7 +51,11 @@
   }
 }
 
+// Só espaçamento externo: o `.btn` global monta o botão como `inline-flex` e
+// centraliza o rótulo por `align-items`/`justify-content`. Sobrescrever `display`
+// aqui desligava o contexto flex e, como o botão não tem padding vertical
+// (`padding: 0 var(--sp-5)`) e usa `line-height: 1`, o texto encostava no topo da
+// borda, deixando um vão embaixo da altura de `--btn-h` (issue #199).
 .back-link {
-  display: inline-block;
-  margin-top: 1.5rem;
+  margin-top: var(--sp-6);
 }

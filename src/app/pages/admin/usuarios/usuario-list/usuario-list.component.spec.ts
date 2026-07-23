@@ -434,6 +434,19 @@ describe('UsuarioListComponent', () => {
     expect(link).toBeTruthy();
   });
 
+  // O `.back-link` sobrescrevia o `display: inline-flex` do `.btn` global com
+  // `inline-block`, desligando o contexto flex: sem padding vertical e com
+  // `line-height: 1`, o rótulo encostava no topo da borda (issue #199). O
+  // espaçamento externo continua sendo responsabilidade do componente.
+  it('should keep the back link as a flex button so the label stays centered (issue #199)', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a.back-link') as HTMLElement;
+    const estilo = getComputedStyle(link);
+
+    expect(estilo.display).toBe('inline-flex');
+    expect(estilo.marginTop).toBe('24px');
+  });
+
   it('should render only visible page buttons in the DOM', () => {
     component.totalPages = 500;
     component.currentPage = 250;
