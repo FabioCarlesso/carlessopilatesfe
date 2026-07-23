@@ -1,5 +1,5 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,6 +12,7 @@ import { AvaliacaoPosturalService } from '../../../core/services/avaliacao-postu
 import { PacienteService } from '../../../core/services/paciente.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ImageCompressorService } from '../../../shared/services/image-compressor.service';
 
 @Component({
@@ -48,7 +49,8 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
     private imageCompressorService: ImageCompressorService,
     private route: ActivatedRoute,
     private router: Router,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -187,6 +189,7 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

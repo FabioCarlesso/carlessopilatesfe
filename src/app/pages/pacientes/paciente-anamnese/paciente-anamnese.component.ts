@@ -1,6 +1,6 @@
 import { NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -11,6 +11,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AnamneseService } from '../../../core/services/anamnese.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-paciente-anamnese',
@@ -35,7 +36,8 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
     private pacienteService: PacienteService,
     private anamneseService: AnamneseService,
     private route: ActivatedRoute,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +93,10 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
         if (anamnese) {
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = anamnese;
           this.form.patchValue(formFields);
+        } else {
+          // Só há campo para focar depois que o *ngIf="!loading" renderiza o
+          // formulário, por isso o foco é adiado para o próximo ciclo.
+          setTimeout(() => focarPrimeiroCampo(this.host));
         }
         this.loading = false;
       },
@@ -109,6 +115,7 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

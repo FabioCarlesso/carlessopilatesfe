@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
@@ -39,7 +40,8 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -107,7 +109,12 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   }
 
   confirmarPagar(): void {
-    if (this.pagarForm.invalid || this.pagarId === null || this.acaoEmAndamento) return;
+    if (this.pagarId === null || this.acaoEmAndamento) return;
+    if (this.pagarForm.invalid) {
+      this.pagarForm.markAllAsTouched();
+      focarPrimeiroInvalido(this.pagarForm, this.host);
+      return;
+    }
     const { dataPagamento } = this.pagarForm.value;
     this.acaoEmAndamento = true;
     this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

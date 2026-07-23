@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,6 +14,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
@@ -40,7 +41,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
     private reavaliacaoService: ReavaliacaoService,
     private route: ActivatedRoute,
     private router: Router,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -118,6 +120,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
             });
           } else {
             this.reavaliacao = null;
+            // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
+            setTimeout(() => focarPrimeiroCampo(this.host));
           }
           this.loading = false;
         },
@@ -142,6 +146,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

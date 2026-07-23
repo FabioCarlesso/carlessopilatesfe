@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
@@ -7,6 +7,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ROLE_OPTIONS, RoleOption, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-usuario-form',
@@ -15,11 +16,12 @@ import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
   templateUrl: './usuario-form.component.html',
   styleUrl: './usuario-form.component.scss'
 })
-export class UsuarioFormComponent implements OnInit {
+export class UsuarioFormComponent implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(UsuarioAdminService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   form!: FormGroup;
   isEdit = false;
@@ -56,6 +58,10 @@ export class UsuarioFormComponent implements OnInit {
     this.carregarEdicao(this.usuarioId);
   }
 
+  ngAfterViewInit(): void {
+    if (!this.isEdit) focarPrimeiroCampo(this.host);
+  }
+
   salvar(): void {
     if (this.parametroInvalido) {
       this.erro = 'Identificador inválido.';
@@ -66,6 +72,7 @@ export class UsuarioFormComponent implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

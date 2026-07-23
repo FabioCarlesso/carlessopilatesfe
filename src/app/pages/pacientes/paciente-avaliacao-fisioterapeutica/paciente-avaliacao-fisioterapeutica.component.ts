@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-paciente-avaliacao-fisioterapeutica',
@@ -34,7 +35,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
     private pacienteService: PacienteService,
     private avaliacaoService: AvaliacaoFisioterapeuticaService,
     private route: ActivatedRoute,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -86,6 +88,9 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
         if (this.avaliacao) {
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = this.avaliacao;
           this.form.patchValue(formFields);
+        } else {
+          // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
+          setTimeout(() => focarPrimeiroCampo(this.host));
         }
         this.loading = false;
       },
@@ -104,6 +109,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

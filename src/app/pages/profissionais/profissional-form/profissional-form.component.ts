@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-profissional-form',
@@ -12,7 +13,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   templateUrl: './profissional-form.component.html',
   styleUrl: './profissional-form.component.scss'
 })
-export class ProfissionalFormComponent implements OnInit {
+export class ProfissionalFormComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
   isEdit = false;
   profissionalId: number | null = null;
@@ -28,8 +29,13 @@ export class ProfissionalFormComponent implements OnInit {
     private fb: FormBuilder,
     private service: ProfissionalService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private host: ElementRef<HTMLElement>
   ) {}
+
+  ngAfterViewInit(): void {
+    if (!this.isEdit) focarPrimeiroCampo(this.host);
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -74,6 +80,7 @@ export class ProfissionalFormComponent implements OnInit {
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

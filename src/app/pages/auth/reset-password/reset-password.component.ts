@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -12,6 +12,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { StylePreferencesService } from '../../../core/services/style-preferences.service';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 const TOKEN_INVALIDO_CODES = [
   'TOKEN_EXPIRED',
@@ -31,12 +32,13 @@ const TOKEN_INVALIDO_CODES = [
   templateUrl: './reset-password.component.html',
   styleUrl: './reset-password.component.scss'
 })
-export class ResetPasswordComponent {
+export class ResetPasswordComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly stylePreferences = inject(StylePreferencesService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   private readonly token: string;
 
@@ -61,6 +63,10 @@ export class ResetPasswordComponent {
         validators: [this.matchValidator('novaSenha', 'confirmacaoNovaSenha')]
       }
     );
+  }
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
   }
 
   get isDarkTheme(): boolean {
@@ -93,6 +99,7 @@ export class ResetPasswordComponent {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

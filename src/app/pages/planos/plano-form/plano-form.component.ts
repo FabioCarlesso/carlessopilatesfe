@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -15,6 +15,7 @@ import {
   TipoPagamento
 } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 function diasSemanaValidator(control: AbstractControl): ValidationErrors | null {
   const group = control.parent;
@@ -32,7 +33,7 @@ function diasSemanaValidator(control: AbstractControl): ValidationErrors | null 
   templateUrl: './plano-form.component.html',
   styleUrl: './plano-form.component.scss'
 })
-export class PlanoFormComponent implements OnInit, OnDestroy {
+export class PlanoFormComponent implements OnInit, OnDestroy, AfterViewInit {
   form!: FormGroup;
   pacienteId: number | null = null;
   salvando = false;
@@ -46,7 +47,11 @@ export class PlanoFormComponent implements OnInit, OnDestroy {
   readonly tipoLabel = TIPO_LABEL;
   readonly frequenciaLabel = FREQUENCIA_LABEL;
 
-  constructor(private fb: FormBuilder, private service: PlanoService, private route: ActivatedRoute, private router: Router) {}
+  constructor(private fb: FormBuilder, private service: PlanoService, private route: ActivatedRoute, private router: Router, private host: ElementRef<HTMLElement>) {}
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
+  }
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -97,6 +102,7 @@ export class PlanoFormComponent implements OnInit, OnDestroy {
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
     this.salvando = true;

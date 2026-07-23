@@ -1,6 +1,6 @@
 import { DatePipe, NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,6 +17,7 @@ import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.se
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
@@ -46,7 +47,8 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
     private sessaoService: SessaoService,
     private evolucaoSessaoService: EvolucaoSessaoService,
     private route: ActivatedRoute,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -125,6 +127,9 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
         this.evolucao = evolucao;
         if (evolucao) {
           this.preencherFormulario(evolucao);
+        } else {
+          // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
+          setTimeout(() => focarPrimeiroCampo(this.host));
         }
         this.loading = false;
       },
@@ -143,6 +148,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

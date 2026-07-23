@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ElementRef } from '@angular/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
@@ -121,7 +122,8 @@ describe('PlanoFormComponent', () => {
       TestBed.inject(FormBuilder),
       invalidServiceSpy,
       invalidRoute,
-      invalidRouterSpy
+      invalidRouterSpy,
+      new ElementRef(document.createElement('div'))
     );
 
     invalidComponent.ngOnInit();

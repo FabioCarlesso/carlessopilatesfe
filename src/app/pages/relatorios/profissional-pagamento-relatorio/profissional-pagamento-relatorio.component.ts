@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import {
   ProfissionalResponseDTO
 } from '../../../core/models/profissional';
 import { baixarBlob } from '../../../shared/utils/file-download';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-profissional-pagamento-relatorio',
@@ -15,7 +16,7 @@ import { baixarBlob } from '../../../shared/utils/file-download';
   templateUrl: './profissional-pagamento-relatorio.component.html',
   styleUrl: './profissional-pagamento-relatorio.component.scss'
 })
-export class ProfissionalPagamentoRelatorioComponent implements OnInit {
+export class ProfissionalPagamentoRelatorioComponent implements OnInit, AfterViewInit {
   profissionais: ProfissionalResponseDTO[] = [];
   form!: FormGroup;
   relatorio: ProfissionalPagamentoRelatorioDTO | null = null;
@@ -27,7 +28,8 @@ export class ProfissionalPagamentoRelatorioComponent implements OnInit {
 
   constructor(
     private profissionalService: ProfissionalService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +39,10 @@ export class ProfissionalPagamentoRelatorioComponent implements OnInit {
       fim: ['', Validators.required]
     });
     this.carregarProfissionais();
+  }
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
   }
 
   carregarProfissionais(): void {
@@ -56,6 +62,7 @@ export class ProfissionalPagamentoRelatorioComponent implements OnInit {
   consultar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 
@@ -92,6 +99,7 @@ export class ProfissionalPagamentoRelatorioComponent implements OnInit {
   private exportar(formato: 'pdf' | 'xlsx'): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 
