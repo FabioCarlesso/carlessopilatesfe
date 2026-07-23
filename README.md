@@ -195,7 +195,7 @@ No Angular, os tokens foram migrados para `src/styles/_tokens.scss` e importados
 
 Componentes globais como botões, inputs, cards, badges, tabelas, paginação, alertas e diálogos consomem tokens semânticos de cor, tipografia, raio, sombra e densidade.
 
-Ao ajustar um componente global dentro do SCSS de uma página, altere apenas o **espaçamento externo** (`margin`) e use os tokens `--sp-*`. Não sobrescreva `display`, `padding`, `min-height` ou `line-height`: o SCSS do componente ganha o atributo `[_ngcontent-*]` do encapsulamento emulado e vence o estilo global em especificidade. O `.btn`, por exemplo, é um `inline-flex` que centraliza o rótulo por `align-items`/`justify-content` e não tem padding vertical — trocar o `display` por `inline-block` desliga o contexto flex e joga o texto para o topo da borda (issue #199).
+Ao ajustar um componente global dentro do SCSS de uma página, mexa apenas em como ele se **posiciona** no layout: `margin` (com os tokens `--sp-*`) e, quando a página precisar, `width` — é assim que `forbidden` e `aula-list` deixam os botões com largura total no mobile. Não sobrescreva as propriedades que montam o interior do componente — `display`, `padding`, `min-height`, `line-height` —, porque o SCSS da página ganha o atributo `[_ngcontent-*]` do encapsulamento emulado e vence o estilo global em especificidade. O `.btn`, por exemplo, é um `inline-flex` que centraliza o rótulo por `align-items`/`justify-content` e não tem padding vertical: trocar o `display` por `inline-block` desliga o contexto flex e joga o texto para o topo da borda (issue #199).
 
 ### Responsividade
 
