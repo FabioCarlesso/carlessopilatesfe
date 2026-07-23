@@ -50,7 +50,7 @@
         <div class="login-erro">{{ erro }}</div>
       }
 
-      <button type="submit" class="btn-entrar" [disabled]="form.invalid || carregando">
+      <button type="submit" class="btn-entrar" [disabled]="carregando">
         {{ carregando ? 'Entrando...' : 'Entrar' }}
       </button>
 

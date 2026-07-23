@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-paciente-form',
@@ -11,7 +12,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   templateUrl: './paciente-form.component.html',
   styleUrl: './paciente-form.component.scss'
 })
-export class PacienteFormComponent implements OnInit {
+export class PacienteFormComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
   isEdit = false;
   pacienteId: number | null = null;
@@ -24,8 +25,13 @@ export class PacienteFormComponent implements OnInit {
     private fb: FormBuilder,
     private service: PacienteService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private host: ElementRef<HTMLElement>
   ) {}
+
+  ngAfterViewInit(): void {
+    if (!this.isEdit) focarPrimeiroCampo(this.host);
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -76,6 +82,7 @@ export class PacienteFormComponent implements OnInit {
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
     this.salvando = true;

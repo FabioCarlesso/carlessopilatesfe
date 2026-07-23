@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -12,6 +12,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsuarioAdminService } from '../../../core/services/usuario-admin.service';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 const SENHA_ATUAL_INCORRETA_CODES = [
   'SENHA_ATUAL_INCORRETA',
@@ -28,11 +29,12 @@ const SENHA_ATUAL_INCORRETA_CODES = [
   templateUrl: './alterar-senha.component.html',
   styleUrl: './alterar-senha.component.scss'
 })
-export class AlterarSenhaComponent {
+export class AlterarSenhaComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(UsuarioAdminService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   form: FormGroup;
   salvando = false;
@@ -58,6 +60,10 @@ export class AlterarSenhaComponent {
     );
   }
 
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
+  }
+
   campo(nome: string) {
     return this.form.get(nome);
   }
@@ -79,6 +85,7 @@ export class AlterarSenhaComponent {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

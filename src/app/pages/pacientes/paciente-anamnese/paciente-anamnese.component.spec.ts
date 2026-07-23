@@ -148,6 +148,21 @@ describe('PacienteAnamneseComponent', () => {
       expect(component.form.get('objetivos')?.touched).toBeTrue();
     });
 
+    it('should focus the first field when opening the form for creation', async () => {
+      // O foco inicial é adiado para o próximo ciclo (após o *ngIf renderizar).
+      await new Promise(resolve => setTimeout(resolve));
+      const primeiro = fixture.nativeElement.querySelector('#queixaPrincipal') as HTMLTextAreaElement;
+      expect(document.activeElement).toBe(primeiro);
+    });
+
+    it('should focus the first invalid field on invalid submit', () => {
+      component.salvar();
+      fixture.detectChanges();
+
+      const primeiro = fixture.nativeElement.querySelector('#queixaPrincipal') as HTMLTextAreaElement;
+      expect(document.activeElement).toBe(primeiro);
+    });
+
     it('should keep required fields invalid when they contain only whitespace', () => {
       component.form.patchValue({
         queixaPrincipal: '   ',

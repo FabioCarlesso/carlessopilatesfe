@@ -53,11 +53,32 @@ describe('LoginComponent', () => {
     expect(el.querySelector('input[type="password"]')).toBeTruthy();
   });
 
-  it('should disable submit button when form is invalid', () => {
+  it('should keep submit button enabled when form is invalid', () => {
     const fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
     const btn = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
-    expect(btn.disabled).toBeTrue();
+    expect(btn.disabled).toBeFalse();
+  });
+
+  it('should mark fields as touched and focus the first invalid field on invalid submit', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    comp.entrar();
+    fixture.detectChanges();
+
+    expect(comp.form.touched).toBeTrue();
+    expect(authServiceSpy.login).not.toHaveBeenCalled();
+    const emailInput = fixture.nativeElement.querySelector('input[type="email"]') as HTMLInputElement;
+    expect(document.activeElement).toBe(emailInput);
+  });
+
+  it('should focus the email field when the form is opened', () => {
+    const fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+    const emailInput = fixture.nativeElement.querySelector('input[type="email"]') as HTMLInputElement;
+    expect(document.activeElement).toBe(emailInput);
   });
 
   it('should navigate to / on successful login', () => {

@@ -120,7 +120,7 @@
   </div>
 
   <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="form.invalid || salvando">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
       {{ salvando ? 'Salvando...' : 'Alterar senha' }}
     </button>
     <a routerLink="/" class="btn btn-outline">Cancelar</a>

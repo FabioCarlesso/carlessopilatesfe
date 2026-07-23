@@ -1,5 +1,5 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 function dataHoraFutura(control: AbstractControl): ValidationErrors | null {
@@ -60,7 +61,8 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
     private pacienteService: PacienteService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -185,6 +187,7 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   confirmarReagendar(): void {
     if (this.reagendarId === null || this.reagendarForm.invalid || this.acaoEmAndamentoId !== null) {
       this.reagendarForm.markAllAsTouched();
+      focarPrimeiroInvalido(this.reagendarForm, this.host);
       return;
     }
 

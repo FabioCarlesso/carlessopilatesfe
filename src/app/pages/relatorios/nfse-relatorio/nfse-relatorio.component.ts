@@ -1,11 +1,12 @@
 import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RelatorioNfseFormatoExportacao, RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { formatCompetencia } from '../../../shared/utils/competencia-mask';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-nfse-relatorio',
@@ -13,7 +14,7 @@ import { formatCompetencia } from '../../../shared/utils/competencia-mask';
   templateUrl: './nfse-relatorio.component.html',
   styleUrl: './nfse-relatorio.component.scss'
 })
-export class NfseRelatorioComponent implements OnInit {
+export class NfseRelatorioComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
   registros: RelatorioNfseResponseDTO[] = [];
   loadingRelatorio = false;
@@ -24,7 +25,8 @@ export class NfseRelatorioComponent implements OnInit {
 
   constructor(
     private relatorioService: RelatorioService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private host: ElementRef<HTMLElement>
   ) {}
 
   ngOnInit(): void {
@@ -35,6 +37,10 @@ export class NfseRelatorioComponent implements OnInit {
       ]],
       notaAnteriorEmitida: [null]
     });
+  }
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
   }
 
   formatarCompetencia(): void {
@@ -50,6 +56,7 @@ export class NfseRelatorioComponent implements OnInit {
   consultar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 
@@ -87,6 +94,7 @@ export class NfseRelatorioComponent implements OnInit {
   private exportar(formato: RelatorioNfseFormatoExportacao): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

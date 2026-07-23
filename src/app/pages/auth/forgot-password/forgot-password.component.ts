@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { StylePreferencesService } from '../../../core/services/style-preferences.service';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-forgot-password',
@@ -12,10 +13,11 @@ import { StylePreferencesService } from '../../../core/services/style-preference
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss'
 })
-export class ForgotPasswordComponent {
+export class ForgotPasswordComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly stylePreferences = inject(StylePreferencesService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   // Mensagem genérica exibida sempre que a solicitação é aceita, independentemente
   // de o e-mail existir ou não — o backend retorna 200 por design para evitar
@@ -34,6 +36,10 @@ export class ForgotPasswordComponent {
     });
   }
 
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
+  }
+
   get isDarkTheme(): boolean {
     return this.stylePreferences.current.theme === 'dark';
   }
@@ -47,6 +53,7 @@ export class ForgotPasswordComponent {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
 

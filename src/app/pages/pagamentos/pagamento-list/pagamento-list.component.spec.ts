@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -141,7 +141,7 @@ describe('PagamentoListComponent', () => {
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef, new ElementRef(document.createElement('div')));
 
     invalidComponent.ngOnInit();
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-pagamento-form',
@@ -14,7 +15,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
   templateUrl: './pagamento-form.component.html',
   styleUrl: './pagamento-form.component.scss'
 })
-export class PagamentoFormComponent implements OnInit {
+export class PagamentoFormComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
   pacienteId: number | null = null;
   planos: PlanoResponseDTO[] = [];
@@ -29,8 +30,13 @@ export class PagamentoFormComponent implements OnInit {
     private pagamentoService: PagamentoService,
     private planoService: PlanoService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private host: ElementRef<HTMLElement>
   ) {}
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
+  }
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -76,6 +82,7 @@ export class PagamentoFormComponent implements OnInit {
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
       return;
     }
     this.salvando = true;

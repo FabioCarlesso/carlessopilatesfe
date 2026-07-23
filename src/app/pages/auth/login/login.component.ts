@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { StylePreferencesService } from '../../../core/services/style-preferences.service';
+import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 @Component({
   selector: 'app-login',
@@ -11,7 +12,7 @@ import { StylePreferencesService } from '../../../core/services/style-preference
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
   form: FormGroup;
   erro = '';
   aviso = '';
@@ -22,7 +23,8 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private stylePreferences: StylePreferencesService
+    private stylePreferences: StylePreferencesService,
+    private host: ElementRef<HTMLElement>
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -32,6 +34,10 @@ export class LoginComponent {
     if (this.route.snapshot.queryParamMap.get('redefinicao') === 'sucesso') {
       this.aviso = 'Senha redefinida com sucesso. Faça login com a nova senha.';
     }
+  }
+
+  ngAfterViewInit(): void {
+    focarPrimeiroCampo(this.host);
   }
 
   // O tema é só preferência visual em localStorage (data-theme), sem dado
@@ -45,7 +51,13 @@ export class LoginComponent {
   }
 
   entrar(): void {
-    if (this.form.invalid || this.carregando) return;
+    if (this.carregando) return;
+
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      focarPrimeiroInvalido(this.form, this.host);
+      return;
+    }
 
     this.carregando = true;
     this.erro = '';

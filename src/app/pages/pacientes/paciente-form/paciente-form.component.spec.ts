@@ -93,6 +93,26 @@ describe('PacienteFormComponent', () => {
       expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
     });
 
+    it('should keep the submit button enabled while the form is invalid', () => {
+      const btn = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+      expect(component.form.invalid).toBeTrue();
+      expect(btn.disabled).toBeFalse();
+    });
+
+    it('should mark all fields as touched and focus the first invalid field on invalid submit', () => {
+      component.salvar();
+      fixture.detectChanges();
+
+      expect(component.form.touched).toBeTrue();
+      const nomeInput = fixture.nativeElement.querySelector('#nome') as HTMLInputElement;
+      expect(document.activeElement).toBe(nomeInput);
+    });
+
+    it('should focus the first field when opening the create form', () => {
+      const nomeInput = fixture.nativeElement.querySelector('#nome') as HTMLInputElement;
+      expect(document.activeElement).toBe(nomeInput);
+    });
+
     it('should set erro and clear salvando flag on cadastrar failure', () => {
       serviceSpy.cadastrar.and.returnValue(throwError(() => new Error('fail')));
       component.form.patchValue({ nome: 'Ana Silva', email: 'ana@email.com', cpf: '123' });
