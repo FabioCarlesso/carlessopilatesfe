@@ -15,14 +15,11 @@
     font-weight: 600;
   }
 
+  // O campo é o `.form-control` global (borda, altura, seta): aqui só sobra o
+  // que o posiciona no layout — sem `width: auto` os 100% do global brigariam
+  // com o rótulo dentro do label flex (issue #200).
   select {
-    min-height: 34px;
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-md);
-    padding: .35rem .5rem;
-    background: var(--bg-elev);
-    color: var(--text-primary);
-    font: inherit;
+    width: auto;
   }
 }
 

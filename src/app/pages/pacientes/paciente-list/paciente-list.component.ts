@@ -7,6 +7,7 @@ import { PacienteFiltro, PacienteService } from '../../../core/services/paciente
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
 import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/ordenacao';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 
 interface FiltroUI {
@@ -19,7 +20,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, SortableHeaderComponent],
+  imports: [NgIf, NgFor, FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -229,11 +230,10 @@ export class PacienteListComponent implements OnInit, OnDestroy {
     this.pagina(this.currentPage + 1);
   }
 
-  alterarTamanhoPagina(size: string): void {
-    const novoTamanho = Number(size);
-    if (!this.pageSizeOptions.includes(novoTamanho) || novoTamanho === this.pageSize) return;
+  alterarTamanhoPagina(size: number): void {
+    if (!this.pageSizeOptions.includes(size) || size === this.pageSize) return;
 
-    this.pageSize = novoTamanho;
+    this.pageSize = size;
     this.currentPage = 0;
     this.carregar();
   }
@@ -257,15 +257,5 @@ export class PacienteListComponent implements OnInit, OnDestroy {
 
   canGoNext(): boolean {
     return this.currentPage < this.totalPages - 1;
-  }
-
-  pageStart(): number {
-    if (this.totalElements === 0) return 0;
-    return this.currentPage * this.pageSize + 1;
-  }
-
-  pageEnd(): number {
-    if (this.totalElements === 0) return 0;
-    return Math.min((this.currentPage + 1) * this.pageSize, this.totalElements);
   }
 }

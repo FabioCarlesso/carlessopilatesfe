@@ -275,10 +275,7 @@ a {
   margin-bottom: var(--sp-4);
 }
 
-.form-control,
-.input,
-.select,
-.textarea {
+.form-control {
   min-height: var(--input-h);
   padding: 0 14px;
   border: 1px solid var(--border-default);
@@ -299,27 +296,34 @@ a {
     border-color: var(--c-danger);
   }
 
+  // `background-color` e não a shorthand: `background` redefiniria também o
+  // `background-image`, apagando a seta dos selects desabilitados (issue #200).
   &:disabled {
-    background: var(--bg-sunken);
+    background-color: var(--bg-sunken);
     color: var(--text-muted);
     cursor: not-allowed;
   }
 }
 
-textarea.form-control,
-.textarea {
+textarea.form-control {
   min-height: 96px;
   padding: var(--sp-3) 14px;
   line-height: var(--lh-normal);
   resize: vertical;
 }
 
-select.form-control,
-.select {
+select.form-control {
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23455157' fill='none' stroke-width='1.5'/></svg>");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 14px center;
+  // Obrigatório: o SVG do data URI tem proporção intrínseca (12:8) mas nenhum
+  // tamanho intrínseco. Sem `background-size`, o algoritmo padrão do CSS
+  // (Images 3, §5.5) ajusta a imagem por *contain* contra a área do fundo e a
+  // seta escala até a altura do campo — 60×40px na densidade padrão, 66×44 na
+  // `comfortable` (issue #200).
+  background-size: 12px 8px;
+  // 14px de recuo + 12px de seta + 10px de folga até o texto da opção.
   padding-right: 36px;
 }
 
@@ -327,6 +331,14 @@ select.form-control,
   min-height: var(--btn-h-sm);
   padding: 0 var(--sp-3);
   font-size: var(--fs-caption);
+}
+
+// O campo pequeno tem 32px de altura e 12px de recuo horizontal: a seta encosta
+// mais na borda (8px) para não comer a largura útil do texto, que hoje herdaria
+// os 36px pensados para o campo padrão (issue #200).
+select.form-control-sm {
+  background-position: right 8px center;
+  padding-right: 26px;
 }
 
 .invalid-feedback {
@@ -720,9 +732,6 @@ body.dialog-aberto {
   // (issue #160). Cobre os campos globais; login e filtros têm overrides
   // próprios nos respectivos componentes.
   .form-control,
-  .input,
-  .select,
-  .textarea,
   .form-control-sm {
     font-size: 16px;
   }

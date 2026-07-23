@@ -20,27 +20,27 @@
 <form id="filtros-pacientes" class="filters" [class.filtros-recolhidos]="!filtrosAbertos" (ngSubmit)="buscar()">
   <label>
     Nome
-    <input type="text" name="nome" [(ngModel)]="filtro.nome" placeholder="Nome do paciente">
+    <input type="text" class="form-control" name="nome" [(ngModel)]="filtro.nome" placeholder="Nome do paciente">
   </label>
 
   <label>
     E-mail
-    <input type="email" name="email" [(ngModel)]="filtro.email" placeholder="email@exemplo.com">
+    <input type="email" class="form-control" name="email" [(ngModel)]="filtro.email" placeholder="email@exemplo.com">
   </label>
 
   <label>
     CPF
-    <input type="text" inputmode="numeric" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
+    <input type="text" class="form-control" inputmode="numeric" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
   </label>
 
   <label>
     Telefone
-    <input type="tel" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
+    <input type="tel" class="form-control" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
   </label>
 
   <label>
     Status
-    <select name="status" [(ngModel)]="filtro.status">
+    <select name="status" class="form-control" [(ngModel)]="filtro.status">
       <option value="todos">Todos</option>
       <option value="ativos">Ativos</option>
       <option value="inativos">Inativos</option>
@@ -60,16 +60,13 @@
 </div>
 
 <ng-container *ngIf="pacientes.length > 0">
-  <div class="pagination-summary">
-    <span>Exibindo {{ pageStart() }}-{{ pageEnd() }} de {{ totalElements }} pacientes</span>
-
-    <label>
-      Itens por página
-      <select #pageSizeSelect (change)="alterarTamanhoPagina(pageSizeSelect.value)">
-        <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="size === pageSize">{{ size }}</option>
-      </select>
-    </label>
-  </div>
+  <app-pagination-summary
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [totalElements]="totalElements"
+    itemLabel="pacientes"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageSizeChange)="alterarTamanhoPagina($event)" />
 
   <div class="table-wrap paciente-table-wrap">
     <table class="table paciente-table">

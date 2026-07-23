@@ -3,7 +3,7 @@
 
   <label>
     Itens por página
-    <select #pageSizeSelect (change)="aoAlterarTamanho(pageSizeSelect.value)">
+    <select #pageSizeSelect class="form-control" (change)="aoAlterarTamanho(pageSizeSelect.value)">
       <option *ngFor="let size of pageSizeOptions" [value]="size" [selected]="size === pageSize">{{ size }}</option>
     </select>
   </label>

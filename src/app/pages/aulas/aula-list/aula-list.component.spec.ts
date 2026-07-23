@@ -236,6 +236,25 @@ describe('AulaListComponent', () => {
       expect(component.acaoEmAndamento).toBeFalse();
     });
 
+    // A shorthand `background` do `.form-control-sm` local zerava o
+    // `background-image` do global e, com `appearance: none` já aplicado, o
+    // campo ficava sem seta alguma. O recuo também é menor que o do campo
+    // padrão, senão os 36px comeriam a largura útil do texto (issue #200).
+    it('should keep the custom chevron on the small select with its own right padding (issue #200)', () => {
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+        const estilo = getComputedStyle(select);
+
+        expect(estilo.backgroundImage).not.toBe('none');
+        expect(estilo.backgroundSize).toBe('12px 8px');
+        expect(estilo.paddingRight).toBe('26px');
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
     it('should set an aria-label on the profissional select', () => {
       const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
       expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');

@@ -253,7 +253,7 @@ describe('PacienteListComponent', () => {
   it('should reset to first page and reload when page size changes', () => {
     component.currentPage = 2;
 
-    component.alterarTamanhoPagina('20');
+    component.alterarTamanhoPagina(20);
 
     expect(component.pageSize).toBe(20);
     expect(component.currentPage).toBe(0);
@@ -269,8 +269,8 @@ describe('PacienteListComponent', () => {
   it('should ignore unsupported or unchanged page size', () => {
     serviceSpy.listar.calls.reset();
 
-    component.alterarTamanhoPagina('10');
-    component.alterarTamanhoPagina('15');
+    component.alterarTamanhoPagina(10);
+    component.alterarTamanhoPagina(15);
 
     expect(component.pageSize).toBe(10);
     expect(serviceSpy.listar).not.toHaveBeenCalled();
@@ -405,19 +405,25 @@ describe('PacienteListComponent', () => {
 
     expect(component.canGoPrevious()).toBeFalse();
     expect(component.canGoNext()).toBeTrue();
-    expect(component.pageStart()).toBe(1);
-    expect(component.pageEnd()).toBe(10);
 
     component.currentPage = 2;
     expect(component.canGoPrevious()).toBeTrue();
     expect(component.canGoNext()).toBeFalse();
-    expect(component.pageStart()).toBe(21);
-    expect(component.pageEnd()).toBe(21);
   });
 
-  it('should return zero as pageStart when there are no elements', () => {
-    component.totalElements = 0;
-    expect(component.pageStart()).toBe(0);
+  // O intervalo exibido passou a ser calculado pelo `app-pagination-summary`
+  // (issue #200): aqui basta garantir que a listagem alimenta o componente com
+  // o estado certo. O cálculo em si é coberto por `pagination-summary.spec`.
+  it('should render the pagination summary with total and page-size selector', () => {
+    const summary = fixture.nativeElement.querySelector('app-pagination-summary');
+    expect(summary).withContext('pagination summary must be present').toBeTruthy();
+
+    const text = fixture.nativeElement.querySelector('.pagination-summary span');
+    expect(text.textContent?.trim()).toBe('Exibindo 1-10 de 21 pacientes');
+
+    const select = fixture.nativeElement.querySelector('.pagination-summary select') as HTMLSelectElement;
+    expect(select).withContext('page size select must be present').toBeTruthy();
+    expect(select.value).toBe('10');
   });
 
   it('should fall back to current values when API returns metadata with undefined number/size', () => {
@@ -437,8 +443,8 @@ describe('PacienteListComponent', () => {
 
     expect(component.currentPage).toBe(0);
     expect(component.pageSize).toBe(10);
-    expect(Number.isNaN(component.pageStart())).toBeFalse();
-    expect(Number.isNaN(component.pageEnd())).toBeFalse();
+    expect(Number.isNaN(component.currentPage)).toBeFalse();
+    expect(Number.isNaN(component.pageSize)).toBeFalse();
   });
 
   it('should fall back to current values when API returns no page metadata at all', () => {
@@ -453,8 +459,8 @@ describe('PacienteListComponent', () => {
     expect(component.pacientes).toEqual([mockPaciente]);
     expect(component.currentPage).toBe(0);
     expect(component.pageSize).toBe(10);
-    expect(Number.isNaN(component.pageStart())).toBeFalse();
-    expect(Number.isNaN(component.pageEnd())).toBeFalse();
+    expect(Number.isNaN(component.currentPage)).toBeFalse();
+    expect(Number.isNaN(component.pageSize)).toBeFalse();
   });
 
   it('should ignore unsupported page sizes returned by the API', () => {
@@ -564,6 +570,31 @@ describe('PacienteListComponent', () => {
     expect(toggle.hasAttribute('aria-label')).toBeFalse();
     expect(form.id).toBe('filtros-pacientes');
     expect(form.classList).toContain('filtros-recolhidos');
+  });
+
+  // Os campos dos filtros e o seletor de itens por página não usavam
+  // `.form-control`: exibiam a seta nativa do sistema e o SCSS local
+  // redeclarava o campo com a shorthand `background`, que apagaria a seta
+  // global (issue #200).
+  it('should style every select with the global form-control chevron (issue #200)', () => {
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const selects = (fixture.nativeElement as HTMLElement)
+        .querySelectorAll('select') as NodeListOf<HTMLSelectElement>;
+
+      expect(selects.length).toBe(2);
+      selects.forEach(select => {
+        const estilo = getComputedStyle(select);
+
+        expect(select.classList).toContain('form-control');
+        expect(estilo.appearance).toBe('none');
+        expect(estilo.backgroundImage).not.toBe('none');
+        expect(estilo.backgroundSize).toBe('12px 8px');
+      });
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should reflect the open state and active-filter badge in the template', () => {
