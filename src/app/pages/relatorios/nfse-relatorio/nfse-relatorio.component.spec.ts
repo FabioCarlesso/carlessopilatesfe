@@ -147,4 +147,105 @@ describe('NfseRelatorioComponent', () => {
     expect(el.textContent).toContain('123.456.789-00');
     expect(el.textContent).toContain('Não');
   });
+
+  // A tabela tem 8 colunas e `min-width: 980px`: em 375px o usuário vê ~2 delas
+  // e nada indicava que havia mais à direita, nem sobrava referência da linha
+  // ao rolar (issue #164).
+  describe('scroll horizontal da tabela no mobile (issue #164)', () => {
+    /** Renderiza o resultado e anexa a fixture ao documento (computed styles). */
+    function renderizarResultado(): HTMLElement {
+      component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+      component.consultar();
+      fixture.detectChanges();
+      document.body.appendChild(fixture.nativeElement);
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    afterEach(() => {
+      if (fixture.nativeElement.parentNode === document.body) {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    it('should freeze the first column with an opaque background', () => {
+      const el = renderizarResultado();
+      const primeiroTh = el.querySelector('.table-sticky-first-col th:first-child') as HTMLElement;
+      const primeiraTd = el.querySelector('.table-sticky-first-col td:first-child') as HTMLElement;
+      const segundaTd = el.querySelector('.table-sticky-first-col td:nth-child(2)') as HTMLElement;
+
+      expect(getComputedStyle(primeiroTh).position).toBe('sticky');
+      expect(getComputedStyle(primeiroTh).left).toBe('0px');
+      expect(getComputedStyle(primeiraTd).position).toBe('sticky');
+      expect(getComputedStyle(primeiraTd).left).toBe('0px');
+      // Sem fundo opaco as colunas seguintes passariam por baixo e o texto se
+      // sobreporia ao da coluna congelada.
+      expect(getComputedStyle(primeiraTd).backgroundColor).toBe('rgb(255, 255, 255)');
+      expect(getComputedStyle(segundaTd).position).toBe('static');
+    });
+
+    it('should keep the frozen column opaque in dark theme', () => {
+      const el = renderizarResultado();
+      const primeiraTd = el.querySelector('.table-sticky-first-col td:first-child') as HTMLElement;
+      const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+      try {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        // `--bg-elev` do tema escuro: #182230.
+        expect(getComputedStyle(primeiraTd).backgroundColor).toBe('rgb(24, 34, 48)');
+      } finally {
+        if (temaAnterior === null) {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', temaAnterior);
+        }
+      }
+    });
+
+    it('should paint the scroll shadows on the scroll container, not behind the table', () => {
+      const el = renderizarResultado();
+      const wrap = el.querySelector('.table-responsive') as HTMLElement;
+      const tabela = el.querySelector('table.table') as HTMLElement;
+      const estiloWrap = getComputedStyle(wrap);
+
+      // Duas tampas que rolam com o conteúdo (`local`) sobre duas sombras
+      // presas ao contêiner (`scroll`): sem transbordo as tampas escondem as
+      // sombras e nada aparece.
+      expect(estiloWrap.backgroundAttachment).toBe('local, local, scroll, scroll');
+      expect(estiloWrap.overflowX).toBe('auto');
+      // Com fundo próprio a tabela cobriria as camadas do contêiner.
+      expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    });
+
+    it('should show the drag hint only on mobile widths', () => {
+      const el = renderizarResultado();
+      const hint = el.querySelector('.table-scroll-hint') as HTMLElement;
+
+      expect(hint).not.toBeNull();
+      expect(hint.textContent).toContain('Arraste a tabela para o lado');
+
+      const mobile = window.matchMedia('(max-width: 768px)').matches;
+      expect(getComputedStyle(hint).display).toBe(mobile ? 'block' : 'none');
+    });
+
+    it('should keep the summary cards on a single column at 375px', () => {
+      const el = renderizarResultado();
+      // Largura útil em um viewport de 375px: o `.container` tira 16px de cada
+      // lado.
+      el.style.width = '343px';
+      const grid = el.querySelector('.summary-grid') as HTMLElement;
+
+      expect(getComputedStyle(grid).gridTemplateColumns.split(' ').length).toBe(1);
+    });
+
+    it('should stack the action buttons at the mobile breakpoint', () => {
+      const el = renderizarResultado();
+      const acoes = el.querySelector('.form-actions') as HTMLElement;
+
+      const mobile = window.matchMedia('(max-width: 760px)').matches;
+      expect(getComputedStyle(acoes).flexDirection).toBe(mobile ? 'column' : 'row');
+      // `stretch` é o alinhamento padrão: empilhados, os botões ocupam a
+      // largura toda do card.
+      expect(getComputedStyle(acoes).alignItems).toBe('normal');
+    });
+  });
 });

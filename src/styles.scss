@@ -355,12 +355,70 @@ select.form-control-sm {
   border-top: 1px solid var(--border-subtle);
 }
 
+// Affordance de scroll horizontal: sombras nas bordas que aparecem só quando a
+// tabela transborda o contêiner, sem JavaScript (issue #164). São quatro
+// camadas de fundo: as duas primeiras são "tampas" opacas da cor do contêiner
+// com `background-attachment: local` — rolam junto com a tabela e, no início e
+// no fim do scroll, escondem a sombra da borda correspondente; as duas últimas
+// são as sombras, presas ao contêiner (`scroll`). Sem transbordo as tampas
+// nunca saem de cima das sombras e nada aparece.
 .table-responsive,
 .table-wrap {
   overflow-x: auto;
-  background: var(--bg-elev);
+  // `background-color` e nunca a shorthand: ela zeraria as camadas de
+  // `background-image` declaradas abaixo (issue #200).
+  background-color: var(--bg-elev);
+  background-image:
+    linear-gradient(var(--bg-elev), var(--bg-elev)),
+    linear-gradient(var(--bg-elev), var(--bg-elev)),
+    linear-gradient(to right, var(--table-scroll-shadow), transparent),
+    linear-gradient(to left, var(--table-scroll-shadow), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 16px 100%;
+  background-attachment: local, local, scroll, scroll;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-lg);
+}
+
+// As sombras são pintadas no fundo do contêiner: com fundo próprio a tabela as
+// cobriria por inteiro (issue #164). O visual das linhas não muda, porque o
+// contêiner já é opaco na mesma cor.
+.table-responsive > .table,
+.table-wrap > .table {
+  background-color: transparent;
+}
+
+// Congela a primeira coluna (a que identifica a linha: data, nome, id) durante
+// o scroll horizontal, para não perder a referência ao cruzar linha × valor no
+// mobile (issue #164). O fundo precisa ser opaco — e vem de token, para
+// acompanhar o tema — senão as colunas passam por baixo e sobrepõem o texto.
+.table-sticky-first-col {
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  td:first-child {
+    background-color: var(--bg-elev);
+  }
+
+  th:first-child {
+    background-color: var(--bg-sunken);
+    z-index: 2;
+  }
+}
+
+// Aviso textual de que há mais colunas à direita. Só no mobile: no desktop as
+// tabelas cabem na largura da página e o scroll não existe (issue #164).
+.table-scroll-hint {
+  display: none;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
 }
 
 .table {
@@ -724,6 +782,13 @@ body.dialog-aberto {
 
   .container {
     margin: var(--sp-5) auto;
+  }
+
+  // Complemento das sombras do `.table-responsive`/`.table-wrap`: com 6 a 8
+  // colunas em 375px sobram ~2 no viewport, e a coluna que interessa fica fora
+  // da tela sem nada indicando o scroll (issue #164).
+  .table-scroll-hint {
+    display: block;
   }
 
   // O Safari iOS aplica zoom automático ao focar campos cuja fonte é menor que

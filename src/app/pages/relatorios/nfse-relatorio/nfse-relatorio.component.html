@@ -73,8 +73,12 @@
     Nenhum pagamento confirmado encontrado para a competência informada.
   </div>
 
+  <p *ngIf="registros.length > 0" class="table-scroll-hint">
+    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+  </p>
+
   <div *ngIf="registros.length > 0" class="table-responsive">
-    <table class="table nfse-table">
+    <table class="table nfse-table table-sticky-first-col">
       <thead>
         <tr>
           <th>Nome</th>
