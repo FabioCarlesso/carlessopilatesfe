@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { NfseRelatorioComponent } from './nfse-relatorio.component';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
+import { renderizarEmViewport } from '../../../../testing/viewport';
 
 const mockRelatorio: RelatorioNfseResponseDTO[] = [
   {
@@ -216,17 +217,6 @@ describe('NfseRelatorioComponent', () => {
       expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
     });
 
-    it('should show the drag hint only on mobile widths', () => {
-      const el = renderizarResultado();
-      const hint = el.querySelector('.table-scroll-hint') as HTMLElement;
-
-      expect(hint).not.toBeNull();
-      expect(hint.textContent).toContain('Arraste a tabela para o lado');
-
-      const mobile = window.matchMedia('(max-width: 768px)').matches;
-      expect(getComputedStyle(hint).display).toBe(mobile ? 'block' : 'none');
-    });
-
     it('should expose the scroll container as a keyboard reachable region', () => {
       const el = renderizarResultado();
       const wrap = el.querySelector('.table-responsive') as HTMLElement;
@@ -252,26 +242,42 @@ describe('NfseRelatorioComponent', () => {
       expect(getComputedStyle(primeiraTd).borderRightWidth).toBe('0px');
     });
 
-    it('should keep the summary cards on a single column at 375px', () => {
+    it('should apply the mobile layout at 375px and keep the desktop one at 1200px', () => {
       const el = renderizarResultado();
-      // Largura útil em um viewport de 375px: o `.container` tira 16px de cada
-      // lado.
-      el.style.width = '343px';
-      const grid = el.querySelector('.summary-grid') as HTMLElement;
 
-      expect(getComputedStyle(grid).gridTemplateColumns.split(' ').length).toBe(1);
-    });
+      // Em iframe de largura fixa: a janela do Karma é sempre larga e deixaria
+      // as regras mobile — o motivo desta issue — sem teste efetivo.
+      [375, 1200].forEach(largura => {
+        const viewport = renderizarEmViewport(el, largura);
+        const mobile = largura === 375;
 
-    it('should stack the action buttons at the mobile breakpoint', () => {
-      const el = renderizarResultado();
-      const acoes = el.querySelector('.form-actions') as HTMLElement;
+        try {
+          const estilo = (alvo: Element) => viewport.janela.getComputedStyle(alvo);
+          const acoes = el.querySelector('.form-actions') as HTMLElement;
+          const grid = el.querySelector('.summary-grid') as HTMLElement;
 
-      // Mesmo breakpoint do bloco mobile global, desde a issue #164.
-      const mobile = window.matchMedia('(max-width: 768px)').matches;
-      expect(getComputedStyle(acoes).flexDirection).toBe(mobile ? 'column' : 'row');
-      // `stretch` é o alinhamento padrão: empilhados, os botões ocupam a
-      // largura toda do card.
-      expect(getComputedStyle(acoes).alignItems).toBe('normal');
+          el.querySelectorAll('.table-scroll-hint').forEach(hint => {
+            expect(hint.textContent).toContain('Arraste a tabela para o lado');
+            expect(estilo(hint).display)
+              .withContext(`hint em ${largura}px`).toBe(mobile ? 'block' : 'none');
+          });
+
+          expect(estilo(acoes).flexDirection)
+            .withContext(`ações em ${largura}px`).toBe(mobile ? 'column' : 'row');
+          // `stretch` é o alinhamento padrão: empilhados, os botões ocupam a
+          // largura toda do card.
+          expect(estilo(acoes).alignItems).toBe('normal');
+
+          const colunas = estilo(grid).gridTemplateColumns.split(' ').length;
+          if (mobile) {
+            expect(colunas).withContext('cards de resumo em 375px').toBe(1);
+          } else {
+            expect(colunas).withContext('cards de resumo em 1200px').toBeGreaterThan(1);
+          }
+        } finally {
+          viewport.destruir();
+        }
+      });
     });
   });
 });

@@ -62,17 +62,12 @@
   font-weight: 700;
 }
 
+// Só a largura mínima: `width`, `border-collapse` e `box-shadow` repetiam o
+// `.table` global, e o `border-radius`/`overflow` não pintam nada desde que a
+// tabela ficou transparente — quem desenha a superfície e o arredondamento é o
+// `.table-wrap`, que usa o próprio fundo para as sombras de scroll (issue #164).
 .table {
-  width: 100%;
   min-width: 820px;
-  border-collapse: collapse;
-  // Transparente de propósito: o `.table-wrap` pinta a mesma cor e usa o fundo
-  // para as sombras que sinalizam o scroll horizontal — com fundo próprio a
-  // tabela as cobriria por inteiro (issue #164).
-  background-color: transparent;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-1);
 
   th {
     background: var(--bg-sunken);

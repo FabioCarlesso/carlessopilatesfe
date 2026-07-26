@@ -12,6 +12,13 @@ import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
+/**
+ * Largura a partir da qual a tabela vira cards (mesmo valor do media query do
+ * SCSS). Abaixo dela o contêiner não rola na horizontal e, por isso, não deve
+ * ser parada de tabulação nem região anunciada (issue #164).
+ */
+const CARD_MODE_MAX_WIDTH = 640;
+
 @Component({
   selector: 'app-aula-list',
   imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
@@ -33,7 +40,13 @@ export class AulaListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   titulo = 'Aulas';
   subtitulo: string | null = null;
+  modoCard = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
+  private cardModeQuery: MediaQueryList | null = null;
+  private readonly onCardModeChange = (evento: MediaQueryListEvent): void => {
+    this.modoCard = evento.matches;
+    this.cdr.markForCheck();
+  };
 
   constructor(
     private service: AulaService,
@@ -45,6 +58,10 @@ export class AulaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.cardModeQuery = window.matchMedia(`(max-width: ${CARD_MODE_MAX_WIDTH}px)`);
+    this.modoCard = this.cardModeQuery.matches;
+    this.cardModeQuery.addEventListener('change', this.onCardModeChange);
+
     const rawPacienteId = this.route.snapshot.paramMap.get('pacienteId');
     const rawPagamentoId = this.route.snapshot.paramMap.get('pagamentoId');
 
@@ -91,6 +108,8 @@ export class AulaListComponent implements OnInit, OnDestroy {
     if (this.successTimer !== null) {
       clearTimeout(this.successTimer);
     }
+
+    this.cardModeQuery?.removeEventListener('change', this.onCardModeChange);
   }
 
   carregarProfissionais(): void {

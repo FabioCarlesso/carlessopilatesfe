@@ -382,9 +382,15 @@ select.form-control-sm {
 
   // O contêiner é `tabindex="0"` para que o teclado alcance o scroll horizontal
   // (WCAG 2.1.1): sem foco visível o usuário não saberia onde as setas atuam.
+  // Aqui o anel não é o `--shadow-focus` do resto da aplicação: com 18% de alfa
+  // ele compõe 1,32:1 sobre `--bg-app`, longe dos 3:1 da WCAG 2.4.11 — tolerável
+  // num botão, que já se distingue sozinho, mas não neste alvo que só existe
+  // para o teclado. O `--text-brand` vira `#a8bcca` no tema escuro e rende
+  // 7,2:1 no claro e 9,67:1 no escuro (o `--border-brand` não é redefinido no
+  // escuro e cairia para 2,26:1).
   &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
+    outline: 2px solid var(--text-brand);
+    outline-offset: 2px;
   }
 }
 
