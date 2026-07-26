@@ -9,6 +9,7 @@ import {
   ProfissionalPagamentoRelatorioDTO,
   ProfissionalResponseDTO
 } from '../../../core/models/profissional';
+import { renderizarEmViewport } from '../../../../testing/viewport';
 
 const mockProfissional: ProfissionalResponseDTO = {
   id: 1,
@@ -218,5 +219,149 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
 
     expect(component.erro).toBe('Erro ao exportar relatório em PDF.');
     expect(component.exportandoPdf).toBeFalse();
+  });
+
+  // São 6 colunas na tabela de pagamentos e 8 na de aulas: em 375px o usuário
+  // vê ~2 delas e nada indicava que "Valor Profissional" estava fora da tela,
+  // nem sobrava referência da linha ao rolar (issue #164).
+  describe('scroll horizontal das tabelas no mobile (issue #164)', () => {
+    /** Renderiza o resultado e anexa a fixture ao documento (computed styles). */
+    function renderizarResultado(): HTMLElement {
+      component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
+      component.consultar();
+      fixture.detectChanges();
+      document.body.appendChild(fixture.nativeElement);
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    afterEach(() => {
+      if (fixture.nativeElement.parentNode === document.body) {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    it('should freeze the first column of both result tables with an opaque background', () => {
+      const el = renderizarResultado();
+      const tabelas = el.querySelectorAll('.table-sticky-first-col');
+
+      expect(tabelas.length).toBe(2);
+
+      tabelas.forEach(tabela => {
+        const primeiroTh = tabela.querySelector('th:first-child') as HTMLElement;
+        const primeiraTd = tabela.querySelector('td:first-child') as HTMLElement;
+        const segundaTd = tabela.querySelector('td:nth-child(2)') as HTMLElement;
+
+        expect(getComputedStyle(primeiroTh).position).toBe('sticky');
+        expect(getComputedStyle(primeiroTh).left).toBe('0px');
+        expect(getComputedStyle(primeiraTd).position).toBe('sticky');
+        expect(getComputedStyle(primeiraTd).left).toBe('0px');
+        // Sem fundo opaco as colunas seguintes passariam por baixo e o texto se
+        // sobreporia ao da coluna congelada.
+        expect(getComputedStyle(primeiraTd).backgroundColor).toBe('rgb(255, 255, 255)');
+        expect(getComputedStyle(segundaTd).position).toBe('static');
+      });
+    });
+
+    it('should keep the frozen column opaque in dark theme', () => {
+      const el = renderizarResultado();
+      const primeiraTd = el.querySelector('.table-sticky-first-col td:first-child') as HTMLElement;
+      const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+      try {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        // `--bg-elev` do tema escuro: #182230.
+        expect(getComputedStyle(primeiraTd).backgroundColor).toBe('rgb(24, 34, 48)');
+      } finally {
+        if (temaAnterior === null) {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', temaAnterior);
+        }
+      }
+    });
+
+    it('should paint the scroll shadows on the scroll containers, not behind the tables', () => {
+      const el = renderizarResultado();
+      const wraps = el.querySelectorAll('.table-responsive');
+
+      expect(wraps.length).toBe(2);
+
+      wraps.forEach(wrap => {
+        const estiloWrap = getComputedStyle(wrap);
+        const tabela = wrap.querySelector('table.table') as HTMLElement;
+
+        // Duas tampas que rolam com o conteúdo (`local`) sobre duas sombras
+        // presas ao contêiner (`scroll`): sem transbordo as tampas escondem as
+        // sombras e nada aparece.
+        expect(estiloWrap.backgroundAttachment).toBe('local, local, scroll, scroll');
+        expect(estiloWrap.overflowX).toBe('auto');
+        // Com fundo próprio a tabela cobriria as camadas do contêiner.
+        expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      });
+    });
+
+    it('should expose both scroll containers as keyboard reachable regions', () => {
+      const el = renderizarResultado();
+      const wraps = Array.from(el.querySelectorAll('.table-responsive')) as HTMLElement[];
+
+      // Sem `tabindex` o teclado não alcança o scroll horizontal (WCAG 2.1.1).
+      expect(wraps.map(w => w.getAttribute('tabindex'))).toEqual(['0', '0']);
+      expect(wraps.map(w => w.getAttribute('role'))).toEqual(['region', 'region']);
+      expect(wraps.map(w => w.getAttribute('aria-label')))
+        .toEqual(['Pagamentos do período', 'Aulas do período']);
+    });
+
+    it('should separate the frozen column with a pseudo-element, not a cell border', () => {
+      const el = renderizarResultado();
+      const primeiraTd = el.querySelector('.table-sticky-first-col td:first-child') as HTMLElement;
+      const separador = getComputedStyle(primeiraTd, '::after');
+
+      // Nem `border-right` nem `box-shadow` na célula: com
+      // `border-collapse: collapse` a borda é da tabela (o WebKit não a repinta
+      // na posição sticky) e o Chromium não pinta box-shadow de célula
+      // colapsada — o separador sumia. O pseudo é um box comum e renderiza.
+      expect(separador.position).toBe('absolute');
+      expect(separador.width).toBe('1px');
+      expect(separador.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      expect(getComputedStyle(primeiraTd).borderRightWidth).toBe('0px');
+    });
+
+    it('should apply the mobile layout at 375px and keep the desktop one at 1200px', () => {
+      const el = renderizarResultado();
+
+      // Em iframe de largura fixa: a janela do Karma é sempre larga e deixaria
+      // as regras mobile — o motivo desta issue — sem teste efetivo.
+      [375, 1200].forEach(largura => {
+        const viewport = renderizarEmViewport(el, largura);
+        const mobile = largura === 375;
+
+        try {
+          const estilo = (alvo: Element) => viewport.janela.getComputedStyle(alvo);
+          const acoes = el.querySelector('.form-actions') as HTMLElement;
+          const grid = el.querySelector('.summary-grid') as HTMLElement;
+
+          el.querySelectorAll('.table-scroll-hint').forEach(hint => {
+            expect(hint.textContent).toContain('Arraste a tabela para o lado');
+            expect(estilo(hint).display)
+              .withContext(`hint em ${largura}px`).toBe(mobile ? 'block' : 'none');
+          });
+
+          expect(estilo(acoes).flexDirection)
+            .withContext(`ações em ${largura}px`).toBe(mobile ? 'column' : 'row');
+          // `stretch` é o alinhamento padrão: empilhados, os botões ocupam a
+          // largura toda do card.
+          expect(estilo(acoes).alignItems).toBe('normal');
+
+          const colunas = estilo(grid).gridTemplateColumns.split(' ').length;
+          if (mobile) {
+            expect(colunas).withContext('cards de resumo em 375px').toBe(1);
+          } else {
+            expect(colunas).withContext('cards de resumo em 1200px').toBeGreaterThan(1);
+          }
+        } finally {
+          viewport.destruir();
+        }
+      });
+    });
   });
 });

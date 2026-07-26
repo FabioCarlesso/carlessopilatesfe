@@ -87,8 +87,13 @@
     </div>
   </div>
 
-  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo">
-    <table class="table">
+  <p *ngIf="relatorio.pagamentos.length > 0" class="table-scroll-hint">
+    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+  </p>
+
+  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo" tabindex="0" role="region"
+    aria-label="Pagamentos do período">
+    <table class="table table-sticky-first-col">
       <thead>
         <tr>
           <th>Pagamento</th>
@@ -116,8 +121,13 @@
     Nenhuma aula realizada para o profissional no período informado.
   </div>
 
-  <div *ngIf="relatorio.aulas.length > 0" class="table-responsive">
-    <table class="table">
+  <p *ngIf="relatorio.aulas.length > 0" class="table-scroll-hint">
+    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+  </p>
+
+  <div *ngIf="relatorio.aulas.length > 0" class="table-responsive" tabindex="0" role="region"
+    aria-label="Aulas do período">
+    <table class="table table-sticky-first-col">
       <thead>
         <tr>
           <th>Data</th>

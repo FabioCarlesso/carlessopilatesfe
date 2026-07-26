@@ -29,7 +29,8 @@
   Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
 </div>
 
-<div *ngIf="aulas.length > 0" class="table-wrap">
+<div *ngIf="aulas.length > 0" class="table-wrap" [attr.tabindex]="modoCard ? null : 0"
+  [attr.role]="modoCard ? null : 'region'" [attr.aria-label]="modoCard ? null : 'Lista de aulas'">
   <table class="table">
     <thead>
       <tr>

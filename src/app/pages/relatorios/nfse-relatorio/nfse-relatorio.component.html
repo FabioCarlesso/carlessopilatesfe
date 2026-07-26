@@ -73,8 +73,12 @@
     Nenhum pagamento confirmado encontrado para a competência informada.
   </div>
 
-  <div *ngIf="registros.length > 0" class="table-responsive">
-    <table class="table nfse-table">
+  <p *ngIf="registros.length > 0" class="table-scroll-hint">
+    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+  </p>
+
+  <div *ngIf="registros.length > 0" class="table-responsive" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
+    <table class="table nfse-table table-sticky-first-col">
       <thead>
         <tr>
           <th>Nome</th>

@@ -35,20 +35,14 @@
   }
 }
 
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
 .pagamentos-resumo {
   margin-bottom: 1rem;
 }
 
-@media (max-width: 760px) {
-  .form-row {
-    flex-direction: column;
-  }
-
+// Mesmo breakpoint do bloco mobile do `styles.scss` (o `.form-row` já empilha
+// por lá; aqui restam só as ações). Antes eram 760px, 8px fora de sincronia com
+// o resto da aplicação (issue #164).
+@media (max-width: 768px) {
   .form-actions {
     flex-direction: column;
   }

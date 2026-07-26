@@ -6,6 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
+import { renderizarEmViewport } from '../../../../testing/viewport';
 import { AulaListComponent } from './aula-list.component';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
@@ -253,6 +254,94 @@ describe('AulaListComponent', () => {
       } finally {
         document.body.removeChild(fixture.nativeElement);
       }
+    });
+
+    // A tabela e as linhas tinham fundo próprio no SCSS local, cobrindo as
+    // sombras que o `.table-wrap` pinta para sinalizar o scroll horizontal; no
+    // modo card (≤640px) a linha volta a ser uma superfície elevada (issue
+    // #164).
+    it('should let the scroll shadows of the wrapper show through the table (issue #164)', () => {
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const tabela: HTMLElement = fixture.nativeElement.querySelector('table.table');
+        expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    it('should elevate each row only in card mode (issue #164)', () => {
+      document.body.appendChild(fixture.nativeElement);
+
+      // Em iframe de largura fixa: a janela do Karma é sempre larga e o ramo
+      // mobile ficaria sem teste efetivo.
+      [375, 1200].forEach(largura => {
+        const viewport = renderizarEmViewport(fixture.nativeElement, largura);
+
+        try {
+          const linha: HTMLElement = fixture.nativeElement.querySelector('tbody tr');
+          // No modo card cada linha é um card sobre o fundo da página; no modo
+          // tabela ela é transparente para não cobrir as sombras do wrapper.
+          expect(viewport.janela.getComputedStyle(linha).backgroundColor)
+            .withContext(`linha em ${largura}px`)
+            .toBe(largura === 375 ? 'rgb(255, 255, 255)' : 'rgba(0, 0, 0, 0)');
+        } finally {
+          viewport.destruir();
+        }
+      });
+
+      document.body.removeChild(fixture.nativeElement);
+    });
+
+    // O contêiner só é parada de tabulação onde de fato rola: no modo card
+    // (≤640px) ele não tem scroll horizontal e um tab stop ali não levaria a
+    // lugar nenhum (issue #164).
+    it('should expose the scroll region only outside card mode (issue #164)', () => {
+      // Modo tabela: a fixture do beforeEach, na janela larga do Karma.
+      const wrap: HTMLElement = fixture.nativeElement.querySelector('.table-wrap');
+      expect(wrap.getAttribute('tabindex')).toBe('0');
+      expect(wrap.getAttribute('role')).toBe('region');
+      expect(wrap.getAttribute('aria-label')).toBe('Lista de aulas');
+
+      // Modo card: nova fixture com o media query casando, que é como o
+      // componente decide em produção.
+      spyOn(window, 'matchMedia').and.returnValue({
+        matches: true,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined
+      } as unknown as MediaQueryList);
+      const fixtureCard = TestBed.createComponent(AulaListComponent);
+      fixtureCard.detectChanges();
+
+      const wrapCard: HTMLElement = fixtureCard.nativeElement.querySelector('.table-wrap');
+      expect(wrapCard.getAttribute('tabindex')).toBeNull();
+      expect(wrapCard.getAttribute('role')).toBeNull();
+      expect(wrapCard.getAttribute('aria-label')).toBeNull();
+      fixtureCard.destroy();
+    });
+
+    it('should track the card mode media query and drop the listener on destroy (issue #164)', () => {
+      const ouvintes: ((evento: MediaQueryListEvent) => void)[] = [];
+      const consulta = {
+        matches: true,
+        addEventListener: (_: string, ouvinte: (evento: MediaQueryListEvent) => void) => ouvintes.push(ouvinte),
+        removeEventListener: (_: string, ouvinte: (evento: MediaQueryListEvent) => void) =>
+          ouvintes.splice(ouvintes.indexOf(ouvinte), 1)
+      } as unknown as MediaQueryList;
+      spyOn(window, 'matchMedia').and.returnValue(consulta);
+
+      const outraFixture = TestBed.createComponent(AulaListComponent);
+      outraFixture.detectChanges();
+
+      expect(window.matchMedia).toHaveBeenCalledWith('(max-width: 640px)');
+      expect(outraFixture.componentInstance.modoCard).toBeTrue();
+
+      ouvintes[0]({ matches: false } as MediaQueryListEvent);
+      expect(outraFixture.componentInstance.modoCard).toBeFalse();
+
+      outraFixture.destroy();
+      expect(ouvintes.length).toBe(0);
     });
 
     it('should set an aria-label on the profissional select', () => {
