@@ -485,6 +485,29 @@ describe('PacienteListComponent', () => {
     expect(select.value).toBe('20');
   });
 
+  // O SCSS local declarava `background: var(--bg-elev)` na tabela; com o atributo
+  // de encapsulamento ele empata em especificidade com a regra global e vence
+  // por ordem de injeção, cobrindo as sombras que o `.table-wrap` pinta para
+  // sinalizar o scroll horizontal (issue #164).
+  it('should let the scroll shadows of the wrapper show through the table (issue #164)', () => {
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      fixture.detectChanges();
+
+      const wrap = fixture.nativeElement.querySelector('.table-wrap') as HTMLElement;
+      const tabela = fixture.nativeElement.querySelector('table.table') as HTMLElement;
+
+      expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+      expect(getComputedStyle(wrap).backgroundAttachment).toBe('local, local, scroll, scroll');
+      // Sem `tabindex` o teclado não alcança o scroll horizontal (WCAG 2.1.1).
+      expect(wrap.getAttribute('tabindex')).toBe('0');
+      expect(wrap.getAttribute('role')).toBe('region');
+      expect(wrap.getAttribute('aria-label')).toBe('Lista de pacientes');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should render patient actions on a single line (no line wrapping)', () => {
     document.body.appendChild(fixture.nativeElement);
     try {

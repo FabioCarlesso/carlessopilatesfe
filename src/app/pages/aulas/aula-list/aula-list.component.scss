@@ -8,13 +8,12 @@
   color-scheme: light;
 }
 
+// Sem fundo próprio na tabela nem nas linhas: o `.table-wrap` pinta a mesma cor
+// e usa o fundo para as sombras que sinalizam o scroll horizontal — uma tabela
+// opaca as cobriria por inteiro (issue #164). No modo card (≤640px) as linhas
+// recuperam o fundo elevado, porque lá cada linha é um card sobre a página.
 .table {
-  background: var(--bg-elev);
   color: var(--text);
-
-  tbody tr {
-    background: var(--bg-elev);
-  }
 
   td {
     color: var(--text);
@@ -82,6 +81,9 @@
 
     tbody tr {
       display: block;
+      // Aqui a linha é um card sobre o fundo da página e precisa da superfície
+      // elevada; no modo tabela ela é transparente (issue #164).
+      background-color: var(--bg-elev);
       padding: var(--sp-3);
       margin-bottom: var(--sp-4);
       border: 1px solid var(--border-subtle);

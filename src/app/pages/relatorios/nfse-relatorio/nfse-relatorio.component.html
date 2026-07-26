@@ -77,7 +77,7 @@
     Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
   </p>
 
-  <div *ngIf="registros.length > 0" class="table-responsive">
+  <div *ngIf="registros.length > 0" class="table-responsive" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
     <table class="table nfse-table table-sticky-first-col">
       <thead>
         <tr>

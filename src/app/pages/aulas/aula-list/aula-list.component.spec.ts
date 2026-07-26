@@ -255,6 +255,31 @@ describe('AulaListComponent', () => {
       }
     });
 
+    // A tabela e as linhas tinham fundo próprio no SCSS local, cobrindo as
+    // sombras que o `.table-wrap` pinta para sinalizar o scroll horizontal; no
+    // modo card (≤640px) a linha volta a ser uma superfície elevada (issue
+    // #164).
+    it('should let the scroll shadows of the wrapper show through the table (issue #164)', () => {
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const wrap: HTMLElement = fixture.nativeElement.querySelector('.table-wrap');
+        const tabela: HTMLElement = fixture.nativeElement.querySelector('table.table');
+        const linha: HTMLElement = fixture.nativeElement.querySelector('tbody tr');
+        const modoCard = window.matchMedia('(max-width: 640px)').matches;
+
+        expect(getComputedStyle(tabela).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+        expect(getComputedStyle(linha).backgroundColor)
+          .toBe(modoCard ? 'rgb(255, 255, 255)' : 'rgba(0, 0, 0, 0)');
+        // Sem `tabindex` o teclado não alcança o scroll horizontal (WCAG 2.1.1).
+        expect(wrap.getAttribute('tabindex')).toBe('0');
+        expect(wrap.getAttribute('role')).toBe('region');
+        expect(wrap.getAttribute('aria-label')).toBe('Lista de aulas');
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
     it('should set an aria-label on the profissional select', () => {
       const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
       expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');

@@ -91,7 +91,8 @@
     Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
   </p>
 
-  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo">
+  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo" tabindex="0" role="region"
+    aria-label="Pagamentos do período">
     <table class="table table-sticky-first-col">
       <thead>
         <tr>
@@ -124,7 +125,8 @@
     Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
   </p>
 
-  <div *ngIf="relatorio.aulas.length > 0" class="table-responsive">
+  <div *ngIf="relatorio.aulas.length > 0" class="table-responsive" tabindex="0" role="region"
+    aria-label="Aulas do período">
     <table class="table table-sticky-first-col">
       <thead>
         <tr>

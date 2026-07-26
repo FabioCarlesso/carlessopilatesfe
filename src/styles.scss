@@ -379,6 +379,13 @@ select.form-control-sm {
   background-attachment: local, local, scroll, scroll;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-lg);
+
+  // O contêiner é `tabindex="0"` para que o teclado alcance o scroll horizontal
+  // (WCAG 2.1.1): sem foco visível o usuário não saberia onde as setas atuam.
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
 }
 
 // As sombras são pintadas no fundo do contêiner: com fundo próprio a tabela as
@@ -399,7 +406,26 @@ select.form-control-sm {
     position: sticky;
     left: 0;
     z-index: 1;
-    border-right: 1px solid var(--border-subtle);
+  }
+
+  // Separador da coluna congelada como pseudo-elemento, e não como
+  // `border-right` ou `box-shadow` da própria célula: numa tabela com
+  // `border-collapse: collapse` a borda pertence à tabela (o WebKit não a
+  // repinta na posição sticky) e o Chromium simplesmente não pinta box-shadow
+  // de célula colapsada — verificado. O pseudo é um box comum ancorado na
+  // célula sticky e resolve os dois casos. A sombra difusa mostra que o
+  // conteúdo passa por baixo: a sombra esquerda do contêiner fica encoberta
+  // pela coluna congelada e é esta que faz o papel dela.
+  th:first-child::after,
+  td:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--border-default);
+    box-shadow: 4px 0 6px -4px var(--table-scroll-shadow);
   }
 
   td:first-child {

@@ -312,6 +312,32 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
       });
     });
 
+    it('should expose both scroll containers as keyboard reachable regions', () => {
+      const el = renderizarResultado();
+      const wraps = Array.from(el.querySelectorAll('.table-responsive')) as HTMLElement[];
+
+      // Sem `tabindex` o teclado não alcança o scroll horizontal (WCAG 2.1.1).
+      expect(wraps.map(w => w.getAttribute('tabindex'))).toEqual(['0', '0']);
+      expect(wraps.map(w => w.getAttribute('role'))).toEqual(['region', 'region']);
+      expect(wraps.map(w => w.getAttribute('aria-label')))
+        .toEqual(['Pagamentos do período', 'Aulas do período']);
+    });
+
+    it('should separate the frozen column with a pseudo-element, not a cell border', () => {
+      const el = renderizarResultado();
+      const primeiraTd = el.querySelector('.table-sticky-first-col td:first-child') as HTMLElement;
+      const separador = getComputedStyle(primeiraTd, '::after');
+
+      // Nem `border-right` nem `box-shadow` na célula: com
+      // `border-collapse: collapse` a borda é da tabela (o WebKit não a repinta
+      // na posição sticky) e o Chromium não pinta box-shadow de célula
+      // colapsada — o separador sumia. O pseudo é um box comum e renderiza.
+      expect(separador.position).toBe('absolute');
+      expect(separador.width).toBe('1px');
+      expect(separador.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      expect(getComputedStyle(primeiraTd).borderRightWidth).toBe('0px');
+    });
+
     it('should keep the summary cards on a single column at 375px', () => {
       const el = renderizarResultado();
       // Largura útil em um viewport de 375px: o `.container` tira 16px de cada
@@ -326,7 +352,8 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
       const el = renderizarResultado();
       const acoes = el.querySelector('.form-actions') as HTMLElement;
 
-      const mobile = window.matchMedia('(max-width: 760px)').matches;
+      // Mesmo breakpoint do bloco mobile global, desde a issue #164.
+      const mobile = window.matchMedia('(max-width: 768px)').matches;
       expect(getComputedStyle(acoes).flexDirection).toBe(mobile ? 'column' : 'row');
       // `stretch` é o alinhamento padrão: empilhados, os botões ocupam a
       // largura toda do card.
