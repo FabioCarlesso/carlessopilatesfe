@@ -686,6 +686,12 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - **Observações do fisioterapeuta** sempre visível (com quebras de linha preservadas); demais campos atrás de expandir/recolher com `aria-expanded` e `aria-controls`, e **Expandir tudo**/**Recolher tudo** no topo. O painel permanece no DOM quando recolhido (classe `.evolucao-detalhes-recolhido`) para que o `aria-controls` sempre resolva
 - Par de dor com `aria-label` próprio ("Dor antes 7, depois 3, melhora") e fallback `—` para o valor ausente
 - Campos vazios não são renderizados; estado vazio e alerta de erro derivado de `extrairMensagemErro`, com mensagem neutra quando o `forkJoin` falha (a requisição que falhou pode ter sido a de sessões)
+- Gráfico da evolução da dor acima da linha do tempo, em SVG inline montado pela função pura `montarGraficoDor(itens)` — deriva da coleção já carregada, sem requisição própria e sem biblioteca de gráficos
+- Eixo Y fixo em 0–10 (escala do formulário de evolução) e eixo X com as sessões em ordem cronológica crescente, inversa à da lista; no máximo cinco datas escritas, sempre a primeira e a última
+- Sessão com dor `null` quebra a série em vez de virar ponto em `0`; o gráfico é omitido quando menos de duas sessões têm dor informada
+- `role="img"` com `aria-label` textual (sessões, período e a primeira e a última medição de cada série); grade, eixos e rótulos internos em `aria-hidden`
+- Séries **Dor antes** e **Dor depois** distinguidas por cor de token (`--c-warning-text`/`--text-brand`) e por tracejado, nomeadas na legenda
+- Responsivo por `viewBox` + `preserveAspectRatio` (`width: 100%`, `max-width: 480px`), sem gerar scroll horizontal
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente

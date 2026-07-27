@@ -51,6 +51,208 @@ export interface EvolucaoTimelineItem {
   expandido: boolean;
 }
 
+/** Um ponto plotado, já em coordenadas do `viewBox`. */
+export interface GraficoDorPonto {
+  x: number;
+  y: number;
+  valor: number;
+  /** Data da sessão em `dd/MM/yyyy`, reaproveitada no `aria-label`. */
+  data: string;
+}
+
+export interface GraficoDorSerie {
+  chave: 'antes' | 'depois';
+  rotulo: string;
+  pontos: GraficoDorPonto[];
+  /**
+   * `points` de um `<polyline>` por trecho contínuo da série: a sessão sem dor
+   * informada quebra a linha em vez de virar um ponto em `0`.
+   */
+  linhas: string[];
+  /** Subconjunto de `pontos` desenhado como círculo. */
+  marcadores: GraficoDorPonto[];
+}
+
+export interface GraficoDorMarcaX {
+  x: number;
+  rotulo: string;
+  /** As marcas das pontas ancoram para dentro para não vazar do `viewBox`. */
+  ancora: 'start' | 'middle' | 'end';
+}
+
+export interface GraficoDorMarcaY {
+  y: number;
+  rotulo: string;
+}
+
+export interface GraficoDorArea {
+  esquerda: number;
+  direita: number;
+  topo: number;
+  base: number;
+}
+
+export interface GraficoDor {
+  viewBox: string;
+  area: GraficoDorArea;
+  series: GraficoDorSerie[];
+  marcasX: GraficoDorMarcaX[];
+  marcasY: GraficoDorMarcaY[];
+  ariaLabel: string;
+}
+
+/** Geometria do gráfico, em unidades do `viewBox`. */
+const GRAFICO_LARGURA = 480;
+const GRAFICO_ALTURA = 220;
+const GRAFICO_MARGEM = { topo: 12, direita: 14, base: 34, esquerda: 26 };
+/** Escala da dor no formulário de evolução: o eixo Y é fixo, não normalizado. */
+const DOR_MAXIMA = 10;
+const GRAFICO_MARCAS_Y = [0, 5, DOR_MAXIMA];
+/** Abaixo disso não há tendência para mostrar, só um ponto solto. */
+const GRAFICO_MIN_SESSOES_COM_DOR = 2;
+/** Datas escritas no eixo X; as demais sessões entram sem rótulo. */
+const GRAFICO_MAX_MARCAS_X = 5;
+/**
+ * Acima disso os círculos viram uma faixa sólida — e centenas de nós no DOM:
+ * a linha basta, e só os pontos isolados seguem marcados para não sumirem.
+ */
+const GRAFICO_MAX_MARCADORES = 30;
+
+const SERIES_DOR: {
+  chave: GraficoDorSerie['chave'];
+  rotulo: string;
+  valor: (item: EvolucaoTimelineItem) => number | null;
+}[] = [
+  { chave: 'antes', rotulo: 'Dor antes', valor: item => item.dorAntes },
+  { chave: 'depois', rotulo: 'Dor depois', valor: item => item.dorDepois }
+];
+
+/**
+ * Formata o prefixo ISO de `dataHora` direto, sem construir `Date`: a string
+ * vem sem fuso (`2026-05-20T14:00`) e o construtor a interpretaria como local
+ * ou UTC conforme o formato, o que já viraria um dia a menos no rótulo.
+ */
+function formatarData(dataHora: string): { curta: string; completa: string } {
+  const [ano, mes, dia] = dataHora.slice(0, 10).split('-');
+  if (!ano || !mes || !dia) return { curta: dataHora, completa: dataHora };
+  return { curta: `${dia}/${mes}`, completa: `${dia}/${mes}/${ano}` };
+}
+
+/** Índices das sessões que ganham rótulo no eixo X, sempre com a primeira e a última. */
+function indicesDasMarcasX(total: number): number[] {
+  if (total <= GRAFICO_MAX_MARCAS_X) return Array.from({ length: total }, (_indice, i) => i);
+
+  const passo = (total - 1) / (GRAFICO_MAX_MARCAS_X - 1);
+  const indices = new Set<number>();
+  for (let marca = 0; marca < GRAFICO_MAX_MARCAS_X; marca++) {
+    indices.add(Math.round(marca * passo));
+  }
+  return [...indices].sort((a, b) => a - b);
+}
+
+function descreverSerie(serie: GraficoDorSerie): string | null {
+  const primeiro = serie.pontos[0];
+  const ultimo = serie.pontos[serie.pontos.length - 1];
+  if (!primeiro) return null;
+  if (primeiro === ultimo) return `${serie.rotulo}: ${primeiro.valor} em ${primeiro.data}, medição única`;
+  return `${serie.rotulo}: de ${primeiro.valor} em ${primeiro.data} para ${ultimo.valor} em ${ultimo.data}`;
+}
+
+/**
+ * Deriva o gráfico da mesma coleção que alimenta a linha do tempo — nenhuma
+ * requisição a mais —, invertendo a ordem: a lista é decrescente e o eixo X é
+ * cronológico crescente. Função pura para que o spec asserte os pontos sem
+ * precisar medir o SVG renderizado.
+ *
+ * Devolve `null` quando há menos de duas sessões com dor informada: uma medição
+ * isolada não desenha tendência nenhuma.
+ */
+export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | null {
+  const sessoes = [...itens].reverse();
+  const comDor = sessoes.filter(item => item.dorAntes !== null || item.dorDepois !== null);
+  if (comDor.length < GRAFICO_MIN_SESSOES_COM_DOR) return null;
+
+  const area: GraficoDorArea = {
+    esquerda: GRAFICO_MARGEM.esquerda,
+    direita: GRAFICO_LARGURA - GRAFICO_MARGEM.direita,
+    topo: GRAFICO_MARGEM.topo,
+    base: GRAFICO_ALTURA - GRAFICO_MARGEM.base
+  };
+
+  // Duas casas bastam na escala do `viewBox` e evitam `26,64.20000000000002`
+  // no atributo `points`.
+  const arredondar = (valor: number): number => Math.round(valor * 100) / 100;
+
+  const posicaoX = (indice: number): number =>
+    arredondar(area.esquerda + ((area.direita - area.esquerda) * indice) / (sessoes.length - 1));
+  // O `clamp` é defensivo: o backend limita a dor a 0–10, e um valor fora da
+  // escala desenharia o ponto por cima dos rótulos em vez de falhar visivelmente.
+  const posicaoY = (valor: number): number => {
+    const escalado = Math.min(Math.max(valor, 0), DOR_MAXIMA);
+    return arredondar(area.base - (escalado / DOR_MAXIMA) * (area.base - area.topo));
+  };
+
+  const denso = sessoes.length > GRAFICO_MAX_MARCADORES;
+
+  const series: GraficoDorSerie[] = SERIES_DOR.map(definicao => {
+    const pontos: GraficoDorPonto[] = [];
+    const trechos: GraficoDorPonto[][] = [];
+    let trecho: GraficoDorPonto[] = [];
+
+    sessoes.forEach((item, indice) => {
+      const valor = definicao.valor(item);
+      if (valor === null) {
+        if (trecho.length > 0) trechos.push(trecho);
+        trecho = [];
+        return;
+      }
+
+      const ponto: GraficoDorPonto = {
+        x: posicaoX(indice),
+        y: posicaoY(valor),
+        valor,
+        data: formatarData(item.dataHora).completa
+      };
+      pontos.push(ponto);
+      trecho.push(ponto);
+    });
+    if (trecho.length > 0) trechos.push(trecho);
+
+    const isolados = trechos.filter(atual => atual.length === 1).map(atual => atual[0]);
+
+    return {
+      chave: definicao.chave,
+      rotulo: definicao.rotulo,
+      pontos,
+      linhas: trechos
+        .filter(atual => atual.length > 1)
+        .map(atual => atual.map(ponto => `${ponto.x},${ponto.y}`).join(' ')),
+      marcadores: denso ? isolados : pontos
+    };
+  });
+
+  const descricoes = series.map(descreverSerie).filter((texto): texto is string => texto !== null);
+  const ariaLabel = [
+    `Gráfico da evolução da dor ao longo de ${sessoes.length} sessões, ` +
+      `de ${formatarData(sessoes[0].dataHora).completa} ` +
+      `a ${formatarData(sessoes[sessoes.length - 1].dataHora).completa}`,
+    ...descricoes
+  ].join('. ') + '.';
+
+  return {
+    viewBox: `0 0 ${GRAFICO_LARGURA} ${GRAFICO_ALTURA}`,
+    area,
+    series,
+    marcasX: indicesDasMarcasX(sessoes.length).map(indice => ({
+      x: posicaoX(indice),
+      rotulo: formatarData(sessoes[indice].dataHora).curta,
+      ancora: indice === 0 ? 'start' : indice === sessoes.length - 1 ? 'end' : 'middle'
+    })),
+    marcasY: GRAFICO_MARCAS_Y.map(valor => ({ y: posicaoY(valor), rotulo: `${valor}` })),
+    ariaLabel
+  };
+}
+
 @Component({
   selector: 'app-paciente-evolucao-list',
   imports: [NgIf, NgFor, DatePipe, RouterLink, BreadcrumbComponent],
@@ -66,6 +268,8 @@ export class PacienteEvolucaoListComponent implements OnInit {
    * gráfico de dor (#206) e para os filtros de período/tipo (#207).
    */
   itens: EvolucaoTimelineItem[] = [];
+  /** Derivado de `itens`, sem requisição própria. `null` esconde o gráfico. */
+  grafico: GraficoDor | null = null;
   loading = false;
   erro: string | null = null;
 
@@ -123,6 +327,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
       .subscribe({
         next: ({ sessoes, evolucoes }) => {
           this.itens = this.montarTimeline(sessoes, evolucoes);
+          this.grafico = montarGraficoDor(this.itens);
           this.loading = false;
           this.cdr.markForCheck();
         },

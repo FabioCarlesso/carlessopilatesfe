@@ -3,6 +3,111 @@
   color: var(--text-secondary);
 }
 
+.grafico {
+  /* `figure` vem com margem lateral do UA. */
+  margin: 0 0 var(--sp-5);
+  /* Acompanha o teto do desenho (480px + o padding dos dois lados): num card
+     de largura total o gráfico ficaria encostado à esquerda com um vazio à
+     direita do tamanho dele mesmo. */
+  max-width: calc(480px + 2 * var(--sp-4));
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.grafico-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+}
+
+/* `width: 100%` + `viewBox`: o desenho encolhe junto com a coluna e nunca
+   empurra scroll horizontal. O teto de 480px é a largura de projeto — o texto
+   dentro do SVG está em unidades do `viewBox` e cresceria junto com o desenho. */
+.grafico-svg {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+}
+
+.grafico-grade line {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.grafico-eixo line {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+/* Em unidades do `viewBox`, não em pixels de tela: em 375px o desenho encolhe
+   para ~0,6 e estes 13 rendem ~8px. Subir mais engordaria o rótulo no desktop,
+   onde o SVG chega ao tamanho natural. */
+.grafico-rotulo-y,
+.grafico-rotulo-x {
+  fill: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+/* Cor por série num custom property: o mesmo token pinta o `stroke` do SVG e a
+   borda do quadradinho HTML da legenda, sem repetir a lista de cores.
+   Neutras de propósito, e não `--c-success`/`--c-danger`: a série "depois" não
+   é necessariamente a boa notícia. */
+.grafico-serie-antes {
+  --serie-cor: var(--c-warning-text);
+}
+
+.grafico-serie-depois {
+  --serie-cor: var(--text-brand);
+}
+
+.grafico-linha {
+  fill: none;
+  stroke: var(--serie-cor);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Tracejado além da cor: as duas séries continuam distinguíveis em impressão
+   preto e branco e para quem não separa âmbar de azul. */
+.grafico-serie-antes .grafico-linha {
+  stroke-dasharray: 6 4;
+}
+
+.grafico-ponto {
+  fill: var(--serie-cor);
+  /* Contorno na cor do card para separar pontos sobrepostos das duas séries. */
+  stroke: var(--bg-elev);
+  stroke-width: 1;
+}
+
+.grafico-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.grafico-legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grafico-legenda-marca {
+  width: 18px;
+  border-top: 3px solid var(--serie-cor);
+}
+
+.grafico-serie-antes .grafico-legenda-marca {
+  border-top-style: dashed;
+}
+
 .timeline {
   display: flex;
   flex-direction: column;
