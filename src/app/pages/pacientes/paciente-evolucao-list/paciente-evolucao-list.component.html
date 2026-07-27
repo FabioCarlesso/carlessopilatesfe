@@ -35,10 +35,11 @@
         <span class="evolucao-data">{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
         <span *ngIf="item.tipo" class="evolucao-tipo">{{ item.tipo }}</span>
         <span *ngIf="item.nomeProfissional" class="evolucao-profissional">{{ item.nomeProfissional }}</span>
+        <!-- Sem classe para `estavel`: a dor sem variação fica na cor neutra do
+             `.evolucao-dor`, só melhora e piora ganham cor própria. -->
         <span *ngIf="item.descricaoDor" class="evolucao-dor" role="img" [attr.aria-label]="item.descricaoDor"
           [class.dor-melhora]="item.tendenciaDor === 'melhora'"
-          [class.dor-piora]="item.tendenciaDor === 'piora'"
-          [class.dor-estavel]="item.tendenciaDor === 'estavel'">
+          [class.dor-piora]="item.tendenciaDor === 'piora'">
           <span class="dor-rotulo">Dor</span>
           <span>{{ item.dorAntes ?? '—' }}</span>
           <span aria-hidden="true">→</span>
