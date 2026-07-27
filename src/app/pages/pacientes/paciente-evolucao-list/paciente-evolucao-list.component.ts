@@ -108,8 +108,14 @@ const GRAFICO_MARGEM = { topo: 12, direita: 14, base: 34, esquerda: 26 };
 /** Escala da dor no formulário de evolução: o eixo Y é fixo, não normalizado. */
 const DOR_MAXIMA = 10;
 const GRAFICO_MARCAS_Y = [0, 5, DOR_MAXIMA];
-/** Abaixo disso não há tendência para mostrar, só um ponto solto. */
-const GRAFICO_MIN_SESSOES_COM_DOR = 2;
+/**
+ * Pontos que uma série precisa para desenhar tendência — que é o que o gráfico
+ * se propõe a mostrar. O critério é por série, e não o total de sessões com dor
+ * informada: duas medições em séries diferentes (uma sessão só com `dorAntes`,
+ * outra só com `dorDepois`) não se ligam e renderizariam eixos e legenda em
+ * volta de dois pontos soltos, sem linha nenhuma.
+ */
+const GRAFICO_MIN_PONTOS_SERIE = 2;
 /** Datas escritas no eixo X; as demais sessões entram sem rótulo. */
 const GRAFICO_MAX_MARCAS_X = 5;
 /**
@@ -164,13 +170,14 @@ function descreverSerie(serie: GraficoDorSerie): string | null {
  * cronológico crescente. Função pura para que o spec asserte os pontos sem
  * precisar medir o SVG renderizado.
  *
- * Devolve `null` quando há menos de duas sessões com dor informada: uma medição
+ * Devolve `null` enquanto nenhuma série chega a dois pontos: uma medição
  * isolada não desenha tendência nenhuma.
  */
 export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | null {
   const sessoes = [...itens].reverse();
-  const comDor = sessoes.filter(item => item.dorAntes !== null || item.dorDepois !== null);
-  if (comDor.length < GRAFICO_MIN_SESSOES_COM_DOR) return null;
+  // Também é a guarda da divisão em `posicaoX`: com menos de duas posições no
+  // eixo X nenhuma série teria como chegar a dois pontos de qualquer forma.
+  if (sessoes.length < GRAFICO_MIN_PONTOS_SERIE) return null;
 
   const area: GraficoDorArea = {
     esquerda: GRAFICO_MARGEM.esquerda,
@@ -194,7 +201,7 @@ export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | nu
 
   const denso = sessoes.length > GRAFICO_MAX_MARCADORES;
 
-  const series: GraficoDorSerie[] = SERIES_DOR.map(definicao => {
+  const todasAsSeries: GraficoDorSerie[] = SERIES_DOR.map(definicao => {
     const pontos: GraficoDorPonto[] = [];
     const trechos: GraficoDorPonto[][] = [];
     let trecho: GraficoDorPonto[] = [];
@@ -230,6 +237,12 @@ export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | nu
       marcadores: denso ? isolados : pontos
     };
   });
+
+  // Série sem nenhum ponto não entra: a legenda anunciaria uma linha que não
+  // existe, contradizendo o `aria-label`, que já a omite. Acontece de verdade
+  // quando só a dor inicial é registrada.
+  const series = todasAsSeries.filter(serie => serie.pontos.length > 0);
+  if (!series.some(serie => serie.pontos.length >= GRAFICO_MIN_PONTOS_SERIE)) return null;
 
   const descricoes = series.map(descreverSerie).filter((texto): texto is string => texto !== null);
   const ariaLabel = [

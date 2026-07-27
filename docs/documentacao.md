@@ -688,7 +688,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Campos vazios não são renderizados; estado vazio e alerta de erro derivado de `extrairMensagemErro`, com mensagem neutra quando o `forkJoin` falha (a requisição que falhou pode ter sido a de sessões)
 - Gráfico da evolução da dor acima da linha do tempo, em SVG inline montado pela função pura `montarGraficoDor(itens)` — deriva da coleção já carregada, sem requisição própria e sem biblioteca de gráficos
 - Eixo Y fixo em 0–10 (escala do formulário de evolução) e eixo X com as sessões em ordem cronológica crescente, inversa à da lista; no máximo cinco datas escritas, sempre a primeira e a última
-- Sessão com dor `null` quebra a série em vez de virar ponto em `0`; o gráfico é omitido quando menos de duas sessões têm dor informada
+- Sessão com dor `null` quebra a série em vez de virar ponto em `0`; o gráfico é omitido enquanto nenhuma série chega a dois pontos, e séries sem nenhum ponto não são desenhadas nem entram na legenda
 - `role="img"` com `aria-label` textual (sessões, período e a primeira e a última medição de cada série); grade, eixos e rótulos internos em `aria-hidden`
 - Séries **Dor antes** e **Dor depois** distinguidas por cor de token (`--c-warning-text`/`--text-brand`) e por tracejado, nomeadas na legenda
 - Responsivo por `viewBox` + `preserveAspectRatio` (`width: 100%`, `max-width: 480px`), sem gerar scroll horizontal

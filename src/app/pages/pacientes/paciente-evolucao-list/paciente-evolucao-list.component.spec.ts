@@ -415,6 +415,36 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
   });
 
+  // Duas medições em séries diferentes não se ligam: sem esta guarda o gráfico
+  // renderizava eixos e legenda em volta de dois pontos soltos, sem linha.
+  it('should hide the chart when no series reaches two points', async () => {
+    await setup([sessaoAntiga, sessaoRecente], [
+      evolucao({ id: 100, sessaoId: 1, dorAntes: 7, dorDepois: null }),
+      evolucao({ id: 200, sessaoId: 2, dorAntes: null, dorDepois: 2 })
+    ]);
+
+    expect(component.grafico).toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+    // As duas medições continuam legíveis nos cards da linha do tempo.
+    expect(fixture.nativeElement.querySelectorAll('.evolucao-dor').length).toBe(2);
+  });
+
+  // Acontece de verdade quando a fisioterapeuta só registra a dor inicial.
+  it('should drop a series with no point from the chart and the legend', async () => {
+    await setup([sessaoAntiga, sessaoRecente], [
+      evolucao({ id: 100, sessaoId: 1, dorAntes: 7, dorDepois: null }),
+      evolucao({ id: 200, sessaoId: 2, dorAntes: 4, dorDepois: null })
+    ]);
+
+    const svg: SVGElement = fixture.nativeElement.querySelector('.grafico-svg');
+
+    expect(component.grafico!.series.map(serie => serie.chave)).toEqual(['antes']);
+    expect(fixture.nativeElement.querySelectorAll('.grafico-legenda-item').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.grafico-serie-depois')).toBeNull();
+    // A legenda e o rótulo acessível passam a contar a mesma história.
+    expect(svg.getAttribute('aria-label')).not.toContain('Dor depois');
+  });
+
   // A lista é decrescente e o eixo X é cronológico crescente: as duas vistas
   // saem da mesma coleção, então a inversão é o ponto a travar.
   it('should plot the points from the oldest session to the newest', async () => {
