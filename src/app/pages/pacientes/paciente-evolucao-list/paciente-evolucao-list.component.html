@@ -18,8 +18,73 @@
 <div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
 <div *ngIf="loading" class="loading">Carregando...</div>
 
-<div *ngIf="!loading && itens.length === 0 && !erro" class="empty-state">
+<!-- Recorte client-side sobre a coleção já carregada: nenhuma requisição sai
+     daqui. Some quando não há o que recortar.
+     O disclosure só existe no mobile (issue #163): três campos empilhados
+     ocupam meia tela em 375px e empurrariam gráfico e linha do tempo para
+     fora da primeira dobra. O botão e o painel compartilham o mesmo `*ngIf`,
+     então o `aria-controls` sempre resolve. -->
+<button *ngIf="itensCarregados.length > 0" type="button" class="filtros-toggle"
+  (click)="alternarFiltros()" [attr.aria-expanded]="filtrosAbertos" aria-controls="filtros-evolucoes">
+  <span>Filtros</span>
+  <span *ngIf="filtrosAtivos() > 0" class="filtros-badge"
+    [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  <span class="filtros-caret" aria-hidden="true">▾</span>
+</button>
+
+<form *ngIf="itensCarregados.length > 0" id="filtros-evolucoes" class="filtros"
+  [class.filtros-recolhidos]="!filtrosAbertos" (ngSubmit)="aplicarFiltros()">
+  <div class="filtro-campo">
+    <label for="filtroDataInicial">Data inicial</label>
+    <input id="filtroDataInicial" type="date" class="form-control" name="dataInicial"
+      [(ngModel)]="filtro.dataInicial" (ngModelChange)="aplicarFiltros()"
+      [class.is-invalid]="periodoInvalido"
+      [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
+  </div>
+
+  <div class="filtro-campo">
+    <label for="filtroDataFinal">Data final</label>
+    <input id="filtroDataFinal" type="date" class="form-control" name="dataFinal"
+      [(ngModel)]="filtro.dataFinal" (ngModelChange)="aplicarFiltros()"
+      [class.is-invalid]="periodoInvalido"
+      [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
+  </div>
+
+  <div class="filtro-campo">
+    <label for="filtroTipo">Tipo de sessão</label>
+    <select id="filtroTipo" class="form-control" name="tipo"
+      [(ngModel)]="filtro.tipo" (ngModelChange)="aplicarFiltros()">
+      <option value="todos">Todos</option>
+      <option *ngFor="let opcao of opcoesTipo" [value]="opcao.valor">{{ opcao.rotulo }}</option>
+    </select>
+  </div>
+
+  <div class="filtro-acoes">
+    <button type="button" class="btn btn-outline" [disabled]="!temFiltroAtivo"
+      (click)="limparFiltros()">Limpar filtros</button>
+  </div>
+
+  <p *ngIf="periodoInvalido" id="filtroPeriodoErro" class="invalid-feedback filtro-erro" role="alert">
+    A data final não pode ser anterior à data inicial.
+  </p>
+</form>
+
+<!-- Região viva permanente, e não um `role="status"` no estado vazio: o leitor
+     de tela anuncia a mudança de texto de uma região que já está no DOM de
+     forma bem mais confiável do que a inserção de um elemento novo. Fica vazia
+     sem filtro ativo — e mudar para string vazia não anuncia nada. -->
+<p *ngIf="itensCarregados.length > 0" class="filtro-resumo" role="status">{{ resumoFiltro }}</p>
+
+<div *ngIf="!loading && itensCarregados.length === 0 && !erro" class="empty-state">
   Nenhuma evolução registrada.
+</div>
+
+<!-- Recorte sem resultados é um estado diferente de paciente sem evolução: aqui
+     a saída é limpar o filtro, não registrar uma evolução (issue #146). -->
+<div *ngIf="!loading && !erro && itensCarregados.length > 0 && itens.length === 0"
+  class="empty-state empty-state-filtrado">
+  <p>Nenhuma evolução para os filtros aplicados.</p>
+  <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
 </div>
 
 <!-- Derivado da mesma coleção da linha do tempo: nenhuma requisição a mais.

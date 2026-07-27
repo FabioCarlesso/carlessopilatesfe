@@ -1,12 +1,13 @@
 import { DatePipe, NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { EvolucaoSessaoResponseDTO } from '../../../core/models/evolucao-sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
-import { SessaoResponseDTO, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
+import { SessaoResponseDTO, SessaoTipo, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
@@ -32,6 +33,11 @@ export interface EvolucaoTimelineItem {
   chave: string;
   sessaoId: number;
   dataHora: string;
+  /**
+   * Tipo cru da sessão, para o filtro comparar contra o `value` do select em vez
+   * do rótulo exibido. `null` na evolução cuja sessão não veio na listagem.
+   */
+  tipoSessao: SessaoTipo | null;
   tipo: string | null;
   nomeProfissional: string | null;
   evolucao: EvolucaoSessaoResponseDTO | null;
@@ -266,9 +272,65 @@ export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | nu
   };
 }
 
+/** Valor do select de tipo: os tipos de sessão mais o coringa. */
+export type FiltroTipoSessao = SessaoTipo | 'todos';
+
+export interface FiltroEvolucao {
+  /** `yyyy-MM-dd` do `<input type="date">`; vazio quando o limite não foi informado. */
+  dataInicial: string;
+  dataFinal: string;
+  tipo: FiltroTipoSessao;
+}
+
+export const FILTRO_EVOLUCAO_PADRAO: FiltroEvolucao = {
+  dataInicial: '',
+  dataFinal: '',
+  tipo: 'todos'
+};
+
+/** Data final anterior à inicial: recorte impossível, não um recorte vazio. */
+export function periodoInvertido(filtro: FiltroEvolucao): boolean {
+  return !!filtro.dataInicial && !!filtro.dataFinal && filtro.dataFinal < filtro.dataInicial;
+}
+
+/**
+ * Recorta a coleção carregada num único ponto: o resultado alimenta ao mesmo
+ * tempo a linha do tempo e `montarGraficoDor`, de modo que os pontos plotados
+ * são sempre exatamente as sessões listadas. Client-side de propósito — a carga
+ * já trouxe todo o histórico do paciente e mudar o filtro não pede requisição.
+ */
+export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvolucao): EvolucaoTimelineItem[] {
+  // Período invertido não recorta nada; quem avisa é a mensagem de erro do
+  // formulário. O tipo continua valendo: é um filtro independente, e derrubá-lo
+  // junto surpreenderia quem só errou a data.
+  const invertido = periodoInvertido(filtro);
+  const inicio = invertido ? '' : filtro.dataInicial;
+  const fim = invertido ? '' : filtro.dataFinal;
+
+  // Cópia, e não a própria fonte: sem filtro ativo devolver `itens` faria
+  // `this.itens === this.itensCarregados`, e um `sort()`/`splice()` futuro no
+  // recorte corromperia em silêncio a coleção que "limpar filtros" restaura.
+  if (!inicio && !fim && filtro.tipo === 'todos') return [...itens];
+
+  return itens.filter(item => {
+    // Compara o prefixo ISO (`yyyy-MM-dd`) de `dataHora` como string, no mesmo
+    // formato em que o `<input type="date">` entrega os limites: a ordem
+    // lexicográfica coincide com a cronológica, o dia inteiro entra nas duas
+    // pontas e nenhum `Date` é construído — o que reintroduziria o
+    // deslocamento de fuso que `formatarData` já evita.
+    const dia = item.dataHora.slice(0, 10);
+    if (inicio && dia < inicio) return false;
+    if (fim && dia > fim) return false;
+    // A evolução cuja sessão não veio na listagem tem `tipoSessao` nulo e sai
+    // de qualquer recorte por tipo: não há tipo a conhecer, e incluí-la
+    // contradiria o "apenas sessões do tipo escolhido". Ela volta em "todos".
+    return filtro.tipo === 'todos' || item.tipoSessao === filtro.tipo;
+  });
+}
+
 @Component({
   selector: 'app-paciente-evolucao-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink, BreadcrumbComponent],
+  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-evolucao-list.component.html',
   styleUrl: './paciente-evolucao-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -276,18 +338,29 @@ export function montarGraficoDor(itens: EvolucaoTimelineItem[]): GraficoDor | nu
 export class PacienteEvolucaoListComponent implements OnInit {
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
+  /** Fonte carregada e já ordenada, preservada para o "limpar filtros" voltar a ela. */
+  itensCarregados: EvolucaoTimelineItem[] = [];
   /**
-   * Coleção única já ordenada e derivada, ponto de consumo previsto para o
-   * gráfico de dor (#206) e para os filtros de período/tipo (#207).
+   * Recorte visível de `itensCarregados`. Coleção única consumida ao mesmo
+   * tempo pela linha do tempo e pelo gráfico de dor (#206), para que os pontos
+   * plotados nunca divirjam das sessões listadas.
    */
   itens: EvolucaoTimelineItem[] = [];
   /** Derivado de `itens`, sem requisição própria. `null` esconde o gráfico. */
   grafico: GraficoDor | null = null;
+  filtro: FiltroEvolucao = { ...FILTRO_EVOLUCAO_PADRAO };
+  /** Data final anterior à inicial: o recorte não é aplicado enquanto durar. */
+  periodoInvalido = false;
+  /** Disclosure dos filtros no mobile (issue #163); no desktop o painel é fixo. */
+  filtrosAbertos = false;
   loading = false;
   erro: string | null = null;
 
   readonly tipoLabel = SESSAO_TIPO_LABEL;
   readonly tendenciaLabel = TENDENCIA_DOR_LABEL;
+  /** Opções do select vindas do mapa de rótulos, sem redeclarar os tipos aqui. */
+  readonly opcoesTipo = (Object.keys(SESSAO_TIPO_LABEL) as SessaoTipo[])
+    .map(valor => ({ valor, rotulo: SESSAO_TIPO_LABEL[valor] }));
 
   constructor(
     private evolucaoSessaoService: EvolucaoSessaoService,
@@ -339,8 +412,8 @@ export class PacienteEvolucaoListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ sessoes, evolucoes }) => {
-          this.itens = this.montarTimeline(sessoes, evolucoes);
-          this.grafico = montarGraficoDor(this.itens);
+          this.itensCarregados = this.montarTimeline(sessoes, evolucoes);
+          this.aplicarFiltros();
           this.loading = false;
           this.cdr.markForCheck();
         },
@@ -379,6 +452,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
       itens.push(this.montarItem({
         sessaoId: sessao.id,
         dataHora: sessao.dataHora,
+        tipoSessao: sessao.tipo,
         tipo: this.tipoLabel[sessao.tipo] ?? sessao.tipo,
         nomeProfissional: sessao.nomeProfissional,
         evolucao
@@ -389,6 +463,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
       itens.push(this.montarItem({
         sessaoId: evolucao.sessaoId,
         dataHora: evolucao.dataHoraRegistro,
+        tipoSessao: null,
         tipo: null,
         nomeProfissional: null,
         evolucao
@@ -404,6 +479,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
   private montarItem(dados: {
     sessaoId: number;
     dataHora: string;
+    tipoSessao: SessaoTipo | null;
     tipo: string | null;
     nomeProfissional: string | null;
     evolucao: EvolucaoSessaoResponseDTO | null;
@@ -426,6 +502,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
       chave: `${dados.sessaoId}`,
       sessaoId: dados.sessaoId,
       dataHora: dados.dataHora,
+      tipoSessao: dados.tipoSessao,
       tipo: dados.tipo,
       nomeProfissional: dados.nomeProfissional,
       evolucao,
@@ -461,6 +538,53 @@ export class PacienteEvolucaoListComponent implements OnInit {
     const depois = dorDepois ?? 'não informada';
     const sufixo = tendencia === null ? '' : `, ${TENDENCIA_DOR_LABEL[tendencia]}`;
     return `Dor antes ${antes}, depois ${depois}${sufixo}`;
+  }
+
+  /**
+   * Único ponto que recalcula o recorte: a lista e o gráfico saem da mesma
+   * chamada, então não há como um refletir um filtro que o outro ignorou. Com
+   * `OnPush` o `markForCheck` é obrigatório — o `ngModelChange` do select já
+   * marca a view suja, mas o "limpar filtros" chamado por código não marcaria.
+   */
+  aplicarFiltros(): void {
+    this.periodoInvalido = periodoInvertido(this.filtro);
+    this.itens = filtrarItens(this.itensCarregados, this.filtro);
+    this.grafico = montarGraficoDor(this.itens);
+    this.cdr.markForCheck();
+  }
+
+  limparFiltros(): void {
+    this.filtro = { ...FILTRO_EVOLUCAO_PADRAO };
+    this.aplicarFiltros();
+  }
+
+  alternarFiltros(): void {
+    this.filtrosAbertos = !this.filtrosAbertos;
+  }
+
+  /** Contagem para o badge do disclosure, no padrão de `paciente-list`. */
+  filtrosAtivos(): number {
+    let total = 0;
+    if (this.filtro.dataInicial !== '') total++;
+    if (this.filtro.dataFinal !== '') total++;
+    if (this.filtro.tipo !== 'todos') total++;
+    return total;
+  }
+
+  get temFiltroAtivo(): boolean {
+    return this.filtrosAtivos() > 0;
+  }
+
+  /**
+   * Texto da região viva que anuncia o recorte. Sem ele a troca de filtro é
+   * silenciosa para o leitor de tela: a lista muda sem nenhum retorno, e mesmo
+   * o estado vazio passaria despercebido. Vazio quando não há filtro ativo —
+   * uma região viva que muda para string vazia não anuncia nada.
+   */
+  get resumoFiltro(): string {
+    if (!this.temFiltroAtivo) return '';
+    if (this.itens.length === 0) return 'Nenhuma sessão no recorte.';
+    return `${this.itens.length} de ${this.itensCarregados.length} sessões no recorte.`;
   }
 
   alternar(item: EvolucaoTimelineItem): void {
