@@ -10,10 +10,17 @@ import { SessaoResponseDTO, SESSAO_TIPO_LABEL } from '../../../core/models/sessa
 import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 
 /** Tendência da dor entre o início e o fim da sessão. */
 export type TendenciaDor = 'melhora' | 'piora' | 'estavel';
+
+export const TENDENCIA_DOR_LABEL: Record<TendenciaDor, string> = {
+  melhora: 'melhora',
+  piora: 'piora',
+  estavel: 'sem variação'
+};
 
 /**
  * Uma entrada da linha do tempo: a sessão já cruzada com a evolução registrada
@@ -28,7 +35,15 @@ export interface EvolucaoTimelineItem {
   tipo: string | null;
   nomeProfissional: string | null;
   evolucao: EvolucaoSessaoResponseDTO | null;
+  /**
+   * Normalizados para `null` no componente: a guarda do template não precisa
+   * distinguir `null` de um campo ausente no corpo da resposta.
+   */
+  dorAntes: number | null;
+  dorDepois: number | null;
   tendenciaDor: TendenciaDor | null;
+  /** Rótulo acessível do par de dor, já que o `→` do template é decorativo. */
+  descricaoDor: string | null;
   /** Há observações do fisioterapeuta ou campos atrás do expandir/recolher. */
   temCorpo: boolean;
   /** Há campos atrás do expandir/recolher. */
@@ -55,6 +70,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
   erro: string | null = null;
 
   readonly tipoLabel = SESSAO_TIPO_LABEL;
+  readonly tendenciaLabel = TENDENCIA_DOR_LABEL;
 
   constructor(
     private evolucaoSessaoService: EvolucaoSessaoService,
@@ -88,8 +104,8 @@ export class PacienteEvolucaoListComponent implements OnInit {
           this.carregarEvolucoes();
           this.cdr.markForCheck();
         },
-        error: () => {
-          this.erro = 'Erro ao carregar dados do paciente.';
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Erro ao carregar dados do paciente.');
           this.loading = false;
           this.cdr.markForCheck();
         }
@@ -110,8 +126,11 @@ export class PacienteEvolucaoListComponent implements OnInit {
           this.loading = false;
           this.cdr.markForCheck();
         },
-        error: () => {
-          this.erro = 'Erro ao carregar evoluções.';
+        // O `forkJoin` colapsa as duas falhas num ramo só, então a mensagem não
+        // pode culpar as evoluções: quem falhou pode ter sido a listagem de
+        // sessões.
+        error: err => {
+          this.erro = extrairMensagemErro(err, 'Não foi possível carregar o histórico de evoluções.');
           this.loading = false;
           this.cdr.markForCheck();
         }
@@ -181,6 +200,10 @@ export class PacienteEvolucaoListComponent implements OnInit {
       evolucao.orientacoes
     ].some(campo => !!campo);
 
+    const dorAntes = evolucao?.dorAntes ?? null;
+    const dorDepois = evolucao?.dorDepois ?? null;
+    const tendenciaDor = this.calcularTendenciaDor(dorAntes, dorDepois);
+
     return {
       chave: `${dados.sessaoId}`,
       sessaoId: dados.sessaoId,
@@ -188,18 +211,38 @@ export class PacienteEvolucaoListComponent implements OnInit {
       tipo: dados.tipo,
       nomeProfissional: dados.nomeProfissional,
       evolucao,
-      tendenciaDor: this.calcularTendenciaDor(evolucao),
+      dorAntes,
+      dorDepois,
+      tendenciaDor,
+      descricaoDor: this.descreverDor(dorAntes, dorDepois, tendenciaDor),
       temCorpo: temDetalhes || !!evolucao?.observacoesFisioterapeuta,
       temDetalhes,
       expandido: false
     };
   }
 
-  private calcularTendenciaDor(evolucao: EvolucaoSessaoResponseDTO | null): TendenciaDor | null {
-    if (evolucao === null || evolucao.dorAntes === null || evolucao.dorDepois === null) return null;
-    if (evolucao.dorDepois < evolucao.dorAntes) return 'melhora';
-    if (evolucao.dorDepois > evolucao.dorAntes) return 'piora';
+  private calcularTendenciaDor(dorAntes: number | null, dorDepois: number | null): TendenciaDor | null {
+    if (dorAntes === null || dorDepois === null) return null;
+    if (dorDepois < dorAntes) return 'melhora';
+    if (dorDepois > dorAntes) return 'piora';
     return 'estavel';
+  }
+
+  /**
+   * O `→` do cabeçalho é `aria-hidden`, então sem este rótulo o leitor de tela
+   * anunciaria apenas "Dor 7 3 melhora".
+   */
+  private descreverDor(
+    dorAntes: number | null,
+    dorDepois: number | null,
+    tendencia: TendenciaDor | null
+  ): string | null {
+    if (dorAntes === null && dorDepois === null) return null;
+
+    const antes = dorAntes ?? 'não informada';
+    const depois = dorDepois ?? 'não informada';
+    const sufixo = tendencia === null ? '' : `, ${TENDENCIA_DOR_LABEL[tendencia]}`;
+    return `Dor antes ${antes}, depois ${depois}${sufixo}`;
   }
 
   alternar(item: EvolucaoTimelineItem): void {

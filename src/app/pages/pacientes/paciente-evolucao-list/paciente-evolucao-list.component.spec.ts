@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -156,6 +157,49 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(component.itens[0].tendenciaDor).toBeNull();
   });
 
+  it('should fall back to an em dash for the pain value that is missing', async () => {
+    await setup([sessaoAntiga], [evolucao({ id: 100, sessaoId: 1, dorAntes: 4, dorDepois: null })]);
+
+    // Angular remove os nós de texto só-espaço entre os `<span>`; a separação
+    // visual vem do `gap` do flex, então o texto sai concatenado.
+    const dor: HTMLElement = fixture.nativeElement.querySelector('.evolucao-dor');
+    expect(dor.textContent?.trim()).toBe('Dor4→—');
+    expect(component.itens[0].dorDepois).toBeNull();
+  });
+
+  // A API declara os dois campos como não-opcionais, mas um corpo sem eles não
+  // pode virar um par de dor em branco no cabeçalho.
+  it('should ignore a pain pair whose fields are absent from the response body', async () => {
+    const semDor = evolucao({ id: 100, sessaoId: 1 }) as unknown as Record<string, unknown>;
+    delete semDor['dorAntes'];
+    delete semDor['dorDepois'];
+    await setup([sessaoAntiga], [semDor as unknown as EvolucaoSessaoResponseDTO]);
+
+    expect(component.itens[0].dorAntes).toBeNull();
+    expect(component.itens[0].descricaoDor).toBeNull();
+    expect(fixture.nativeElement.querySelector('.evolucao-dor')).toBeNull();
+  });
+
+  // O `→` é decorativo (`aria-hidden`): sem rótulo o leitor de tela anunciaria
+  // apenas "Dor 7 3 melhora".
+  it('should expose an accessible label for the pain pair', async () => {
+    await setup([sessaoAntiga], [evolucaoAntiga]);
+
+    const dor: HTMLElement = fixture.nativeElement.querySelector('.evolucao-dor');
+    expect(dor.getAttribute('aria-label')).toBe('Dor antes 7, depois 3, melhora');
+    expect(dor.getAttribute('role')).toBe('img');
+  });
+
+  it('should break ties by sessaoId when two entries share the same timestamp', async () => {
+    const mesmaHora = '2026-05-01T08:00';
+    await setup(
+      [sessao({ id: 1, dataHora: mesmaHora }), sessao({ id: 7, dataHora: mesmaHora }), sessao({ id: 4, dataHora: mesmaHora })],
+      [evolucao({ id: 100, sessaoId: 1 }), evolucao({ id: 101, sessaoId: 7 }), evolucao({ id: 102, sessaoId: 4 })]
+    );
+
+    expect(component.itens.map(item => item.sessaoId)).toEqual([7, 4, 1]);
+  });
+
   it('should mark realizada sessions without evolucao', async () => {
     await setup([sessaoAntiga, sessaoRecente], [evolucaoRecente]);
 
@@ -195,29 +239,47 @@ describe('PacienteEvolucaoListComponent', () => {
 
   it('should hide the collapsible fields until the card is expanded', async () => {
     await setup([sessaoAntiga], [evolucaoAntiga]);
+    document.body.appendChild(fixture.nativeElement);
 
-    expect(fixture.nativeElement.textContent).not.toContain('Ponte, dead bug.');
+    try {
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.evolucao-toggle');
+      const painel: HTMLElement = fixture.nativeElement.querySelector('.evolucao-detalhes');
 
-    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.evolucao-toggle');
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      expect(getComputedStyle(painel).display).toBe('none');
 
-    toggle.click();
-    fixture.detectChanges();
+      toggle.click();
+      fixture.detectChanges();
 
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(fixture.nativeElement.textContent).toContain('Ponte, dead bug.');
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(getComputedStyle(painel).display).toBe('grid');
+      expect(painel.textContent).toContain('Ponte, dead bug.');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
-  it('should point aria-controls at the panel it expands', async () => {
+  // O painel fica no DOM mesmo recolhido: um `aria-controls` apontando para um
+  // id inexistente é referência quebrada para o leitor de tela e para o axe.
+  it('should keep aria-controls resolvable while the card is collapsed', async () => {
     await setup([sessaoAntiga], [evolucaoAntiga]);
+    document.body.appendChild(fixture.nativeElement);
 
-    component.alternar(component.itens[0]);
-    fixture.detectChanges();
+    try {
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.evolucao-toggle');
+      const id = toggle.getAttribute('aria-controls');
 
-    const toggle: HTMLButtonElement = fixture.nativeElement.querySelector('.evolucao-toggle');
-    const painel: HTMLElement = fixture.nativeElement.querySelector('.evolucao-detalhes');
-    expect(painel.id).toBe(`evolucao-detalhes-${component.itens[0].chave}`);
-    expect(toggle.getAttribute('aria-controls')).toBe(painel.id);
+      expect(id).toBe(`evolucao-detalhes-${component.itens[0].chave}`);
+      expect(component.itens[0].expandido).toBeFalse();
+      expect(document.getElementById(id!)).not.toBeNull();
+
+      component.alternar(component.itens[0]);
+      fixture.detectChanges();
+
+      expect(document.getElementById(id!)).not.toBeNull();
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should omit the toggle when the evolucao has no collapsible field', async () => {
@@ -229,22 +291,25 @@ describe('PacienteEvolucaoListComponent', () => {
 
   it('should expand and collapse every card at once', async () => {
     await setup();
+    const recolhidos = () => fixture.nativeElement.querySelectorAll('.evolucao-detalhes-recolhido').length;
 
     const [expandirTudo, recolherTudo]: HTMLButtonElement[] =
       Array.from(fixture.nativeElement.querySelectorAll('.timeline-controles button'));
+
+    expect(recolhidos()).toBe(1);
 
     expandirTudo.click();
     fixture.detectChanges();
 
     expect(component.itens.filter(item => item.expandido).length).toBe(1);
     expect(component.itens.find(item => item.sessaoId === 1)?.expandido).toBeTrue();
-    expect(fixture.nativeElement.querySelectorAll('.evolucao-detalhes').length).toBe(1);
+    expect(recolhidos()).toBe(0);
 
     recolherTudo.click();
     fixture.detectChanges();
 
     expect(component.itens.every(item => !item.expandido)).toBeTrue();
-    expect(fixture.nativeElement.querySelectorAll('.evolucao-detalhes').length).toBe(0);
+    expect(recolhidos()).toBe(1);
   });
 
   it('should hide the bulk controls when no card has collapsible fields', async () => {
@@ -330,20 +395,34 @@ describe('PacienteEvolucaoListComponent', () => {
     component.carregar();
     fixture.detectChanges();
 
-    expect(component.erro).toBe('Erro ao carregar evoluções.');
+    expect(component.erro).toBe('Não foi possível carregar o histórico de evoluções.');
     expect(component.loading).toBeFalse();
     expect(fixture.nativeElement.querySelector('.alert-danger')?.textContent?.trim())
-      .toBe('Erro ao carregar evoluções.');
+      .toBe('Não foi possível carregar o histórico de evoluções.');
   });
 
-  it('should set erro when the sessions request fails', async () => {
+  // O `forkJoin` colapsa as duas falhas: a mensagem não pode culpar as evoluções
+  // quando quem falhou foi a listagem de sessões.
+  it('should set the same neutral erro when the sessions request fails', async () => {
     await setup();
     sessaoServiceSpy.listarPorPaciente.and.returnValue(throwError(() => new Error('fail')));
 
     component.carregar();
 
-    expect(component.erro).toBe('Erro ao carregar evoluções.');
+    expect(component.erro).toBe('Não foi possível carregar o histórico de evoluções.');
     expect(component.loading).toBeFalse();
+  });
+
+  it('should surface the backend message when the API explains the failure', async () => {
+    await setup();
+    evolucaoServiceSpy.listarPorPaciente.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 400,
+      error: { message: 'Paciente inativo.' }
+    })));
+
+    component.carregar();
+
+    expect(component.erro).toBe('Paciente inativo.');
   });
 
   it('should set erro without any request when pacienteId is invalid', async () => {

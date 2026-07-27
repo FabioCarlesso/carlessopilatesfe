@@ -35,17 +35,15 @@
         <span class="evolucao-data">{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
         <span *ngIf="item.tipo" class="evolucao-tipo">{{ item.tipo }}</span>
         <span *ngIf="item.nomeProfissional" class="evolucao-profissional">{{ item.nomeProfissional }}</span>
-        <span *ngIf="item.evolucao && (item.evolucao.dorAntes !== null || item.evolucao.dorDepois !== null)"
-          class="evolucao-dor" [class.dor-melhora]="item.tendenciaDor === 'melhora'"
+        <span *ngIf="item.descricaoDor" class="evolucao-dor" role="img" [attr.aria-label]="item.descricaoDor"
+          [class.dor-melhora]="item.tendenciaDor === 'melhora'"
           [class.dor-piora]="item.tendenciaDor === 'piora'"
           [class.dor-estavel]="item.tendenciaDor === 'estavel'">
           <span class="dor-rotulo">Dor</span>
-          <span>{{ item.evolucao.dorAntes !== null ? item.evolucao.dorAntes : '—' }}</span>
+          <span>{{ item.dorAntes ?? '—' }}</span>
           <span aria-hidden="true">→</span>
-          <span>{{ item.evolucao.dorDepois !== null ? item.evolucao.dorDepois : '—' }}</span>
-          <span *ngIf="item.tendenciaDor === 'melhora'" class="dor-tendencia">melhora</span>
-          <span *ngIf="item.tendenciaDor === 'piora'" class="dor-tendencia">piora</span>
-          <span *ngIf="item.tendenciaDor === 'estavel'" class="dor-tendencia">sem variação</span>
+          <span>{{ item.dorDepois ?? '—' }}</span>
+          <span *ngIf="item.tendenciaDor" class="dor-tendencia">{{ tendenciaLabel[item.tendenciaDor] }}</span>
         </span>
         <span *ngIf="!item.evolucao" class="badge badge-pendente">Sem evolução registrada</span>
       </div>
@@ -69,7 +67,10 @@
         {{ item.expandido ? 'Recolher detalhes' : 'Ver detalhes' }}
       </button>
 
-      <div *ngIf="item.temDetalhes && item.expandido" class="detail-grid evolucao-detalhes"
+      <!-- O painel fica sempre no DOM (escondido por classe, como os filtros de
+           `paciente-list`) para que o `aria-controls` do botão sempre resolva. -->
+      <div *ngIf="item.temDetalhes" class="detail-grid evolucao-detalhes"
+        [class.evolucao-detalhes-recolhido]="!item.expandido"
         [id]="'evolucao-detalhes-' + item.chave">
         <div *ngIf="item.evolucao.exerciciosRealizados" class="detail-item">
           <span class="label">Exercícios realizados</span>

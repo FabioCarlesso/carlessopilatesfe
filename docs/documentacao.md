@@ -683,8 +683,9 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Ordena por data/hora da sessão em ordem decrescente, com desempate por `sessaoId`, e expõe a lista derivada num único ponto (`itens`) para reuso pelas fases seguintes
 - Exibe sessões `REALIZADA` sem evolução como **Sem evolução registrada**, com link para registrar; sessões agendadas/canceladas sem evolução ficam fora da lista
 - Cabeçalho com data/hora, tipo, profissional e variação `dorAntes → dorDepois` indicando melhora/piora
-- **Observações do fisioterapeuta** sempre visível (com quebras de linha preservadas); demais campos atrás de expandir/recolher com `aria-expanded`/`aria-controls`, e **Expandir tudo**/**Recolher tudo** no topo
-- Campos vazios não são renderizados; estado vazio e alerta de erro por requisição falha
+- **Observações do fisioterapeuta** sempre visível (com quebras de linha preservadas); demais campos atrás de expandir/recolher com `aria-expanded` e `aria-controls`, e **Expandir tudo**/**Recolher tudo** no topo. O painel permanece no DOM quando recolhido (classe `.evolucao-detalhes-recolhido`) para que o `aria-controls` sempre resolva
+- Par de dor com `aria-label` próprio ("Dor antes 7, depois 3, melhora") e fallback `—` para o valor ausente
+- Campos vazios não são renderizados; estado vazio e alerta de erro derivado de `extrairMensagemErro`, com mensagem neutra quando o `forkJoin` falha (a requisição que falhou pode ter sido a de sessões)
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente

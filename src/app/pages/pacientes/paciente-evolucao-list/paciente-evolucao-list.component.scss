@@ -118,3 +118,10 @@
 .evolucao-detalhes {
   margin-top: var(--sp-3);
 }
+
+/* O painel recolhido continua no DOM para o `aria-controls` do botão resolver.
+   Precisa de `display: none` explícito: o `.detail-grid` global já declara
+   `display: grid`, e o atributo `hidden` do HTML perderia em especificidade. */
+.evolucao-detalhes-recolhido {
+  display: none;
+}
