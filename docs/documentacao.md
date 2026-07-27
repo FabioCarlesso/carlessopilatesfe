@@ -482,11 +482,12 @@ Injetável em toda a aplicação (`providedIn: 'root'`).
 
 | Método | Endpoint HTTP | Descrição |
 |--------|---------------|-----------|
+| `listarPorPaciente(pacienteId)` | `GET /evolucoes-sessao/paciente/{pacienteId}` | Lista todas as evoluções do paciente; devolve lista vazia (não `404`) quando não há registros |
 | `buscarPorSessao(sessaoId)` | `GET /evolucoes-sessao/sessao/{sessaoId}` | Busca evolução vinculada a uma sessão |
 | `criar(dto)` | `POST /evolucoes-sessao` | Cria evolução com `sessaoId` e `dataHoraRegistro` |
 | `atualizar(id, dto)` | `PUT /evolucoes-sessao/{id}` | Atualiza dados da evolução |
 
-O contrato de evolução usa `dataHoraRegistro`, `exerciciosRealizados`, `equipamentosUtilizados`, `cargasMolas`, `dorAntes`, `dorDepois`, `respostaPaciente`, `intercorrencias`, `orientacoes` e `observacoesFisioterapeuta`. `dorAntes` e `dorDepois` aceitam apenas valores de 0 a 10 quando informados.
+O contrato de evolução usa `dataHoraRegistro`, `exerciciosRealizados`, `equipamentosUtilizados`, `cargasMolas`, `dorAntes`, `dorDepois`, `respostaPaciente`, `intercorrencias`, `orientacoes` e `observacoesFisioterapeuta`. `dorAntes` e `dorDepois` aceitam apenas valores de 0 a 10 quando informados. O `EvolucaoSessaoResponseDTO` acrescenta `id`, `sessaoId`, `dataCriacao` e `dataAtualizacao`, e **não** desnormaliza dados da sessão: data/hora, tipo e profissional continuam vindo de `GET /api/sessoes/paciente/{pacienteId}` e são cruzados no frontend por `sessaoId` (é o que o histórico de evoluções faz).
 
 ### `ProfissionalService`
 Arquivo: `src/app/core/services/profissional.service.ts`
@@ -598,6 +599,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/:pacienteId/sessoes/nova` | `PacienteSessaoFormComponent` | Cadastro de sessão |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | `PacienteSessaoFormComponent` | Edição de sessão |
 | `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | `PacienteEvolucaoSessaoComponent` | Cadastro e edição da evolução clínica da sessão |
+| `/pacientes/:pacienteId/evolucoes` | `PacienteEvolucaoListComponent` | Histórico de evoluções do paciente em linha do tempo (somente leitura) |
 | `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
@@ -674,6 +676,16 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Reactive Form alinhado ao DTO do backend, com `dataHoraRegistro` obrigatório
 - Valida `dorAntes` e `dorDepois` entre 0 e 10 quando informados
 - Trata ausência de evolução por `404`, mantendo a tela em modo de cadastro
+
+### `PacienteEvolucaoListComponent`
+- Linha do tempo somente leitura com todas as evoluções do paciente em `/pacientes/:pacienteId/evolucoes` (`ChangeDetectionStrategy.OnPush`)
+- Valida `pacienteId` antes de chamar a API e carrega paciente, sessões e evoluções (`forkJoin` das duas listagens), cruzando-as por `sessaoId`
+- Ordena por data/hora da sessão em ordem decrescente, com desempate por `sessaoId`, e expõe a lista derivada num único ponto (`itens`) para reuso pelas fases seguintes
+- Exibe sessões `REALIZADA` sem evolução como **Sem evolução registrada**, com link para registrar; sessões agendadas/canceladas sem evolução ficam fora da lista
+- Cabeçalho com data/hora, tipo, profissional e variação `dorAntes → dorDepois` indicando melhora/piora
+- **Observações do fisioterapeuta** sempre visível (com quebras de linha preservadas); demais campos atrás de expandir/recolher com `aria-expanded` e `aria-controls`, e **Expandir tudo**/**Recolher tudo** no topo. O painel permanece no DOM quando recolhido (classe `.evolucao-detalhes-recolhido`) para que o `aria-controls` sempre resolva
+- Par de dor com `aria-label` próprio ("Dor antes 7, depois 3, melhora") e fallback `—` para o valor ausente
+- Campos vazios não são renderizados; estado vazio e alerta de erro derivado de `extrairMensagemErro`, com mensagem neutra quando o `forkJoin` falha (a requisição que falhou pode ter sido a de sessões)
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente
@@ -846,6 +858,7 @@ Comando: `npm test`
 | `app/pages/pacientes/paciente-sessao-list/paciente-sessao-list.component.spec.ts` | Carregamento, vazio, ações de status, confirmação e erros |
 | `app/pages/pacientes/paciente-sessao-form/paciente-sessao-form.component.spec.ts` | Criação, edição, validações, vínculo paciente/sessão e erros |
 | `app/pages/pacientes/paciente-evolucao-sessao/paciente-evolucao-sessao.component.spec.ts` | Criação, edição, validações, vínculo paciente/sessão, contrato de API e erros |
+| `app/pages/pacientes/paciente-evolucao-list/paciente-evolucao-list.component.spec.ts` | Ordenação, join por `sessaoId`, tendência de dor, sessão sem evolução, expandir/recolher (clique, teclado e em massa), estado vazio, erros e guards de estilo |
 | `app/pages/pacientes/paciente-plano-tratamento-list/paciente-plano-tratamento-list.component.spec.ts` | Carregamento, vazio, ações de status, confirmação e erros |
 | `app/pages/pacientes/paciente-plano-tratamento-form/paciente-plano-tratamento-form.component.spec.ts` | Criação, edição, validações, vínculo paciente/plano e erros |
 | `app/pages/planos/plano-form/plano-form.component.spec.ts` | Criação de plano, validação de frequência e dias, `ngOnDestroy`, reatividade do `valueChanges` |

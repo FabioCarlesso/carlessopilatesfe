@@ -1,0 +1,128 @@
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.timeline-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Os cards das demais listagens do prontuário usam três tokens que nunca foram
+   definidos em `_tokens.scss` — `--surface`, `--c-primary` e `--radius-lg` —, o
+   que lá deixa o card sem fundo, com a borda de destaque em `currentColor` e com
+   cantos retos. Aqui valem os nomes que existem de fato. */
+.evolucao-card {
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
+  border-left: 4px solid var(--text-brand);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+
+  &.evolucao-card-pendente {
+    border-left-color: var(--border);
+  }
+}
+
+.evolucao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.evolucao-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.evolucao-data {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.evolucao-tipo,
+.evolucao-profissional {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.evolucao-dor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+
+  /* `--c-*-text` porque o valor fica sobre superfície elevada; `--c-success`
+     e `--c-danger` também servem de fundo e não são clareados no tema escuro. */
+  &.dor-melhora {
+    color: var(--c-success-text);
+  }
+
+  &.dor-piora {
+    color: var(--c-danger-text);
+  }
+}
+
+.dor-rotulo {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.dor-tendencia {
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.evolucao-acoes {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.evolucao-body {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+/* As observações do fisioterapeuta são o campo mais lido da evolução e o mais
+   longo: ocupam a linha inteira do grid em vez de uma coluna de 200px. */
+.detail-item-largo {
+  grid-column: 1 / -1;
+}
+
+/* O texto vem da API com quebras de linha (a fisioterapeuta escreve em blocos
+   de queixas e conduta); sem `pre-wrap` o HTML as colapsaria num parágrafo só. */
+.evolucao-texto {
+  white-space: pre-wrap;
+}
+
+.evolucao-toggle {
+  margin-top: var(--sp-3);
+}
+
+.evolucao-detalhes {
+  margin-top: var(--sp-3);
+}
+
+/* O painel recolhido continua no DOM para o `aria-controls` do botão resolver.
+   Precisa de `display: none` explícito: o `.detail-grid` global já declara
+   `display: grid`, e o atributo `hidden` do HTML perderia em especificidade. */
+.evolucao-detalhes-recolhido {
+  display: none;
+}

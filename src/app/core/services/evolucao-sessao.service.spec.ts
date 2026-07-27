@@ -43,6 +43,20 @@ describe('EvolucaoSessaoService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should GET /api/evolucoes-sessao/paciente/:pacienteId', () => {
+    service.listarPorPaciente(10).subscribe(lista => expect(lista).toEqual([mockEvolucao]));
+
+    const req = httpMock.expectOne('/api/evolucoes-sessao/paciente/10');
+    expect(req.request.method).toBe('GET');
+    req.flush([mockEvolucao]);
+  });
+
+  it('should return an empty list when the patient has no evolucoes', () => {
+    service.listarPorPaciente(10).subscribe(lista => expect(lista).toEqual([]));
+
+    httpMock.expectOne('/api/evolucoes-sessao/paciente/10').flush([]);
+  });
+
   it('should GET /api/evolucoes-sessao/sessao/:sessaoId', () => {
     service.buscarPorSessao(5).subscribe(e => expect(e).toEqual(mockEvolucao));
 
