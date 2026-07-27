@@ -790,8 +790,142 @@ describe('PacienteEvolucaoListComponent', () => {
       limpar.click();
       fixture.detectChanges();
 
-      expect(component.itens).toEqual(component.itensCarregados);
+      // Pelos ids, e não `toEqual(itensCarregados)`: o recorte sem filtro é uma
+      // cópia da fonte, e comparar as duas coleções passaria por construção.
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 2, 1]);
       expect(limpar.disabled).toBeTrue();
+    });
+
+    // Devolver a própria fonte faria `itens === itensCarregados`, e um
+    // `sort()`/`splice()` futuro no recorte corromperia a coleção que o
+    // "limpar filtros" restaura.
+    it('should hand back a copy of the source instead of the source array', async () => {
+      await setupTresSessoes();
+
+      expect(component.itens).not.toBe(component.itensCarregados);
+      expect(component.itens.map(item => item.sessaoId))
+        .toEqual(component.itensCarregados.map(item => item.sessaoId));
+
+      component.itens.splice(0, component.itens.length);
+
+      expect(component.itensCarregados.length).toBe(3);
+    });
+
+    // O ramo da evolução órfã existe para o registro clínico não sumir quando a
+    // sessão é excluída; sem tipo conhecido, ela sai de qualquer recorte por
+    // tipo e volta em "todos".
+    it('should keep an evolucao whose session is missing out of a type cut', async () => {
+      await setup([maio01], [
+        evolucoesTresSessoes[0],
+        evolucao({ id: 999, sessaoId: 42, dataHoraRegistro: '2026-05-05T10:00', dorAntes: 5, dorDepois: 3 })
+      ]);
+      expect(component.itens.map(item => item.sessaoId)).toEqual([42, 1]);
+      expect(component.itens[0].tipoSessao).toBeNull();
+
+      preencher({ tipo: 'PILATES' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([1]);
+
+      preencher({ tipo: 'todos' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([42, 1]);
+    });
+
+    // Sem isso a troca de filtro é silenciosa para o leitor de tela: a lista
+    // muda sem nenhum retorno, e nem o estado vazio é anunciado.
+    it('should announce the cut in a live region that is already in the DOM', async () => {
+      await setupTresSessoes();
+
+      const resumo: HTMLElement = fixture.nativeElement.querySelector('.filtro-resumo');
+      // A região precisa preexistir à mudança de texto: um `role="status"`
+      // inserido junto com o conteúdo é anunciado de forma bem menos confiável.
+      expect(resumo).not.toBeNull();
+      expect(resumo.getAttribute('role')).toBe('status');
+      expect(resumo.textContent?.trim()).toBe('');
+
+      preencher({ tipo: 'PILATES' });
+      expect(resumo.textContent?.trim()).toBe('2 de 3 sessões no recorte.');
+
+      preencher({ dataInicial: '2026-07-01' });
+      expect(resumo.textContent?.trim()).toBe('Nenhuma sessão no recorte.');
+
+      component.limparFiltros();
+      fixture.detectChanges();
+      expect(resumo.textContent?.trim()).toBe('');
+    });
+
+    it('should hide the live region from the layout while it is empty', async () => {
+      await setupTresSessoes();
+      const raiz = fixture.nativeElement as HTMLElement;
+      document.body.appendChild(raiz);
+
+      try {
+        const resumo = raiz.querySelector('.filtro-resumo') as HTMLElement;
+        expect(getComputedStyle(resumo).display).toBe('none');
+
+        preencher({ tipo: 'PILATES' });
+
+        expect(getComputedStyle(resumo).display).not.toBe('none');
+      } finally {
+        document.body.removeChild(raiz);
+      }
+    });
+
+    // Padrão do issue #163, já usado por `paciente-list` e `profissional-list`:
+    // em 375px os campos empilhados empurrariam o gráfico para fora da dobra.
+    it('should offer the mobile filter disclosure with a resolvable aria-controls', async () => {
+      await setupTresSessoes();
+      const raiz = fixture.nativeElement as HTMLElement;
+      document.body.appendChild(raiz);
+
+      try {
+        const toggle = raiz.querySelector('.filtros-toggle') as HTMLButtonElement;
+        const painel = raiz.querySelector('.filtros') as HTMLElement;
+
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.getAttribute('aria-controls')).toBe(painel.id);
+        expect(document.getElementById(painel.id)).not.toBeNull();
+
+        toggle.click();
+        fixture.detectChanges();
+
+        expect(component.filtrosAbertos).toBeTrue();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        // O painel segue no DOM nos dois estados: quem o esconde no mobile é a
+        // classe, dentro da media query, e o `aria-controls` sempre resolve.
+        expect(document.getElementById(painel.id)).not.toBeNull();
+        expect(painel.classList).not.toContain('filtros-recolhidos');
+      } finally {
+        document.body.removeChild(raiz);
+      }
+    });
+
+    it('should count the active filters in the disclosure badge', async () => {
+      await setupTresSessoes();
+      const badge = (): HTMLElement | null => fixture.nativeElement.querySelector('.filtros-badge');
+
+      expect(component.filtrosAtivos()).toBe(0);
+      expect(badge()).toBeNull();
+
+      preencher({ dataInicial: '2026-05-01', tipo: 'PILATES' });
+
+      expect(component.filtrosAtivos()).toBe(2);
+      expect(badge()!.textContent?.trim()).toBe('2');
+      expect(badge()!.getAttribute('aria-label')).toBe('2 filtros ativos');
+    });
+
+    // O estado vazio do recorte protege-se como o de paciente sem evolução: com
+    // erro na tela, quem manda é o alerta.
+    it('should not show the filtered empty state while an error is on screen', async () => {
+      await setupTresSessoes();
+      preencher({ dataInicial: '2026-07-01' });
+      expect(fixture.nativeElement.querySelector('.empty-state-filtrado')).not.toBeNull();
+
+      evolucaoServiceSpy.listarPorPaciente.and.returnValue(throwError(() => new Error('fail')));
+      component.carregar();
+      fixture.detectChanges();
+
+      expect(component.erro).toBe('Não foi possível carregar o histórico de evoluções.');
+      expect(fixture.nativeElement.querySelector('.empty-state-filtrado')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.alert-danger')).not.toBeNull();
     });
 
     // A regra do gráfico passa a valer sobre o recorte: com uma medição só não
@@ -893,14 +1027,46 @@ describe('PacienteEvolucaoListComponent', () => {
       }
     });
 
-    // Em 375px o grid de uma coluna só empilha os campos; o `auto-fit` com piso
-    // de 180px é o que evita o scroll horizontal, sem media query.
+    // O runner do Karma roda a 765px, dentro do breakpoint do #163: o painel
+    // nasce recolhido e o grid só é medido depois de abrir pelo disclosure,
+    // que é exatamente o fluxo do mobile. A guarda de media query está aqui
+    // para o teste falhar dizendo o porquê caso a janela do runner mude.
+    it('should keep the filter panel collapsed on a narrow viewport until the disclosure opens it', async () => {
+      await setupTresSessoes();
+      const raiz = fixture.nativeElement as HTMLElement;
+      document.body.appendChild(raiz);
+
+      try {
+        expect(window.matchMedia('(max-width: 768px)').matches)
+          .withContext(`runner a ${window.innerWidth}px, fora do breakpoint mobile de 768px`)
+          .toBeTrue();
+
+        const filtros = raiz.querySelector('.filtros') as HTMLElement;
+        const toggle = raiz.querySelector('.filtros-toggle') as HTMLButtonElement;
+
+        expect(getComputedStyle(toggle).display).toBe('inline-flex');
+        expect(getComputedStyle(filtros).display).toBe('none');
+
+        toggle.click();
+        fixture.detectChanges();
+
+        expect(getComputedStyle(filtros).display).toBe('grid');
+      } finally {
+        document.body.removeChild(raiz);
+      }
+    });
+
+    // Com o painel aberto em 375px o grid cai para uma coluna e empilha os
+    // campos; o `auto-fit` com piso de 180px é o que evita o scroll horizontal.
     it('should stack the filter fields on a narrow viewport', async () => {
       await setupTresSessoes();
       const raiz = fixture.nativeElement as HTMLElement;
       document.body.appendChild(raiz);
 
       try {
+        component.alternarFiltros();
+        fixture.detectChanges();
+
         // O host é `inline` por padrão e ignoraria a largura.
         raiz.style.display = 'block';
         raiz.style.width = '375px';

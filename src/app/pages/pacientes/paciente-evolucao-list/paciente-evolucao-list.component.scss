@@ -50,6 +50,40 @@
   color: var(--c-danger-text);
 }
 
+/* Resumo do recorte: também é a região viva do leitor de tela, então some do
+   layout quando não há filtro ativo em vez de deixar um parágrafo vazio
+   ocupando margem. */
+.filtro-resumo {
+  margin: calc(-1 * var(--sp-3)) 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+
+  &:empty {
+    display: none;
+  }
+}
+
+/* Botão de disclosure dos filtros (issue #163): só existe no mobile. No desktop
+   fica oculto e o painel permanece sempre aberto, como em `paciente-list` e
+   `profissional-list`. */
+.filtros-toggle {
+  display: none;
+}
+
+.filtros-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 .35rem;
+  border-radius: 999px;
+  background: var(--c-horizonte);
+  color: var(--c-cloud-dancer);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
 /* O `.empty-state` global centraliza o texto; aqui ele ganha o botão embaixo. */
 .empty-state-filtrado {
   display: flex;
@@ -289,4 +323,42 @@
    `display: grid`, e o atributo `hidden` do HTML perderia em especificidade. */
 .evolucao-detalhes-recolhido {
   display: none;
+}
+
+/* Mesmo breakpoint e mesma anatomia do disclosure de `paciente-list` e
+   `profissional-list` (issue #163) — é a terceira cópia deste bloco no projeto;
+   extrair para o global valeria uma issue própria, já que mexeria nas outras
+   duas telas. Em 375px a barra empilhada mede 323px e empurra o gráfico para
+   fora da primeira dobra, que é exatamente o que o #163 resolveu lá. */
+@media (max-width: 768px) {
+  .filtros-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    /* Alvo de toque de 44px, como no #163. */
+    min-height: 44px;
+    padding: .5rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-elev);
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-1);
+  }
+
+  .filtros-caret {
+    margin-left: auto;
+    transition: transform .2s ease;
+  }
+
+  .filtros-toggle[aria-expanded="true"] .filtros-caret {
+    transform: rotate(180deg);
+  }
+
+  .filtros.filtros-recolhidos {
+    display: none;
+  }
 }

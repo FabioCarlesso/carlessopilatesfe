@@ -307,7 +307,10 @@ export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvoluc
   const inicio = invertido ? '' : filtro.dataInicial;
   const fim = invertido ? '' : filtro.dataFinal;
 
-  if (!inicio && !fim && filtro.tipo === 'todos') return itens;
+  // Cópia, e não a própria fonte: sem filtro ativo devolver `itens` faria
+  // `this.itens === this.itensCarregados`, e um `sort()`/`splice()` futuro no
+  // recorte corromperia em silêncio a coleção que "limpar filtros" restaura.
+  if (!inicio && !fim && filtro.tipo === 'todos') return [...itens];
 
   return itens.filter(item => {
     // Compara o prefixo ISO (`yyyy-MM-dd`) de `dataHora` como string, no mesmo
@@ -318,6 +321,9 @@ export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvoluc
     const dia = item.dataHora.slice(0, 10);
     if (inicio && dia < inicio) return false;
     if (fim && dia > fim) return false;
+    // A evolução cuja sessão não veio na listagem tem `tipoSessao` nulo e sai
+    // de qualquer recorte por tipo: não há tipo a conhecer, e incluí-la
+    // contradiria o "apenas sessões do tipo escolhido". Ela volta em "todos".
     return filtro.tipo === 'todos' || item.tipoSessao === filtro.tipo;
   });
 }
@@ -345,6 +351,8 @@ export class PacienteEvolucaoListComponent implements OnInit {
   filtro: FiltroEvolucao = { ...FILTRO_EVOLUCAO_PADRAO };
   /** Data final anterior à inicial: o recorte não é aplicado enquanto durar. */
   periodoInvalido = false;
+  /** Disclosure dos filtros no mobile (issue #163); no desktop o painel é fixo. */
+  filtrosAbertos = false;
   loading = false;
   erro: string | null = null;
 
@@ -550,8 +558,33 @@ export class PacienteEvolucaoListComponent implements OnInit {
     this.aplicarFiltros();
   }
 
+  alternarFiltros(): void {
+    this.filtrosAbertos = !this.filtrosAbertos;
+  }
+
+  /** Contagem para o badge do disclosure, no padrão de `paciente-list`. */
+  filtrosAtivos(): number {
+    let total = 0;
+    if (this.filtro.dataInicial !== '') total++;
+    if (this.filtro.dataFinal !== '') total++;
+    if (this.filtro.tipo !== 'todos') total++;
+    return total;
+  }
+
   get temFiltroAtivo(): boolean {
-    return this.filtro.dataInicial !== '' || this.filtro.dataFinal !== '' || this.filtro.tipo !== 'todos';
+    return this.filtrosAtivos() > 0;
+  }
+
+  /**
+   * Texto da região viva que anuncia o recorte. Sem ele a troca de filtro é
+   * silenciosa para o leitor de tela: a lista muda sem nenhum retorno, e mesmo
+   * o estado vazio passaria despercebido. Vazio quando não há filtro ativo —
+   * uma região viva que muda para string vazia não anuncia nada.
+   */
+  get resumoFiltro(): string {
+    if (!this.temFiltroAtivo) return '';
+    if (this.itens.length === 0) return 'Nenhuma sessão no recorte.';
+    return `${this.itens.length} de ${this.itensCarregados.length} sessões no recorte.`;
   }
 
   alternar(item: EvolucaoTimelineItem): void {

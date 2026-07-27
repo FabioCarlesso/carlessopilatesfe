@@ -697,6 +697,9 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Período comparado pelo prefixo ISO (`yyyy-MM-dd`) de `dataHora`, com o dia inteiro incluído nas duas pontas; o select de tipo reaproveita `SESSAO_TIPO_LABEL`
 - Data final anterior à inicial exibe erro (`role="alert"`, com `aria-describedby` nos dois campos) e não aplica o período — o filtro de tipo, independente, continua valendo
 - Recorte sem resultados exibe estado vazio próprio com ação **Limpar filtros**, distinto do estado "Nenhuma evolução registrada" de paciente sem histórico
+- Resumo do recorte numa região viva permanente (`role="status"`, "4 de 9 sessões no recorte") — sem ela a troca de filtro seria silenciosa para o leitor de tela; fica vazia e fora do layout quando não há filtro ativo
+- Barra recolhível no mobile pelo disclosure do issue #163 (`.filtros-toggle` com `aria-expanded`/`aria-controls` e badge de filtros ativos), no mesmo padrão de `paciente-list` e `profissional-list`
+- Evolução cuja sessão não veio na listagem tem tipo desconhecido e fica fora de qualquer recorte por tipo, voltando em "todos"
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente
