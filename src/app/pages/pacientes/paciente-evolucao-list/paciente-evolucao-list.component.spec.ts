@@ -381,6 +381,239 @@ describe('PacienteEvolucaoListComponent', () => {
     }
   });
 
+  // --- Gráfico de evolução da dor (#206) ---
+
+  it('should render the chart above the timeline when at least two sessions have a pain value', async () => {
+    await setup();
+
+    const raiz: HTMLElement = fixture.nativeElement;
+    const grafico = raiz.querySelector('.grafico');
+    const timeline = raiz.querySelector('.timeline');
+
+    expect(component.grafico).not.toBeNull();
+    expect(grafico).not.toBeNull();
+    // `DOCUMENT_POSITION_FOLLOWING` = a linha do tempo vem depois do gráfico.
+    expect(grafico!.compareDocumentPosition(timeline!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('should hide the chart when only one session has a pain value', async () => {
+    await setup([sessaoAntiga, sessaoRecente], [evolucaoAntiga, evolucao({ id: 200, sessaoId: 2 })]);
+
+    expect(component.grafico).toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+    // A linha do tempo segue normal sem o gráfico.
+    expect(fixture.nativeElement.querySelectorAll('.evolucao-card').length).toBe(2);
+  });
+
+  it('should hide the chart when no session has a pain value', async () => {
+    await setup(
+      [sessaoAntiga, sessaoRecente],
+      [evolucao({ id: 100, sessaoId: 1 }), evolucao({ id: 200, sessaoId: 2 })]
+    );
+
+    expect(component.grafico).toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+  });
+
+  // Duas medições em séries diferentes não se ligam: sem esta guarda o gráfico
+  // renderizava eixos e legenda em volta de dois pontos soltos, sem linha.
+  it('should hide the chart when no series reaches two points', async () => {
+    await setup([sessaoAntiga, sessaoRecente], [
+      evolucao({ id: 100, sessaoId: 1, dorAntes: 7, dorDepois: null }),
+      evolucao({ id: 200, sessaoId: 2, dorAntes: null, dorDepois: 2 })
+    ]);
+
+    expect(component.grafico).toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+    // As duas medições continuam legíveis nos cards da linha do tempo.
+    expect(fixture.nativeElement.querySelectorAll('.evolucao-dor').length).toBe(2);
+  });
+
+  // Acontece de verdade quando a fisioterapeuta só registra a dor inicial.
+  it('should drop a series with no point from the chart and the legend', async () => {
+    await setup([sessaoAntiga, sessaoRecente], [
+      evolucao({ id: 100, sessaoId: 1, dorAntes: 7, dorDepois: null }),
+      evolucao({ id: 200, sessaoId: 2, dorAntes: 4, dorDepois: null })
+    ]);
+
+    const svg: SVGElement = fixture.nativeElement.querySelector('.grafico-svg');
+
+    expect(component.grafico!.series.map(serie => serie.chave)).toEqual(['antes']);
+    expect(fixture.nativeElement.querySelectorAll('.grafico-legenda-item').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.grafico-serie-depois')).toBeNull();
+    // A legenda e o rótulo acessível passam a contar a mesma história.
+    expect(svg.getAttribute('aria-label')).not.toContain('Dor depois');
+  });
+
+  // A lista é decrescente e o eixo X é cronológico crescente: as duas vistas
+  // saem da mesma coleção, então a inversão é o ponto a travar.
+  it('should plot the points from the oldest session to the newest', async () => {
+    await setup();
+
+    const antes = component.grafico!.series[0];
+    expect(antes.chave).toBe('antes');
+    expect(antes.pontos.map(ponto => ponto.data)).toEqual(['01/05/2026', '20/05/2026']);
+    expect(antes.pontos.map(ponto => ponto.valor)).toEqual([7, 2]);
+    expect(antes.pontos[0].x).toBeLessThan(antes.pontos[1].x);
+    expect(component.itens.map(item => item.sessaoId)).toEqual([2, 1]);
+  });
+
+  it('should keep the y axis on the 0 to 10 scale regardless of the plotted values', async () => {
+    await setup(
+      [sessaoAntiga, sessaoRecente],
+      [evolucao({ id: 100, sessaoId: 1, dorAntes: 4, dorDepois: 4 }),
+        evolucao({ id: 200, sessaoId: 2, dorAntes: 5, dorDepois: 5 })]
+    );
+
+    const { area, marcasY, series } = component.grafico!;
+    expect(marcasY.map(marca => marca.rotulo)).toEqual(['0', '5', '10']);
+    expect(marcasY[0].y).toBe(area.base);
+    expect(marcasY[2].y).toBe(area.topo);
+    // Nenhum valor chega ao topo nem à base: a escala não foi normalizada.
+    series.forEach(serie => serie.pontos.forEach(ponto => {
+      expect(ponto.y).toBeGreaterThan(area.topo);
+      expect(ponto.y).toBeLessThan(area.base);
+    }));
+  });
+
+  it('should break the series instead of plotting a missing pain value as zero', async () => {
+    const sessoes = [1, 2, 3, 4].map(id => sessao({ id, dataHora: `2026-05-0${id}T08:00` }));
+    await setup(sessoes, [
+      evolucao({ id: 101, sessaoId: 1, dorAntes: 7, dorDepois: 6 }),
+      evolucao({ id: 102, sessaoId: 2, dorAntes: 5, dorDepois: 4 }),
+      evolucao({ id: 103, sessaoId: 3, dorAntes: null, dorDepois: 3 }),
+      evolucao({ id: 104, sessaoId: 4, dorAntes: 2, dorDepois: 1 })
+    ]);
+
+    const antes = component.grafico!.series[0];
+    const base = component.grafico!.area.base;
+
+    expect(antes.pontos.map(ponto => ponto.valor)).toEqual([7, 5, 2]);
+    expect(antes.pontos.every(ponto => ponto.y !== base)).toBeTrue();
+    // Dois trechos, mas o segundo tem um ponto só e não vira linha.
+    expect(antes.linhas.length).toBe(1);
+    expect(component.grafico!.series[1].linhas.length).toBe(1);
+    expect(component.grafico!.series[1].pontos.length).toBe(4);
+  });
+
+  it('should describe the pain trend in an accessible label', async () => {
+    await setup();
+
+    const svg: SVGElement = fixture.nativeElement.querySelector('.grafico-svg');
+    expect(svg.getAttribute('role')).toBe('img');
+    expect(svg.getAttribute('aria-label')).toBe(
+      'Gráfico da evolução da dor ao longo de 2 sessões, de 01/05/2026 a 20/05/2026. ' +
+      'Dor antes: de 7 em 01/05/2026 para 2 em 20/05/2026. ' +
+      'Dor depois: de 3 em 01/05/2026 para 5 em 20/05/2026.'
+    );
+  });
+
+  it('should name both series in the legend', async () => {
+    await setup();
+
+    const legenda: string[] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.grafico-legenda-item'),
+      (item: Element) => item.textContent?.trim() ?? ''
+    );
+    expect(legenda).toEqual(['Dor antes', 'Dor depois']);
+  });
+
+  // O gráfico consome a coleção já carregada: uma requisição por causa dele
+  // seria uma terceira chamada na carga da tela.
+  it('should not fire any extra request because of the chart', async () => {
+    await setup();
+
+    expect(pacienteServiceSpy.buscar).toHaveBeenCalledTimes(1);
+    expect(sessaoServiceSpy.listarPorPaciente).toHaveBeenCalledTimes(1);
+    expect(evolucaoServiceSpy.listarPorPaciente).toHaveBeenCalledTimes(1);
+  });
+
+  it('should paint each series with a token that stays legible in both themes', async () => {
+    await setup();
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const raiz = fixture.nativeElement as HTMLElement;
+      const antes = raiz.querySelector('.grafico-serie-antes .grafico-linha') as SVGElement;
+      const depois = raiz.querySelector('.grafico-serie-depois .grafico-linha') as SVGElement;
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(antes).stroke).toBe('rgb(122, 92, 30)');
+      expect(getComputedStyle(depois).stroke).toBe('rgb(55, 79, 108)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(antes).stroke).toBe('rgb(176, 136, 66)');
+      expect(getComputedStyle(depois).stroke).toBe('rgb(168, 188, 202)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // Sem `viewBox` + largura relativa o SVG assume 300px fixos e, num paciente
+  // com muitas sessões, empurraria a página para o lado em 375px.
+  it('should scale the chart by the viewBox instead of overflowing the page', async () => {
+    await setup();
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const svg = (fixture.nativeElement as HTMLElement).querySelector('.grafico-svg') as SVGElement;
+      expect(svg.getAttribute('viewBox')).toBe('0 0 480 220');
+      expect(svg.getAttribute('preserveAspectRatio')).toBe('xMidYMid meet');
+      expect(getComputedStyle(svg).maxWidth).toBe('480px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // Uma sessão sem evolução ainda ocupa posição no eixo X: é o intervalo em que
+  // a dor não foi medida, e ignorá-la comprimiria a linha do tempo do gráfico.
+  it('should label at most five x marks and always the first and the last session', async () => {
+    const sessoes = Array.from({ length: 12 }, (_valor, indice) =>
+      sessao({ id: indice + 1, dataHora: `2026-05-${`${indice + 1}`.padStart(2, '0')}T08:00` }));
+    await setup(sessoes, sessoes.map(atual =>
+      evolucao({ id: 100 + atual.id, sessaoId: atual.id, dorAntes: 8, dorDepois: 4 })));
+
+    const marcas = component.grafico!.marcasX;
+    expect(marcas.length).toBe(5);
+    expect(marcas[0].rotulo).toBe('01/05');
+    expect(marcas[0].ancora).toBe('start');
+    expect(marcas[4].rotulo).toBe('12/05');
+    expect(marcas[4].ancora).toBe('end');
+    expect(marcas[0].x).toBe(component.grafico!.area.esquerda);
+    expect(marcas[4].x).toBe(component.grafico!.area.direita);
+  });
+
+  // Um paciente da base real chega a 381 sessões: com um círculo por ponto em
+  // cada série, os marcadores viram uma faixa sólida e centenas de nós no DOM.
+  it('should drop the point markers on a dense chart but keep the isolated ones', async () => {
+    const sessoes = Array.from({ length: 40 }, (_valor, indice) =>
+      sessao({ id: indice + 1, dataHora: `2026-05-01T08:${`${indice}`.padStart(2, '0')}` }));
+    await setup(sessoes, sessoes.map(atual => evolucao({
+      id: 100 + atual.id,
+      sessaoId: atual.id,
+      dorAntes: 5,
+      // A sessão 20 fica sem `dorDepois`, isolando a 21 entre dois furos.
+      dorDepois: atual.id === 20 || atual.id === 22 ? null : 4
+    })));
+
+    const [antes, depois] = component.grafico!.series;
+
+    // A série contínua fica só com a linha; a `depois` quebra em dois trechos
+    // longos mais o ponto solto da sessão 21, que sem círculo desapareceria.
+    expect(antes.pontos.length).toBe(40);
+    expect(antes.marcadores.length).toBe(0);
+    expect(depois.linhas.length).toBe(2);
+    expect(depois.marcadores.length).toBe(1);
+    expect(depois.marcadores[0].x).toBe(antes.pontos[20].x);
+    expect(fixture.nativeElement.querySelectorAll('.grafico-ponto').length).toBe(1);
+  });
+
   it('should set erro when patient loading fails', async () => {
     await setup();
     pacienteServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));

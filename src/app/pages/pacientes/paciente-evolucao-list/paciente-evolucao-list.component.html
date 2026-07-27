@@ -22,6 +22,51 @@
   Nenhuma evolução registrada.
 </div>
 
+<!-- Derivado da mesma coleção da linha do tempo: nenhuma requisição a mais.
+     Some quando há menos de duas sessões com dor informada. -->
+<figure *ngIf="grafico" class="grafico">
+  <h2 class="grafico-titulo">Evolução da dor</h2>
+
+  <!-- O desenho inteiro é um `role="img"` com rótulo textual: os elementos
+       internos não têm nome acessível e seriam ruído para o leitor de tela. -->
+  <svg class="grafico-svg" [attr.viewBox]="grafico.viewBox" preserveAspectRatio="xMidYMid meet"
+    role="img" [attr.aria-label]="grafico.ariaLabel" focusable="false">
+    <g class="grafico-grade" aria-hidden="true">
+      <line *ngFor="let marca of grafico.marcasY"
+        [attr.x1]="grafico.area.esquerda" [attr.y1]="marca.y"
+        [attr.x2]="grafico.area.direita" [attr.y2]="marca.y" />
+    </g>
+
+    <g class="grafico-eixo" aria-hidden="true">
+      <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.topo"
+        [attr.x2]="grafico.area.esquerda" [attr.y2]="grafico.area.base" />
+      <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.base"
+        [attr.x2]="grafico.area.direita" [attr.y2]="grafico.area.base" />
+    </g>
+
+    <g class="grafico-rotulos" aria-hidden="true">
+      <text *ngFor="let marca of grafico.marcasY" class="grafico-rotulo-y"
+        [attr.x]="grafico.area.esquerda - 6" [attr.y]="marca.y"
+        text-anchor="end" dominant-baseline="middle">{{ marca.rotulo }}</text>
+      <text *ngFor="let marca of grafico.marcasX" class="grafico-rotulo-x"
+        [attr.x]="marca.x" [attr.y]="grafico.area.base + 18"
+        [attr.text-anchor]="marca.ancora">{{ marca.rotulo }}</text>
+    </g>
+
+    <g *ngFor="let serie of grafico.series" [class]="'grafico-serie grafico-serie-' + serie.chave">
+      <polyline *ngFor="let linha of serie.linhas" class="grafico-linha" [attr.points]="linha" />
+      <circle *ngFor="let ponto of serie.marcadores" class="grafico-ponto"
+        [attr.cx]="ponto.x" [attr.cy]="ponto.y" r="3" />
+    </g>
+  </svg>
+
+  <figcaption class="grafico-legenda">
+    <span *ngFor="let serie of grafico.series" [class]="'grafico-legenda-item grafico-serie-' + serie.chave">
+      <span class="grafico-legenda-marca" aria-hidden="true"></span>{{ serie.rotulo }}
+    </span>
+  </figcaption>
+</figure>
+
 <div *ngIf="itens.length > 0" class="timeline">
   <div *ngIf="temItensExpansiveis" class="timeline-controles">
     <button type="button" class="btn btn-secondary btn-sm" (click)="expandirTudo()">Expandir tudo</button>
