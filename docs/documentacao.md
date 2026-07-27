@@ -599,7 +599,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/:pacienteId/sessoes/nova` | `PacienteSessaoFormComponent` | Cadastro de sessão |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | `PacienteSessaoFormComponent` | Edição de sessão |
 | `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | `PacienteEvolucaoSessaoComponent` | Cadastro e edição da evolução clínica da sessão |
-| `/pacientes/:pacienteId/evolucoes` | `PacienteEvolucaoListComponent` | Histórico de evoluções do paciente em linha do tempo (somente leitura) |
+| `/pacientes/:pacienteId/evolucoes` | `PacienteEvolucaoListComponent` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor e filtros de período/tipo (somente leitura) |
 | `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
@@ -692,6 +692,11 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - `role="img"` com `aria-label` textual (sessões, período e a primeira e a última medição de cada série); grade, eixos e rótulos internos em `aria-hidden`
 - Séries **Dor antes** e **Dor depois** distinguidas por cor de token (`--c-warning-text`/`--text-brand`) e por tracejado, nomeadas na legenda
 - Responsivo por `viewBox` + `preserveAspectRatio` (`width: 100%`, `max-width: 480px`), sem gerar scroll horizontal
+- Barra de filtros no topo da tela (data inicial, data final e tipo de sessão) com recorte **client-side** sobre a coleção já carregada: nenhuma requisição é disparada ao alterar ou limpar filtros
+- O recorte é calculado num único ponto (`filtrarItens`) e alimenta ao mesmo tempo a linha do tempo e `montarGraficoDor`, de modo que os pontos plotados são sempre as sessões listadas; a regra de omitir o gráfico com menos de dois pontos por série passa a valer sobre o conjunto filtrado
+- Período comparado pelo prefixo ISO (`yyyy-MM-dd`) de `dataHora`, com o dia inteiro incluído nas duas pontas; o select de tipo reaproveita `SESSAO_TIPO_LABEL`
+- Data final anterior à inicial exibe erro (`role="alert"`, com `aria-describedby` nos dois campos) e não aplica o período — o filtro de tipo, independente, continua valendo
+- Recorte sem resultados exibe estado vazio próprio com ação **Limpar filtros**, distinto do estado "Nenhuma evolução registrada" de paciente sem histórico
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente

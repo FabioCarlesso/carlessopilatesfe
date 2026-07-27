@@ -10,7 +10,7 @@ import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.se
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
-import { PacienteEvolucaoListComponent } from './paciente-evolucao-list.component';
+import { FiltroEvolucao, PacienteEvolucaoListComponent } from './paciente-evolucao-list.component';
 
 const mockPaciente: PacienteResponseDTO = {
   id: 10,
@@ -612,6 +612,308 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(depois.marcadores.length).toBe(1);
     expect(depois.marcadores[0].x).toBe(antes.pontos[20].x);
     expect(fixture.nativeElement.querySelectorAll('.grafico-ponto').length).toBe(1);
+  });
+
+  // --- Filtros de período e tipo de sessão (#207) ---
+
+  describe('filtros', () => {
+    // Três sessões em dois meses e nos dois tipos: recorte de período e recorte
+    // de tipo separam subconjuntos diferentes da mesma coleção.
+    const maio01 = sessao({ id: 1, dataHora: '2026-05-01T08:00', tipo: 'PILATES' });
+    const maio20 = sessao({ id: 2, dataHora: '2026-05-20T14:00', tipo: 'FISIOTERAPIA' });
+    const junho10 = sessao({ id: 3, dataHora: '2026-06-10T09:00', tipo: 'PILATES' });
+
+    const evolucoesTresSessoes = [
+      evolucao({ id: 101, sessaoId: 1, dorAntes: 8, dorDepois: 6 }),
+      evolucao({ id: 102, sessaoId: 2, dorAntes: 6, dorDepois: 4 }),
+      evolucao({ id: 103, sessaoId: 3, dorAntes: 4, dorDepois: 2 })
+    ];
+
+    async function setupTresSessoes() {
+      await setup([maio01, maio20, junho10], evolucoesTresSessoes);
+    }
+
+    function preencher(filtro: Partial<FiltroEvolucao>) {
+      Object.assign(component.filtro, filtro);
+      component.aplicarFiltros();
+      fixture.detectChanges();
+    }
+
+    it('should render the filter bar above the chart', async () => {
+      await setupTresSessoes();
+
+      const raiz: HTMLElement = fixture.nativeElement;
+      const filtros = raiz.querySelector('.filtros');
+      const grafico = raiz.querySelector('.grafico');
+
+      expect(filtros).not.toBeNull();
+      expect(grafico!.compareDocumentPosition(filtros!) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    });
+
+    it('should label every filter field and reuse the session type labels', async () => {
+      await setupTresSessoes();
+      const raiz: HTMLElement = fixture.nativeElement;
+
+      ['filtroDataInicial', 'filtroDataFinal', 'filtroTipo'].forEach(id => {
+        expect(raiz.querySelector(`label[for="${id}"]`)).withContext(id).not.toBeNull();
+        expect(raiz.querySelector(`#${id}`)).withContext(id).not.toBeNull();
+      });
+
+      const opcoes = Array.from(raiz.querySelectorAll('#filtroTipo option'), item => item.textContent?.trim());
+      expect(opcoes).toEqual(['Todos', 'Pilates', 'Fisioterapia']);
+    });
+
+    it('should trim the timeline and the chart consistently when a period is applied', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-05-01', dataFinal: '2026-05-31' });
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([2, 1]);
+      expect(fixture.nativeElement.querySelectorAll('.evolucao-card').length).toBe(2);
+      // Os pontos plotados são exatamente as sessões listadas, na ordem inversa.
+      expect(component.grafico!.series[0].pontos.map(ponto => ponto.data))
+        .toEqual(['01/05/2026', '20/05/2026']);
+      expect(component.grafico!.series[0].pontos.map(ponto => ponto.valor)).toEqual([8, 6]);
+    });
+
+    it('should include the whole day at both ends of the period', async () => {
+      await setupTresSessoes();
+
+      // A sessão do dia 20 é às 14h e a do dia 1º às 8h: um limite tratado como
+      // meia-noite deixaria a do dia 20 de fora.
+      preencher({ dataInicial: '2026-05-01', dataFinal: '2026-05-20' });
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([2, 1]);
+    });
+
+    it('should filter by session type and show everything again on todos', async () => {
+      await setupTresSessoes();
+
+      preencher({ tipo: 'FISIOTERAPIA' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([2]);
+
+      preencher({ tipo: 'PILATES' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 1]);
+
+      preencher({ tipo: 'todos' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 2, 1]);
+    });
+
+    it('should combine the period and the type filters', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-05-01', dataFinal: '2026-05-31', tipo: 'PILATES' });
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([1]);
+    });
+
+    // Uma sessão REALIZADA sem evolução é entrada de linha do tempo como
+    // qualquer outra: ficar de fora do recorte esconderia o que falta registrar.
+    it('should apply the same filters to realizada sessions without evolucao', async () => {
+      await setup([maio01, maio20, junho10], [evolucoesTresSessoes[0]]);
+
+      component.filtro.tipo = 'PILATES';
+      component.aplicarFiltros();
+      fixture.detectChanges();
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 1]);
+      expect(fixture.nativeElement.textContent).toContain('Sem evolução registrada');
+
+      component.filtro.dataInicial = '2026-06-01';
+      component.aplicarFiltros();
+      fixture.detectChanges();
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3]);
+      expect(component.itens[0].evolucao).toBeNull();
+    });
+
+    it('should not apply the period and show an error when the end date precedes the start', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-06-01', dataFinal: '2026-05-01' });
+
+      expect(component.periodoInvalido).toBeTrue();
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 2, 1]);
+
+      const erro: HTMLElement = fixture.nativeElement.querySelector('.filtro-erro');
+      expect(erro.textContent?.trim()).toBe('A data final não pode ser anterior à data inicial.');
+      expect(erro.getAttribute('role')).toBe('alert');
+      // A referência só existe enquanto a mensagem está no DOM.
+      const inicio: HTMLInputElement = fixture.nativeElement.querySelector('#filtroDataInicial');
+      expect(inicio.getAttribute('aria-describedby')).toBe('filtroPeriodoErro');
+      expect(inicio.classList).toContain('is-invalid');
+    });
+
+    it('should clear the period error and apply the cut once the dates are ordered again', async () => {
+      await setupTresSessoes();
+      preencher({ dataInicial: '2026-06-01', dataFinal: '2026-05-01' });
+
+      preencher({ dataFinal: '2026-06-30' });
+
+      expect(component.periodoInvalido).toBeFalse();
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3]);
+      expect(fixture.nativeElement.querySelector('.filtro-erro')).toBeNull();
+      expect(fixture.nativeElement.querySelector('#filtroDataInicial').getAttribute('aria-describedby'))
+        .toBeNull();
+    });
+
+    it('should show a dedicated empty state with a clear action when the cut returns nothing', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-07-01', dataFinal: '2026-07-31' });
+
+      expect(component.itens.length).toBe(0);
+      const vazio: HTMLElement = fixture.nativeElement.querySelector('.empty-state-filtrado');
+      expect(vazio.textContent).toContain('Nenhuma evolução para os filtros aplicados.');
+      // O estado vazio de paciente sem evolução não aparece no lugar deste.
+      expect(fixture.nativeElement.textContent).not.toContain('Nenhuma evolução registrada.');
+      expect(fixture.nativeElement.querySelector('.timeline')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+
+      const limpar: HTMLButtonElement = vazio.querySelector('button')!;
+      limpar.click();
+      fixture.detectChanges();
+
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3, 2, 1]);
+      expect(component.filtro).toEqual({ dataInicial: '', dataFinal: '', tipo: 'todos' });
+      expect(fixture.nativeElement.querySelector('.empty-state-filtrado')).toBeNull();
+    });
+
+    it('should restore the full collection from the filter bar action', async () => {
+      await setupTresSessoes();
+      preencher({ dataInicial: '2026-06-01', tipo: 'PILATES' });
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3]);
+
+      const limpar: HTMLButtonElement = fixture.nativeElement.querySelector('.filtro-acoes button');
+      expect(limpar.disabled).toBeFalse();
+
+      limpar.click();
+      fixture.detectChanges();
+
+      expect(component.itens).toEqual(component.itensCarregados);
+      expect(limpar.disabled).toBeTrue();
+    });
+
+    // A regra do gráfico passa a valer sobre o recorte: com uma medição só não
+    // há tendência para desenhar, mesmo que a coleção completa tenha várias.
+    it('should hide the chart when the cut leaves fewer than two pain points', async () => {
+      await setupTresSessoes();
+      expect(component.grafico).not.toBeNull();
+
+      preencher({ dataInicial: '2026-06-01' });
+
+      expect(component.itens.length).toBe(1);
+      expect(component.grafico).toBeNull();
+      expect(fixture.nativeElement.querySelector('.grafico')).toBeNull();
+      // A linha do tempo segue com o card recortado.
+      expect(fixture.nativeElement.querySelectorAll('.evolucao-card').length).toBe(1);
+    });
+
+    it('should bring the chart back when the filters are cleared', async () => {
+      await setupTresSessoes();
+      preencher({ dataInicial: '2026-06-01' });
+      expect(component.grafico).toBeNull();
+
+      component.limparFiltros();
+      fixture.detectChanges();
+
+      expect(component.grafico).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.grafico')).not.toBeNull();
+    });
+
+    it('should not fire any request when the filters change or are cleared', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-05-01', dataFinal: '2026-05-31', tipo: 'PILATES' });
+      component.limparFiltros();
+      fixture.detectChanges();
+
+      expect(pacienteServiceSpy.buscar).toHaveBeenCalledTimes(1);
+      expect(sessaoServiceSpy.listarPorPaciente).toHaveBeenCalledTimes(1);
+      expect(evolucaoServiceSpy.listarPorPaciente).toHaveBeenCalledTimes(1);
+    });
+
+    it('should apply the filter typed in the date field of the rendered form', async () => {
+      await setupTresSessoes();
+
+      const inicio: HTMLInputElement = fixture.nativeElement.querySelector('#filtroDataInicial');
+      inicio.value = '2026-06-01';
+      inicio.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(component.filtro.dataInicial).toBe('2026-06-01');
+      expect(component.itens.map(item => item.sessaoId)).toEqual([3]);
+      expect(fixture.nativeElement.querySelectorAll('.evolucao-card').length).toBe(1);
+    });
+
+    it('should apply the type chosen in the rendered select', async () => {
+      await setupTresSessoes();
+
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#filtroTipo');
+      select.value = 'FISIOTERAPIA';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(component.filtro.tipo).toBe('FISIOTERAPIA');
+      expect(component.itens.map(item => item.sessaoId)).toEqual([2]);
+    });
+
+    it('should hide the filter bar when the patient has no timeline entries', async () => {
+      await setup([], []);
+
+      expect(fixture.nativeElement.querySelector('.filtros')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.empty-state')?.textContent?.trim())
+        .toBe('Nenhuma evolução registrada.');
+    });
+
+    // O `--c-danger` do `.invalid-feedback` global também serve de fundo e não é
+    // clareado no tema escuro: sobre o card de filtros rende 2,1:1 em 11px.
+    it('should keep the period error legible on the elevated surface in both themes', async () => {
+      await setupTresSessoes();
+      const raiz = fixture.nativeElement as HTMLElement;
+      document.body.appendChild(raiz);
+      const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+      try {
+        preencher({ dataInicial: '2026-06-01', dataFinal: '2026-05-01' });
+        const erro = raiz.querySelector('.filtro-erro') as HTMLElement;
+
+        document.documentElement.setAttribute('data-theme', 'light');
+        expect(getComputedStyle(erro).color).toBe('rgb(140, 58, 58)');
+
+        document.documentElement.setAttribute('data-theme', 'dark');
+        expect(getComputedStyle(erro).color).toBe('rgb(217, 112, 112)');
+      } finally {
+        if (temaAnterior === null) {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', temaAnterior);
+        }
+        document.body.removeChild(raiz);
+      }
+    });
+
+    // Em 375px o grid de uma coluna só empilha os campos; o `auto-fit` com piso
+    // de 180px é o que evita o scroll horizontal, sem media query.
+    it('should stack the filter fields on a narrow viewport', async () => {
+      await setupTresSessoes();
+      const raiz = fixture.nativeElement as HTMLElement;
+      document.body.appendChild(raiz);
+
+      try {
+        // O host é `inline` por padrão e ignoraria a largura.
+        raiz.style.display = 'block';
+        raiz.style.width = '375px';
+        const filtros = raiz.querySelector('.filtros') as HTMLElement;
+        const colunas = getComputedStyle(filtros).gridTemplateColumns.split(' ').length;
+
+        expect(colunas).toBe(1);
+        expect(filtros.scrollWidth).toBeLessThanOrEqual(filtros.clientWidth);
+      } finally {
+        raiz.removeAttribute('style');
+        document.body.removeChild(raiz);
+      }
+    });
   });
 
   it('should set erro when patient loading fails', async () => {
