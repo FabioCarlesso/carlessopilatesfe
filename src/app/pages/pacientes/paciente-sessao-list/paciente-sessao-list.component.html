@@ -11,6 +11,7 @@
   </div>
   <div class="acoes">
     <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'evolucoes']" class="btn btn-secondary">Histórico de Evoluções</a>
     <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
   </div>
 </div>

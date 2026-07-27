@@ -116,6 +116,13 @@ export const routes: Routes = [
         .then(m => m.PacienteSessaoListComponent)
   },
   {
+    path: 'pacientes/:pacienteId/evolucoes',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-evolucao-list/paciente-evolucao-list.component')
+        .then(m => m.PacienteEvolucaoListComponent)
+  },
+  {
     path: 'pacientes/:pacienteId/plano-tratamento/novo',
     canActivate: [authGuard],
     loadComponent: () =>

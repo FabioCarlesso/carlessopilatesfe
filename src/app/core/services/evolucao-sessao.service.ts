@@ -15,6 +15,10 @@ export class EvolucaoSessaoService {
 
   constructor(private http: HttpClient) {}
 
+  listarPorPaciente(pacienteId: number): Observable<EvolucaoSessaoResponseDTO[]> {
+    return this.http.get<EvolucaoSessaoResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
+  }
+
   buscarPorSessao(sessaoId: number): Observable<EvolucaoSessaoResponseDTO> {
     return this.http.get<EvolucaoSessaoResponseDTO>(`${this.apiUrl}/sessao/${sessaoId}`);
   }

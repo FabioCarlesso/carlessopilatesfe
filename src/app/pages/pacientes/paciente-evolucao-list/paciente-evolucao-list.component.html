@@ -1,0 +1,101 @@
+<app-breadcrumb *ngIf="pacienteId" [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Histórico de Evoluções' }
+]"></app-breadcrumb>
+
+<div class="page-header">
+  <div>
+    <h1>Histórico de Evoluções</h1>
+    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+  </div>
+  <div class="acoes">
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Sessões</a>
+    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+<div *ngIf="loading" class="loading">Carregando...</div>
+
+<div *ngIf="!loading && itens.length === 0 && !erro" class="empty-state">
+  Nenhuma evolução registrada.
+</div>
+
+<div *ngIf="itens.length > 0" class="timeline">
+  <div *ngIf="temItensExpansiveis" class="timeline-controles">
+    <button type="button" class="btn btn-secondary btn-sm" (click)="expandirTudo()">Expandir tudo</button>
+    <button type="button" class="btn btn-outline btn-sm" (click)="recolherTudo()">Recolher tudo</button>
+  </div>
+
+  <div *ngFor="let item of itens; trackBy: trackByItem" class="evolucao-card"
+    [class.evolucao-card-pendente]="!item.evolucao">
+    <div class="evolucao-header">
+      <div class="evolucao-info">
+        <span class="evolucao-data">{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="item.tipo" class="evolucao-tipo">{{ item.tipo }}</span>
+        <span *ngIf="item.nomeProfissional" class="evolucao-profissional">{{ item.nomeProfissional }}</span>
+        <span *ngIf="item.evolucao && (item.evolucao.dorAntes !== null || item.evolucao.dorDepois !== null)"
+          class="evolucao-dor" [class.dor-melhora]="item.tendenciaDor === 'melhora'"
+          [class.dor-piora]="item.tendenciaDor === 'piora'"
+          [class.dor-estavel]="item.tendenciaDor === 'estavel'">
+          <span class="dor-rotulo">Dor</span>
+          <span>{{ item.evolucao.dorAntes !== null ? item.evolucao.dorAntes : '—' }}</span>
+          <span aria-hidden="true">→</span>
+          <span>{{ item.evolucao.dorDepois !== null ? item.evolucao.dorDepois : '—' }}</span>
+          <span *ngIf="item.tendenciaDor === 'melhora'" class="dor-tendencia">melhora</span>
+          <span *ngIf="item.tendenciaDor === 'piora'" class="dor-tendencia">piora</span>
+          <span *ngIf="item.tendenciaDor === 'estavel'" class="dor-tendencia">sem variação</span>
+        </span>
+        <span *ngIf="!item.evolucao" class="badge badge-pendente">Sem evolução registrada</span>
+      </div>
+      <div class="evolucao-acoes">
+        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', item.sessaoId, 'evolucao']"
+          class="btn btn-secondary btn-sm">{{ item.evolucao ? 'Editar evolução' : 'Registrar evolução' }}</a>
+      </div>
+    </div>
+
+    <div *ngIf="item.evolucao && item.temCorpo" class="evolucao-body">
+      <div *ngIf="item.evolucao.observacoesFisioterapeuta" class="detail-grid">
+        <div class="detail-item detail-item-largo">
+          <span class="label">Observações do fisioterapeuta</span>
+          <span class="evolucao-texto">{{ item.evolucao.observacoesFisioterapeuta }}</span>
+        </div>
+      </div>
+
+      <button *ngIf="item.temDetalhes" type="button" class="btn btn-outline btn-sm evolucao-toggle"
+        [attr.aria-expanded]="item.expandido" [attr.aria-controls]="'evolucao-detalhes-' + item.chave"
+        (click)="alternar(item)">
+        {{ item.expandido ? 'Recolher detalhes' : 'Ver detalhes' }}
+      </button>
+
+      <div *ngIf="item.temDetalhes && item.expandido" class="detail-grid evolucao-detalhes"
+        [id]="'evolucao-detalhes-' + item.chave">
+        <div *ngIf="item.evolucao.exerciciosRealizados" class="detail-item">
+          <span class="label">Exercícios realizados</span>
+          <span class="evolucao-texto">{{ item.evolucao.exerciciosRealizados }}</span>
+        </div>
+        <div *ngIf="item.evolucao.equipamentosUtilizados" class="detail-item">
+          <span class="label">Equipamentos utilizados</span>
+          <span class="evolucao-texto">{{ item.evolucao.equipamentosUtilizados }}</span>
+        </div>
+        <div *ngIf="item.evolucao.cargasMolas" class="detail-item">
+          <span class="label">Cargas / molas</span>
+          <span class="evolucao-texto">{{ item.evolucao.cargasMolas }}</span>
+        </div>
+        <div *ngIf="item.evolucao.respostaPaciente" class="detail-item">
+          <span class="label">Resposta do paciente</span>
+          <span class="evolucao-texto">{{ item.evolucao.respostaPaciente }}</span>
+        </div>
+        <div *ngIf="item.evolucao.intercorrencias" class="detail-item">
+          <span class="label">Intercorrências</span>
+          <span class="evolucao-texto">{{ item.evolucao.intercorrencias }}</span>
+        </div>
+        <div *ngIf="item.evolucao.orientacoes" class="detail-item">
+          <span class="label">Orientações</span>
+          <span class="evolucao-texto">{{ item.evolucao.orientacoes }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
