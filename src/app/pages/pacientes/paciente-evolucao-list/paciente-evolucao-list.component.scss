@@ -15,15 +15,16 @@
   gap: var(--sp-2);
 }
 
+/* Os cards das demais listagens do prontuário usam três tokens que nunca foram
+   definidos em `_tokens.scss` — `--surface`, `--c-primary` e `--radius-lg` —, o
+   que lá deixa o card sem fundo, com a borda de destaque em `currentColor` e com
+   cantos retos. Aqui valem os nomes que existem de fato. */
 .evolucao-card {
-  /* `--bg-elev` (superfície elevada) e não `--surface`: esse token nunca foi
-     definido em `_tokens.scss` e deixa o card sem fundo nos dois temas. */
   background-color: var(--bg-elev);
   border: 1px solid var(--border);
-  /* `--text-brand` e não `--c-primary` (indefinido, cairia para `currentColor`):
-     é o único token de marca com versão própria no tema escuro. */
+  /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
   border-left: 4px solid var(--text-brand);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-lg);
   padding: var(--sp-4);
 
   &.evolucao-card-pendente {

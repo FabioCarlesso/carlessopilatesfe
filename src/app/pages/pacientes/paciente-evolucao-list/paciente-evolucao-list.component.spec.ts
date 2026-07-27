@@ -336,9 +336,10 @@ describe('PacienteEvolucaoListComponent', () => {
       .toBe('Nenhuma evolução registrada.');
   });
 
-  // `--surface` e `--c-primary`, usados pelos cards das demais listagens do
-  // prontuário, nunca foram definidos em `_tokens.scss`: o fundo some e a borda
-  // cai para `currentColor`. O guard trava os tokens que existem de fato.
+  // `--surface`, `--c-primary` e `--radius-lg`, usados pelos cards das demais
+  // listagens do prontuário, nunca foram definidos em `_tokens.scss`: o fundo
+  // some, a borda cai para `currentColor` e o raio para `0`. O guard trava os
+  // nomes que existem de fato (`--bg-elev`, `--text-brand`, `--r-lg`).
   it('should paint the card with real tokens in both themes', async () => {
     await setup([sessaoAntiga], [evolucaoAntiga]);
     document.body.appendChild(fixture.nativeElement);
@@ -346,6 +347,8 @@ describe('PacienteEvolucaoListComponent', () => {
 
     try {
       const card = (fixture.nativeElement as HTMLElement).querySelector('.evolucao-card') as HTMLElement;
+
+      expect(getComputedStyle(card).borderRadius).toBe('8px');
 
       document.documentElement.setAttribute('data-theme', 'light');
       expect(getComputedStyle(card).backgroundColor).toBe('rgb(255, 255, 255)');
