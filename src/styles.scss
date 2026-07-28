@@ -115,6 +115,22 @@ a {
     gap: var(--sp-3);
   }
 
+  // Identificação do usuário autenticado ("Nome · Perfil"). Cor literal, como
+  // nos links do menu acima e pelo mesmo motivo: o fundo da navbar é o
+  // --c-horizonte fixo nos dois temas, mas --c-cloud-dancer é re-tematizado em
+  // [data-theme="dark"] (#f0ede8 → #0e1620). Usar o token aqui renderia 2,16:1
+  // no tema escuro — abaixo dos 4,5:1 da WCAG AA para 13px —, contra 7,20:1
+  // desta literal nos dois temas (medido no DOM). O truncamento evita que um
+  // nome longo empurre os botões de ação ou quebre a barra em duas linhas.
+  &-usuario {
+    color: #f0ede8;
+    font-size: var(--fs-body-sm);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   // Wrapper dos links + ações. No desktop não cria caixa própria
   // (display: contents), preservando o layout de três colunas da navbar.
   &-collapse {
@@ -749,6 +765,20 @@ body.dialog-aberto {
     .btn-sair {
       width: 100%;
       min-height: 44px;
+    }
+
+    // No painel expandido há espaço para o nome inteiro: o texto ocupa a
+    // largura toda e deixa de ser truncado. Sem os 44px dos botões vizinhos,
+    // porque não é alvo de toque. O padding acompanha o dos links do menu.
+    // A identificação abre o bloco de ações pela própria ordem do DOM (é o
+    // primeiro filho de .navbar-actions), sem `order`: ordem visual e ordem de
+    // leitura ficam iguais nos dois breakpoints.
+    .navbar-usuario {
+      width: 100%;
+      max-width: none;
+      padding: var(--sp-2);
+      overflow: visible;
+      white-space: normal;
     }
   }
 

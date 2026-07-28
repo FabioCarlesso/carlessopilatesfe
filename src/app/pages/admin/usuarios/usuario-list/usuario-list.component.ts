@@ -7,9 +7,8 @@ import { SortableHeaderComponent } from '../../../../shared/components/sortable-
 import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../../core/models/ordenacao';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ROLE_OPTIONS, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
+import { ROLE_LABEL, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { PageMetadata } from '../../../../core/models/common';
-import { UserRole } from '../../../../core/models/auth';
 
 type ConfirmacaoAcao = 'inativar' | 'ativar' | 'excluir';
 
@@ -17,11 +16,6 @@ interface Confirmacao {
   acao: ConfirmacaoAcao;
   usuario: UsuarioAdminResponseDTO;
 }
-
-const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
-  acc[opt.value] = opt.label;
-  return acc;
-}, {} as Record<UserRole, string>);
 
 @Component({
   selector: 'app-usuario-list',

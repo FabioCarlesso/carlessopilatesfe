@@ -2,6 +2,7 @@ import { Component, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { ROLE_LABEL } from './core/models/usuario-admin';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService } from './core/services/style-preferences.service';
@@ -26,18 +27,40 @@ export class AppComponent {
 
   menuAberto = false;
 
+  // Identificação do usuário autenticado exibida na navbar ("Nome · Perfil"),
+  // vazia quando não há sessão válida. Resolvida uma vez por navegação — e não
+  // na interpolação do template — porque `getCurrentUser()` faz `JSON.parse` +
+  // validação a cada chamada e o template do AppComponent reavalia a cada ciclo
+  // de detecção de mudanças. Login e logout sempre passam por uma navegação,
+  // então o valor acompanha a sessão. Um campo só: o texto exibido e o `title`
+  // saem daqui, e montá-los no template repetiria a concatenação nos dois
+  // lugares, que divergiriam ao primeiro ajuste de formato.
+  usuarioAtualDescricao = '';
+
   constructor() {
-    // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
+    this.resolverUsuarioAtual();
+
     this.router.events
       .pipe(
         filter(evento => evento instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => this.notificacoes.limpar());
+      .subscribe(() => {
+        // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
+        this.notificacoes.limpar();
+        this.resolverUsuarioAtual();
+      });
   }
 
   get isDarkTheme(): boolean {
     return this.stylePreferences.current.theme === 'dark';
+  }
+
+  // Sessão sem `currentUser` no localStorage (ausente ou corrompido) devolve
+  // null: a navbar segue funcional e apenas omite a identificação.
+  private resolverUsuarioAtual(): void {
+    const usuario = this.authService.getCurrentUser();
+    this.usuarioAtualDescricao = usuario ? `${usuario.name} · ${ROLE_LABEL[usuario.role]}` : '';
   }
 
   toggleMenu(): void {

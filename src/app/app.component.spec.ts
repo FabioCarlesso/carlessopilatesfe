@@ -6,15 +6,30 @@ import { AuthService } from './core/services/auth.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService, StyleTheme } from './core/services/style-preferences.service';
+import { AuthenticatedUser } from './core/models/auth';
+import { renderizarEmViewport } from '../testing/viewport';
 
 describe('AppComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let stylePreferencesSpy: jasmine.SpyObj<StylePreferencesService>;
 
-  function setup(authenticated: boolean, admin = false, theme: StyleTheme = 'light') {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
+  const usuarioAdmin: AuthenticatedUser = {
+    id: 1,
+    name: 'Fabio Carlesso',
+    email: 'fabio@carlessopilates.com.br',
+    role: 'ADMIN'
+  };
+
+  function setup(
+    authenticated: boolean,
+    admin = false,
+    theme: StyleTheme = 'light',
+    currentUser: AuthenticatedUser | null = authenticated ? usuarioAdmin : null
+  ) {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(authenticated);
     authServiceSpy.isAdmin.and.returnValue(admin);
+    authServiceSpy.getCurrentUser.and.returnValue(currentUser);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
       'StylePreferencesService',
@@ -121,6 +136,159 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('a[href="/perfil/alterar-senha"]')).toBeNull();
+  });
+
+  it('should render the authenticated user name and admin role label in the navbar', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-actions .navbar-usuario') as HTMLElement;
+    expect(identificacao).toBeTruthy();
+    expect(identificacao.textContent).toContain('Fabio Carlesso');
+    expect(identificacao.textContent).toContain('Administrador');
+  });
+
+  it('should render the "Usuário" role label for a non admin user', async () => {
+    await setup(true, false, 'light', { id: 2, name: 'Ana Souza', email: 'ana@exemplo.com', role: 'USER' });
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+    expect(identificacao.textContent).toContain('Ana Souza');
+    expect(identificacao.textContent).toContain('Usuário');
+    expect(identificacao.textContent).not.toContain('Administrador');
+  });
+
+  it('should expose the full identification in the title attribute for truncated names', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+    expect(identificacao.getAttribute('title')).toBe('Fabio Carlesso · Administrador');
+  });
+
+  it('should render the navbar without the identification when the current user is unavailable', async () => {
+    await setup(true, false, 'light', null);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.navbar')).toBeTruthy();
+    expect(el.querySelector('.btn-sair')).toBeTruthy();
+    expect(el.querySelector('.navbar-usuario')).toBeNull();
+  });
+
+  it('should not render the identification when not authenticated', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.navbar')).toBeNull();
+    expect(el.querySelector('.navbar-usuario')).toBeNull();
+  });
+
+  it('should refresh the identification after a navigation completes', async () => {
+    await setup(true, false, 'light', null);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.navbar-usuario')).toBeNull();
+
+    authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
+    await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.navbar-usuario')?.textContent).toContain('Fabio Carlesso');
+  });
+
+  // `--c-cloud-dancer` é re-tematizado em [data-theme="dark"] (#f0ede8 →
+  // #0e1620) e o fundo da navbar é o --c-horizonte fixo nos dois temas: usar o
+  // token aqui derrubaria o texto para 2,16:1 no escuro. A literal rende 7,20:1
+  // nos dois. O guard trava a cor contra o tema, que é o que o token quebra.
+  it('should keep the identification legible in both themes', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
+      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
+      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // Em iframe de largura fixa: a janela do Karma roda a 765px, dentro do
+  // breakpoint de 1024px, e o ramo desktop ficaria sem teste efetivo.
+  it('should truncate a long name on desktop without pushing the action buttons', async () => {
+    await setup(true, true, 'light', {
+      ...usuarioAdmin,
+      name: 'Maria Aparecida da Conceição dos Santos Albuquerque'
+    });
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const viewport = renderizarEmViewport(fixture.nativeElement, 1280);
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
+      const menu = fixture.nativeElement.querySelector('.navbar-menu') as HTMLElement;
+
+      expect(viewport.janela.getComputedStyle(identificacao).textOverflow).toBe('ellipsis');
+      expect(identificacao.scrollWidth).toBeGreaterThan(identificacao.clientWidth);
+      expect(identificacao.getBoundingClientRect().width).toBeLessThanOrEqual(220);
+      // Quem absorve a pressão de um nome sem truncamento é `.navbar-menu`, não
+      // os botões: medido nesta mesma fixture, o nome longo espreme o menu de
+      // 305px para 98px (um link por linha), o que estica a barra de 64px para
+      // 185px, enquanto `.btn-sair` não sai do lugar em nenhum dos casos
+      // (`min-width: auto` impede o botão de comprimir).
+      expect(navbar.getBoundingClientRect().height).toBe(64);
+      expect(menu.getBoundingClientRect().width)
+        .toBeGreaterThan(identificacao.getBoundingClientRect().width);
+    } finally {
+      viewport.destruir();
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('should open the collapsed panel with the identification and no touch target', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const viewport = renderizarEmViewport(fixture.nativeElement, 375);
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const acoes = fixture.nativeElement.querySelector('.navbar-actions') as HTMLElement;
+      const busca = fixture.nativeElement.querySelector('app-busca-global') as HTMLElement;
+
+      expect(identificacao.getBoundingClientRect().width).toBe(acoes.getBoundingClientRect().width);
+      // Não é alvo de toque: sem o min-height de 44px dos botões vizinhos.
+      expect(viewport.janela.getComputedStyle(identificacao).minHeight).not.toBe('44px');
+      // Abre o bloco de ações, acima da busca — por ordem de DOM, não por
+      // `order`, para a ordem de leitura bater com a visual.
+      expect(identificacao.getBoundingClientRect().top).toBeLessThan(busca.getBoundingClientRect().top);
+    } finally {
+      viewport.destruir();
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should show logout button when authenticated', async () => {
@@ -406,9 +574,10 @@ describe('AppComponent', () => {
   });
 
   function setupComRotas() {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(true);
     authServiceSpy.isAdmin.and.returnValue(false);
+    authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
       'StylePreferencesService',

@@ -855,7 +855,7 @@ Comando: `npm test`
 | Arquivo | Cobertura |
 |---------|-----------|
 | `app/app.routes.spec.ts` | Inventário de rotas, agrupamento e precedência de rotas estáticas e dinâmicas |
-| `app/app.component.spec.ts` | Renderização da navbar e router-outlet |
+| `app/app.component.spec.ts` | Renderização da navbar, identificação do usuário autenticado e router-outlet |
 | `app/core/services/dashboard.service.spec.ts` | Contrato HTTP do resumo do dashboard |
 | `app/core/services/paciente.service.spec.ts` | Todos os métodos HTTP e parâmetros de filtro em `listar` |
 | `app/core/services/plano-tratamento.service.spec.ts` | Métodos HTTP de planos de tratamento, incluindo encerrar e suspender |
@@ -908,6 +908,7 @@ Comando: `npm test`
 - Módulo Relatórios: pagamento de profissional por período e emissão de NFSEs por competência
 - Autenticação JWT com login, guard de rotas, interceptor HTTP e logout
 - Autorização por perfil com `roleGuard`, rotas administrativas restritas a `ADMIN` e tela dedicada `/403`
+- Identificação do usuário autenticado na navbar (`Nome · Perfil`), com rótulo de perfil compartilhado (`ROLE_LABEL`) e truncamento no desktop
 - Navegação contextual na tela de detalhe do paciente (Planos / Pagamentos / Aulas / Anamnese / Avaliação Fisioterapêutica / Plano de Tratamento)
 - Dockerfile, Docker Compose e Nginx para execução do frontend em container
 - Testes unitários (serviço e todos os componentes de página)
