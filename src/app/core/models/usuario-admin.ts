@@ -33,4 +33,11 @@ export const ROLE_OPTIONS: RoleOption[] = [
   { value: 'USER', label: 'Usuário' }
 ];
 
+// Rótulo de exibição do perfil, derivado das opções acima para manter uma única
+// fonte de verdade entre a listagem administrativa e a identificação na navbar.
+export const ROLE_LABEL: Record<UserRole, string> = ROLE_OPTIONS.reduce((acc, opt) => {
+  acc[opt.value] = opt.label;
+  return acc;
+}, {} as Record<UserRole, string>);
+
 export type UsuarioAdminPage = Page<UsuarioAdminResponseDTO>;

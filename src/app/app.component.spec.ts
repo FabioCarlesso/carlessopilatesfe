@@ -6,15 +6,29 @@ import { AuthService } from './core/services/auth.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService, StyleTheme } from './core/services/style-preferences.service';
+import { AuthenticatedUser } from './core/models/auth';
 
 describe('AppComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let stylePreferencesSpy: jasmine.SpyObj<StylePreferencesService>;
 
-  function setup(authenticated: boolean, admin = false, theme: StyleTheme = 'light') {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
+  const usuarioAdmin: AuthenticatedUser = {
+    id: 1,
+    name: 'Fabio Carlesso',
+    email: 'fabio@carlessopilates.com.br',
+    role: 'ADMIN'
+  };
+
+  function setup(
+    authenticated: boolean,
+    admin = false,
+    theme: StyleTheme = 'light',
+    currentUser: AuthenticatedUser | null = authenticated ? usuarioAdmin : null
+  ) {
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(authenticated);
     authServiceSpy.isAdmin.and.returnValue(admin);
+    authServiceSpy.getCurrentUser.and.returnValue(currentUser);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
       'StylePreferencesService',
@@ -121,6 +135,67 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('a[href="/perfil/alterar-senha"]')).toBeNull();
+  });
+
+  it('should render the authenticated user name and admin role label in the navbar', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-actions .navbar-usuario') as HTMLElement;
+    expect(identificacao).toBeTruthy();
+    expect(identificacao.textContent).toContain('Fabio Carlesso');
+    expect(identificacao.textContent).toContain('Administrador');
+  });
+
+  it('should render the "Usuário" role label for a non admin user', async () => {
+    await setup(true, false, 'light', { id: 2, name: 'Ana Souza', email: 'ana@exemplo.com', role: 'USER' });
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+    expect(identificacao.textContent).toContain('Ana Souza');
+    expect(identificacao.textContent).toContain('Usuário');
+    expect(identificacao.textContent).not.toContain('Administrador');
+  });
+
+  it('should expose the full identification in the title attribute for truncated names', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+    expect(identificacao.getAttribute('title')).toBe('Fabio Carlesso · Administrador');
+  });
+
+  it('should render the navbar without the identification when the current user is unavailable', async () => {
+    await setup(true, false, 'light', null);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.navbar')).toBeTruthy();
+    expect(el.querySelector('.btn-sair')).toBeTruthy();
+    expect(el.querySelector('.navbar-usuario')).toBeNull();
+  });
+
+  it('should not render the identification when not authenticated', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.navbar')).toBeNull();
+    expect(el.querySelector('.navbar-usuario')).toBeNull();
+  });
+
+  it('should refresh the identification after a navigation completes', async () => {
+    await setup(true, false, 'light', null);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.navbar-usuario')).toBeNull();
+
+    authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
+    await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.navbar-usuario')?.textContent).toContain('Fabio Carlesso');
   });
 
   it('should show logout button when authenticated', async () => {
@@ -406,9 +481,10 @@ describe('AppComponent', () => {
   });
 
   function setupComRotas() {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(true);
     authServiceSpy.isAdmin.and.returnValue(false);
+    authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
       'StylePreferencesService',

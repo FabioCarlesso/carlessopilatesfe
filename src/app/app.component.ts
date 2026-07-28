@@ -2,6 +2,8 @@ import { Component, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { AuthenticatedUser } from './core/models/auth';
+import { ROLE_LABEL } from './core/models/usuario-admin';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService } from './core/services/style-preferences.service';
@@ -26,18 +28,38 @@ export class AppComponent {
 
   menuAberto = false;
 
+  // Identificação do usuário autenticado exibida na navbar. Resolvida uma vez
+  // por navegação — e não na interpolação do template — porque
+  // `getCurrentUser()` faz `JSON.parse` + validação a cada chamada e o template
+  // do AppComponent reavalia a cada ciclo de detecção de mudanças. Login e
+  // logout sempre passam por uma navegação, então o valor acompanha a sessão.
+  usuarioAtual: AuthenticatedUser | null = null;
+  perfilAtualLabel = '';
+
   constructor() {
-    // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
+    this.resolverUsuarioAtual();
+
     this.router.events
       .pipe(
         filter(evento => evento instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => this.notificacoes.limpar());
+      .subscribe(() => {
+        // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
+        this.notificacoes.limpar();
+        this.resolverUsuarioAtual();
+      });
   }
 
   get isDarkTheme(): boolean {
     return this.stylePreferences.current.theme === 'dark';
+  }
+
+  // Sessão sem `currentUser` no localStorage (ausente ou corrompido) devolve
+  // null: a navbar segue funcional e apenas omite a identificação.
+  private resolverUsuarioAtual(): void {
+    this.usuarioAtual = this.authService.getCurrentUser();
+    this.perfilAtualLabel = this.usuarioAtual ? ROLE_LABEL[this.usuarioAtual.role] : '';
   }
 
   toggleMenu(): void {

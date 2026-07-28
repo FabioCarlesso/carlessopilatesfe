@@ -115,6 +115,20 @@ a {
     gap: var(--sp-3);
   }
 
+  // Identificação do usuário autenticado ("Nome · Perfil"). Usa
+  // --c-cloud-dancer como os irmãos .btn-sair/.btn-tema, e não os tokens de
+  // texto, pelo mesmo motivo do comentário acima: o fundo da navbar é fixo
+  // (--c-horizonte) nos dois temas. O truncamento evita que um nome longo
+  // empurre os botões de ação ou quebre a barra em duas linhas.
+  &-usuario {
+    color: var(--c-cloud-dancer);
+    font-size: var(--fs-body-sm);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   // Wrapper dos links + ações. No desktop não cria caixa própria
   // (display: contents), preservando o layout de três colunas da navbar.
   &-collapse {
@@ -749,6 +763,17 @@ body.dialog-aberto {
     .btn-sair {
       width: 100%;
       min-height: 44px;
+    }
+
+    // No painel expandido há espaço para o nome inteiro: o texto ocupa a
+    // largura toda e deixa de ser truncado. Sem os 44px dos botões vizinhos,
+    // porque não é alvo de toque. O padding acompanha o dos links do menu.
+    .navbar-usuario {
+      width: 100%;
+      max-width: none;
+      padding: var(--sp-2);
+      overflow: visible;
+      white-space: normal;
     }
   }
 
