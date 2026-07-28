@@ -246,16 +246,19 @@ describe('AppComponent', () => {
     try {
       const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
       const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
-      const sair = fixture.nativeElement.querySelector('.btn-sair') as HTMLElement;
+      const menu = fixture.nativeElement.querySelector('.navbar-menu') as HTMLElement;
 
       expect(viewport.janela.getComputedStyle(identificacao).textOverflow).toBe('ellipsis');
       expect(identificacao.scrollWidth).toBeGreaterThan(identificacao.clientWidth);
       expect(identificacao.getBoundingClientRect().width).toBeLessThanOrEqual(220);
-      // A navbar fechada tem 64px: mais que isso significa que o nome quebrou a
-      // barra em duas linhas em vez de ser truncado.
+      // Quem absorve a pressão de um nome sem truncamento é `.navbar-menu`, não
+      // os botões: medido nesta mesma fixture, o nome longo espreme o menu de
+      // 305px para 98px (um link por linha), o que estica a barra de 64px para
+      // 185px, enquanto `.btn-sair` não sai do lugar em nenhum dos casos
+      // (`min-width: auto` impede o botão de comprimir).
       expect(navbar.getBoundingClientRect().height).toBe(64);
-      // O botão mantém a largura do próprio rótulo, sem ser comprimido.
-      expect(sair.scrollWidth).toBeLessThanOrEqual(Math.ceil(sair.getBoundingClientRect().width));
+      expect(menu.getBoundingClientRect().width)
+        .toBeGreaterThan(identificacao.getBoundingClientRect().width);
     } finally {
       viewport.destruir();
       document.body.removeChild(fixture.nativeElement);
@@ -279,7 +282,8 @@ describe('AppComponent', () => {
       expect(identificacao.getBoundingClientRect().width).toBe(acoes.getBoundingClientRect().width);
       // Não é alvo de toque: sem o min-height de 44px dos botões vizinhos.
       expect(viewport.janela.getComputedStyle(identificacao).minHeight).not.toBe('44px');
-      // Abre o bloco de ações, acima da busca, mesmo vindo depois dela no DOM.
+      // Abre o bloco de ações, acima da busca — por ordem de DOM, não por
+      // `order`, para a ordem de leitura bater com a visual.
       expect(identificacao.getBoundingClientRect().top).toBeLessThan(busca.getBoundingClientRect().top);
     } finally {
       viewport.destruir();

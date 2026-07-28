@@ -2,7 +2,6 @@ import { Component, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { AuthenticatedUser } from './core/models/auth';
 import { ROLE_LABEL } from './core/models/usuario-admin';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
@@ -28,15 +27,14 @@ export class AppComponent {
 
   menuAberto = false;
 
-  // Identificação do usuário autenticado exibida na navbar. Resolvida uma vez
-  // por navegação — e não na interpolação do template — porque
-  // `getCurrentUser()` faz `JSON.parse` + validação a cada chamada e o template
-  // do AppComponent reavalia a cada ciclo de detecção de mudanças. Login e
-  // logout sempre passam por uma navegação, então o valor acompanha a sessão.
-  usuarioAtual: AuthenticatedUser | null = null;
-  // Texto exibido e `title` saem do mesmo campo: montá-lo no template exigiria
-  // repetir a concatenação nos dois lugares, que divergiriam ao primeiro ajuste
-  // de formato.
+  // Identificação do usuário autenticado exibida na navbar ("Nome · Perfil"),
+  // vazia quando não há sessão válida. Resolvida uma vez por navegação — e não
+  // na interpolação do template — porque `getCurrentUser()` faz `JSON.parse` +
+  // validação a cada chamada e o template do AppComponent reavalia a cada ciclo
+  // de detecção de mudanças. Login e logout sempre passam por uma navegação,
+  // então o valor acompanha a sessão. Um campo só: o texto exibido e o `title`
+  // saem daqui, e montá-los no template repetiria a concatenação nos dois
+  // lugares, que divergiriam ao primeiro ajuste de formato.
   usuarioAtualDescricao = '';
 
   constructor() {
@@ -61,10 +59,8 @@ export class AppComponent {
   // Sessão sem `currentUser` no localStorage (ausente ou corrompido) devolve
   // null: a navbar segue funcional e apenas omite a identificação.
   private resolverUsuarioAtual(): void {
-    this.usuarioAtual = this.authService.getCurrentUser();
-    this.usuarioAtualDescricao = this.usuarioAtual
-      ? `${this.usuarioAtual.name} · ${ROLE_LABEL[this.usuarioAtual.role]}`
-      : '';
+    const usuario = this.authService.getCurrentUser();
+    this.usuarioAtualDescricao = usuario ? `${usuario.name} · ${ROLE_LABEL[usuario.role]}` : '';
   }
 
   toggleMenu(): void {

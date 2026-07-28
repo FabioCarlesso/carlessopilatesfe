@@ -770,12 +770,10 @@ body.dialog-aberto {
     // No painel expandido há espaço para o nome inteiro: o texto ocupa a
     // largura toda e deixa de ser truncado. Sem os 44px dos botões vizinhos,
     // porque não é alvo de toque. O padding acompanha o dos links do menu.
-    // `order` abre o bloco de ações com a identificação (a issue a quer no topo
-    // do painel) sem mexer na ordem do DOM, que a issue fixa antes do link
-    // "Alterar senha" — seguro aqui porque o elemento não é focável e não há
-    // ordem de tabulação para divergir da ordem visual.
+    // A identificação abre o bloco de ações pela própria ordem do DOM (é o
+    // primeiro filho de .navbar-actions), sem `order`: ordem visual e ordem de
+    // leitura ficam iguais nos dois breakpoints.
     .navbar-usuario {
-      order: -1;
       width: 100%;
       max-width: none;
       padding: var(--sp-2);
