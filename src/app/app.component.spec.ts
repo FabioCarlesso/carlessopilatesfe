@@ -7,6 +7,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService, StyleTheme } from './core/services/style-preferences.service';
 import { AuthenticatedUser } from './core/models/auth';
+import { renderizarEmViewport } from '../testing/viewport';
 
 describe('AppComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
@@ -196,6 +197,94 @@ describe('AppComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.navbar-usuario')?.textContent).toContain('Fabio Carlesso');
+  });
+
+  // `--c-cloud-dancer` é re-tematizado em [data-theme="dark"] (#f0ede8 →
+  // #0e1620) e o fundo da navbar é o --c-horizonte fixo nos dois temas: usar o
+  // token aqui derrubaria o texto para 2,16:1 no escuro. A literal rende 7,20:1
+  // nos dois. O guard trava a cor contra o tema, que é o que o token quebra.
+  it('should keep the identification legible in both themes', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
+      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
+      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // Em iframe de largura fixa: a janela do Karma roda a 765px, dentro do
+  // breakpoint de 1024px, e o ramo desktop ficaria sem teste efetivo.
+  it('should truncate a long name on desktop without pushing the action buttons', async () => {
+    await setup(true, true, 'light', {
+      ...usuarioAdmin,
+      name: 'Maria Aparecida da Conceição dos Santos Albuquerque'
+    });
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const viewport = renderizarEmViewport(fixture.nativeElement, 1280);
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
+      const sair = fixture.nativeElement.querySelector('.btn-sair') as HTMLElement;
+
+      expect(viewport.janela.getComputedStyle(identificacao).textOverflow).toBe('ellipsis');
+      expect(identificacao.scrollWidth).toBeGreaterThan(identificacao.clientWidth);
+      expect(identificacao.getBoundingClientRect().width).toBeLessThanOrEqual(220);
+      // A navbar fechada tem 64px: mais que isso significa que o nome quebrou a
+      // barra em duas linhas em vez de ser truncado.
+      expect(navbar.getBoundingClientRect().height).toBe(64);
+      // O botão mantém a largura do próprio rótulo, sem ser comprimido.
+      expect(sair.scrollWidth).toBeLessThanOrEqual(Math.ceil(sair.getBoundingClientRect().width));
+    } finally {
+      viewport.destruir();
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('should open the collapsed panel with the identification and no touch target', async () => {
+    await setup(true, true, 'light', usuarioAdmin);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.navbar-toggle') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const viewport = renderizarEmViewport(fixture.nativeElement, 375);
+
+    try {
+      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
+      const acoes = fixture.nativeElement.querySelector('.navbar-actions') as HTMLElement;
+      const busca = fixture.nativeElement.querySelector('app-busca-global') as HTMLElement;
+
+      expect(identificacao.getBoundingClientRect().width).toBe(acoes.getBoundingClientRect().width);
+      // Não é alvo de toque: sem o min-height de 44px dos botões vizinhos.
+      expect(viewport.janela.getComputedStyle(identificacao).minHeight).not.toBe('44px');
+      // Abre o bloco de ações, acima da busca, mesmo vindo depois dela no DOM.
+      expect(identificacao.getBoundingClientRect().top).toBeLessThan(busca.getBoundingClientRect().top);
+    } finally {
+      viewport.destruir();
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should show logout button when authenticated', async () => {

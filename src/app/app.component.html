@@ -61,10 +61,8 @@
       </ul>
       <div class="navbar-actions">
         <app-busca-global />
-        @if (usuarioAtual; as usuario) {
-          <span class="navbar-usuario" [title]="usuario.name + ' · ' + perfilAtualLabel">
-            {{ usuario.name }} · {{ perfilAtualLabel }}
-          </span>
+        @if (usuarioAtual) {
+          <span class="navbar-usuario" [title]="usuarioAtualDescricao">{{ usuarioAtualDescricao }}</span>
         }
         <a routerLink="/perfil/alterar-senha" class="btn-alterar-senha" (click)="fecharMenu()">Alterar senha</a>
         <button

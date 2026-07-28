@@ -34,7 +34,10 @@ export class AppComponent {
   // do AppComponent reavalia a cada ciclo de detecção de mudanças. Login e
   // logout sempre passam por uma navegação, então o valor acompanha a sessão.
   usuarioAtual: AuthenticatedUser | null = null;
-  perfilAtualLabel = '';
+  // Texto exibido e `title` saem do mesmo campo: montá-lo no template exigiria
+  // repetir a concatenação nos dois lugares, que divergiriam ao primeiro ajuste
+  // de formato.
+  usuarioAtualDescricao = '';
 
   constructor() {
     this.resolverUsuarioAtual();
@@ -59,7 +62,9 @@ export class AppComponent {
   // null: a navbar segue funcional e apenas omite a identificação.
   private resolverUsuarioAtual(): void {
     this.usuarioAtual = this.authService.getCurrentUser();
-    this.perfilAtualLabel = this.usuarioAtual ? ROLE_LABEL[this.usuarioAtual.role] : '';
+    this.usuarioAtualDescricao = this.usuarioAtual
+      ? `${this.usuarioAtual.name} · ${ROLE_LABEL[this.usuarioAtual.role]}`
+      : '';
   }
 
   toggleMenu(): void {
