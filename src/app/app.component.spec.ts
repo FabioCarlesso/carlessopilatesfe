@@ -138,199 +138,82 @@ describe('AppComponent', () => {
     expect(el.querySelector('a[href="/perfil/alterar-senha"]')).toBeNull();
   });
 
-  it('should render the authenticated user name and admin role label in the navbar', async () => {
+  it('should render the account menu when authenticated', async () => {
     await setup(true, true, 'light', usuarioAdmin);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const identificacao = fixture.nativeElement.querySelector('.navbar-actions .navbar-usuario') as HTMLElement;
-    expect(identificacao).toBeTruthy();
-    expect(identificacao.textContent).toContain('Fabio Carlesso');
-    expect(identificacao.textContent).toContain('Administrador');
-  });
-
-  it('should render the "Usuário" role label for a non admin user', async () => {
-    await setup(true, false, 'light', { id: 2, name: 'Ana Souza', email: 'ana@exemplo.com', role: 'USER' });
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
-    expect(identificacao.textContent).toContain('Ana Souza');
-    expect(identificacao.textContent).toContain('Usuário');
-    expect(identificacao.textContent).not.toContain('Administrador');
-  });
-
-  it('should expose the full identification in the title attribute for truncated names', async () => {
-    await setup(true, true, 'light', usuarioAdmin);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
-    expect(identificacao.getAttribute('title')).toBe('Fabio Carlesso · Administrador');
-  });
-
-  it('should render the navbar without the identification when the current user is unavailable', async () => {
-    await setup(true, false, 'light', null);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.navbar')).toBeTruthy();
-    expect(el.querySelector('.btn-sair')).toBeTruthy();
-    expect(el.querySelector('.navbar-usuario')).toBeNull();
+    expect(el.querySelector('.navbar-actions app-menu-conta')).toBeTruthy();
   });
 
-  it('should not render the identification when not authenticated', async () => {
+  it('should not render the account menu when not authenticated', async () => {
     await setup(false);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.navbar')).toBeNull();
-    expect(el.querySelector('.navbar-usuario')).toBeNull();
+    expect(el.querySelector('app-menu-conta')).toBeNull();
   });
 
-  it('should refresh the identification after a navigation completes', async () => {
-    await setup(true, false, 'light', null);
-    const fixture = TestBed.createComponent(AppComponent);
-    const router = TestBed.inject(Router);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.navbar-usuario')).toBeNull();
-
-    authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
-    await router.navigateByUrl('/outra-tela');
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.navbar-usuario')?.textContent).toContain('Fabio Carlesso');
-  });
-
-  // `--c-cloud-dancer` é re-tematizado em [data-theme="dark"] (#f0ede8 →
-  // #0e1620) e o fundo da navbar é o --c-horizonte fixo nos dois temas: usar o
-  // token aqui derrubaria o texto para 2,16:1 no escuro. A literal rende 7,20:1
-  // nos dois. O guard trava a cor contra o tema, que é o que o token quebra.
-  it('should keep the identification legible in both themes', async () => {
+  // Regressão da issue #219: até então a barra exigia ~1426px para caber numa
+  // linha, mas só colapsava em ≤1024px — toda a faixa de notebook (1280, 1366,
+  // 1440) renderizava marca e menu quebrados em duas linhas. 1025px é o pior
+  // caso do ramo desktop. Em iframe de largura fixa porque a janela do Karma
+  // roda a 765px, dentro do breakpoint, e o ramo desktop ficaria sem teste.
+  it('should keep the navbar on a single row at the narrowest desktop width', async () => {
     await setup(true, true, 'light', usuarioAdmin);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     document.body.appendChild(fixture.nativeElement);
-    const temaAnterior = document.documentElement.getAttribute('data-theme');
+    const viewport = renderizarEmViewport(fixture.nativeElement, 1025);
 
     try {
-      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
       const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
+      const marca = fixture.nativeElement.querySelector('.navbar-brand a') as HTMLElement;
+      const links = Array.from(
+        fixture.nativeElement.querySelectorAll('.navbar-menu a')
+      ) as HTMLElement[];
 
-      document.documentElement.setAttribute('data-theme', 'light');
-      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
-      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
-
-      document.documentElement.setAttribute('data-theme', 'dark');
-      expect(getComputedStyle(navbar).backgroundColor).toBe('rgb(55, 79, 108)');
-      expect(getComputedStyle(identificacao).color).toBe('rgb(240, 237, 232)');
-    } finally {
-      if (temaAnterior === null) {
-        document.documentElement.removeAttribute('data-theme');
-      } else {
-        document.documentElement.setAttribute('data-theme', temaAnterior);
-      }
-      document.body.removeChild(fixture.nativeElement);
-    }
-  });
-
-  // Em iframe de largura fixa: a janela do Karma roda a 765px, dentro do
-  // breakpoint de 1024px, e o ramo desktop ficaria sem teste efetivo.
-  it('should truncate a long name on desktop without pushing the action buttons', async () => {
-    await setup(true, true, 'light', {
-      ...usuarioAdmin,
-      name: 'Maria Aparecida da Conceição dos Santos Albuquerque'
-    });
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    document.body.appendChild(fixture.nativeElement);
-    const viewport = renderizarEmViewport(fixture.nativeElement, 1280);
-
-    try {
-      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
-      const navbar = fixture.nativeElement.querySelector('.navbar') as HTMLElement;
-      const menu = fixture.nativeElement.querySelector('.navbar-menu') as HTMLElement;
-
-      expect(viewport.janela.getComputedStyle(identificacao).textOverflow).toBe('ellipsis');
-      expect(identificacao.scrollWidth).toBeGreaterThan(identificacao.clientWidth);
-      expect(identificacao.getBoundingClientRect().width).toBeLessThanOrEqual(220);
-      // Quem absorve a pressão de um nome sem truncamento é `.navbar-menu`, não
-      // os botões: medido nesta mesma fixture, o nome longo espreme o menu de
-      // 305px para 98px (um link por linha), o que estica a barra de 64px para
-      // 185px, enquanto `.btn-sair` não sai do lugar em nenhum dos casos
-      // (`min-width: auto` impede o botão de comprimir).
       expect(navbar.getBoundingClientRect().height).toBe(64);
-      expect(menu.getBoundingClientRect().width)
-        .toBeGreaterThan(identificacao.getBoundingClientRect().width);
+
+      // Uma única linha de links: todos compartilham o mesmo topo.
+      const topos = new Set(links.map(link => Math.round(link.getBoundingClientRect().top)));
+      expect(links.length).toBe(5);
+      expect(topos.size).toBe(1);
+
+      // A marca cabe inteira, sem quebrar: com `nowrap` o conteúdo nunca excede
+      // a caixa, então uma quebra apareceria como scrollWidth maior que a caixa.
+      expect(marca.scrollWidth).toBeLessThanOrEqual(Math.ceil(marca.getBoundingClientRect().width));
+      expect(viewport.janela.getComputedStyle(marca).whiteSpace).toBe('nowrap');
     } finally {
       viewport.destruir();
       document.body.removeChild(fixture.nativeElement);
     }
   });
 
-  it('should open the collapsed panel with the identification and no touch target', async () => {
+  // O conteúdo acompanha o `.container` das páginas; só a faixa de fundo sangra
+  // de ponta a ponta. A marca tem que começar na mesma coluna do conteúdo — foi
+  // o padding interno do wrapper que resolveu os 16px de defasagem.
+  it('should align the navbar content with the page container', async () => {
     await setup(true, true, 'light', usuarioAdmin);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    (fixture.nativeElement.querySelector('.navbar-toggle') as HTMLButtonElement).click();
-    fixture.detectChanges();
     document.body.appendChild(fixture.nativeElement);
-    const viewport = renderizarEmViewport(fixture.nativeElement, 375);
+    const viewport = renderizarEmViewport(fixture.nativeElement, 1440);
 
     try {
-      const identificacao = fixture.nativeElement.querySelector('.navbar-usuario') as HTMLElement;
-      const acoes = fixture.nativeElement.querySelector('.navbar-actions') as HTMLElement;
-      const busca = fixture.nativeElement.querySelector('app-busca-global') as HTMLElement;
+      const inner = fixture.nativeElement.querySelector('.navbar-inner') as HTMLElement;
+      const marca = fixture.nativeElement.querySelector('.navbar-brand a') as HTMLElement;
+      const container = fixture.nativeElement.querySelector('main.container') as HTMLElement;
+      const paddingContainer = parseFloat(viewport.janela.getComputedStyle(container).paddingLeft);
 
-      expect(identificacao.getBoundingClientRect().width).toBe(acoes.getBoundingClientRect().width);
-      // Não é alvo de toque: sem o min-height de 44px dos botões vizinhos.
-      expect(viewport.janela.getComputedStyle(identificacao).minHeight).not.toBe('44px');
-      // Abre o bloco de ações, acima da busca — por ordem de DOM, não por
-      // `order`, para a ordem de leitura bater com a visual.
-      expect(identificacao.getBoundingClientRect().top).toBeLessThan(busca.getBoundingClientRect().top);
+      expect(inner.getBoundingClientRect().width).toBeLessThanOrEqual(1120);
+      expect(Math.round(marca.getBoundingClientRect().left))
+        .toBe(Math.round(container.getBoundingClientRect().left + paddingContainer));
     } finally {
       viewport.destruir();
       document.body.removeChild(fixture.nativeElement);
     }
-  });
-
-  it('should show logout button when authenticated', async () => {
-    await setup(true);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.btn-sair')).toBeTruthy();
-  });
-
-  it('should call logout on sair button click', async () => {
-    await setup(true);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.btn-sair') as HTMLButtonElement;
-    btn.click();
-    expect(authServiceSpy.logout).toHaveBeenCalled();
-  });
-
-  it('should render the theme toggle in the navbar when authenticated', async () => {
-    await setup(true);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.navbar .btn-tema')).toBeTruthy();
-  });
-
-  it('should hide the theme toggle when not authenticated', async () => {
-    await setup(false);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.btn-tema')).toBeNull();
-  });
-
-  it('should call toggleTheme when the theme toggle is clicked', async () => {
-    await setup(true);
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.btn-tema') as HTMLButtonElement;
-    btn.click();
-    expect(stylePreferencesSpy.toggleTheme).toHaveBeenCalled();
   });
 
   it('should render the collapsed menu toggle wired to the collapse region', async () => {
@@ -390,30 +273,34 @@ describe('AppComponent', () => {
     expect(el.querySelector('.navbar.is-open')).toBeNull();
   });
 
-  it('should expose the menu, theme, alterar senha and logout inside the collapse region', async () => {
+  it('should expose the navigation and the account menu inside the collapse region', async () => {
     await setup(true, true);
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const collapse = fixture.nativeElement.querySelector('.navbar-collapse') as HTMLElement;
     expect(collapse.querySelector('.navbar-menu a[href="/admin"]')).toBeTruthy();
-    expect(collapse.querySelector('.btn-alterar-senha')).toBeTruthy();
-    expect(collapse.querySelector('.btn-tema')).toBeTruthy();
-    expect(collapse.querySelector('.btn-sair')).toBeTruthy();
+    expect(collapse.querySelector('app-menu-conta')).toBeTruthy();
+    expect(collapse.querySelector('a[href="/perfil/alterar-senha"]')).toBeTruthy();
+    expect(collapse.querySelector('.menu-conta-sair')).toBeTruthy();
   });
 
-  it('should close the menu when logging out', async () => {
+  // O logout saiu do AppComponent junto com as demais ações de conta e passou a
+  // navegar sem tocar em `menuAberto`; sem fechar por navegação, a barra
+  // reapareceria expandida no login seguinte.
+  it('should close the collapsed menu after a navigation completes', async () => {
     await setup(true);
     const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     (el.querySelector('.navbar-toggle') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(el.querySelector('.navbar.is-open')).toBeTruthy();
 
-    (el.querySelector('.btn-sair') as HTMLButtonElement).click();
+    await router.navigateByUrl('/outra-tela');
     fixture.detectChanges();
+
     expect(el.querySelector('.navbar.is-open')).toBeNull();
-    expect(authServiceSpy.logout).toHaveBeenCalled();
   });
 
   it('should close the menu when Escape is pressed', async () => {
@@ -511,26 +398,6 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('app-busca-global')).toBeNull();
-  });
-
-  it('should label the theme toggle to switch to dark while the light theme is active', async () => {
-    await setup(true, false, 'light');
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.btn-tema') as HTMLButtonElement;
-    expect(btn.textContent).toContain('Tema escuro');
-    expect(btn.getAttribute('aria-label')).toBe('Mudar para tema escuro');
-    expect(btn.getAttribute('aria-pressed')).toBe('false');
-  });
-
-  it('should label the theme toggle to switch to light while the dark theme is active', async () => {
-    await setup(true, false, 'dark');
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const btn = fixture.nativeElement.querySelector('.btn-tema') as HTMLButtonElement;
-    expect(btn.textContent).toContain('Tema claro');
-    expect(btn.getAttribute('aria-label')).toBe('Mudar para tema claro');
-    expect(btn.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('should not render the global notification banner when there is no notification', async () => {

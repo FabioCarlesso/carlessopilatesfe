@@ -1,0 +1,247 @@
+.menu-conta {
+  position: relative;
+  flex: none;
+}
+
+// O gatilho fica sobre o `--c-horizonte`, que é fixo nos dois temas, enquanto
+// `--c-cloud-dancer` é re-tematizado em [data-theme="dark"] (#f0ede8 → #0e1620).
+// Por isso as cores aqui são literais: o token derrubaria o texto para 2,16:1 no
+// tema escuro, contra 7,20:1 desta literal nos dois. Mesmo motivo dos antigos
+// botões da barra e da identificação que este menu substitui.
+.menu-conta-gatilho {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--btn-h-sm);
+  padding: 0 var(--sp-3);
+  border: 1px solid rgba(240, 237, 232, 0.55);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: #f0ede8;
+  cursor: pointer;
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 160ms ease, color 160ms ease;
+
+  &:hover {
+    background: #f0ede8;
+    color: var(--c-horizonte);
+
+    .menu-conta-avatar {
+      background: rgba(55, 79, 108, 0.16);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.menu-conta-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: rgba(240, 237, 232, 0.18);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--ls-caps-tight);
+  transition: background-color 160ms ease;
+}
+
+// Só o primeiro nome: o nome inteiro vive no cabeçalho do painel. O max-width é
+// rede de segurança para um primeiro nome fora do comum, não o caso normal — o
+// que a barra exibe não deve aparecer truncado (issue #219).
+.menu-conta-nome {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-conta-chevron {
+  flex: none;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 160ms ease;
+
+  .menu-conta.is-aberto & {
+    transform: rotate(180deg);
+  }
+}
+
+// Fechado por padrão: `display: none` também tira os itens da ordem de tabulação,
+// sem precisar gerenciar `tabindex`.
+.menu-conta-painel {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  right: 0;
+  z-index: 20;
+  min-width: 240px;
+  padding: var(--sp-2) 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-2);
+
+  .menu-conta.is-aberto & {
+    display: block;
+  }
+}
+
+.menu-conta-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--sp-2);
+}
+
+.menu-conta-cabecalho-nome {
+  color: var(--text-primary);
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+}
+
+// Quebra por caractere: e-mails longos não têm espaço onde quebrar e esticariam
+// o painel ou vazariam da borda.
+.menu-conta-cabecalho-email {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.menu-conta-cabecalho-perfil {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-caps-tight);
+  text-transform: uppercase;
+}
+
+.menu-conta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--sp-4);
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--fs-body-sm);
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+  transition: background-color 160ms ease;
+
+  &:hover {
+    background: var(--bg-sunken);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.menu-conta-item-icone {
+  color: var(--text-secondary);
+}
+
+// Separado das demais por ser a ação que encerra a sessão, não uma preferência.
+.menu-conta-sair {
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--c-danger-text);
+  min-height: 44px;
+}
+
+// Faixa estreita do desktop (1025–1199px): o gatilho fica só com avatar e
+// chevron (64px em vez de ~169px). Medido em 1025px — o pior caso do ramo
+// desktop —, o conjunto marca + 5 links deixa ~334px para busca e conta; com o
+// nome no gatilho a busca encosta no `min-width` de 160px e some a folga. O
+// avatar e o `aria-label` do gatilho seguem identificando a conta, e o nome
+// inteiro continua no cabeçalho do painel.
+@media (min-width: 1025px) and (max-width: 1199px) {
+  .menu-conta-nome {
+    display: none;
+  }
+}
+
+// Layout compacto (tablet + mobile): dentro do painel colapsado da navbar o menu
+// vira lista plana — um dropdown aqui seria menu dentro de menu. O gatilho some e
+// o painel deixa de ser flutuante; a semântica ARIA acompanha pelo `compacto` do
+// componente, já que atributo não se altera por media query.
+@media (max-width: 1024px) {
+  .menu-conta {
+    width: 100%;
+  }
+
+  .menu-conta-gatilho {
+    display: none;
+  }
+
+  .menu-conta-painel {
+    display: block;
+    position: static;
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .menu-conta-cabecalho {
+    padding: var(--sp-2);
+    border-bottom-color: rgba(240, 237, 232, 0.16);
+  }
+
+  // Sobre o fundo `--c-horizonte` da navbar, e não sobre `--bg-elev`: valem as
+  // literais pelo mesmo motivo do gatilho.
+  .menu-conta-cabecalho-nome {
+    color: #f0ede8;
+  }
+
+  .menu-conta-cabecalho-email,
+  .menu-conta-cabecalho-perfil {
+    color: rgba(240, 237, 232, 0.75);
+  }
+
+  .menu-conta-item {
+    min-height: 44px;
+    padding: 0 var(--sp-2);
+    color: #f0ede8;
+    font-size: var(--fs-body);
+
+    &:hover {
+      background: rgba(240, 237, 232, 0.12);
+    }
+  }
+
+  .menu-conta-item-icone {
+    color: rgba(240, 237, 232, 0.75);
+  }
+
+  .menu-conta-sair {
+    border-top-color: rgba(240, 237, 232, 0.16);
+    // `--c-danger-text` rende abaixo de 4,5:1 sobre o azul da navbar nos dois
+    // temas; este vermelho claro fica em 5,1:1 e mantém a leitura de "perigo".
+    color: #f0a9a9;
+  }
+}

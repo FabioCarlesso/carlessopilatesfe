@@ -62,14 +62,40 @@ a {
 .navbar {
   background: var(--c-horizonte);
   color: var(--c-cloud-dancer);
-  padding: 0 var(--sp-6);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-5);
+  // O wrapper estica até a altura da barra; é dele que os links herdam a altura
+  // cheia para ancorar a marcação da seção ativa na borda inferior. A altura
+  // total continua saindo daqui (64px), e não do wrapper: somar um `min-height`
+  // lá dentro empilharia com a borda de 1px e a barra passaria a 65px.
+  align-items: stretch;
   min-height: 64px;
   border-bottom: 1px solid rgba(240, 237, 232, 0.16);
   box-shadow: var(--shadow-2);
+
+  // A faixa de fundo sangra de ponta a ponta, mas o conteúdo acompanha o
+  // `.container` das páginas — sem isso a navegação fica colada nas bordas do
+  // viewport enquanto o conteúdo abaixo está centralizado. `max-width` e
+  // `padding` repetem os do `.container` de propósito: é o padding interno que
+  // faz a marca começar na mesma coluna do conteúdo, e não 16px à esquerda dele.
+  &-inner {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 var(--sp-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-5);
+  }
+
+  // Quem cede espaço sob pressão é só a busca (`flex: 0 1 260px` no próprio
+  // componente). Marca, menu e menu de conta são `flex: none` e nunca quebram:
+  // antes todos encolhiam juntos e a barra estourava em duas linhas em qualquer
+  // largura abaixo de ~1426px — toda a faixa de notebook (issue #219).
+  &-brand {
+    flex: none;
+  }
 
   &-brand a {
     color: var(--c-cloud-dancer);
@@ -79,12 +105,16 @@ a {
     font-weight: 400;
     letter-spacing: var(--ls-display);
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   &-menu {
     list-style: none;
     display: flex;
-    flex-wrap: wrap;
+    flex: none;
+    // Estica na altura da barra para que os links possam ancorar a marcação da
+    // seção ativa na borda inferior; os `li` já herdam o stretch daqui.
+    align-self: stretch;
     gap: var(--sp-5);
 
     a {
@@ -92,6 +122,7 @@ a {
       text-decoration: none;
       font-size: var(--fs-body-sm);
       font-weight: 500;
+      white-space: nowrap;
 
       &:hover {
         color: var(--c-cloud-dancer);
@@ -102,9 +133,6 @@ a {
       &.is-active {
         color: #f6f4f0;
         font-weight: 600;
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 6px;
       }
     }
   }
@@ -112,23 +140,10 @@ a {
   &-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-width: 0;
     gap: var(--sp-3);
-  }
-
-  // Identificação do usuário autenticado ("Nome · Perfil"). Cor literal, como
-  // nos links do menu acima e pelo mesmo motivo: o fundo da navbar é o
-  // --c-horizonte fixo nos dois temas, mas --c-cloud-dancer é re-tematizado em
-  // [data-theme="dark"] (#f0ede8 → #0e1620). Usar o token aqui renderia 2,16:1
-  // no tema escuro — abaixo dos 4,5:1 da WCAG AA para 13px —, contra 7,20:1
-  // desta literal nos dois temas (medido no DOM). O truncamento evita que um
-  // nome longo empurre os botões de ação ou quebre a barra em duas linhas.
-  &-usuario {
-    color: #f0ede8;
-    font-size: var(--fs-body-sm);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   // Wrapper dos links + ações. No desktop não cria caixa própria
@@ -138,10 +153,21 @@ a {
   }
 }
 
+// Marcação da seção atual: barra colada na base da navbar, alinhada à altura
+// total dela. Substitui o `text-decoration: underline` com offset, que flutuava
+// no meio da barra sem relação visual com a borda inferior.
+.navbar-inner .navbar-menu a {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  border-bottom: 2px solid transparent;
+
+  &.is-active {
+    border-bottom-color: #f6f4f0;
+  }
+}
+
 .btn,
-.btn-sair,
-.btn-tema,
-.btn-alterar-senha,
 .navbar-toggle {
   display: inline-flex;
   align-items: center;
@@ -202,9 +228,6 @@ a {
 }
 
 .btn-outline,
-.btn-sair,
-.btn-tema,
-.btn-alterar-senha,
 .navbar-toggle {
   background: transparent;
   border-color: var(--border-default);
@@ -216,9 +239,6 @@ a {
   }
 }
 
-.btn-sair,
-.btn-tema,
-.btn-alterar-senha,
 .navbar-toggle {
   border-color: rgba(240, 237, 232, 0.55);
   color: var(--c-cloud-dancer);
@@ -709,16 +729,18 @@ body.dialog-aberto {
 }
 
 // Faixa de tablet + mobile (≤ 1024px): a navbar completa (marca + até 5 links +
-// busca + 3 ações) não cabe na barra e transborda/sobrepõe. Colapsa num painel
-// acionado pelo botão do menu. O breakpoint acompanha DESKTOP_MIN_WIDTH em
-// app.component.ts, que fecha o menu ao voltar para o layout desktop.
+// busca + menu de conta) não cabe na barra e transborda/sobrepõe. Colapsa num
+// painel acionado pelo botão do menu. O breakpoint acompanha DESKTOP_MIN_WIDTH
+// em shared/utils/breakpoints.ts, que fecha o menu ao voltar para o desktop e
+// alterna o menu de conta entre dropdown e lista plana.
 @media (max-width: 1024px) {
   // Navbar colapsável: barra fechada mantém apenas marca + botão do menu
   // (~64px de altura). Os links e ações ficam num painel que expande abaixo.
-  .navbar {
+  // O padding horizontal já vem do `.navbar-inner`, igual ao do `.container`.
+  .navbar-inner {
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--sp-3);
-    padding: 0 var(--sp-4);
   }
 
   .navbar-toggle {
@@ -741,16 +763,29 @@ body.dialog-aberto {
   .navbar-menu {
     flex-direction: column;
     align-items: stretch;
+    align-self: auto;
     width: 100%;
     gap: 0;
+  }
 
-    a {
-      display: flex;
-      align-items: center;
-      min-height: 44px;
-      width: 100%;
-      padding: 0 var(--sp-2);
-      font-size: var(--fs-body);
+  // Sobrescreve o alvo do desktop, onde o link tem a altura cheia da barra para
+  // ancorar a marcação da seção ativa na borda inferior. Empilhados no painel,
+  // os links voltam a ser alvos de toque de 44px e a seção ativa se marca por
+  // sublinhado, que não depende da borda da barra.
+  .navbar-inner .navbar-menu a {
+    display: flex;
+    align-items: center;
+    height: auto;
+    min-height: 44px;
+    width: 100%;
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-body);
+    border-bottom: none;
+
+    &.is-active {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
     }
   }
 
@@ -759,27 +794,6 @@ body.dialog-aberto {
     align-items: stretch;
     width: 100%;
     gap: var(--sp-2);
-
-    .btn-alterar-senha,
-    .btn-tema,
-    .btn-sair {
-      width: 100%;
-      min-height: 44px;
-    }
-
-    // No painel expandido há espaço para o nome inteiro: o texto ocupa a
-    // largura toda e deixa de ser truncado. Sem os 44px dos botões vizinhos,
-    // porque não é alvo de toque. O padding acompanha o dos links do menu.
-    // A identificação abre o bloco de ações pela própria ordem do DOM (é o
-    // primeiro filho de .navbar-actions), sem `order`: ordem visual e ordem de
-    // leitura ficam iguais nos dois breakpoints.
-    .navbar-usuario {
-      width: 100%;
-      max-width: none;
-      padding: var(--sp-2);
-      overflow: visible;
-      white-space: normal;
-    }
   }
 
   // Alvos de toque adequados (≥ 44px) para todos os botões de ação de linha
