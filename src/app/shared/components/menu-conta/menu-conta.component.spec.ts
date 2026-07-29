@@ -19,27 +19,33 @@ describe('MenuContaComponent', () => {
     role: 'ADMIN'
   };
 
-  // O componente lê `matchMedia` no ngOnInit para decidir entre dropdown e lista
-  // plana. Sem o duplo, o Karma responderia com a largura real da sua janela e o
-  // modo sob teste variaria conforme a máquina.
-  function mockarMediaQuery(compacto: boolean): ((evento: MediaQueryListEvent) => void)[] {
-    const ouvintes: ((evento: MediaQueryListEvent) => void)[] = [];
+  // O componente consulta `matchMedia` para decidir entre dropdown e lista plana.
+  // Sem o duplo, o Karma responderia com a largura real da sua janela e o modo sob
+  // teste variaria conforme a máquina. `matches` é gravável de propósito: o
+  // componente lê a consulta a cada acesso (e não uma cópia feita no init), então
+  // simular troca de layout é mudar `matches` e disparar o ouvinte.
+  interface ConsultaFalsa {
+    consulta: MediaQueryList & { matches: boolean };
+    ouvintes: (() => void)[];
+  }
+
+  function mockarMediaQuery(compacto: boolean): ConsultaFalsa {
+    const ouvintes: (() => void)[] = [];
     const consulta = {
       matches: compacto,
-      addEventListener: (_: string, ouvinte: (evento: MediaQueryListEvent) => void) => ouvintes.push(ouvinte),
-      removeEventListener: (_: string, ouvinte: (evento: MediaQueryListEvent) => void) =>
-        ouvintes.splice(ouvintes.indexOf(ouvinte), 1)
-    } as unknown as MediaQueryList;
+      addEventListener: (_: string, ouvinte: () => void) => ouvintes.push(ouvinte),
+      removeEventListener: (_: string, ouvinte: () => void) => ouvintes.splice(ouvintes.indexOf(ouvinte), 1)
+    } as unknown as MediaQueryList & { matches: boolean };
     spyOn(window, 'matchMedia').and.returnValue(consulta);
-    return ouvintes;
+    return { consulta, ouvintes };
   }
 
   async function setup(
     currentUser: AuthenticatedUser | null = usuarioAdmin,
     theme: StyleTheme = 'light',
     compacto = false
-  ) {
-    const ouvintes = mockarMediaQuery(compacto);
+  ): Promise<ConsultaFalsa> {
+    const mediaQuery = mockarMediaQuery(compacto);
 
     authServiceSpy = jasmine.createSpyObj('AuthService', ['getCurrentUser', 'logout']);
     authServiceSpy.getCurrentUser.and.returnValue(currentUser);
@@ -65,7 +71,7 @@ describe('MenuContaComponent', () => {
       ]
     }).compileComponents();
 
-    return ouvintes;
+    return mediaQuery;
   }
 
   function criar(): ComponentFixture<MenuContaComponent> {
@@ -331,19 +337,43 @@ describe('MenuContaComponent', () => {
     });
 
     it('should close the panel when leaving the compact layout', async () => {
-      const ouvintes = await setup(usuarioAdmin, 'light', true);
+      const { consulta, ouvintes } = await setup(usuarioAdmin, 'light', true);
       const fixture = criar();
       fixture.componentInstance.aberto = true;
 
-      ouvintes[0]({ matches: false } as MediaQueryListEvent);
+      consulta.matches = false;
+      ouvintes[0]();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.compacto).toBeFalse();
       expect(fixture.componentInstance.aberto).toBeFalse();
     });
 
+    // A cópia feita uma vez no init podia congelar em desacordo com o media query
+    // — gatilho visível sem `aria-haspopup`, painel flutuante sem `role="menu"` —
+    // sem nada que corrigisse depois. Lendo da consulta, os dois andam juntos.
+    it('should follow the media query without depending on a value copied at init', async () => {
+      const { consulta } = await setup(usuarioAdmin, 'light', true);
+      const fixture = criar();
+      expect(fixture.componentInstance.compacto).toBeTrue();
+
+      // Sem disparar o ouvinte: é o cenário em que o evento não chega e a cópia
+      // feita no init ficaria presa no valor errado para sempre.
+      consulta.matches = false;
+      expect(fixture.componentInstance.compacto).toBeFalse();
+
+      // E o render acompanha na primeira interação que marcar a view (OnPush).
+      // Com a cópia feita no init, nem essa detecção corrigia: o valor ficava
+      // preso no que foi lido antes de o layout assentar.
+      gatilhoDe(fixture).click();
+      fixture.detectChanges();
+
+      expect(gatilhoDe(fixture).getAttribute('aria-haspopup')).toBe('menu');
+      expect(fixture.nativeElement.querySelector('.menu-conta-painel').getAttribute('role')).toBe('menu');
+    });
+
     it('should drop the media query listener on destroy', async () => {
-      const ouvintes = await setup();
+      const { ouvintes } = await setup();
       const fixture = criar();
       expect(ouvintes.length).toBe(1);
 
@@ -357,20 +387,47 @@ describe('MenuContaComponent', () => {
       return Array.from(fixture.nativeElement.querySelectorAll('.menu-conta-item')) as HTMLElement[];
     }
 
+    // Em iframe largo de propósito: com o painel partindo de `display: none`, este
+    // é o único cenário em que a abertura precisa ser renderizada antes do
+    // `focus()`. Rodando na janela do Karma (765px) o teste passava sem exercitar
+    // nada — no compacto o painel já está visível e a corrida não existe.
     it('should open and focus the first item on ArrowDown from the trigger', async () => {
-      await setup();
+      const { consulta } = await setup();
+      consulta.matches = false;
       const fixture = criar();
       document.body.appendChild(fixture.nativeElement);
+      const viewport = renderizarEmViewport(fixture.nativeElement, 1280);
 
       try {
-        gatilhoDe(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.menu-conta.is-aberto')).toBeTruthy();
+        const painel = fixture.nativeElement.querySelector('.menu-conta-painel') as HTMLElement;
+        expect(viewport.janela.getComputedStyle(painel).display).toBe('none');
 
-        // O foco é adiado até o Angular renderizar a abertura.
-        await new Promise(resolve => setTimeout(resolve));
-        expect(document.activeElement).toBe(itensDe(fixture)[0]);
+        gatilhoDe(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+        // Sem espera: o foco tem que valer no mesmo turno, senão a abertura por
+        // teclado depende de o macrotask perder a corrida para o render.
+        expect(viewport.janela.getComputedStyle(painel).display).toBe('block');
+        expect(viewport.janela.document.activeElement).toBe(itensDe(fixture)[0]);
       } finally {
+        viewport.destruir();
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    it('should open and focus the last item on ArrowUp from the trigger', async () => {
+      const { consulta } = await setup();
+      consulta.matches = false;
+      const fixture = criar();
+      document.body.appendChild(fixture.nativeElement);
+      const viewport = renderizarEmViewport(fixture.nativeElement, 1280);
+
+      try {
+        gatilhoDe(fixture).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+
+        const itens = itensDe(fixture);
+        expect(viewport.janela.document.activeElement).toBe(itens[itens.length - 1]);
+      } finally {
+        viewport.destruir();
         document.body.removeChild(fixture.nativeElement);
       }
     });
@@ -454,7 +511,7 @@ describe('MenuContaComponent', () => {
       const botao = fixture.nativeElement.querySelectorAll('.menu-conta-item')[1] as HTMLButtonElement;
       expect(botao.textContent).toContain('Tema escuro');
       expect(botao.getAttribute('aria-label')).toBe('Mudar para tema escuro');
-      expect(botao.getAttribute('aria-pressed')).toBe('false');
+      expect(botao.getAttribute('aria-checked')).toBe('false');
     });
 
     it('should label the theme item to switch to light while the dark theme is active', async () => {
@@ -463,7 +520,7 @@ describe('MenuContaComponent', () => {
       const botao = fixture.nativeElement.querySelectorAll('.menu-conta-item')[1] as HTMLButtonElement;
       expect(botao.textContent).toContain('Tema claro');
       expect(botao.getAttribute('aria-label')).toBe('Mudar para tema claro');
-      expect(botao.getAttribute('aria-pressed')).toBe('true');
+      expect(botao.getAttribute('aria-checked')).toBe('true');
     });
 
     it('should delegate the logout', async () => {
@@ -495,6 +552,47 @@ describe('MenuContaComponent', () => {
       expect(gatilho.getAttribute('aria-expanded')).toBeNull();
       expect(painel.getAttribute('role')).toBeNull();
       expect(fixture.nativeElement.querySelector('.menu-conta-item')?.getAttribute('role')).toBeNull();
+    });
+
+    // No compacto não há dropdown a dispensar e o gatilho nem existe: quem trata o
+    // Esc é o AppComponent, fechando a navbar colapsada. Engolir o evento aqui
+    // prendia o painel aberto, sem fechar nada e sem mover o foco.
+    it('should let the Escape reach the document in the compact layout', async () => {
+      await setup(usuarioAdmin, 'light', true);
+      const fixture = criar();
+      document.body.appendChild(fixture.nativeElement);
+      const noDocumento = jasmine.createSpy('escapeNoDocumento');
+      document.addEventListener('keydown', noDocumento);
+
+      try {
+        const item = fixture.nativeElement.querySelector('.menu-conta-item') as HTMLElement;
+        item.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+        expect(noDocumento).toHaveBeenCalled();
+      } finally {
+        document.removeEventListener('keydown', noDocumento);
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    // `aria-pressed` só vale em `role="button"`: num `menuitemcheckbox` seria
+    // ignorado, e o estado do tema deixaria de ser anunciado.
+    it('should announce the theme state with the attribute each role supports', async () => {
+      const { consulta } = await setup(usuarioAdmin, 'dark', true);
+      const fixture = criar();
+      const item = () => fixture.nativeElement.querySelectorAll('.menu-conta-item')[1] as HTMLElement;
+
+      expect(item().getAttribute('role')).toBeNull();
+      expect(item().getAttribute('aria-pressed')).toBe('true');
+      expect(item().getAttribute('aria-checked')).toBeNull();
+
+      consulta.matches = false;
+      gatilhoDe(fixture).click();
+      fixture.detectChanges();
+
+      expect(item().getAttribute('role')).toBe('menuitemcheckbox');
+      expect(item().getAttribute('aria-checked')).toBe('true');
+      expect(item().getAttribute('aria-pressed')).toBeNull();
     });
 
     it('should keep the menu semantics in the desktop layout', async () => {

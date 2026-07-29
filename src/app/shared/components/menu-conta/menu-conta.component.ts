@@ -48,11 +48,20 @@ export class MenuContaComponent implements OnInit {
   // sempre passam por uma navegação, então o valor acompanha a sessão.
   usuario: AuthenticatedUser | null = null;
 
+  private consultaCompacto?: MediaQueryList;
+
   // O layout compacto renderiza o painel como lista plana, sem gatilho: um
   // dropdown dentro do painel colapsado da navbar seria um menu dentro de menu.
   // A troca vive aqui, e não só no media query, porque a semântica ARIA muda
   // junto (ver `aria-haspopup`/`role` no template) e CSS não altera atributo.
-  compacto = false;
+  //
+  // É getter, e não campo copiado no `ngOnInit`: a cópia congelava o valor lido
+  // antes de o layout assentar e podia travar em desacordo com o media query —
+  // gatilho visível sem `aria-haspopup`, painel flutuante sem `role="menu"`, sem
+  // nada que corrigisse depois. Lendo da consulta, CSS e ARIA não divergem.
+  get compacto(): boolean {
+    return this.consultaCompacto?.matches ?? false;
+  }
 
   constructor(
     private authService: AuthService,
@@ -77,12 +86,11 @@ export class MenuContaComponent implements OnInit {
       });
 
     const consulta = window.matchMedia(MEDIA_QUERY_COMPACTO);
-    this.compacto = consulta.matches;
-    const aoMudar = (evento: MediaQueryListEvent) => {
-      this.compacto = evento.matches;
-      // Ao voltar para o desktop o painel precisa reabrir fechado: no compacto
-      // ele fica sempre visível, e herdar `aberto = true` deixaria o dropdown
-      // aberto sem que o usuário tenha clicado no gatilho.
+    this.consultaCompacto = consulta;
+    const aoMudar = () => {
+      // Ao trocar de layout o painel precisa voltar fechado: no compacto ele
+      // fica sempre visível, e herdar `aberto = true` deixaria o dropdown aberto
+      // no desktop sem que o usuário tenha clicado no gatilho.
       this.aberto = false;
       this.cdr.markForCheck();
     };
@@ -141,6 +149,21 @@ export class MenuContaComponent implements OnInit {
     this.aberto = !this.aberto;
   }
 
+  /**
+   * Abre o painel e **aplica a renderização na hora**, de modo que os itens já
+   * estejam visíveis para quem chamar `focarItem` em seguida.
+   *
+   * O `detectChanges()` síncrono substitui um `setTimeout` que corria contra o
+   * ciclo de detecção do Angular: quando o macrotask vencia, o `focus()` acertava
+   * um painel ainda em `display: none` e falhava em silêncio, deixando o foco no
+   * gatilho. A falha era intermitente e não aparecia na suíte, porque a janela do
+   * Karma roda a 765px — no compacto o painel já está visível e não há corrida.
+   */
+  private abrir(): void {
+    this.aberto = true;
+    this.cdr.detectChanges();
+  }
+
   fechar(): void {
     this.aberto = false;
   }
@@ -158,19 +181,25 @@ export class MenuContaComponent implements OnInit {
   aoTeclarNoGatilho(event: KeyboardEvent): void {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      this.aberto = true;
-      // O foco é adiado porque os itens só existem no DOM depois que o Angular
-      // renderiza a abertura; focar ainda dentro do keydown não acharia nada.
-      const posicao = event.key === 'ArrowDown' ? 0 : -1;
-      setTimeout(() => this.focarItem(posicao));
+      this.abrir();
+      this.focarItem(event.key === 'ArrowDown' ? 0 : -1);
     }
   }
 
   aoTeclarNoPainel(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
-      // O AppComponent fecha a navbar colapsada em `document:keydown.escape`; sem
-      // parar a propagação, o Esc que dispensa este painel fecharia o menu inteiro
-      // no mobile — mesmo cuidado tomado na busca global.
+      // No compacto não há dropdown a dispensar: o painel é permanentemente
+      // visível e o gatilho nem existe. Deixar o Esc subir é justamente o que
+      // fecha a navbar colapsada no AppComponent — engoli-lo aqui prendia o
+      // painel aberto, sem fechar nada e sem mover o foco.
+      if (this.compacto) {
+        return;
+      }
+
+      // No desktop vale o contrário: o AppComponent fecha a navbar em
+      // `document:keydown.escape`, e sem parar a propagação o Esc que dispensa
+      // este dropdown fecharia o menu inteiro junto — mesmo cuidado tomado na
+      // busca global.
       event.stopPropagation();
       this.fechar();
       this.gatilho?.nativeElement.focus();

@@ -41,11 +41,16 @@
       (click)="fechar()"
     >Alterar senha</a>
 
+    <!-- O estado do tema é anunciado pelo atributo que cada papel suporta: em
+         `menuitemcheckbox` é `aria-checked`, e `aria-pressed` — válido só em
+         `role="button"` — seria ignorado. No compacto o item volta a ser um
+         botão comum e aí `aria-pressed` é o correto. -->
     <button
       type="button"
       class="menu-conta-item"
-      [attr.role]="compacto ? null : 'menuitem'"
-      [attr.aria-pressed]="temaEscuro"
+      [attr.role]="compacto ? null : 'menuitemcheckbox'"
+      [attr.aria-checked]="compacto ? null : temaEscuro"
+      [attr.aria-pressed]="compacto ? temaEscuro : null"
       [attr.aria-label]="rotuloAcessivelTema"
       (click)="alternarTema()"
     >
