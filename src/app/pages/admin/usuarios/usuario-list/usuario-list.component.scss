@@ -36,14 +36,21 @@
   font-weight: 600;
   white-space: nowrap;
 
+  // `--bg-success`/`--text-success`/`--bg-warning`/`--text-warning` nunca existiram
+  // em `_tokens.scss`: os badges renderizavam pelos literais do fallback, verde e
+  // vermelho claros, e por isso escapavam do tema escuro (issue #213). Os tokens
+  // reais têm versão por tema; a variante `-text` é a indicada aqui porque
+  // `--c-success`/`--c-danger` também servem de fundo (`.btn-danger`) e não são
+  // clareadas no escuro. "Inativo" fica em `--c-danger-*`, mantendo o vermelho
+  // que o fallback já pintava.
   &--ativo {
-    background: var(--bg-success, #e6f4ea);
-    color: var(--text-success, #1e6b3a);
+    background: var(--c-success-bg);
+    color: var(--c-success-text);
   }
 
   &--inativo {
-    background: var(--bg-warning, #fdecea);
-    color: var(--text-warning, #b3261e);
+    background: var(--c-danger-bg);
+    color: var(--c-danger-text);
   }
 
   &--desconhecido {

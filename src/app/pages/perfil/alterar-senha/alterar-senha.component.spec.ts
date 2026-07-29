@@ -217,4 +217,44 @@ describe('AlterarSenhaComponent', () => {
     component.toggleConfirmacao();
     expect(component.mostrarConfirmacao).toBeTrue();
   });
+
+  // A tela usava `--space-md`, `--space-sm`, `--radius-sm`, `--text-default` e
+  // `--surface-muted`, que nunca foram definidos em `_tokens.scss`: tudo vinha do
+  // literal do fallback, fora do sistema de temas (issue #213). Diferente dos
+  // guards das listagens do prontuário, este **não** falha contra o CSS antigo —
+  // os literais rendiam os mesmos números e a cor herdada coincidia com
+  // `--text-primary` nos dois temas. Quem pega a classe de erro ali é o
+  // `npm run lint:tokens`; o papel do guard é travar os valores para que a
+  // troca de nome não vire troca de desenho (`--r-sm` são 2px, não 4px).
+  it('should size and color the password toggle from real tokens in both themes', async () => {
+    const { fixture } = await setup();
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const el = fixture.nativeElement as HTMLElement;
+      const hint = el.querySelector('.form-section-hint') as HTMLElement;
+      const campo = el.querySelector('.password-field') as HTMLElement;
+      const botao = el.querySelector('.btn-toggle-password') as HTMLElement;
+
+      expect(getComputedStyle(hint).marginBottom).toBe('16px');
+      expect(getComputedStyle(campo).columnGap).toBe('8px');
+      expect(getComputedStyle(botao).borderRadius).toBe('4px');
+      expect(getComputedStyle(botao).paddingLeft).toBe('16px');
+      expect(getComputedStyle(botao).paddingRight).toBe('16px');
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(botao).color).toBe('rgb(20, 31, 45)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(botao).color).toBe('rgb(235, 232, 226)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
 });

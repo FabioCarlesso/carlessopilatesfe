@@ -418,6 +418,40 @@ describe('UsuarioListComponent', () => {
     }
   });
 
+  // Os badges usavam `--bg-success`/`--text-success`/`--bg-warning`/`--text-warning`,
+  // que nunca foram definidos em `_tokens.scss`: pintavam pelos literais do
+  // fallback e por isso ignoravam o tema escuro — verde-claro sobre fundo escuro
+  // (issue #213). O guard trava os tokens com versão por tema.
+  it('should paint the status badges with themed tokens in both themes', () => {
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const el = fixture.nativeElement as HTMLElement;
+      const ativo = el.querySelector('.status--ativo') as HTMLElement;
+      const inativo = el.querySelector('.status--inativo') as HTMLElement;
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(ativo).backgroundColor).toBe('rgb(230, 237, 228)');
+      expect(getComputedStyle(ativo).color).toBe('rgb(90, 122, 94)');
+      expect(getComputedStyle(inativo).backgroundColor).toBe('rgb(240, 220, 220)');
+      expect(getComputedStyle(inativo).color).toBe('rgb(140, 58, 58)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(ativo).backgroundColor).toBe('rgb(29, 42, 35)');
+      expect(getComputedStyle(ativo).color).toBe('rgb(109, 163, 114)');
+      expect(getComputedStyle(inativo).backgroundColor).toBe('rgb(44, 29, 29)');
+      expect(getComputedStyle(inativo).color).toBe('rgb(217, 112, 112)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should render a Reativar button for inactive users and an Inativar button for active users', () => {
     const el = fixture.nativeElement as HTMLElement;
     const rows = el.querySelectorAll('tbody tr');

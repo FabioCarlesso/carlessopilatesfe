@@ -404,4 +404,36 @@ describe('PacienteSessaoListComponent', () => {
     component.acaoPendente = 'cancelar';
     expect(component.acaoLabel()).toBe('cancelar');
   });
+
+  // O card usava `--surface`, `--c-primary` e `--radius-lg`, que nunca foram
+  // definidos em `_tokens.scss`: o fundo não era pintado, a borda de destaque da
+  // sessão agendada caía para `currentColor` (faixa creme de 4px no tema escuro)
+  // e o raio para `0` (issue #213). O guard trava os nomes que existem de fato.
+  it('should paint the card with real tokens in both themes', async () => {
+    await setup([mockSessaoAgendada]);
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const card = (fixture.nativeElement as HTMLElement)
+        .querySelector('.sessao-card.sessao-agendada') as HTMLElement;
+
+      expect(getComputedStyle(card).borderRadius).toBe('8px');
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(card).backgroundColor).toBe('rgb(255, 255, 255)');
+      expect(getComputedStyle(card).borderLeftColor).toBe('rgb(55, 79, 108)');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(card).backgroundColor).toBe('rgb(24, 34, 48)');
+      expect(getComputedStyle(card).borderLeftColor).toBe('rgb(168, 188, 202)');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
 });
