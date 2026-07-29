@@ -10,10 +10,11 @@
 }
 
 .reavaliacao-card {
-  background: var(--surface);
+  background-color: var(--bg-elev);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--c-primary);
-  border-radius: var(--radius-lg);
+  /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
+  border-left: 4px solid var(--text-brand);
+  border-radius: var(--r-lg);
   padding: var(--sp-4);
 }
 

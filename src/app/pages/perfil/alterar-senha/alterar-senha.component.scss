@@ -1,7 +1,12 @@
+// `--space-*`, `--radius-*`, `--text-default` e `--surface-muted` nunca existiram
+// em `_tokens.scss`: tudo aqui vinha do literal do fallback, fora do sistema de
+// temas (issue #213). A nomenclatura real é `--sp-*` para espaçamento e `--r-*`
+// para raio; os valores abaixo são os equivalentes exatos dos literais antigos,
+// então o desenho da tela não muda — só passa a acompanhar o tema.
 .form-section-hint {
   color: var(--text-muted);
   font-size: var(--fs-body);
-  margin-bottom: var(--space-md, 1rem);
+  margin-bottom: var(--sp-4);
 }
 
 .field-hint {
@@ -12,7 +17,7 @@
 .password-field {
   display: flex;
   align-items: stretch;
-  gap: var(--space-sm, 0.5rem);
+  gap: var(--sp-2);
 
   .form-control {
     flex: 1;
@@ -20,16 +25,18 @@
 }
 
 .btn-toggle-password {
-  background: transparent;
-  border: 1px solid var(--border-default, currentColor);
-  color: var(--text-default, inherit);
-  border-radius: var(--radius-sm, 4px);
-  padding: 0 var(--space-md, 1rem);
+  background-color: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  // `--r-md` (4px) e não `--r-sm` (2px): 4px era o raio que o fallback pintava e
+  // é o mesmo do `.form-control` ao lado, com quem o botão forma um par.
+  border-radius: var(--r-md);
+  padding: 0 var(--sp-4);
   font-size: var(--fs-micro);
   cursor: pointer;
 
   &:hover,
   &:focus {
-    background: var(--surface-muted, transparent);
+    background-color: var(--bg-sunken);
   }
 }

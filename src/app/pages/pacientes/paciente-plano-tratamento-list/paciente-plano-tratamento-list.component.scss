@@ -10,13 +10,14 @@
 }
 
 .plano-card {
-  background: var(--surface);
+  background-color: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-lg);
   padding: var(--sp-4);
 
   &.plano-ativo {
-    border-left: 4px solid var(--c-primary);
+    /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
+    border-left: 4px solid var(--text-brand);
   }
 }
 
