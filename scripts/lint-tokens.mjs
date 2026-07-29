@@ -65,7 +65,12 @@ function semComentarios(conteudo, caminho) {
     return conteudo.replace(/<!--[\s\S]*?-->/g, trecho => trecho.replace(/[^\n]/g, ' '));
   }
 
-  const saida = [...conteudo];
+  // `split('')` e não `[...conteudo]`: o spread itera por *code point* e junta o
+  // par surrogate de um emoji num só elemento, enquanto o laço abaixo indexa por
+  // *code unit* (`conteudo[i]`). Um único caractere fora do BMP desalinharia as
+  // duas indexações e o `saida[i] = ' '` passaria a apagar a posição errada —
+  // comendo o `v` de um `var(` colado a um comentário e deixando o uso passar.
+  const saida = conteudo.split('');
   let estado = 'codigo';
   let aspa = '';
 
