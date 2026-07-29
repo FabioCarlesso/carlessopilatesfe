@@ -37,7 +37,7 @@ npm install
 | `npm start`      | Servidor de desenvolvimento em http://localhost:4200 |
 | `npm test`       | Executa testes unitários (Karma + Jasmine)         |
 | `npm run test:ci`| Testes em Chrome headless, sem watch, com cobertura (usado na CI) |
-| `npm run lint`   | Análise estática com ESLint (angular-eslint)       |
+| `npm run lint`   | Análise estática com ESLint (angular-eslint) + `lint:tokens`  |
 | `npm run lint:tokens` | Verifica que todo `var(--token)` de `src/` aponta para um token declarado |
 | `npm run build`  | Build de produção em `dist/carlessopilatesfe`      |
 | `npm run watch`  | Build contínuo em modo desenvolvimento             |
@@ -77,7 +77,7 @@ O CodeGraph é ferramenta de apoio ao desenvolvimento: não entra no bundle, no 
 A cada `push` na `master` e a cada `pull_request`, o workflow
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa no GitHub Actions:
 
-- **Lint** — `npm run lint` (ESLint + angular-eslint) e `npm run lint:tokens` (nomes de custom property)
+- **Lint** — `npm run lint`, que encadeia `ng lint` (ESLint + angular-eslint) e `lint:tokens` (nomes de custom property)
 - **Testes unitários** — `npm run test:ci` em Chrome headless, publicando o relatório de cobertura como artifact
 - **Build de produção** — `npm run build`, respeitando os *budgets* de bundle e publicando `dist/` como artifact
 - **Build da imagem Docker** — apenas em merges na `master`, valida o `Dockerfile` (sem publicar imagem)
@@ -195,7 +195,7 @@ Os arquivos de referência do Design System ficam em `assets/`, incluindo `Funda
 
 No Angular, os tokens foram migrados para `src/styles/_tokens.scss` e importados por `src/styles.scss`. O sistema usa `data-theme="light|dark"` e `data-density="default|compact|comfortable"` no `documentElement`, aplicado pelo `StylePreferencesService`.
 
-A nomenclatura é **`--bg-*` para superfície, `--text-*` para texto, `--border-*` para borda, `--sp-*` para espaçamento e `--r-*` para raio** — nomes comuns de outros design systems (`--surface`, `--space-md`, `--radius-lg`, `--c-primary`) não existem aqui. Escrever um nome inexistente não quebra build, lint nem teste: `var(--inexistente)` sem fallback torna a declaração inválida no momento da computação e a propriedade cai para o valor herdado ou inicial (fundo transparente, `currentColor`, raio `0`), enquanto `var(--inexistente, 1rem)` renderiza pelo literal e escapa do tema escuro. Foi assim que quatro telas do prontuário e os badges de `/admin/usuarios` ficaram meses fora do padrão (issue #213). Por isso `npm run lint:tokens` (`scripts/lint-tokens.mjs`) valida, no job de lint da CI, que todo `var(--token)` de `src/` aponta para um token de `_tokens.scss` ou para uma variável declarada no próprio arquivo — o nome é conferido inclusive quando há fallback.
+A nomenclatura é **`--bg-*` para superfície, `--text-*` para texto, `--border-*` para borda, `--sp-*` para espaçamento e `--r-*` para raio** — nomes comuns de outros design systems (`--surface`, `--space-md`, `--radius-lg`, `--c-primary`) não existem aqui. Escrever um nome inexistente não quebra build, lint nem teste: `var(--inexistente)` sem fallback torna a declaração inválida no momento da computação e a propriedade cai para o valor herdado ou inicial (fundo transparente, `currentColor`, raio `0`), enquanto `var(--inexistente, 1rem)` renderiza pelo literal e escapa do tema escuro. Foi assim que quatro telas do prontuário e os badges de `/admin/usuarios` ficaram meses fora do padrão (issue #213). Por isso `npm run lint:tokens` (`scripts/lint-tokens.mjs`), encadeado em `npm run lint` e portanto executado tanto localmente quanto no job de lint da CI, valida que todo `var(--token)` de `src/` aponta para um token de `_tokens.scss` ou para uma variável declarada na **pasta** de quem o usa — o escopo é a pasta porque um componente é uma pasta aqui, e uma variável local pode nascer no `.scss` e ser consumida por um `[style.--x]` no `.html` irmão. O nome é conferido inclusive quando há fallback, e comentários são descartados antes da análise: sem isso, uma custom property escrita dentro de um bloco `/* */` passaria a valer como declaração e uma menção a `var(--x)` em comentário seria acusada como uso.
 
 Componentes globais como botões, inputs, cards, badges, tabelas, paginação, alertas e diálogos consomem tokens semânticos de cor, tipografia, raio, sombra e densidade.
 

@@ -26,10 +26,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      # `npm run lint` encadeia `ng lint` e `lint:tokens`: nomes de custom
+      # property nao sao validados por nenhuma outra etapa, e `var(--inexistente)`
+      # nao quebra build, lint nem teste (issue #213). Encadear em vez de somar um
+      # passo aqui garante a mesma verificacao na maquina de quem desenvolve.
       - run: npm run lint
-      # Nomes de custom property nao sao validados por nenhuma outra etapa:
-      # `var(--inexistente)` nao quebra build, lint nem teste (issue #213).
-      - run: npm run lint:tokens
 
   test:
     name: Unit tests

@@ -14,12 +14,18 @@
  * `/admin/usuarios` e os espaçamentos de `/perfil/alterar-senha`.
  *
  * Um nome é válido se estiver declarado em `src/styles/_tokens.scss` (os tokens
- * do Design System) ou no próprio arquivo que o usa (variável local de
- * componente, como `--serie-cor` no gráfico de evoluções).
+ * do Design System) ou em qualquer arquivo da **mesma pasta** de quem o usa. O
+ * escopo é a pasta, e não o arquivo, porque um componente é uma pasta neste
+ * projeto: `--serie-cor` é declarado no `.scss` do gráfico de evoluções e nada
+ * impede que uma variável local seja declarada no `.scss` e consumida por um
+ * `[style.--x]` no `.html` irmão.
+ *
+ * Limites conhecidos: um `var()` montado por concatenação em tempo de execução
+ * (`` `var(--${nome})` ``) não é analisável estaticamente e passa sem conferência.
  */
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
@@ -27,10 +33,82 @@ const DIR_FONTE = join(RAIZ, 'src');
 const ARQUIVO_TOKENS = join(DIR_FONTE, 'styles', '_tokens.scss');
 const EXTENSOES = ['.scss', '.css', '.html', '.ts'];
 
-/** `var(--nome` — captura o nome e o que vem logo depois, para saber se há fallback. */
+/**
+ * `var(--nome` com ou sem fallback. Aplicado ao arquivo inteiro, e não linha a
+ * linha, para pegar também o `var(` quebrado em várias linhas — que era
+ * exatamente o formato capaz de escapar da versão anterior desta verificação.
+ */
 const USO = /var\(\s*(--[\w-]+)\s*([,)])/g;
-/** `--nome:` em posição de declaração (início de linha, após `{` ou após `;`). */
-const DECLARACAO = /(?:^|[;{])\s*(--[\w-]+)\s*:/gm;
+/**
+ * `--nome:` em posição de declaração. Além de início de linha, `;` e `{`, aceita
+ * `"` e `'` para reconhecer a primeira propriedade de um `style="--x: 4px"`.
+ */
+const DECLARACAO = /(?:^|[;{"'])\s*(--[\w-]+)\s*:/gm;
+
+/**
+ * Troca comentários por espaços, preservando offsets e quebras de linha para os
+ * números de linha continuarem válidos.
+ *
+ * Sem isso a verificação erra nas duas direções: uma custom property escrita
+ * dentro de um bloco `/* *\/` era lida como declaração e **whitelistava** o nome,
+ * e uma menção a `var(--x)` em comentário era acusada como uso.
+ *
+ * Em SCSS/CSS/TS a varredura é caractere a caractere porque `//` também aparece
+ * dentro de string — o data URI de `--select-chevron` traz
+ * `http://www.w3.org/2000/svg` — e um regex ingênuo cortaria o valor no meio. As
+ * strings ficam intactas: em `.ts` há uso legítimo de `var()` dentro delas. Em
+ * HTML só existe `<!-- -->`, e ali não se rastreia string alguma: apóstrofo de
+ * texto corrido (`aria-label`, conteúdo) engoliria o resto do arquivo.
+ */
+function semComentarios(conteudo, caminho) {
+  if (caminho.endsWith('.html')) {
+    return conteudo.replace(/<!--[\s\S]*?-->/g, trecho => trecho.replace(/[^\n]/g, ' '));
+  }
+
+  const saida = [...conteudo];
+  let estado = 'codigo';
+  let aspa = '';
+
+  for (let i = 0; i < conteudo.length; i++) {
+    const atual = conteudo[i];
+    const proximo = conteudo[i + 1];
+
+    if (estado === 'codigo') {
+      if (atual === '"' || atual === "'" || atual === '`') {
+        estado = 'string';
+        aspa = atual;
+      } else if (atual === '/' && proximo === '*') {
+        estado = 'bloco';
+        saida[i] = saida[i + 1] = ' ';
+        i++;
+      } else if (atual === '/' && proximo === '/') {
+        estado = 'linha';
+        saida[i] = saida[i + 1] = ' ';
+        i++;
+      }
+    } else if (estado === 'string') {
+      if (atual === '\\') {
+        i++;
+      } else if (atual === aspa) {
+        estado = 'codigo';
+      }
+    } else if (estado === 'bloco') {
+      if (atual === '*' && proximo === '/') {
+        saida[i] = saida[i + 1] = ' ';
+        i++;
+        estado = 'codigo';
+      } else if (atual !== '\n') {
+        saida[i] = ' ';
+      }
+    } else if (atual === '\n') {
+      estado = 'codigo';
+    } else {
+      saida[i] = ' ';
+    }
+  }
+
+  return saida.join('');
+}
 
 function listarArquivos(dir) {
   return readdirSync(dir).flatMap(nome => {
@@ -43,39 +121,57 @@ function listarArquivos(dir) {
 }
 
 function nomesDeclarados(conteudo) {
-  return new Set(Array.from(conteudo.matchAll(DECLARACAO), ([, nome]) => nome));
+  return Array.from(conteudo.matchAll(DECLARACAO), ([, nome]) => nome);
 }
 
-const tokensGlobais = nomesDeclarados(readFileSync(ARQUIVO_TOKENS, 'utf8'));
+const linhaDo = (conteudo, offset) => conteudo.slice(0, offset).split('\n').length;
+
+const tokensGlobais = new Set(
+  nomesDeclarados(semComentarios(readFileSync(ARQUIVO_TOKENS, 'utf8'), ARQUIVO_TOKENS))
+);
 if (tokensGlobais.size === 0) {
   console.error(`Nenhum token encontrado em ${relative(RAIZ, ARQUIVO_TOKENS)} — verificação abortada.`);
   process.exit(1);
 }
 
+// Uma passada só para limpar os comentários e juntar as declarações por pasta;
+// a conferência dos usos vem depois, já com o escopo local completo.
+const arquivos = listarArquivos(DIR_FONTE).map(caminho => ({
+  caminho,
+  conteudo: semComentarios(readFileSync(caminho, 'utf8'), caminho)
+}));
+
+const declaradosNaPasta = new Map();
+for (const { caminho, conteudo } of arquivos) {
+  const pasta = dirname(caminho);
+  const nomes = declaradosNaPasta.get(pasta) ?? new Set();
+  for (const nome of nomesDeclarados(conteudo)) {
+    nomes.add(nome);
+  }
+  declaradosNaPasta.set(pasta, nomes);
+}
+
 const violacoes = [];
 
-for (const caminho of listarArquivos(DIR_FONTE)) {
-  const conteudo = readFileSync(caminho, 'utf8');
-  if (!conteudo.includes('var(--')) {
+for (const { caminho, conteudo } of arquivos) {
+  if (!conteudo.includes('var(')) {
     continue;
   }
 
-  const locais = nomesDeclarados(conteudo);
-  const linhas = conteudo.split('\n');
+  const locais = declaradosNaPasta.get(dirname(caminho));
 
-  linhas.forEach((linha, indice) => {
-    for (const [, nome, separador] of linha.matchAll(USO)) {
-      if (tokensGlobais.has(nome) || locais.has(nome)) {
-        continue;
-      }
-      violacoes.push({
-        arquivo: relative(RAIZ, caminho),
-        linha: indice + 1,
-        nome,
-        comFallback: separador === ','
-      });
+  for (const achado of conteudo.matchAll(USO)) {
+    const [, nome, separador] = achado;
+    if (tokensGlobais.has(nome) || locais.has(nome)) {
+      continue;
     }
-  });
+    violacoes.push({
+      arquivo: relative(RAIZ, caminho),
+      linha: linhaDo(conteudo, achado.index),
+      nome,
+      comFallback: separador === ','
+    });
+  }
 }
 
 if (violacoes.length > 0) {
@@ -89,7 +185,7 @@ if (violacoes.length > 0) {
   console.error(
     '\nUse um token declarado em src/styles/_tokens.scss'
     + ' (--bg-* para superfície, --sp-* para espaçamento, --r-* para raio)'
-    + ' ou declare a variável no próprio componente.\n'
+    + ' ou declare a variável na pasta do próprio componente.\n'
   );
   process.exit(1);
 }
