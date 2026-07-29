@@ -2,44 +2,27 @@ import { Component, HostListener, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { ROLE_LABEL } from './core/models/usuario-admin';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
-import { StylePreferencesService } from './core/services/style-preferences.service';
 import { BuscaGlobalComponent } from './shared/components/busca-global/busca-global.component';
-
-// Acima deste breakpoint a navbar deixa de colapsar (ver media query em styles.scss).
-// Inclui a faixa de tablet (≤ 1024px), onde os links + ações não cabem na barra.
-const DESKTOP_MIN_WIDTH = 1025;
+import { MenuContaComponent } from './shared/components/menu-conta/menu-conta.component';
+import { DESKTOP_MIN_WIDTH } from './shared/utils/breakpoints';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, BuscaGlobalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BuscaGlobalComponent, MenuContaComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
   readonly authService = inject(AuthService);
   readonly notificacoes = inject(NotificacaoService);
-  private readonly stylePreferences = inject(StylePreferencesService);
   private readonly router = inject(Router);
 
   menuAberto = false;
 
-  // Identificação do usuário autenticado exibida na navbar ("Nome · Perfil"),
-  // vazia quando não há sessão válida. Resolvida uma vez por navegação — e não
-  // na interpolação do template — porque `getCurrentUser()` faz `JSON.parse` +
-  // validação a cada chamada e o template do AppComponent reavalia a cada ciclo
-  // de detecção de mudanças. Login e logout sempre passam por uma navegação,
-  // então o valor acompanha a sessão. Um campo só: o texto exibido e o `title`
-  // saem daqui, e montá-los no template repetiria a concatenação nos dois
-  // lugares, que divergiriam ao primeiro ajuste de formato.
-  usuarioAtualDescricao = '';
-
   constructor() {
-    this.resolverUsuarioAtual();
-
     this.router.events
       .pipe(
         filter(evento => evento instanceof NavigationEnd),
@@ -48,19 +31,13 @@ export class AppComponent {
       .subscribe(() => {
         // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
         this.notificacoes.limpar();
-        this.resolverUsuarioAtual();
+        // O painel colapsado não sobrevive a uma troca de tela. Além dos links,
+        // que já fecham no clique, isso cobre as navegações disparadas de dentro
+        // do painel sem passar por eles — o logout do menu de conta é uma: sem
+        // fechar aqui, `menuAberto` seguiria true e a navbar reapareceria
+        // expandida no próximo login.
+        this.fecharMenu();
       });
-  }
-
-  get isDarkTheme(): boolean {
-    return this.stylePreferences.current.theme === 'dark';
-  }
-
-  // Sessão sem `currentUser` no localStorage (ausente ou corrompido) devolve
-  // null: a navbar segue funcional e apenas omite a identificação.
-  private resolverUsuarioAtual(): void {
-    const usuario = this.authService.getCurrentUser();
-    this.usuarioAtualDescricao = usuario ? `${usuario.name} · ${ROLE_LABEL[usuario.role]}` : '';
   }
 
   toggleMenu(): void {
@@ -69,15 +46,6 @@ export class AppComponent {
 
   fecharMenu(): void {
     this.menuAberto = false;
-  }
-
-  sair(): void {
-    this.fecharMenu();
-    this.authService.logout();
-  }
-
-  toggleTheme(): void {
-    this.stylePreferences.toggleTheme();
   }
 
   // Fecha o menu ao passar para o layout desktop, evitando reabri-lo já

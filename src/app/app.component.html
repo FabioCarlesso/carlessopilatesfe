@@ -1,80 +1,69 @@
 @if (authService.isAuthenticated()) {
   <nav class="navbar" [class.is-open]="menuAberto">
-    <div class="navbar-brand">
-      <a routerLink="/" (click)="fecharMenu()">Carlesso Pilates</a>
-    </div>
-    <button
-      type="button"
-      class="navbar-toggle"
-      (click)="toggleMenu()"
-      [attr.aria-expanded]="menuAberto"
-      [attr.aria-label]="menuAberto ? 'Fechar menu' : 'Abrir menu'"
-      aria-controls="navbar-collapse"
-    >
-      <span aria-hidden="true">☰</span> Menu
-    </button>
-    <div class="navbar-collapse" id="navbar-collapse">
-      <ul class="navbar-menu">
-        <li>
-          <a
-            routerLink="/"
-            routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            ariaCurrentWhenActive="page"
-            (click)="fecharMenu()"
-          >Início</a>
-        </li>
-        <li>
-          <a
-            routerLink="/pacientes"
-            routerLinkActive="is-active"
-            ariaCurrentWhenActive="page"
-            (click)="fecharMenu()"
-          >Pacientes</a>
-        </li>
-        @if (authService.isAdmin()) {
+    <div class="navbar-inner">
+      <div class="navbar-brand">
+        <a routerLink="/" (click)="fecharMenu()">Carlesso Pilates</a>
+      </div>
+      <button
+        type="button"
+        class="navbar-toggle"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuAberto"
+        [attr.aria-label]="menuAberto ? 'Fechar menu' : 'Abrir menu'"
+        aria-controls="navbar-collapse"
+      >
+        <span aria-hidden="true">☰</span> Menu
+      </button>
+      <div class="navbar-collapse" id="navbar-collapse">
+        <ul class="navbar-menu">
           <li>
             <a
-              routerLink="/profissionais"
+              routerLink="/"
               routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: true }"
               ariaCurrentWhenActive="page"
               (click)="fecharMenu()"
-            >Profissionais</a>
+            >Início</a>
           </li>
           <li>
             <a
-              routerLink="/relatorios"
+              routerLink="/pacientes"
               routerLinkActive="is-active"
               ariaCurrentWhenActive="page"
               (click)="fecharMenu()"
-            >Relatórios</a>
+            >Pacientes</a>
           </li>
-          <li>
-            <a
-              routerLink="/admin"
-              routerLinkActive="is-active"
-              ariaCurrentWhenActive="page"
-              (click)="fecharMenu()"
-            >Administração</a>
-          </li>
-        }
-      </ul>
-      <div class="navbar-actions">
-        @if (usuarioAtualDescricao) {
-          <span class="navbar-usuario" [title]="usuarioAtualDescricao">{{ usuarioAtualDescricao }}</span>
-        }
-        <app-busca-global />
-        <a routerLink="/perfil/alterar-senha" class="btn-alterar-senha" (click)="fecharMenu()">Alterar senha</a>
-        <button
-          type="button"
-          class="btn-tema"
-          (click)="toggleTheme()"
-          [attr.aria-pressed]="isDarkTheme"
-          [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
-        >
-          {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
-        </button>
-        <button class="btn-sair" (click)="sair()">Sair</button>
+          @if (authService.isAdmin()) {
+            <li>
+              <a
+                routerLink="/profissionais"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                (click)="fecharMenu()"
+              >Profissionais</a>
+            </li>
+            <li>
+              <a
+                routerLink="/relatorios"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                (click)="fecharMenu()"
+              >Relatórios</a>
+            </li>
+            <li>
+              <a
+                routerLink="/admin"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                (click)="fecharMenu()"
+              >Administração</a>
+            </li>
+          }
+        </ul>
+        <div class="navbar-actions">
+          <app-busca-global />
+          <app-menu-conta />
+        </div>
       </div>
     </div>
   </nav>
