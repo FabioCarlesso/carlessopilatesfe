@@ -54,6 +54,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.form = this.fb.group({
       dataHoraRegistro: [this.toDateTimeLocal(new Date()), Validators.required],
+      observacoesFisioterapeuta: [''],
       exerciciosRealizados: [''],
       equipamentosUtilizados: [''],
       cargasMolas: [''],
@@ -61,8 +62,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
       dorDepois: [null, [Validators.min(0), Validators.max(10)]],
       respostaPaciente: [''],
       intercorrencias: [''],
-      orientacoes: [''],
-      observacoesFisioterapeuta: ['']
+      orientacoes: ['']
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
