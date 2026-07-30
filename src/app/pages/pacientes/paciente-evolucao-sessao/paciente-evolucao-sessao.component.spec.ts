@@ -49,7 +49,7 @@ const mockEvolucao: EvolucaoSessaoResponseDTO = {
   respostaPaciente: 'Boa evolução clínica.',
   intercorrencias: null,
   orientacoes: 'Manter exercícios respiratórios.',
-  observacoesFisioterapeuta: null,
+  observacoesFisioterapeuta: 'Paciente relatou melhora da lombalgia.',
   dataCriacao: '2026-05-10T10:30:00',
   dataAtualizacao: null
 };
@@ -99,6 +99,11 @@ describe('PacienteEvolucaoSessaoComponent', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
+  function ordemDosCampos(): (string | null)[] {
+    const grupos: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('form .form-group'));
+    return grupos.map(grupo => grupo.querySelector('[formControlName]')?.getAttribute('formControlName') ?? null);
+  }
+
   describe('with existing evolucao', () => {
     beforeEach(async () => setup());
 
@@ -122,6 +127,27 @@ describe('PacienteEvolucaoSessaoComponent', () => {
       expect(component.form.get('dorDepois')?.value).toBe(2);
       expect(component.form.get('respostaPaciente')?.value).toBe('Boa evolução clínica.');
       expect(component.form.get('orientacoes')?.value).toBe('Manter exercícios respiratórios.');
+      expect(component.form.get('observacoesFisioterapeuta')?.value)
+        .toBe('Paciente relatou melhora da lombalgia.');
+    });
+
+    it('should render observacoesFisioterapeuta right after dataHoraRegistro and orientacoes last', () => {
+      const ordem = ordemDosCampos();
+
+      expect(ordem.slice(0, 3)).toEqual([
+        'dataHoraRegistro',
+        'observacoesFisioterapeuta',
+        'exerciciosRealizados'
+      ]);
+      expect(ordem[ordem.length - 1]).toBe('orientacoes');
+    });
+
+    it('should fill observacoesFisioterapeuta in its new position', () => {
+      const textarea: HTMLTextAreaElement =
+        fixture.nativeElement.querySelector('#observacoesFisioterapeuta');
+
+      expect(textarea.value).toBe('Paciente relatou melhora da lombalgia.');
+      expect(textarea.rows).toBe(3);
     });
 
     it('should update existing evolution and show success message', () => {
