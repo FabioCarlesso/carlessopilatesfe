@@ -141,7 +141,7 @@ describe('PagamentoListComponent', () => {
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef, new ElementRef(document.createElement('div')));
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef, new ElementRef(document.createElement('div')));
 
     invalidComponent.ngOnInit();
 

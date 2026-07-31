@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, DOCUMENT } from '@angular/core';
 
 export type StyleTheme = 'light' | 'dark';
 export type StyleDensity = 'default' | 'compact' | 'comfortable';

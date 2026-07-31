@@ -33,6 +33,14 @@ module.exports = tseslint.config(
           style: "kebab-case",
         },
       ],
+      // Desligada na migracao para o Angular 20 (issue #208), que a trouxe
+      // habilitada pelo "recommended" do angular-eslint v20: 188 ocorrencias
+      // em 51 arquivos. Converter para inject() nao e so estilo — o construtor
+      // fica vazio, e tres specs (aula-list, pagamento-list, plano-list)
+      // instanciam o componente direto com `new Component(dep, ...)` para
+      // cobrir caminhos de rota invalida. Migrar exige reescrever esses testes,
+      // trabalho que nao cabe numa troca de versao. Tratar em issue separada.
+      "@angular-eslint/prefer-inject": "off",
       // Permite o padrao idiomatico de "omitir campos" via rest siblings
       // (ex.: `const { id, ...campos } = objeto;`) e variaveis/argumentos
       // intencionalmente ignorados prefixados com "_".
