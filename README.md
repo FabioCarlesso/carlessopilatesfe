@@ -1,6 +1,6 @@
 # Carlesso Pilates — Frontend
 
-Interface web para gestão administrativa de um estúdio de pilates, desenvolvida em **Angular 19**.
+Interface web para gestão administrativa de um estúdio de pilates, desenvolvida em **Angular 22**.
 
 ## Visão Geral
 
@@ -137,8 +137,8 @@ Em produção a aplicação é hospedada na **Vercel** (`carlessopilatesfe.verce
 
 | Camada     | Tecnologia                    |
 |------------|-------------------------------|
-| Framework  | Angular 19.2 (standalone, imports individuais) |
-| Linguagem  | TypeScript 5.7                |
+| Framework  | Angular 22.1 (standalone, control flow em bloco) |
+| Linguagem  | TypeScript 6.0                |
 | Estilos    | SCSS + Design Tokens          |
 | Forms      | Reactive Forms                |
 | HTTP       | HttpClient + proxy `/api/*`   |
