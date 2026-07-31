@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -17,7 +16,7 @@ export interface BreadcrumbItem {
 // e os separadores num único ponto, evitando que cada tela duplique esse markup.
 @Component({
   selector: 'app-breadcrumb',
-  imports: [NgFor, NgIf, RouterLink],
+  imports: [RouterLink],
   templateUrl: './breadcrumb.component.html',
   styleUrl: './breadcrumb.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

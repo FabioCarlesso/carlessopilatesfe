@@ -1,6 +1,6 @@
 <!--
-  O overlay é apenas um alvo de clique opcional para fechar o diálogo; pelo teclado
-  o fechamento acontece via Esc ou botão Cancelar, por isso as regras abaixo são dispensadas.
+O overlay é apenas um alvo de clique opcional para fechar o diálogo; pelo teclado
+o fechamento acontece via Esc ou botão Cancelar, por isso as regras abaixo são dispensadas.
 -->
 <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <div class="dialog-overlay" (click)="aoClicarNoOverlay()">
@@ -16,7 +16,9 @@
     (keydown)="aoTeclar($event)">
     <h2 class="dialog-title" [id]="tituloId">{{ titulo }}</h2>
     <div [id]="corpoId">
-      <p *ngIf="mensagem">{{ mensagem }}</p>
+      @if (mensagem) {
+        <p>{{ mensagem }}</p>
+      }
       <ng-content />
     </div>
     <div class="dialog-actions">

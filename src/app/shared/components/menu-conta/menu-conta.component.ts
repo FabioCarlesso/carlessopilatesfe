@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -26,7 +25,7 @@ const SELETOR_ITENS = '.menu-conta-item';
 
 @Component({
   selector: 'app-menu-conta',
-  imports: [NgIf, RouterLink],
+  imports: [RouterLink],
   templateUrl: './menu-conta.component.html',
   styleUrl: './menu-conta.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -6,14 +6,65 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Major do Angular nao e trabalho de bot. Alem de exigir que runtime,
+    # toolchain, TypeScript e zone.js subam de forma atomica, o caminho
+    # suportado (`ng update`) roda migrations de codigo que o Dependabot nao
+    # executa: na migracao 19 -> 22 (issue #208) foram a conversao de control
+    # flow em 43 templates, `ChangeDetectionStrategy.Eager` em 35 componentes e
+    # `withXhr()` no `provideHttpClient`. Sem elas o resultado compila e quebra
+    # em runtime. O Dependabot cuida de minor/patch, onde funciona bem; major
+    # se faz a mao.
+    # Os tres blocos abaixo (ignore, groups.angular e
+    # dev-dependencies.exclude-patterns) cobrem o mesmo conjunto de pacotes e
+    # precisam ser mantidos em sincronia: incluir um pacote so no grupo, sem
+    # excluí-lo de `dev-dependencies`, e o que reproduz a divisao que gerou as
+    # PRs quebradas. O `@angular*` casa por prefixo, entao alcanca tambem
+    # `@angular-devkit/*` e `@angular-eslint/*`.
+    ignore:
+      - dependency-name: "@angular*"
+        update-types: ["version-update:semver-major"]
+      # Redundante com `@angular*`, que casa por prefixo, mas listado para os
+      # tres blocos serem identicos e conferiveis lado a lado.
+      - dependency-name: "@angular-devkit/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@schematics/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "angular-eslint"
+        update-types: ["version-update:semver-major"]
+      # `zone.js` esta em 0.x, faixa em que o salto 0.15 -> 0.16 e semver-minor
+      # e portanto nao seria alcancado por um ignore de major. Fica listado
+      # mesmo assim para o conjunto ser identico nos tres blocos, e passa a
+      # valer sozinho quando o pacote chegar em 1.0.
+      - dependency-name: "zone.js"
+        update-types: ["version-update:semver-major"]
+      # O compiler-cli fixa o TypeScript num unico minor (o 22 exige
+      # `>=6.0 <6.1`), entao aqui ate minor quebra a arvore — foi o que
+      # inviabilizou a PR #111, que propunha o TypeScript 7.
+      - dependency-name: "typescript"
+        update-types:
+          ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       angular:
         patterns:
           - "@angular*"
           - "@angular-devkit/*"
           - "@schematics/*"
+          - "angular-eslint"
+          - "typescript"
+          - "zone.js"
       dev-dependencies:
         dependency-type: development
+        # Sem excluir o toolchain do Angular daqui, ele cai neste grupo por ser
+        # devDependency e se separa do runtime em outra PR. Foi essa divisao que
+        # gerou as PRs #110, #111 e #112: mutuamente dependentes e nenhuma
+        # instalavel sozinha.
+        exclude-patterns:
+          - "@angular*"
+          - "@angular-devkit/*"
+          - "@schematics/*"
+          - "angular-eslint"
+          - "typescript"
+          - "zone.js"
 
   # Actions usadas nos workflows do GitHub.
   - package-ecosystem: github-actions

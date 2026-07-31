@@ -3,7 +3,8 @@ import {
   HttpClient,
   HttpContext,
   provideHttpClient,
-  withInterceptors
+  withInterceptors,
+  withXhr
 } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
@@ -26,7 +27,7 @@ describe('forbiddenInterceptor', () => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       providers: [
-        provideHttpClient(withInterceptors([authInterceptor, forbiddenInterceptor])),
+        provideHttpClient(withXhr(), withInterceptors([authInterceptor, forbiddenInterceptor])),
         provideHttpClientTesting()
       ]
     });

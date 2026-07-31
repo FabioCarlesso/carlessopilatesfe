@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -12,8 +12,9 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-profissional-pagamento-relatorio',
-  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './profissional-pagamento-relatorio.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-pagamento-relatorio.component.scss'
 })
 export class ProfissionalPagamentoRelatorioComponent implements OnInit, AfterViewInit {

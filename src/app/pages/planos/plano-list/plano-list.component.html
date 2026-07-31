@@ -1,13 +1,17 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: pacienteNome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Planos' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Planos do Paciente</h1>
-    <p *ngIf="pacienteNome" class="page-subtitle">{{ pacienteNome }}</p>
+    @if (pacienteNome) {
+      <p class="page-subtitle">{{ pacienteNome }}</p>
+    }
   </div>
   <div class="acoes">
     <a [routerLink]="['/planos/novo', pacienteId]" class="btn btn-primary">Novo Plano</a>
@@ -15,53 +19,68 @@
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && planos.length === 0 && !erro" class="empty-state">
-  Nenhum plano cadastrado.
-</div>
+@if (!loading && planos.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhum plano cadastrado.
+  </div>
+}
 
-<div *ngIf="planos.length > 0" class="table-wrap" tabindex="0" role="region" aria-label="Lista de planos">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Tipo</th>
-        <th>Valor</th>
-        <th>Frequência</th>
-        <th>Dias</th>
-        <th>Início</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let plano of planos; trackBy: trackByPlano">
-        <td>{{ tipoLabel[plano.tipo] }}</td>
-        <td>{{ plano.valor | currency:'BRL' }}</td>
-        <td>{{ frequenciaLabel[plano.frequenciaSemanal] }}</td>
-        <td>{{ diasFormatados(plano) }}</td>
-        <td>{{ plano.dataInicio | date:'dd/MM/yyyy' }}</td>
-        <td>
-          <span class="badge" [class.badge-ativo]="plano.ativo" [class.badge-inativo]="!plano.ativo">
-            {{ plano.ativo ? 'Ativo' : 'Inativo' }}
-          </span>
-        </td>
-        <td class="acoes-col">
-          <a [routerLink]="['/pagamentos/paciente', pacienteId]" class="btn btn-secondary btn-sm">Pagamentos</a>
-          <button class="btn btn-danger btn-sm" *ngIf="plano.ativo" (click)="confirmarInativar(plano.id)">Inativar</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+@if (planos.length > 0) {
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de planos">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Frequência</th>
+          <th>Dias</th>
+          <th>Início</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (plano of planos; track trackByPlano($index, plano)) {
+          <tr>
+            <td>{{ tipoLabel[plano.tipo] }}</td>
+            <td>{{ plano.valor | currency:'BRL' }}</td>
+            <td>{{ frequenciaLabel[plano.frequenciaSemanal] }}</td>
+            <td>{{ diasFormatados(plano) }}</td>
+            <td>{{ plano.dataInicio | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge" [class.badge-ativo]="plano.ativo" [class.badge-inativo]="!plano.ativo">
+                {{ plano.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+            <td class="acoes-col">
+              <a [routerLink]="['/pagamentos/paciente', pacienteId]" class="btn btn-secondary btn-sm">Pagamentos</a>
+              @if (plano.ativo) {
+                <button class="btn btn-danger btn-sm" (click)="confirmarInativar(plano.id)">Inativar</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarInativarId !== null"
-  titulo="Confirmar inativação"
-  mensagem="Confirma a inativação deste plano?"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="inativar()"
-  (cancelar)="cancelarInativar()" />
+@if (confirmarInativarId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar inativação"
+    mensagem="Confirma a inativação deste plano?"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="cancelarInativar()" />
+}

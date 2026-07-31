@@ -1,5 +1,5 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -12,8 +12,9 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 
 @Component({
   selector: 'app-paciente-plano-tratamento-list',
-  imports: [NgIf, NgFor, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-plano-tratamento-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-plano-tratamento-list.component.scss'
 })
 export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {

@@ -150,7 +150,7 @@ describe('PlanoListComponent', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PlanoService', ['listar', 'inativar']);
     const invalidPacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidPacienteServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as DestroyRef);
+    const invalidComponent = new PlanoListComponent(invalidServiceSpy, invalidPacienteServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef);
 
     invalidComponent.ngOnInit();
 

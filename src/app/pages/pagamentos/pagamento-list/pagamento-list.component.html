@@ -1,13 +1,17 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: pacienteNome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Pagamentos' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Pagamentos do Paciente</h1>
-    <p *ngIf="pacienteNome" class="page-subtitle">{{ pacienteNome }}</p>
+    @if (pacienteNome) {
+      <p class="page-subtitle">{{ pacienteNome }}</p>
+    }
   </div>
   <div class="acoes">
     <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
@@ -15,60 +19,75 @@
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && pagamentos.length === 0 && !erro" class="empty-state">
-  Nenhum pagamento registrado.
-</div>
+@if (!loading && pagamentos.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhum pagamento registrado.
+  </div>
+}
 
-<div *ngIf="pagamentos.length > 0" class="table-wrap" tabindex="0" role="region" aria-label="Lista de pagamentos">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th>Valor</th>
-        <th>Período</th>
-        <th>Vencimento</th>
-        <th>Pago em</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of pagamentos; trackBy: trackByPagamento">
-        <td>
-          <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
-            {{ statusLabel[p.status] }}
-          </span>
-        </td>
-        <td>{{ p.valor | currency:'BRL' }}</td>
-        <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
-        <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
-        <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
-        <td>
-          <button class="btn btn-secondary btn-sm" *ngIf="p.status === 'PENDENTE'" (click)="abrirPagar(p.id)">
-            Confirmar Pagamento
-          </button>
-          <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+@if (pagamentos.length > 0) {
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de pagamentos">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Valor</th>
+          <th>Período</th>
+          <th>Vencimento</th>
+          <th>Pago em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of pagamentos; track trackByPagamento($index, p)) {
+          <tr>
+            <td>
+              <span class="badge" [ngClass]="'badge-' + p.status.toLowerCase()">
+                {{ statusLabel[p.status] }}
+              </span>
+            </td>
+            <td>{{ p.valor | currency:'BRL' }}</td>
+            <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
+            <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
+            <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>
+              @if (p.status === 'PENDENTE') {
+                <button class="btn btn-secondary btn-sm" (click)="abrirPagar(p.id)">
+                  Confirmar Pagamento
+                </button>
+              }
+              <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
 
-<app-confirmar-dialog
-  *ngIf="pagarId !== null"
-  titulo="Confirmar Pagamento"
-  variante="primaria"
-  [processando]="acaoEmAndamento"
-  [fecharAoClicarFora]="false"
-  (confirmar)="confirmarPagar()"
-  (cancelar)="cancelarPagar()">
-  <form [formGroup]="pagarForm">
-    <div class="form-group">
-      <label for="dataPagamento">Data do Pagamento *</label>
-      <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
-    </div>
-  </form>
-</app-confirmar-dialog>
+@if (pagarId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar Pagamento"
+    variante="primaria"
+    [processando]="acaoEmAndamento"
+    [fecharAoClicarFora]="false"
+    (confirmar)="confirmarPagar()"
+    (cancelar)="cancelarPagar()">
+    <form [formGroup]="pagarForm">
+      <div class="form-group">
+        <label for="dataPagamento">Data do Pagamento *</label>
+        <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
+      </div>
+    </form>
+  </app-confirmar-dialog>
+}

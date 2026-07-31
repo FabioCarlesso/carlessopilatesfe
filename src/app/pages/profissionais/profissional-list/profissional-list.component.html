@@ -3,7 +3,9 @@
   <a routerLink="/profissionais/novo" class="btn btn-primary">+ Novo Profissional</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
 
 <button
   type="button"
@@ -12,7 +14,9 @@
   [attr.aria-expanded]="filtrosAbertos"
   aria-controls="filtros-profissionais">
   <span>Filtros</span>
-  <span *ngIf="filtrosAtivos() > 0" class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  @if (filtrosAtivos() > 0) {
+    <span class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  }
   <span class="filtros-caret" aria-hidden="true">▾</span>
 </button>
 
@@ -31,7 +35,9 @@
     Contrato
     <select name="tipoContrato" class="form-control" [(ngModel)]="filtro.tipoContrato">
       <option value="">Todos</option>
-      <option *ngFor="let tipo of tiposContrato" [value]="tipo">{{ tipoContratoLabel[tipo] }}</option>
+      @for (tipo of tiposContrato; track tipo) {
+        <option [value]="tipo">{{ tipoContratoLabel[tipo] }}</option>
+      }
     </select>
   </label>
 
@@ -56,13 +62,17 @@
   </div>
 </form>
 
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && profissionais.length === 0 && !erro" class="empty-state">
-  Nenhum profissional ativo cadastrado.
-</div>
+@if (!loading && profissionais.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhum profissional ativo cadastrado.
+  </div>
+}
 
-<ng-container *ngIf="profissionais.length > 0">
+@if (profissionais.length > 0) {
   <app-pagination-summary
     [currentPage]="currentPage"
     [pageSize]="pageSize"
@@ -70,7 +80,6 @@
     itemLabel="profissionais"
     [pageSizeOptions]="pageSizeOptions"
     (pageSizeChange)="alterarTamanhoPagina($event)" />
-
   <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de profissionais">
     <table class="table">
       <thead>
@@ -83,56 +92,62 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of profissionais; trackBy: trackByProfissional">
-          <td>{{ p.nome }}</td>
-          <td>{{ p.email }}</td>
-          <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>
-          <td>{{ p.percentualPagamentoAula }}%</td>
-          <td class="acoes">
-            <a [routerLink]="['/profissionais', p.id]" class="btn btn-sm btn-outline">Ver</a>
-            <a [routerLink]="['/profissionais', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-            <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
-          </td>
-        </tr>
+        @for (p of profissionais; track trackByProfissional($index, p)) {
+          <tr>
+            <td>{{ p.nome }}</td>
+            <td>{{ p.email }}</td>
+            <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>
+            <td>{{ p.percentualPagamentoAula }}%</td>
+            <td class="acoes">
+              <a [routerLink]="['/profissionais', p.id]" class="btn btn-sm btn-outline">Ver</a>
+              <a [routerLink]="['/profissionais', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+              <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>
-</ng-container>
+}
 
-<div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de profissionais">
-  <button
-    type="button"
-    class="page-nav-mobile"
-    aria-label="Página anterior"
-    [disabled]="currentPage === 0"
-    (click)="pagina(currentPage - 1)">
-    Anterior
-  </button>
-  <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-  <button
-    *ngFor="let p of visiblePages"
-    class="page-number"
-    [class.active]="p === currentPage"
-    [attr.aria-label]="'Página ' + (p + 1)"
-    [attr.aria-current]="p === currentPage ? 'page' : null"
-    (click)="pagina(p)">
-    {{ p + 1 }}
-  </button>
-  <button
-    type="button"
-    class="page-nav-mobile"
-    aria-label="Próxima página"
-    [disabled]="currentPage === totalPages - 1"
-    (click)="pagina(currentPage + 1)">
-    Próxima
-  </button>
-</div>
+@if (totalPages > 1) {
+  <div class="pagination" role="navigation" aria-label="Paginação de profissionais">
+    <button
+      type="button"
+      class="page-nav-mobile"
+      aria-label="Página anterior"
+      [disabled]="currentPage === 0"
+      (click)="pagina(currentPage - 1)">
+      Anterior
+    </button>
+    <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+    @for (p of visiblePages; track p) {
+      <button
+        class="page-number"
+        [class.active]="p === currentPage"
+        [attr.aria-label]="'Página ' + (p + 1)"
+        [attr.aria-current]="p === currentPage ? 'page' : null"
+        (click)="pagina(p)">
+        {{ p + 1 }}
+      </button>
+    }
+    <button
+      type="button"
+      class="page-nav-mobile"
+      aria-label="Próxima página"
+      [disabled]="currentPage === totalPages - 1"
+      (click)="pagina(currentPage + 1)">
+      Próxima
+    </button>
+  </div>
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarInativarId !== null"
-  titulo="Confirmar inativação"
-  mensagem="Confirma a inativação do profissional?"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="inativar()"
-  (cancelar)="cancelarInativar()" />
+@if (confirmarInativarId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar inativação"
+    mensagem="Confirma a inativação do profissional?"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="cancelarInativar()" />
+}

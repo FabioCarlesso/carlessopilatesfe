@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
@@ -14,6 +14,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/ut
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './usuario-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-form.component.scss'
 })
 export class UsuarioFormComponent implements OnInit, AfterViewInit {

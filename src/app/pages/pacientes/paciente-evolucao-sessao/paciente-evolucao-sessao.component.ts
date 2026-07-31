@@ -1,6 +1,6 @@
-import { DatePipe, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -21,8 +21,9 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
-  imports: [NgIf, DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-evolucao-sessao.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-evolucao-sessao.component.scss'
 })
 export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {

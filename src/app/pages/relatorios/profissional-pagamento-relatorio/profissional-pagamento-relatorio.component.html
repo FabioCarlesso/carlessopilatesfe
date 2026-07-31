@@ -3,7 +3,9 @@
   <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
 
 <form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()">
   <div class="form-row">
@@ -12,31 +14,39 @@
       <select id="profissionalId" formControlName="profissionalId" class="form-control"
         [class.is-invalid]="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
         <option [ngValue]="null">Selecione</option>
-        <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
-          {{ profissional.nome }}
-        </option>
+        @for (profissional of profissionais; track profissional) {
+          <option [ngValue]="profissional.id">
+            {{ profissional.nome }}
+          </option>
+        }
       </select>
-      <div *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched" class="invalid-feedback">
-        Selecione um profissional.
-      </div>
+      @if (form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched) {
+        <div class="invalid-feedback">
+          Selecione um profissional.
+        </div>
+      }
     </div>
 
     <div class="form-group">
       <label for="inicio">Início *</label>
       <input id="inicio" type="date" formControlName="inicio" class="form-control"
         [class.is-invalid]="form.get('inicio')?.invalid && form.get('inicio')?.touched" />
-      <div *ngIf="form.get('inicio')?.invalid && form.get('inicio')?.touched" class="invalid-feedback">
-        Informe a data inicial.
-      </div>
+      @if (form.get('inicio')?.invalid && form.get('inicio')?.touched) {
+        <div class="invalid-feedback">
+          Informe a data inicial.
+        </div>
+      }
     </div>
 
     <div class="form-group">
       <label for="fim">Fim *</label>
       <input id="fim" type="date" formControlName="fim" class="form-control"
         [class.is-invalid]="form.get('fim')?.invalid && form.get('fim')?.touched" />
-      <div *ngIf="form.get('fim')?.invalid && form.get('fim')?.touched" class="invalid-feedback">
-        Informe a data final.
-      </div>
+      @if (form.get('fim')?.invalid && form.get('fim')?.touched) {
+        <div class="invalid-feedback">
+          Informe a data final.
+        </div>
+      }
     </div>
   </div>
 
@@ -55,103 +65,116 @@
   </div>
 </form>
 
-<div *ngIf="loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel" class="loading">
-  {{ exportandoPdf || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
-</div>
-
-<section *ngIf="relatorio" class="relatorio-resultado">
-  <div class="summary-grid">
-    <div class="summary-item">
-      <span class="label">Profissional</span>
-      <strong>{{ relatorio.profissional.nome }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Período</span>
-      <strong>{{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Aulas</span>
-      <strong>{{ relatorio.resumo.totalAulas }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Total devido</span>
-      <strong>{{ relatorio.resumo.totalProfissional | currency:'BRL' }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Pagamentos</span>
-      <strong>{{ relatorio.resumo.quantidadePagamentos }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Bruto no período</span>
-      <strong>{{ relatorio.resumo.totalPagamentosBruto | currency:'BRL' }}</strong>
-    </div>
+@if (loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel) {
+  <div class="loading">
+    {{ exportandoPdf || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
   </div>
+}
 
-  <p *ngIf="relatorio.pagamentos.length > 0" class="table-scroll-hint">
-    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
-  </p>
-
-  <div *ngIf="relatorio.pagamentos.length > 0" class="table-responsive pagamentos-resumo" tabindex="0" role="region"
-    aria-label="Pagamentos do período">
-    <table class="table table-sticky-first-col">
-      <thead>
-        <tr>
-          <th>Pagamento</th>
-          <th>Valor do Pagamento</th>
-          <th>Aulas do Pagamento</th>
-          <th>Aulas no Período</th>
-          <th>Base por Aula</th>
-          <th>Total Profissional</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let pagamento of relatorio.pagamentos">
-          <td>#{{ pagamento.pagamentoId }}</td>
-          <td>{{ pagamento.valorPagamento | currency:'BRL' }}</td>
-          <td>{{ pagamento.quantidadeAulasPagamento }}</td>
-          <td>{{ pagamento.quantidadeAulasNoPeriodo }}</td>
-          <td>{{ pagamento.valorBaseAula | currency:'BRL' }}</td>
-          <td>{{ pagamento.totalProfissional | currency:'BRL' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div *ngIf="relatorio.aulas.length === 0" class="empty-state">
-    Nenhuma aula realizada para o profissional no período informado.
-  </div>
-
-  <p *ngIf="relatorio.aulas.length > 0" class="table-scroll-hint">
-    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
-  </p>
-
-  <div *ngIf="relatorio.aulas.length > 0" class="table-responsive" tabindex="0" role="region"
-    aria-label="Aulas do período">
-    <table class="table table-sticky-first-col">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Paciente</th>
-          <th>Pagamento</th>
-          <th>Valor do Pagamento</th>
-          <th>Aulas</th>
-          <th>Base por Aula</th>
-          <th>% Profissional</th>
-          <th>Valor Profissional</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let aula of relatorio.aulas">
-          <td>{{ aula.data | date:'dd/MM/yyyy' }}</td>
-          <td>{{ aula.pacienteNome }}</td>
-          <td>#{{ aula.pagamentoId }}</td>
-          <td>{{ aula.valorPagamento | currency:'BRL' }}</td>
-          <td>{{ aula.quantidadeAulasPagamento }}</td>
-          <td>{{ aula.valorBaseAula | currency:'BRL' }}</td>
-          <td>{{ aula.percentualPagamentoAula }}%</td>
-          <td>{{ aula.valorProfissional | currency:'BRL' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+@if (relatorio) {
+  <section class="relatorio-resultado">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="label">Profissional</span>
+        <strong>{{ relatorio.profissional.nome }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Período</span>
+        <strong>{{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Aulas</span>
+        <strong>{{ relatorio.resumo.totalAulas }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Total devido</span>
+        <strong>{{ relatorio.resumo.totalProfissional | currency:'BRL' }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Pagamentos</span>
+        <strong>{{ relatorio.resumo.quantidadePagamentos }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Bruto no período</span>
+        <strong>{{ relatorio.resumo.totalPagamentosBruto | currency:'BRL' }}</strong>
+      </div>
+    </div>
+    @if (relatorio.pagamentos.length > 0) {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+    }
+    @if (relatorio.pagamentos.length > 0) {
+      <div class="table-responsive pagamentos-resumo" tabindex="0" role="region"
+        aria-label="Pagamentos do período">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Pagamento</th>
+              <th>Valor do Pagamento</th>
+              <th>Aulas do Pagamento</th>
+              <th>Aulas no Período</th>
+              <th>Base por Aula</th>
+              <th>Total Profissional</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pagamento of relatorio.pagamentos; track pagamento) {
+              <tr>
+                <td>#{{ pagamento.pagamentoId }}</td>
+                <td>{{ pagamento.valorPagamento | currency:'BRL' }}</td>
+                <td>{{ pagamento.quantidadeAulasPagamento }}</td>
+                <td>{{ pagamento.quantidadeAulasNoPeriodo }}</td>
+                <td>{{ pagamento.valorBaseAula | currency:'BRL' }}</td>
+                <td>{{ pagamento.totalProfissional | currency:'BRL' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (relatorio.aulas.length === 0) {
+      <div class="empty-state">
+        Nenhuma aula realizada para o profissional no período informado.
+      </div>
+    }
+    @if (relatorio.aulas.length > 0) {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+    }
+    @if (relatorio.aulas.length > 0) {
+      <div class="table-responsive" tabindex="0" role="region"
+        aria-label="Aulas do período">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Paciente</th>
+              <th>Pagamento</th>
+              <th>Valor do Pagamento</th>
+              <th>Aulas</th>
+              <th>Base por Aula</th>
+              <th>% Profissional</th>
+              <th>Valor Profissional</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (aula of relatorio.aulas; track aula) {
+              <tr>
+                <td>{{ aula.data | date:'dd/MM/yyyy' }}</td>
+                <td>{{ aula.pacienteNome }}</td>
+                <td>#{{ aula.pagamentoId }}</td>
+                <td>{{ aula.valorPagamento | currency:'BRL' }}</td>
+                <td>{{ aula.quantidadeAulasPagamento }}</td>
+                <td>{{ aula.valorBaseAula | currency:'BRL' }}</td>
+                <td>{{ aula.percentualPagamentoAula }}%</td>
+                <td>{{ aula.valorProfissional | currency:'BRL' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

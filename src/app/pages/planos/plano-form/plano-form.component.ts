@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -29,8 +29,9 @@ function diasSemanaValidator(control: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-plano-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './plano-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './plano-form.component.scss'
 })
 export class PlanoFormComponent implements OnInit, OnDestroy, AfterViewInit {

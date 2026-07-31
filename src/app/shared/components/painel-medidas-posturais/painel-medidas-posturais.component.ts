@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { LandmarkDTO, MetricasPosturaisDTO } from '../../../core/models/avaliacao-postural';
 import { LIMIAR_ASSIMETRIA_GRAUS, MedidaPostural, montarMedidas } from '../../utils/metricas-posturais';
@@ -13,7 +12,7 @@ import { LIMIAR_ASSIMETRIA_GRAUS, MedidaPostural, montarMedidas } from '../../ut
  */
 @Component({
   selector: 'app-painel-medidas-posturais',
-  imports: [NgIf, NgFor],
+  imports: [],
   templateUrl: './painel-medidas-posturais.component.html',
   styleUrl: './painel-medidas-posturais.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

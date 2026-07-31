@@ -1,5 +1,4 @@
-import { NgIf } from '@angular/common';
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,8 +17,9 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-form.component.scss'
 })
 export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {

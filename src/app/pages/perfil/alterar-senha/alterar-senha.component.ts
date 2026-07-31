@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -27,6 +27,7 @@ const SENHA_ATUAL_INCORRETA_CODES = [
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './alterar-senha.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './alterar-senha.component.scss'
 })
 export class AlterarSenhaComponent implements AfterViewInit {

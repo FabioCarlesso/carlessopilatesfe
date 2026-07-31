@@ -3,85 +3,102 @@
   <a routerLink="/profissionais" class="btn btn-outline">Voltar</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
-  <h2 class="form-section-title">Dados do Profissional</h2>
-
-  <div class="form-group">
-    <label for="nome">Nome *</label>
-    <input id="nome" formControlName="nome" type="text" autocomplete="name" class="form-control"
-      [class.is-invalid]="campo('nome')?.invalid && campo('nome')?.touched" />
-    <div class="invalid-feedback" *ngIf="campo('nome')?.errors?.['required'] && campo('nome')?.touched">
-      Nome é obrigatório.
-    </div>
-    <div class="invalid-feedback" *ngIf="campo('nome')?.errors?.['minlength'] && campo('nome')?.touched">
-      Nome deve ter ao menos 3 caracteres.
-    </div>
-  </div>
-
-  <div class="form-row">
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Dados do Profissional</h2>
     <div class="form-group">
-      <label for="email">E-mail *</label>
-      <input id="email" formControlName="email" type="email" autocomplete="email" class="form-control"
-        [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
-      <div class="invalid-feedback" *ngIf="campo('email')?.touched && campo('email')?.invalid">
-        E-mail inválido.
+      <label for="nome">Nome *</label>
+      <input id="nome" formControlName="nome" type="text" autocomplete="name" class="form-control"
+        [class.is-invalid]="campo('nome')?.invalid && campo('nome')?.touched" />
+      @if (campo('nome')?.errors?.['required'] && campo('nome')?.touched) {
+        <div class="invalid-feedback">
+          Nome é obrigatório.
+        </div>
+      }
+      @if (campo('nome')?.errors?.['minlength'] && campo('nome')?.touched) {
+        <div class="invalid-feedback">
+          Nome deve ter ao menos 3 caracteres.
+        </div>
+      }
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="email">E-mail *</label>
+        <input id="email" formControlName="email" type="email" autocomplete="email" class="form-control"
+          [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
+        @if (campo('email')?.touched && campo('email')?.invalid) {
+          <div class="invalid-feedback">
+            E-mail inválido.
+          </div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="cpf">CPF *</label>
+        <input id="cpf" formControlName="cpf" type="text" inputmode="numeric" class="form-control"
+          [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
+        @if (campo('cpf')?.touched && campo('cpf')?.invalid) {
+          <div class="invalid-feedback">
+            CPF é obrigatório.
+          </div>
+        }
       </div>
     </div>
-    <div class="form-group">
-      <label for="cpf">CPF *</label>
-      <input id="cpf" formControlName="cpf" type="text" inputmode="numeric" class="form-control"
-        [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
-      <div class="invalid-feedback" *ngIf="campo('cpf')?.touched && campo('cpf')?.invalid">
-        CPF é obrigatório.
+    <div class="form-row">
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input id="telefone" formControlName="telefone" type="tel" autocomplete="tel" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="tipoContrato">Tipo de Contrato *</label>
+        <select id="tipoContrato" formControlName="tipoContrato" class="form-control"
+          [class.is-invalid]="campo('tipoContrato')?.invalid && campo('tipoContrato')?.touched">
+          <option value="">Selecione...</option>
+          @for (tipo of tiposContrato; track tipo) {
+            <option [value]="tipo">{{ tipoContratoLabel[tipo] }}</option>
+          }
+        </select>
+        @if (campo('tipoContrato')?.invalid && campo('tipoContrato')?.touched) {
+          <div class="invalid-feedback">
+            Tipo de contrato é obrigatório.
+          </div>
+        }
       </div>
     </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label for="telefone">Telefone</label>
-      <input id="telefone" formControlName="telefone" type="tel" autocomplete="tel" class="form-control" />
-    </div>
-    <div class="form-group">
-      <label for="tipoContrato">Tipo de Contrato *</label>
-      <select id="tipoContrato" formControlName="tipoContrato" class="form-control"
-        [class.is-invalid]="campo('tipoContrato')?.invalid && campo('tipoContrato')?.touched">
-        <option value="">Selecione...</option>
-        <option *ngFor="let tipo of tiposContrato" [value]="tipo">{{ tipoContratoLabel[tipo] }}</option>
-      </select>
-      <div class="invalid-feedback" *ngIf="campo('tipoContrato')?.invalid && campo('tipoContrato')?.touched">
-        Tipo de contrato é obrigatório.
+    <div class="form-row">
+      <div class="form-group">
+        <label for="percentualPagamentoAula">% de Pagamento por Aula *</label>
+        <input id="percentualPagamentoAula" formControlName="percentualPagamentoAula" type="number"
+          min="0.01" max="100" step="0.01" class="form-control"
+          [class.is-invalid]="campo('percentualPagamentoAula')?.invalid && campo('percentualPagamentoAula')?.touched" />
+        @if (campo('percentualPagamentoAula')?.invalid && campo('percentualPagamentoAula')?.touched) {
+          <div class="invalid-feedback">
+            Informe um percentual entre 0,01 e 100.
+          </div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="dataInicio">Data de Início *</label>
+        <input id="dataInicio" formControlName="dataInicio" type="date" class="form-control"
+          [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
+        @if (campo('dataInicio')?.invalid && campo('dataInicio')?.touched) {
+          <div class="invalid-feedback">
+            Data é obrigatória.
+          </div>
+        }
       </div>
     </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label for="percentualPagamentoAula">% de Pagamento por Aula *</label>
-      <input id="percentualPagamentoAula" formControlName="percentualPagamentoAula" type="number"
-        min="0.01" max="100" step="0.01" class="form-control"
-        [class.is-invalid]="campo('percentualPagamentoAula')?.invalid && campo('percentualPagamentoAula')?.touched" />
-      <div class="invalid-feedback" *ngIf="campo('percentualPagamentoAula')?.invalid && campo('percentualPagamentoAula')?.touched">
-        Informe um percentual entre 0,01 e 100.
-      </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/profissionais" class="btn btn-outline">Cancelar</a>
     </div>
-    <div class="form-group">
-      <label for="dataInicio">Data de Início *</label>
-      <input id="dataInicio" formControlName="dataInicio" type="date" class="form-control"
-        [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
-      <div class="invalid-feedback" *ngIf="campo('dataInicio')?.invalid && campo('dataInicio')?.touched">
-        Data é obrigatória.
-      </div>
-    </div>
-  </div>
-
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="salvando">
-      {{ salvando ? 'Salvando...' : 'Salvar' }}
-    </button>
-    <a routerLink="/profissionais" class="btn btn-outline">Cancelar</a>
-  </div>
-</form>
+  </form>
+}

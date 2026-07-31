@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { isOnPush } from '../../../../testing/onpush';
 import { Ordenacao } from '../../../core/models/ordenacao';
@@ -7,6 +7,7 @@ import { SortableHeaderComponent } from './sortable-header.component';
 @Component({
   standalone: true,
   imports: [SortableHeaderComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <table>
       <thead>

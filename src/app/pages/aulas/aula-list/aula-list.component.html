@@ -1,99 +1,132 @@
-<app-breadcrumb *ngIf="pagamentoId === null && pacienteId !== null" [items]="[
+@if (pagamentoId === null && pacienteId !== null) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Aulas' }
 ]"></app-breadcrumb>
-<app-breadcrumb *ngIf="pagamentoId !== null && pacienteId !== null" [items]="[
+}
+@if (pagamentoId !== null && pacienteId !== null) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Pagamentos', link: ['/pagamentos/paciente', pacienteId] },
   { label: 'Aulas' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>{{ titulo }}</h1>
-    <p *ngIf="subtitulo" class="page-subtitle">{{ subtitulo }}</p>
+    @if (subtitulo) {
+      <p class="page-subtitle">{{ subtitulo }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pagamentoId === null && pacienteId !== null" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
-    <a *ngIf="pagamentoId !== null && pacienteId !== null" [routerLink]="['/pagamentos/paciente', pacienteId]" class="btn btn-outline">Voltar</a>
+    @if (pagamentoId === null && pacienteId !== null) {
+      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    }
+    @if (pagamentoId !== null && pacienteId !== null) {
+      <a [routerLink]="['/pagamentos/paciente', pacienteId]" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && aulas.length === 0 && !erro" class="empty-state">
-  Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
-</div>
+@if (!loading && aulas.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
+  </div>
+}
 
-<div *ngIf="aulas.length > 0" class="table-wrap" [attr.tabindex]="modoCard ? null : 0"
-  [attr.role]="modoCard ? null : 'region'" [attr.aria-label]="modoCard ? null : 'Lista de aulas'">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Status</th>
-        <th>Profissional</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let aula of aulas; trackBy: trackByAula">
-        <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
-        <td data-label="Status">
-          <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
-            {{ aula.realizada ? 'Realizada' : 'Pendente' }}
-          </span>
-        </td>
-        <td data-label="Profissional">
-          <span *ngIf="aula.realizada">{{ aula.profissionalNome || '-' }}</span>
-          <select *ngIf="!aula.realizada" class="form-control form-control-sm"
-            [class.is-invalid]="selectInvalidoPorAula[aula.id]"
-            [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
-            [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
-            [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
-            [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
-            (ngModelChange)="aoSelecionarProfissional(aula.id)">
-            <option [ngValue]="null">Selecione</option>
-            <option *ngFor="let profissional of profissionais" [ngValue]="profissional.id">
-              {{ profissional.nome }}
-            </option>
-          </select>
-          <div *ngIf="selectInvalidoPorAula[aula.id]" [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
-            Selecione um profissional para confirmar a aula.
-          </div>
-        </td>
-        <td class="acoes-cell">
-          <ng-container *ngIf="!aula.realizada">
-            <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
-              [disabled]="profissionais.length === 0 || acaoEmAndamento">
-              Marcar como Realizada
-            </button>
-            <div *ngIf="profissionais.length === 0" class="field-hint">
-              Cadastre um profissional ativo para confirmar aulas.
-            </div>
-          </ng-container>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+@if (aulas.length > 0) {
+  <div class="table-wrap" [attr.tabindex]="modoCard ? null : 0"
+    [attr.role]="modoCard ? null : 'region'" [attr.aria-label]="modoCard ? null : 'Lista de aulas'">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Status</th>
+          <th>Profissional</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (aula of aulas; track trackByAula($index, aula)) {
+          <tr>
+            <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
+            <td data-label="Status">
+              <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
+                {{ aula.realizada ? 'Realizada' : 'Pendente' }}
+              </span>
+            </td>
+            <td data-label="Profissional">
+              @if (aula.realizada) {
+                <span>{{ aula.profissionalNome || '-' }}</span>
+              }
+              @if (!aula.realizada) {
+                <select class="form-control form-control-sm"
+                  [class.is-invalid]="selectInvalidoPorAula[aula.id]"
+                  [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
+                  [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
+                  [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
+                  [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
+                  (ngModelChange)="aoSelecionarProfissional(aula.id)">
+                  <option [ngValue]="null">Selecione</option>
+                  @for (profissional of profissionais; track profissional) {
+                    <option [ngValue]="profissional.id">
+                      {{ profissional.nome }}
+                    </option>
+                  }
+                </select>
+              }
+              @if (selectInvalidoPorAula[aula.id]) {
+                <div [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
+                  Selecione um profissional para confirmar a aula.
+                </div>
+              }
+            </td>
+            <td class="acoes-cell">
+              @if (!aula.realizada) {
+                <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
+                  [disabled]="profissionais.length === 0 || acaoEmAndamento">
+                  Marcar como Realizada
+                </button>
+                @if (profissionais.length === 0) {
+                  <div class="field-hint">
+                    Cadastre um profissional ativo para confirmar aulas.
+                  </div>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
 
-<app-confirmar-dialog
-  *ngIf="aulaEmConfirmacao as aula"
-  titulo="Confirmar aula realizada"
-  textoConfirmar="Marcar como Realizada"
-  [processando]="acaoEmAndamento"
-  (confirmar)="confirmarRealizar()"
-  (cancelar)="cancelarConfirmacao()">
-  <p>Confirma marcar como realizada a aula abaixo?</p>
-  <dl class="confirmacao-detalhes">
-    <dt>Data</dt>
-    <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</dd>
-    <dt>Profissional</dt>
-    <dd>{{ profissionalEmConfirmacaoNome }}</dd>
-  </dl>
-</app-confirmar-dialog>
+@if (aulaEmConfirmacao; as aula) {
+  <app-confirmar-dialog
+    titulo="Confirmar aula realizada"
+    textoConfirmar="Marcar como Realizada"
+    [processando]="acaoEmAndamento"
+    (confirmar)="confirmarRealizar()"
+    (cancelar)="cancelarConfirmacao()">
+    <p>Confirma marcar como realizada a aula abaixo?</p>
+    <dl class="confirmacao-detalhes">
+      <dt>Data</dt>
+      <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</dd>
+      <dt>Profissional</dt>
+      <dd>{{ profissionalEmConfirmacaoNome }}</dd>
+    </dl>
+  </app-confirmar-dialog>
+}

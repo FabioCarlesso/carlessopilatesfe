@@ -1,23 +1,24 @@
-import { NgIf } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConfirmarDialogComponent } from './confirmar-dialog.component';
 
 @Component({
-  imports: [NgIf, ConfirmarDialogComponent],
+  imports: [ConfirmarDialogComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" #disparador (click)="aberto = true">Abrir</button>
-    <app-confirmar-dialog
-      *ngIf="aberto"
-      titulo="Confirmar inativação"
-      mensagem="Confirma a inativação?"
-      variante="perigo"
-      [processando]="processando"
-      [confirmarDesabilitado]="confirmarDesabilitado"
-      [fecharAoClicarFora]="fecharAoClicarFora"
-      (confirmar)="confirmado = confirmado + 1"
-      (cancelar)="aberto = false" />
-  `
+    @if (aberto) {
+      <app-confirmar-dialog
+        titulo="Confirmar inativação"
+        mensagem="Confirma a inativação?"
+        variante="perigo"
+        [processando]="processando"
+        [confirmarDesabilitado]="confirmarDesabilitado"
+        [fecharAoClicarFora]="fecharAoClicarFora"
+        (confirmar)="confirmado = confirmado + 1"
+        (cancelar)="aberto = false" />
+    }
+    `
 })
 class HostComponent {
   @ViewChild('disparador') disparador!: { nativeElement: HTMLButtonElement };
