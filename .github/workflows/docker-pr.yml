@@ -23,7 +23,10 @@ concurrency:
 
 jobs:
   docker:
-    name: Docker image build
+    # Nome distinto do job homonimo no `ci.yml`: numa PR aquele aparece como
+    # "skipping" (esta gated para push na master) e este como "pass", e dois
+    # checks de mesmo nome com resultados diferentes se leem como contradicao.
+    name: Docker image build (PR)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -40,5 +43,12 @@ jobs:
       # apenas avisa (EBADENGINE). Quem falha de verdade e o Angular CLI, que
       # encerra com exit 3 abaixo do minimo -- logar a versao deixa o
       # diagnostico obvio quando a imagem base for trocada no futuro.
+      #
+      # O `-oP` ignora as flags do FROM (`--platform=...`, `--chmod=...`), que
+      # um `cut -d' ' -f2` devolveria no lugar da imagem. Puxar a base de novo
+      # custa alguns segundos: o buildx nao a deixa no image store do daemon.
       - name: Node version do estagio de build
-        run: docker run --rm "$(grep -m1 '^FROM node:' Dockerfile | cut -d' ' -f2)" node -v
+        run: |
+          imagem=$(grep -m1 -oP '^FROM\s+(--\S+\s+)*\K\S+' Dockerfile)
+          echo "Imagem base do estagio de build: $imagem"
+          docker run --rm "$imagem" node -v
