@@ -75,7 +75,10 @@ jobs:
   docker:
     name: Docker image build
     runs-on: ubuntu-latest
-    # Valida a imagem apenas em merges na master (nao em cada PR).
+    # Valida a imagem em merges na master. Em PR a mesma validacao roda pelo
+    # `docker-pr.yml`, restrita aos arquivos que entram na imagem -- manter as
+    # duas evita que uma PR de frontend pague o build do container sem deixar a
+    # master descobrir a quebra sozinha.
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [test, build]
     steps:

@@ -1,0 +1,44 @@
+name: Docker (PR)
+
+# O job `docker` do `ci.yml` so roda em push na master, entao uma quebra na
+# imagem (base sem manutencao, Node abaixo do piso exigido pelo Angular,
+# `npm ci` falhando no container) aparecia apenas depois do merge, com a PR
+# ja verde. Este workflow antecipa essa validacao para a propria PR, mas so
+# quando ela toca algo que entra na imagem -- PR de frontend nao paga o custo.
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "nginx/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/docker-pr.yml"
+
+concurrency:
+  group: docker-pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    name: Docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: carlessopilatesfe:pr
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # O `engines` do package.json declara o piso de Node, mas o `npm ci`
+      # apenas avisa (EBADENGINE). Quem falha de verdade e o Angular CLI, que
+      # encerra com exit 3 abaixo do minimo -- logar a versao deixa o
+      # diagnostico obvio quando a imagem base for trocada no futuro.
+      - name: Node version do estagio de build
+        run: docker run --rm "$(grep -m1 '^FROM node:' Dockerfile | cut -d' ' -f2)" node -v
