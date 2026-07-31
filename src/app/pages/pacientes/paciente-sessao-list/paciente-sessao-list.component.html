@@ -1,99 +1,134 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Sessões' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Sessões</h1>
-    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'evolucoes']" class="btn btn-secondary">Histórico de Evoluções</a>
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+    }
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'evolucoes']" class="btn btn-secondary">Histórico de Evoluções</a>
+    }
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && sessoes.length === 0 && !erro" class="empty-state">
-  Nenhuma sessão cadastrada.
-</div>
-
-<div *ngIf="sessoes.length > 0" class="sessoes-list">
-  <div *ngFor="let sessao of sessoes" class="sessao-card" [class.sessao-agendada]="sessao.status === 'AGENDADA'">
-    <div class="sessao-header">
-      <div class="sessao-info">
-        <span class="badge badge-status"
-          [class.badge-agendada]="sessao.status === 'AGENDADA'"
-          [class.badge-realizada]="sessao.status === 'REALIZADA'"
-          [class.badge-cancelada]="sessao.status === 'CANCELADA'">
-          {{ statusLabel[sessao.status] }}
-        </span>
-        <span class="sessao-tipo">{{ tipoLabel[sessao.tipo] }}</span>
-        <span class="sessao-data">{{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
-        <span class="sessao-duracao">{{ sessao.duracao !== null ? sessao.duracao + ' min' : '-' }}</span>
-        <span *ngIf="sessao.nomeProfissional" class="sessao-profissional">{{ sessao.nomeProfissional }}</span>
-      </div>
-      <div class="sessao-acoes">
-        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']"
-          class="btn btn-secondary btn-sm">Editar</a>
-        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
-          class="btn btn-secondary btn-sm">Evolução</a>
-        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-secondary btn-sm"
-          [disabled]="acaoEmAndamentoId !== null"
-          (click)="abrirReagendar(sessao)">Reagendar</button>
-        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-success btn-sm"
-          [disabled]="acaoEmAndamentoId !== null"
-          (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>
-        <button *ngIf="sessao.status === 'AGENDADA'" class="btn btn-danger btn-sm"
-          [disabled]="acaoEmAndamentoId !== null"
-          (click)="confirmarAcao(sessao.id, 'cancelar')">Cancelar</button>
-      </div>
-    </div>
-
-    <div *ngIf="sessao.observacoes" class="sessao-body">
-      <div class="detail-item">
-        <span class="label">Observações</span>
-        <span>{{ sessao.observacoes }}</span>
-      </div>
-    </div>
+@if (!loading && sessoes.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhuma sessão cadastrada.
   </div>
-</div>
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarAcaoId !== null"
-  titulo="Confirmar ação"
-  [mensagem]="'Confirma ' + acaoLabel() + ' esta sessão?'"
-  variante="perigo"
-  [processando]="acaoEmAndamentoId !== null"
-  (confirmar)="executarAcao()"
-  (cancelar)="cancelarAcao()" />
-
-<app-confirmar-dialog
-  *ngIf="reagendarId !== null"
-  titulo="Reagendar sessão"
-  textoConfirmar="Reagendar"
-  variante="primaria"
-  [processando]="acaoEmAndamentoId !== null"
-  [fecharAoClicarFora]="false"
-  (confirmar)="confirmarReagendar()"
-  (cancelar)="cancelarReagendar()">
-  <form [formGroup]="reagendarForm">
-    <div class="form-group">
-      <label for="reagendarDataHora">Nova data e hora *</label>
-      <input id="reagendarDataHora" type="datetime-local" formControlName="dataHora" class="form-control"
-        [min]="reagendarMinDataHora"
-        aria-describedby="reagendarDataHoraError"
-        [class.is-invalid]="campoReagendar('dataHora')?.invalid && campoReagendar('dataHora')?.touched" />
-      <div id="reagendarDataHoraError" class="invalid-feedback"
-        *ngIf="campoReagendar('dataHora')?.touched && campoReagendar('dataHora')?.invalid">
-        Informe uma data e hora futura.
+@if (sessoes.length > 0) {
+  <div class="sessoes-list">
+    @for (sessao of sessoes; track sessao) {
+      <div class="sessao-card" [class.sessao-agendada]="sessao.status === 'AGENDADA'">
+        <div class="sessao-header">
+          <div class="sessao-info">
+            <span class="badge badge-status"
+              [class.badge-agendada]="sessao.status === 'AGENDADA'"
+              [class.badge-realizada]="sessao.status === 'REALIZADA'"
+              [class.badge-cancelada]="sessao.status === 'CANCELADA'">
+              {{ statusLabel[sessao.status] }}
+            </span>
+            <span class="sessao-tipo">{{ tipoLabel[sessao.tipo] }}</span>
+            <span class="sessao-data">{{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="sessao-duracao">{{ sessao.duracao !== null ? sessao.duracao + ' min' : '-' }}</span>
+            @if (sessao.nomeProfissional) {
+              <span class="sessao-profissional">{{ sessao.nomeProfissional }}</span>
+            }
+          </div>
+          <div class="sessao-acoes">
+            <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']"
+            class="btn btn-secondary btn-sm">Editar</a>
+            <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
+            class="btn btn-secondary btn-sm">Evolução</a>
+            @if (sessao.status === 'AGENDADA') {
+              <button class="btn btn-secondary btn-sm"
+                [disabled]="acaoEmAndamentoId !== null"
+              (click)="abrirReagendar(sessao)">Reagendar</button>
+            }
+            @if (sessao.status === 'AGENDADA') {
+              <button class="btn btn-success btn-sm"
+                [disabled]="acaoEmAndamentoId !== null"
+              (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>
+            }
+            @if (sessao.status === 'AGENDADA') {
+              <button class="btn btn-danger btn-sm"
+                [disabled]="acaoEmAndamentoId !== null"
+              (click)="confirmarAcao(sessao.id, 'cancelar')">Cancelar</button>
+            }
+          </div>
+        </div>
+        @if (sessao.observacoes) {
+          <div class="sessao-body">
+            <div class="detail-item">
+              <span class="label">Observações</span>
+              <span>{{ sessao.observacoes }}</span>
+            </div>
+          </div>
+        }
       </div>
-    </div>
-  </form>
-</app-confirmar-dialog>
+    }
+  </div>
+}
+
+@if (confirmarAcaoId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar ação"
+    [mensagem]="'Confirma ' + acaoLabel() + ' esta sessão?'"
+    variante="perigo"
+    [processando]="acaoEmAndamentoId !== null"
+    (confirmar)="executarAcao()"
+    (cancelar)="cancelarAcao()" />
+}
+
+@if (reagendarId !== null) {
+  <app-confirmar-dialog
+    titulo="Reagendar sessão"
+    textoConfirmar="Reagendar"
+    variante="primaria"
+    [processando]="acaoEmAndamentoId !== null"
+    [fecharAoClicarFora]="false"
+    (confirmar)="confirmarReagendar()"
+    (cancelar)="cancelarReagendar()">
+    <form [formGroup]="reagendarForm">
+      <div class="form-group">
+        <label for="reagendarDataHora">Nova data e hora *</label>
+        <input id="reagendarDataHora" type="datetime-local" formControlName="dataHora" class="form-control"
+          [min]="reagendarMinDataHora"
+          aria-describedby="reagendarDataHoraError"
+          [class.is-invalid]="campoReagendar('dataHora')?.invalid && campoReagendar('dataHora')?.touched" />
+        @if (campoReagendar('dataHora')?.touched && campoReagendar('dataHora')?.invalid) {
+          <div id="reagendarDataHoraError" class="invalid-feedback"
+            >
+            Informe uma data e hora futura.
+          </div>
+        }
+      </div>
+    </form>
+  </app-confirmar-dialog>
+}

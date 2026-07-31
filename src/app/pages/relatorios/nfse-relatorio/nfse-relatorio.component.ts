@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,7 +10,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-nfse-relatorio',
-  imports: [NgIf, NgFor, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './nfse-relatorio.component.html',
   styleUrl: './nfse-relatorio.component.scss'
 })

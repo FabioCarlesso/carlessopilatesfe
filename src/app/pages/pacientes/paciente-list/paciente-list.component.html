@@ -3,8 +3,12 @@
   <a routerLink="/pacientes/novo" class="btn btn-primary">+ Novo Paciente</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
 
 <button
   type="button"
@@ -13,7 +17,9 @@
   [attr.aria-expanded]="filtrosAbertos"
   aria-controls="filtros-pacientes">
   <span>Filtros</span>
-  <span *ngIf="filtrosAtivos() > 0" class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  @if (filtrosAtivos() > 0) {
+    <span class="filtros-badge" [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+  }
   <span class="filtros-caret" aria-hidden="true">▾</span>
 </button>
 
@@ -53,13 +59,17 @@
   </div>
 </form>
 
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && pacientes.length === 0 && !erro" class="empty-state">
-  Nenhum paciente encontrado.
-</div>
+@if (!loading && pacientes.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhum paciente encontrado.
+  </div>
+}
 
-<ng-container *ngIf="pacientes.length > 0">
+@if (pacientes.length > 0) {
   <app-pagination-summary
     [currentPage]="currentPage"
     [pageSize]="pageSize"
@@ -67,7 +77,6 @@
     itemLabel="pacientes"
     [pageSizeOptions]="pageSizeOptions"
     (pageSizeChange)="alterarTamanhoPagina($event)" />
-
   <div class="table-wrap paciente-table-wrap" tabindex="0" role="region" aria-label="Lista de pacientes">
     <table class="table paciente-table">
       <thead>
@@ -81,59 +90,69 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of pacientes; trackBy: trackByPaciente">
-          <td>{{ p.nome }}</td>
-          <td>{{ p.email }}</td>
-          <td>{{ p.cpf }}</td>
-          <td>{{ p.telefone || '-' }}</td>
-          <td>
-            <span class="status-badge" [class.inactive]="!p.ativo">
-              {{ p.ativo ? 'Ativo' : 'Inativo' }}
-            </span>
-          </td>
-          <td class="acoes-cell">
-            <div class="acoes" aria-label="Ações do paciente">
-              <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
-              <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-              <button *ngIf="p.ativo" class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
-              <button *ngIf="!p.ativo" class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
-            </div>
-          </td>
-        </tr>
+        @for (p of pacientes; track trackByPaciente($index, p)) {
+          <tr>
+            <td>{{ p.nome }}</td>
+            <td>{{ p.email }}</td>
+            <td>{{ p.cpf }}</td>
+            <td>{{ p.telefone || '-' }}</td>
+            <td>
+              <span class="status-badge" [class.inactive]="!p.ativo">
+                {{ p.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </td>
+            <td class="acoes-cell">
+              <div class="acoes" aria-label="Ações do paciente">
+                <a [routerLink]="['/pacientes', p.id]" class="btn btn-sm btn-outline">Ver</a>
+                <a [routerLink]="['/pacientes', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+                @if (p.ativo) {
+                  <button class="btn btn-sm btn-danger" (click)="confirmarInativar(p.id)">Inativar</button>
+                }
+                @if (!p.ativo) {
+                  <button class="btn btn-sm btn-primary" (click)="confirmarAtivar(p.id)">Ativar</button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>
+  @if (totalPages > 1) {
+    <div class="pagination" role="navigation" aria-label="Paginação de pacientes">
+      <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
+      <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+      @for (p of pages(); track p) {
+        <button
+          type="button"
+          class="page-number"
+          [class.active]="p === currentPage"
+          [attr.aria-current]="p === currentPage ? 'page' : null"
+          (click)="pagina(p)">
+          {{ p + 1 }}
+        </button>
+      }
+      <button type="button" [disabled]="!canGoNext()" (click)="proximaPagina()">Próxima</button>
+    </div>
+  }
+}
 
-  <div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de pacientes">
-    <button type="button" [disabled]="!canGoPrevious()" (click)="paginaAnterior()">Anterior</button>
-    <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-    <button
-      type="button"
-      class="page-number"
-      *ngFor="let p of pages()"
-      [class.active]="p === currentPage"
-      [attr.aria-current]="p === currentPage ? 'page' : null"
-      (click)="pagina(p)">
-      {{ p + 1 }}
-    </button>
-    <button type="button" [disabled]="!canGoNext()" (click)="proximaPagina()">Próxima</button>
-  </div>
-</ng-container>
+@if (confirmarAtivarId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar ativação"
+    mensagem="Confirma a ativação do paciente?"
+    variante="primaria"
+    [processando]="acaoEmAndamento"
+    (confirmar)="ativar()"
+    (cancelar)="cancelarAtivar()" />
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarAtivarId !== null"
-  titulo="Confirmar ativação"
-  mensagem="Confirma a ativação do paciente?"
-  variante="primaria"
-  [processando]="acaoEmAndamento"
-  (confirmar)="ativar()"
-  (cancelar)="cancelarAtivar()" />
-
-<app-confirmar-dialog
-  *ngIf="confirmarInativarId !== null"
-  titulo="Confirmar inativação"
-  mensagem="Confirma a inativação do paciente?"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="inativar()"
-  (cancelar)="cancelarInativar()" />
+@if (confirmarInativarId !== null) {
+  <app-confirmar-dialog
+    titulo="Confirmar inativação"
+    mensagem="Confirma a inativação do paciente?"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="cancelarInativar()" />
+}

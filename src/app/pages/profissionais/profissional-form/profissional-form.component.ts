@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -9,7 +9,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-profissional-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './profissional-form.component.html',
   styleUrl: './profissional-form.component.scss'
 })

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
-import { CurrencyPipe, DatePipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -12,7 +12,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgIf, NgFor, NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

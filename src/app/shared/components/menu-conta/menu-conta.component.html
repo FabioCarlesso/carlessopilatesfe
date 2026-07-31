@@ -1,6 +1,6 @@
 <div class="menu-conta" [class.is-aberto]="aberto">
   <!-- Oculto no layout compacto (ver .scss): lá o painel já aparece aberto e plano,
-       dentro do painel colapsado da navbar. -->
+  dentro do painel colapsado da navbar. -->
   <button
     #gatilho
     type="button"
@@ -11,28 +11,32 @@
     [attr.aria-label]="nome ? 'Conta de ' + nome : 'Conta'"
     (click)="alternar()"
     (keydown)="aoTeclarNoGatilho($event)"
-  >
-    <span class="menu-conta-avatar" aria-hidden="true" *ngIf="iniciais">{{ iniciais }}</span>
+    >
+    @if (iniciais) {
+      <span class="menu-conta-avatar" aria-hidden="true">{{ iniciais }}</span>
+    }
     <span class="menu-conta-nome">{{ primeiroNome }}</span>
     <span class="menu-conta-chevron" aria-hidden="true"></span>
   </button>
 
   <!-- O keydown é ouvido no contêiner porque as setas navegam entre os itens, e
-       quem tem o foco durante a navegação é sempre um item filho. O `tabindex`
-       de -1 mantém o painel fora da ordem de tabulação (quem recebe Tab são os
-       itens), apenas o tornando um alvo de foco válido para o handler. -->
+  quem tem o foco durante a navegação é sempre um item filho. O `tabindex`
+  de -1 mantém o painel fora da ordem de tabulação (quem recebe Tab são os
+  itens), apenas o tornando um alvo de foco válido para o handler. -->
   <div
     class="menu-conta-painel"
     [id]="painelId"
     tabindex="-1"
     [attr.role]="compacto ? null : 'menu'"
     (keydown)="aoTeclarNoPainel($event)"
-  >
-    <div class="menu-conta-cabecalho" *ngIf="usuario">
-      <span class="menu-conta-cabecalho-nome">{{ nome }}</span>
-      <span class="menu-conta-cabecalho-email">{{ usuario.email }}</span>
-      <span class="menu-conta-cabecalho-perfil">{{ perfil }}</span>
-    </div>
+    >
+    @if (usuario) {
+      <div class="menu-conta-cabecalho">
+        <span class="menu-conta-cabecalho-nome">{{ nome }}</span>
+        <span class="menu-conta-cabecalho-email">{{ usuario.email }}</span>
+        <span class="menu-conta-cabecalho-perfil">{{ perfil }}</span>
+      </div>
+    }
 
     <a
       class="menu-conta-item"
@@ -42,9 +46,9 @@
     >Alterar senha</a>
 
     <!-- O estado do tema é anunciado pelo atributo que cada papel suporta: em
-         `menuitemcheckbox` é `aria-checked`, e `aria-pressed` — válido só em
-         `role="button"` — seria ignorado. No compacto o item volta a ser um
-         botão comum e aí `aria-pressed` é o correto. -->
+    `menuitemcheckbox` é `aria-checked`, e `aria-pressed` — válido só em
+    `role="button"` — seria ignorado. No compacto o item volta a ser um
+    botão comum e aí `aria-pressed` é o correto. -->
     <button
       type="button"
       class="menu-conta-item"
@@ -53,7 +57,7 @@
       [attr.aria-pressed]="compacto ? temaEscuro : null"
       [attr.aria-label]="rotuloAcessivelTema"
       (click)="alternarTema()"
-    >
+      >
       <span>{{ rotuloTema }}</span>
       <span class="menu-conta-item-icone" aria-hidden="true">{{ temaEscuro ? '☀' : '☾' }}</span>
     </button>

@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -22,7 +21,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-sessao-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-sessao-form.component.html',
   styleUrl: './paciente-sessao-form.component.scss'
 })

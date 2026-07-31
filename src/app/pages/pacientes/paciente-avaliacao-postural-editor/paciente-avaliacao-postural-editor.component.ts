@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -27,7 +26,7 @@ import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../sh
  */
 @Component({
   selector: 'app-paciente-avaliacao-postural-editor',
-  imports: [NgIf, RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent],
+  imports: [RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-editor.component.html',
   styleUrl: './paciente-avaliacao-postural-editor.component.scss'
 })

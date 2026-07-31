@@ -1,72 +1,85 @@
-<div class="page-header" *ngIf="profissional">
-  <h1>{{ profissional.nome }}</h1>
-  <div class="acoes">
-    <a [routerLink]="['/profissionais', profissional.id, 'editar']" class="btn btn-secondary">Editar</a>
-    <button class="btn btn-secondary" (click)="confirmarAtivar = true" *ngIf="!profissional.ativo">Ativar</button>
-    <button class="btn btn-danger" (click)="confirmarInativar = true" *ngIf="profissional.ativo">Inativar</button>
-    <a routerLink="/profissionais" class="btn btn-outline">Voltar</a>
-  </div>
-</div>
-
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
-
-<div *ngIf="profissional" class="detail-card">
-  <div class="badge-status" [class.inativo]="!profissional.ativo">
-    {{ profissional.ativo ? 'Ativo' : 'Inativo' }}
-  </div>
-
-  <section class="detail-section">
-    <h2>Dados do Profissional</h2>
-    <div class="detail-grid">
-      <div class="detail-item">
-        <span class="label">Nome</span>
-        <span>{{ profissional.nome }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">E-mail</span>
-        <span>{{ profissional.email }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">CPF</span>
-        <span>{{ profissional.cpf }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Telefone</span>
-        <span>{{ profissional.telefone || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Contrato</span>
-        <span>{{ tipoContratoLabel[profissional.tipoContrato] }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">% por Aula</span>
-        <span>{{ profissional.percentualPagamentoAula }}%</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Data de Início</span>
-        <span>{{ profissional.dataInicio | date:'dd/MM/yyyy' }}</span>
-      </div>
+@if (profissional) {
+  <div class="page-header">
+    <h1>{{ profissional.nome }}</h1>
+    <div class="acoes">
+      <a [routerLink]="['/profissionais', profissional.id, 'editar']" class="btn btn-secondary">Editar</a>
+      @if (!profissional.ativo) {
+        <button class="btn btn-secondary" (click)="confirmarAtivar = true">Ativar</button>
+      }
+      @if (profissional.ativo) {
+        <button class="btn btn-danger" (click)="confirmarInativar = true">Inativar</button>
+      }
+      <a routerLink="/profissionais" class="btn btn-outline">Voltar</a>
     </div>
-  </section>
-</div>
+  </div>
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarAtivar"
-  titulo="Confirmar reativação"
-  variante="secundaria"
-  [processando]="acaoEmAndamento"
-  (confirmar)="ativar()"
-  (cancelar)="confirmarAtivar = false">
-  <p>Confirma a reativação de <strong>{{ profissional?.nome }}</strong>?</p>
-</app-confirmar-dialog>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<app-confirmar-dialog
-  *ngIf="confirmarInativar"
-  titulo="Confirmar inativação"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="inativar()"
-  (cancelar)="confirmarInativar = false">
-  <p>Confirma a inativação de <strong>{{ profissional?.nome }}</strong>?</p>
-</app-confirmar-dialog>
+@if (profissional) {
+  <div class="detail-card">
+    <div class="badge-status" [class.inativo]="!profissional.ativo">
+      {{ profissional.ativo ? 'Ativo' : 'Inativo' }}
+    </div>
+    <section class="detail-section">
+      <h2>Dados do Profissional</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Nome</span>
+          <span>{{ profissional.nome }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">E-mail</span>
+          <span>{{ profissional.email }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">CPF</span>
+          <span>{{ profissional.cpf }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Telefone</span>
+          <span>{{ profissional.telefone || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Contrato</span>
+          <span>{{ tipoContratoLabel[profissional.tipoContrato] }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">% por Aula</span>
+          <span>{{ profissional.percentualPagamentoAula }}%</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Data de Início</span>
+          <span>{{ profissional.dataInicio | date:'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+    </section>
+  </div>
+}
+
+@if (confirmarAtivar) {
+  <app-confirmar-dialog
+    titulo="Confirmar reativação"
+    variante="secundaria"
+    [processando]="acaoEmAndamento"
+    (confirmar)="ativar()"
+    (cancelar)="confirmarAtivar = false">
+    <p>Confirma a reativação de <strong>{{ profissional?.nome }}</strong>?</p>
+  </app-confirmar-dialog>
+}
+
+@if (confirmarInativar) {
+  <app-confirmar-dialog
+    titulo="Confirmar inativação"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="confirmarInativar = false">
+    <p>Confirma a inativação de <strong>{{ profissional?.nome }}</strong>?</p>
+  </app-confirmar-dialog>
+}

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgFor } from '@angular/common';
+
 
 // Bloco compartilhado de resumo de paginação (issue #144). Concentra o "Exibindo X-Y de Z"
 // e o seletor de itens por página que a listagem de pacientes já exibia inline, para que
@@ -9,7 +9,7 @@ import { NgFor } from '@angular/common';
 // ficam a cargo do componente pai, que detém o estado da listagem.
 @Component({
   selector: 'app-pagination-summary',
-  imports: [NgFor],
+  imports: [],
   templateUrl: './pagination-summary.component.html',
   styleUrl: './pagination-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

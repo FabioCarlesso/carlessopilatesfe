@@ -1,133 +1,150 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Planos de Tratamento', link: ['/pacientes', pacienteId, 'plano-tratamento'] },
   { label: modoEdicao ? 'Editar' : 'Novo' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>{{ modoEdicao ? 'Editar' : 'Novo' }} Plano de Tratamento</h1>
-    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'plano-tratamento']" class="btn btn-outline">Voltar</a>
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento']" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
-
-  <h2 class="form-section-title">Dados do plano</h2>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label for="dataInicio">Data de início *</label>
-      <input id="dataInicio" type="date" formControlName="dataInicio" class="form-control"
-        aria-describedby="dataInicioError"
-        [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
-      <div id="dataInicioError" class="invalid-feedback"
-        *ngIf="campo('dataInicio')?.touched && campo('dataInicio')?.invalid">
-        Data de início é obrigatória.
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Dados do plano</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dataInicio">Data de início *</label>
+        <input id="dataInicio" type="date" formControlName="dataInicio" class="form-control"
+          aria-describedby="dataInicioError"
+          [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
+        @if (campo('dataInicio')?.touched && campo('dataInicio')?.invalid) {
+          <div id="dataInicioError" class="invalid-feedback"
+            >
+            Data de início é obrigatória.
+          </div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="dataPrevisaoTermino">Data prevista de término</label>
+        <input id="dataPrevisaoTermino" type="date" formControlName="dataPrevisaoTermino" class="form-control" />
       </div>
     </div>
-
-    <div class="form-group">
-      <label for="dataPrevisaoTermino">Data prevista de término</label>
-      <input id="dataPrevisaoTermino" type="date" formControlName="dataPrevisaoTermino" class="form-control" />
-    </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label for="frequenciaSemanal">Frequência semanal (sessões/semana) *</label>
-      <input id="frequenciaSemanal" type="number" formControlName="frequenciaSemanal" class="form-control"
-        min="1" max="7"
-        aria-describedby="frequenciaSemanalError"
-        [class.is-invalid]="campo('frequenciaSemanal')?.invalid && campo('frequenciaSemanal')?.touched" />
-      <div id="frequenciaSemanalError" class="invalid-feedback"
-        *ngIf="campo('frequenciaSemanal')?.touched && campo('frequenciaSemanal')?.invalid">
-        Frequência semanal é obrigatória e deve estar entre 1 e 7.
+    <div class="form-row">
+      <div class="form-group">
+        <label for="frequenciaSemanal">Frequência semanal (sessões/semana) *</label>
+        <input id="frequenciaSemanal" type="number" formControlName="frequenciaSemanal" class="form-control"
+          min="1" max="7"
+          aria-describedby="frequenciaSemanalError"
+          [class.is-invalid]="campo('frequenciaSemanal')?.invalid && campo('frequenciaSemanal')?.touched" />
+        @if (campo('frequenciaSemanal')?.touched && campo('frequenciaSemanal')?.invalid) {
+          <div id="frequenciaSemanalError" class="invalid-feedback"
+            >
+            Frequência semanal é obrigatória e deve estar entre 1 e 7.
+          </div>
+        }
       </div>
+      @if (modoEdicao) {
+        <div class="form-group">
+          <label for="status">Status *</label>
+          <select id="status" formControlName="status" class="form-control"
+            aria-describedby="statusError"
+            [class.is-invalid]="campo('status')?.invalid && campo('status')?.touched">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ statusLabel[s] }}</option>
+            }
+          </select>
+          @if (campo('status')?.touched && campo('status')?.invalid) {
+            <div id="statusError" class="invalid-feedback"
+              >
+              Status é obrigatório.
+            </div>
+          }
+        </div>
+      }
     </div>
-
-    <div class="form-group" *ngIf="modoEdicao">
-      <label for="status">Status *</label>
-      <select id="status" formControlName="status" class="form-control"
-        aria-describedby="statusError"
-        [class.is-invalid]="campo('status')?.invalid && campo('status')?.touched">
-        <option *ngFor="let s of statuses" [value]="s">{{ statusLabel[s] }}</option>
-      </select>
-      <div id="statusError" class="invalid-feedback"
-        *ngIf="campo('status')?.touched && campo('status')?.invalid">
-        Status é obrigatório.
-      </div>
-    </div>
-  </div>
-
-  <h2 class="form-section-title">Estratégia terapêutica</h2>
-
-  <div class="form-group">
-    <label for="objetivosTerapeuticos">Objetivos terapêuticos *</label>
-    <textarea id="objetivosTerapeuticos" formControlName="objetivosTerapeuticos" class="form-control"
-      aria-describedby="objetivosTerapeuticosError"
+    <h2 class="form-section-title">Estratégia terapêutica</h2>
+    <div class="form-group">
+      <label for="objetivosTerapeuticos">Objetivos terapêuticos *</label>
+      <textarea id="objetivosTerapeuticos" formControlName="objetivosTerapeuticos" class="form-control"
+        aria-describedby="objetivosTerapeuticosError"
       [class.is-invalid]="campo('objetivosTerapeuticos')?.invalid && campo('objetivosTerapeuticos')?.touched"></textarea>
-    <div id="objetivosTerapeuticosError" class="invalid-feedback"
-      *ngIf="campo('objetivosTerapeuticos')?.touched && campo('objetivosTerapeuticos')?.invalid">
-      Objetivos terapêuticos são obrigatórios.
+      @if (campo('objetivosTerapeuticos')?.touched && campo('objetivosTerapeuticos')?.invalid) {
+        <div id="objetivosTerapeuticosError" class="invalid-feedback"
+          >
+          Objetivos terapêuticos são obrigatórios.
+        </div>
+      }
     </div>
-  </div>
-
-  <div class="form-group">
-    <label for="condutasPropostas">Condutas propostas *</label>
-    <textarea id="condutasPropostas" formControlName="condutasPropostas" class="form-control"
-      aria-describedby="condutasPropostasError"
-      [class.is-invalid]="campo('condutasPropostas')?.invalid && campo('condutasPropostas')?.touched"></textarea>
-    <div id="condutasPropostasError" class="invalid-feedback"
-      *ngIf="campo('condutasPropostas')?.touched && campo('condutasPropostas')?.invalid">
-      Condutas propostas são obrigatórias.
-    </div>
-  </div>
-
-  <h2 class="form-section-title">Exercícios e equipamentos</h2>
-
-  <div class="form-row">
     <div class="form-group">
-      <label for="exerciciosIndicados">Exercícios indicados *</label>
-      <textarea id="exerciciosIndicados" formControlName="exerciciosIndicados" class="form-control"
-        aria-describedby="exerciciosIndicadosError"
+      <label for="condutasPropostas">Condutas propostas *</label>
+      <textarea id="condutasPropostas" formControlName="condutasPropostas" class="form-control"
+        aria-describedby="condutasPropostasError"
+      [class.is-invalid]="campo('condutasPropostas')?.invalid && campo('condutasPropostas')?.touched"></textarea>
+      @if (campo('condutasPropostas')?.touched && campo('condutasPropostas')?.invalid) {
+        <div id="condutasPropostasError" class="invalid-feedback"
+          >
+          Condutas propostas são obrigatórias.
+        </div>
+      }
+    </div>
+    <h2 class="form-section-title">Exercícios e equipamentos</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="exerciciosIndicados">Exercícios indicados *</label>
+        <textarea id="exerciciosIndicados" formControlName="exerciciosIndicados" class="form-control"
+          aria-describedby="exerciciosIndicadosError"
         [class.is-invalid]="campo('exerciciosIndicados')?.invalid && campo('exerciciosIndicados')?.touched"></textarea>
-      <div id="exerciciosIndicadosError" class="invalid-feedback"
-        *ngIf="campo('exerciciosIndicados')?.touched && campo('exerciciosIndicados')?.invalid">
-        Exercícios indicados são obrigatórios.
+        @if (campo('exerciciosIndicados')?.touched && campo('exerciciosIndicados')?.invalid) {
+          <div id="exerciciosIndicadosError" class="invalid-feedback"
+            >
+            Exercícios indicados são obrigatórios.
+          </div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="exerciciosContraindicados">Exercícios contraindicados</label>
+        <textarea id="exerciciosContraindicados" formControlName="exerciciosContraindicados" class="form-control"></textarea>
       </div>
     </div>
-
     <div class="form-group">
-      <label for="exerciciosContraindicados">Exercícios contraindicados</label>
-      <textarea id="exerciciosContraindicados" formControlName="exerciciosContraindicados" class="form-control"></textarea>
+      <label for="equipamentosPrevistos">Equipamentos previstos</label>
+      <textarea id="equipamentosPrevistos" formControlName="equipamentosPrevistos" class="form-control"></textarea>
     </div>
-  </div>
-
-  <div class="form-group">
-    <label for="equipamentosPrevistos">Equipamentos previstos</label>
-    <textarea id="equipamentosPrevistos" formControlName="equipamentosPrevistos" class="form-control"></textarea>
-  </div>
-
-  <h2 class="form-section-title">Observações clínicas</h2>
-
-  <div class="form-group">
-    <label for="observacoesClinicas">Observações clínicas</label>
-    <textarea id="observacoesClinicas" formControlName="observacoesClinicas" class="form-control"></textarea>
-  </div>
-
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="salvando">
-      {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
-    </button>
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'plano-tratamento']" class="btn btn-outline">Cancelar</a>
-  </div>
-</form>
+    <h2 class="form-section-title">Observações clínicas</h2>
+    <div class="form-group">
+      <label for="observacoesClinicas">Observações clínicas</label>
+      <textarea id="observacoesClinicas" formControlName="observacoesClinicas" class="form-control"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+      </button>
+      @if (pacienteId) {
+        <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento']" class="btn btn-outline">Cancelar</a>
+      }
+    </div>
+  </form>
+}

@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -49,7 +48,7 @@ const VAZIO: BuscaParcial = { resultados: [], falhou: false };
 
 @Component({
   selector: 'app-busca-global',
-  imports: [NgIf, NgFor, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './busca-global.component.html',
   styleUrl: './busca-global.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

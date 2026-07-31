@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -8,7 +8,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './paciente-form.component.html',
   styleUrl: './paciente-form.component.scss'
 })

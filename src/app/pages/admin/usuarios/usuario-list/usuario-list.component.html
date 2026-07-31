@@ -3,16 +3,24 @@
   <a routerLink="/admin/usuarios/novo" class="btn btn-primary">+ Novo Usuário</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
 
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && usuarios.length === 0 && !erro" class="empty-state">
-  Nenhum usuário cadastrado.
-</div>
+@if (!loading && usuarios.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhum usuário cadastrado.
+  </div>
+}
 
-<ng-container *ngIf="!loading && usuarios.length > 0">
+@if (!loading && usuarios.length > 0) {
   <app-pagination-summary
     [currentPage]="currentPage"
     [pageSize]="pageSize"
@@ -20,7 +28,6 @@
     itemLabel="usuários"
     [pageSizeOptions]="pageSizeOptions"
     (pageSizeChange)="alterarTamanhoPagina($event)" />
-
   <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de usuários">
     <table class="table">
       <thead>
@@ -33,82 +40,97 @@
         </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let u of usuarios">
-        <td>{{ u.name }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ roleLabel[u.role] }}</td>
-        <td>
-          <span *ngIf="u.active === true" class="status status--ativo">Ativo</span>
-          <span *ngIf="u.active === false" class="status status--inativo">Inativo</span>
-          <span *ngIf="u.active === undefined" class="status status--desconhecido">—</span>
-        </td>
-        <td class="acoes">
-          <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-          <button
-            *ngIf="u.active === true"
-            class="btn btn-sm btn-warning"
-            [disabled]="isUsuarioAtual(u)"
-            [title]="isUsuarioAtual(u) ? 'Você não pode inativar a própria conta' : ''"
-            (click)="confirmarAcao('inativar', u)">
-            Inativar
-          </button>
-          <button
-            *ngIf="u.active === false"
-            class="btn btn-sm btn-success"
-            (click)="confirmarAcao('ativar', u)">
-            Reativar
-          </button>
-          <button
-            *ngIf="u.active !== undefined"
-            class="btn btn-sm btn-danger"
-            [disabled]="isUsuarioAtual(u)"
-            [title]="isUsuarioAtual(u) ? 'Você não pode excluir a própria conta' : ''"
-            (click)="confirmarAcao('excluir', u)">
-            Excluir
-          </button>
-        </td>
-      </tr>
-    </tbody>
+        @for (u of usuarios; track u) {
+          <tr>
+            <td>{{ u.name }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ roleLabel[u.role] }}</td>
+            <td>
+              @if (u.active === true) {
+                <span class="status status--ativo">Ativo</span>
+              }
+              @if (u.active === false) {
+                <span class="status status--inativo">Inativo</span>
+              }
+              @if (u.active === undefined) {
+                <span class="status status--desconhecido">—</span>
+              }
+            </td>
+            <td class="acoes">
+              <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+              @if (u.active === true) {
+                <button
+                  class="btn btn-sm btn-warning"
+                  [disabled]="isUsuarioAtual(u)"
+                  [title]="isUsuarioAtual(u) ? 'Você não pode inativar a própria conta' : ''"
+                  (click)="confirmarAcao('inativar', u)">
+                  Inativar
+                </button>
+              }
+              @if (u.active === false) {
+                <button
+                  class="btn btn-sm btn-success"
+                  (click)="confirmarAcao('ativar', u)">
+                  Reativar
+                </button>
+              }
+              @if (u.active !== undefined) {
+                <button
+                  class="btn btn-sm btn-danger"
+                  [disabled]="isUsuarioAtual(u)"
+                  [title]="isUsuarioAtual(u) ? 'Você não pode excluir a própria conta' : ''"
+                  (click)="confirmarAcao('excluir', u)">
+                  Excluir
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
     </table>
   </div>
-</ng-container>
+}
 
-<div class="pagination" *ngIf="totalPages > 1" role="navigation" aria-label="Paginação de usuários">
-  <button
-    type="button"
-    class="page-nav-mobile"
-    aria-label="Página anterior"
-    [disabled]="currentPage === 0"
-    (click)="pagina(currentPage - 1)">
-    Anterior
-  </button>
-  <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
-  <button
-    *ngFor="let p of visiblePages"
-    class="page-number"
-    [class.active]="p === currentPage"
-    [attr.aria-label]="'Página ' + (p + 1)"
-    [attr.aria-current]="p === currentPage ? 'page' : null"
-    (click)="pagina(p)">
-    {{ p + 1 }}
-  </button>
-  <button
-    type="button"
-    class="page-nav-mobile"
-    aria-label="Próxima página"
-    [disabled]="currentPage === totalPages - 1"
-    (click)="pagina(currentPage + 1)">
-    Próxima
-  </button>
-</div>
+@if (totalPages > 1) {
+  <div class="pagination" role="navigation" aria-label="Paginação de usuários">
+    <button
+      type="button"
+      class="page-nav-mobile"
+      aria-label="Página anterior"
+      [disabled]="currentPage === 0"
+      (click)="pagina(currentPage - 1)">
+      Anterior
+    </button>
+    <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+    @for (p of visiblePages; track p) {
+      <button
+        class="page-number"
+        [class.active]="p === currentPage"
+        [attr.aria-label]="'Página ' + (p + 1)"
+        [attr.aria-current]="p === currentPage ? 'page' : null"
+        (click)="pagina(p)">
+        {{ p + 1 }}
+      </button>
+    }
+    <button
+      type="button"
+      class="page-nav-mobile"
+      aria-label="Próxima página"
+      [disabled]="currentPage === totalPages - 1"
+      (click)="pagina(currentPage + 1)">
+      Próxima
+    </button>
+  </div>
+}
 
 <a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
 
-<app-confirmar-dialog
-  *ngIf="confirmacao"
-  titulo="Confirmar ação"
-  [mensagem]="mensagemConfirmacao()"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="executarConfirmacao()"
-  (cancelar)="cancelarConfirmacao()" />
+@if (confirmacao) {
+  <app-confirmar-dialog
+    titulo="Confirmar ação"
+    [mensagem]="mensagemConfirmacao()"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="executarConfirmacao()"
+    (cancelar)="cancelarConfirmacao()" />
+}

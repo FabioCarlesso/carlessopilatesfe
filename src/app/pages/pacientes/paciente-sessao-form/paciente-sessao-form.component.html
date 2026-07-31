@@ -1,107 +1,132 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Sessões', link: ['/pacientes', pacienteId, 'sessoes'] },
   { label: modoEdicao ? 'Editar' : 'Nova' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>{{ modoEdicao ? 'Editar' : 'Nova' }} Sessão</h1>
-    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar</a>
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
-
-  <h2 class="form-section-title">Dados da sessão</h2>
-
-  <div class="form-row">
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Dados da sessão</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="tipo">Tipo{{ modoEdicao ? '' : ' *' }}</label>
+        <select id="tipo" formControlName="tipo" class="form-control"
+          [attr.aria-describedby]="modoEdicao ? 'tipoHint' : 'tipoError'"
+          [class.is-invalid]="campo('tipo')?.invalid && campo('tipo')?.touched">
+          @for (t of tipos; track t) {
+            <option [value]="t">{{ tipoLabel[t] }}</option>
+          }
+        </select>
+        @if (modoEdicao) {
+          <div id="tipoHint" class="field-hint">
+            Definido no agendamento e não alterável na edição.
+          </div>
+        }
+        @if (campo('tipo')?.touched && campo('tipo')?.invalid) {
+          <div id="tipoError" class="invalid-feedback"
+            >
+            Tipo é obrigatório.
+          </div>
+        }
+      </div>
+      @if (modoEdicao) {
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" formControlName="status" class="form-control" aria-describedby="statusHint">
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ statusLabel[s] }}</option>
+            }
+          </select>
+          <div id="statusHint" class="field-hint">
+            Alterado pelas ações Realizar e Cancelar na listagem de sessões.
+          </div>
+        </div>
+      }
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dataHora">Data e hora *</label>
+        <input id="dataHora" type="datetime-local" formControlName="dataHora" class="form-control"
+          aria-describedby="dataHoraError"
+          [class.is-invalid]="campo('dataHora')?.invalid && campo('dataHora')?.touched" />
+        @if (campo('dataHora')?.touched && campo('dataHora')?.invalid) {
+          <div id="dataHoraError" class="invalid-feedback"
+            >
+            Data e hora são obrigatórias.
+          </div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="duracao">Duração (minutos) *</label>
+        <input id="duracao" type="number" formControlName="duracao" class="form-control"
+          min="1" max="480"
+          aria-describedby="duracaoError"
+          [class.is-invalid]="campo('duracao')?.invalid && campo('duracao')?.touched" />
+        @if (campo('duracao')?.touched && campo('duracao')?.invalid) {
+          <div id="duracaoError" class="invalid-feedback"
+            >
+            Duração é obrigatória e deve estar entre 1 e 480 minutos.
+          </div>
+        }
+      </div>
+    </div>
     <div class="form-group">
-      <label for="tipo">Tipo{{ modoEdicao ? '' : ' *' }}</label>
-      <select id="tipo" formControlName="tipo" class="form-control"
-        [attr.aria-describedby]="modoEdicao ? 'tipoHint' : 'tipoError'"
-        [class.is-invalid]="campo('tipo')?.invalid && campo('tipo')?.touched">
-        <option *ngFor="let t of tipos" [value]="t">{{ tipoLabel[t] }}</option>
-      </select>
-      <div id="tipoHint" class="field-hint" *ngIf="modoEdicao">
-        Definido no agendamento e não alterável na edição.
-      </div>
-      <div id="tipoError" class="invalid-feedback"
-        *ngIf="campo('tipo')?.touched && campo('tipo')?.invalid">
-        Tipo é obrigatório.
-      </div>
+      <label for="profissionalId">ID do profissional responsável</label>
+      <input id="profissionalId" type="number" formControlName="profissionalId" class="form-control"
+        min="1" step="1" [attr.placeholder]="modoEdicao ? null : 'Opcional'"
+        [attr.aria-describedby]="modoEdicao ? 'profissionalIdHint' : 'profissionalIdError'"
+        [class.is-invalid]="campo('profissionalId')?.invalid && campo('profissionalId')?.touched" />
+      @if (modoEdicao) {
+        <div id="profissionalIdHint" class="field-hint">
+          Definido no agendamento e não alterável na edição.
+        </div>
+      }
+      @if (campo('profissionalId')?.touched && campo('profissionalId')?.invalid) {
+        <div id="profissionalIdError" class="invalid-feedback"
+          >
+          ID do profissional deve ser um número inteiro positivo.
+        </div>
+      }
     </div>
-
-    <div class="form-group" *ngIf="modoEdicao">
-      <label for="status">Status</label>
-      <select id="status" formControlName="status" class="form-control" aria-describedby="statusHint">
-        <option *ngFor="let s of statuses" [value]="s">{{ statusLabel[s] }}</option>
-      </select>
-      <div id="statusHint" class="field-hint">
-        Alterado pelas ações Realizar e Cancelar na listagem de sessões.
-      </div>
-    </div>
-  </div>
-
-  <div class="form-row">
+    <h2 class="form-section-title">Observações</h2>
     <div class="form-group">
-      <label for="dataHora">Data e hora *</label>
-      <input id="dataHora" type="datetime-local" formControlName="dataHora" class="form-control"
-        aria-describedby="dataHoraError"
-        [class.is-invalid]="campo('dataHora')?.invalid && campo('dataHora')?.touched" />
-      <div id="dataHoraError" class="invalid-feedback"
-        *ngIf="campo('dataHora')?.touched && campo('dataHora')?.invalid">
-        Data e hora são obrigatórias.
-      </div>
+      <label for="observacoes">Observações</label>
+      <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
     </div>
-
-    <div class="form-group">
-      <label for="duracao">Duração (minutos) *</label>
-      <input id="duracao" type="number" formControlName="duracao" class="form-control"
-        min="1" max="480"
-        aria-describedby="duracaoError"
-        [class.is-invalid]="campo('duracao')?.invalid && campo('duracao')?.touched" />
-      <div id="duracaoError" class="invalid-feedback"
-        *ngIf="campo('duracao')?.touched && campo('duracao')?.invalid">
-        Duração é obrigatória e deve estar entre 1 e 480 minutos.
-      </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+      </button>
+      @if (pacienteId) {
+        <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
+      }
     </div>
-  </div>
-
-  <div class="form-group">
-    <label for="profissionalId">ID do profissional responsável</label>
-    <input id="profissionalId" type="number" formControlName="profissionalId" class="form-control"
-      min="1" step="1" [attr.placeholder]="modoEdicao ? null : 'Opcional'"
-      [attr.aria-describedby]="modoEdicao ? 'profissionalIdHint' : 'profissionalIdError'"
-      [class.is-invalid]="campo('profissionalId')?.invalid && campo('profissionalId')?.touched" />
-    <div id="profissionalIdHint" class="field-hint" *ngIf="modoEdicao">
-      Definido no agendamento e não alterável na edição.
-    </div>
-    <div id="profissionalIdError" class="invalid-feedback"
-      *ngIf="campo('profissionalId')?.touched && campo('profissionalId')?.invalid">
-      ID do profissional deve ser um número inteiro positivo.
-    </div>
-  </div>
-
-  <h2 class="form-section-title">Observações</h2>
-
-  <div class="form-group">
-    <label for="observacoes">Observações</label>
-    <textarea id="observacoes" formControlName="observacoes" class="form-control"></textarea>
-  </div>
-
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="salvando">
-      {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
-    </button>
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
-  </div>
-</form>
+  </form>
+}

@@ -1,4 +1,4 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
@@ -34,7 +34,7 @@ function formatarDataHoraLocal(data: Date): string {
 
 @Component({
   selector: 'app-paciente-sessao-list',
-  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-sessao-list.component.html',
   styleUrl: './paciente-sessao-list.component.scss'
 })

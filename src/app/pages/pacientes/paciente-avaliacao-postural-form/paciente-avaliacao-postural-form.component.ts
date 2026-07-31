@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,7 +16,7 @@ import { ImageCompressorService } from '../../../shared/services/image-compresso
 
 @Component({
   selector: 'app-paciente-avaliacao-postural-form',
-  imports: [NgIf, NgFor, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-form.component.html',
   styleUrl: './paciente-avaliacao-postural-form.component.scss'
 })

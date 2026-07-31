@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,7 +15,7 @@ import { formatCompetencia } from '../../../shared/utils/competencia-mask';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-nfse-emitida-form.component.html',
   styleUrl: './paciente-nfse-emitida-form.component.scss'
 })

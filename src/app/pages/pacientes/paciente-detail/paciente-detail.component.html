@@ -1,136 +1,149 @@
-<div class="page-header" *ngIf="paciente">
-  <h1>{{ paciente.nome }}</h1>
-  <div class="acoes">
-    <a [routerLink]="['/pacientes', paciente.id, 'editar']" class="btn btn-secondary">Editar</a>
-    <button class="btn btn-secondary" (click)="confirmarAtivar = true" *ngIf="!paciente.ativo">Ativar</button>
-    <button class="btn btn-danger" (click)="confirmarInativar = true" *ngIf="paciente.ativo">Inativar</button>
-    <a routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+@if (paciente) {
+  <div class="page-header">
+    <h1>{{ paciente.nome }}</h1>
+    <div class="acoes">
+      <a [routerLink]="['/pacientes', paciente.id, 'editar']" class="btn btn-secondary">Editar</a>
+      @if (!paciente.ativo) {
+        <button class="btn btn-secondary" (click)="confirmarAtivar = true">Ativar</button>
+      }
+      @if (paciente.ativo) {
+        <button class="btn btn-danger" (click)="confirmarInativar = true">Inativar</button>
+      }
+      <a routerLink="/pacientes" class="btn btn-outline">Voltar</a>
+    </div>
   </div>
-</div>
+}
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="paciente" class="detail-card">
-  <div class="badge-status" [class.inativo]="!paciente.ativo">
-    {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
+@if (paciente) {
+  <div class="detail-card">
+    <div class="badge-status" [class.inativo]="!paciente.ativo">
+      {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
+    </div>
+    <section class="detail-section">
+      <h2>Dados Pessoais</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Nome</span>
+          <span>{{ paciente.nome }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">E-mail</span>
+          <span>{{ paciente.email }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">CPF</span>
+          <span>{{ paciente.cpf }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Telefone</span>
+          <span>{{ paciente.telefone || '-' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Data de Nascimento</span>
+          <span>{{ paciente.dataNascimento ? (paciente.dataNascimento | date:'dd/MM/yyyy') : '-' }}</span>
+        </div>
+      </div>
+    </section>
+    @if (paciente.endereco) {
+      <section class="detail-section">
+        <h2>Endereço</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Logradouro</span>
+            <span>{{ paciente.endereco.logradouro }}, {{ paciente.endereco.numero }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Bairro</span>
+            <span>{{ paciente.endereco.bairro }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Cidade / UF</span>
+            <span>{{ paciente.endereco.cidade }} - {{ paciente.endereco.uf }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">CEP</span>
+            <span>{{ paciente.endereco.cep }}</span>
+          </div>
+        </div>
+      </section>
+    }
+    <section class="detail-section links-section">
+      <h2>Gestão</h2>
+      <div class="links-grid">
+        <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
+          <span class="link-icon">📋</span>
+          <span>Planos</span>
+        </a>
+        <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
+          <span class="link-icon">💳</span>
+          <span>Pagamentos</span>
+        </a>
+        <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
+          <span class="link-icon">🗓</span>
+          <span>Aulas</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
+          <span class="link-icon">📝</span>
+          <span>Anamnese</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
+          <span class="link-icon">🦴</span>
+          <span>Avaliação Fisioterapêutica</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
+          <span class="link-icon">📐</span>
+          <span>Análise Postural</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
+          <span class="link-icon">📄</span>
+          <span>Plano de Tratamento</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
+          <span class="link-icon">🏃</span>
+          <span>Sessões</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
+          <span class="link-icon">📈</span>
+          <span>Histórico de Evoluções</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
+          <span class="link-icon">📊</span>
+          <span>Reavaliações</span>
+        </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
+          <span class="link-icon">🧾</span>
+          <span>NFSEs Emitidas</span>
+        </a>
+      </div>
+    </section>
   </div>
+}
 
-  <section class="detail-section">
-    <h2>Dados Pessoais</h2>
-    <div class="detail-grid">
-      <div class="detail-item">
-        <span class="label">Nome</span>
-        <span>{{ paciente.nome }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">E-mail</span>
-        <span>{{ paciente.email }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">CPF</span>
-        <span>{{ paciente.cpf }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Telefone</span>
-        <span>{{ paciente.telefone || '-' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Data de Nascimento</span>
-        <span>{{ paciente.dataNascimento ? (paciente.dataNascimento | date:'dd/MM/yyyy') : '-' }}</span>
-      </div>
-    </div>
-  </section>
+@if (confirmarAtivar) {
+  <app-confirmar-dialog
+    titulo="Confirmar reativação"
+    variante="secundaria"
+    [processando]="acaoEmAndamento"
+    (confirmar)="ativar()"
+    (cancelar)="confirmarAtivar = false">
+    <p>Confirma a reativação de <strong>{{ paciente?.nome }}</strong>?</p>
+  </app-confirmar-dialog>
+}
 
-  <section class="detail-section" *ngIf="paciente.endereco">
-    <h2>Endereço</h2>
-    <div class="detail-grid">
-      <div class="detail-item">
-        <span class="label">Logradouro</span>
-        <span>{{ paciente.endereco.logradouro }}, {{ paciente.endereco.numero }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Bairro</span>
-        <span>{{ paciente.endereco.bairro }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">Cidade / UF</span>
-        <span>{{ paciente.endereco.cidade }} - {{ paciente.endereco.uf }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="label">CEP</span>
-        <span>{{ paciente.endereco.cep }}</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="detail-section links-section">
-    <h2>Gestão</h2>
-    <div class="links-grid">
-      <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
-        <span class="link-icon">📋</span>
-        <span>Planos</span>
-      </a>
-      <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
-        <span class="link-icon">💳</span>
-        <span>Pagamentos</span>
-      </a>
-      <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
-        <span class="link-icon">🗓</span>
-        <span>Aulas</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
-        <span class="link-icon">📝</span>
-        <span>Anamnese</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
-        <span class="link-icon">🦴</span>
-        <span>Avaliação Fisioterapêutica</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
-        <span class="link-icon">📐</span>
-        <span>Análise Postural</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
-        <span class="link-icon">📄</span>
-        <span>Plano de Tratamento</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
-        <span class="link-icon">🏃</span>
-        <span>Sessões</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
-        <span class="link-icon">📈</span>
-        <span>Histórico de Evoluções</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
-        <span class="link-icon">📊</span>
-        <span>Reavaliações</span>
-      </a>
-      <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
-        <span class="link-icon">🧾</span>
-        <span>NFSEs Emitidas</span>
-      </a>
-    </div>
-  </section>
-</div>
-
-<app-confirmar-dialog
-  *ngIf="confirmarAtivar"
-  titulo="Confirmar reativação"
-  variante="secundaria"
-  [processando]="acaoEmAndamento"
-  (confirmar)="ativar()"
-  (cancelar)="confirmarAtivar = false">
-  <p>Confirma a reativação de <strong>{{ paciente?.nome }}</strong>?</p>
-</app-confirmar-dialog>
-
-<app-confirmar-dialog
-  *ngIf="confirmarInativar"
-  titulo="Confirmar inativação"
-  variante="perigo"
-  [processando]="acaoEmAndamento"
-  (confirmar)="inativar()"
-  (cancelar)="confirmarInativar = false">
-  <p>Confirma a inativação de <strong>{{ paciente?.nome }}</strong>?</p>
-</app-confirmar-dialog>
+@if (confirmarInativar) {
+  <app-confirmar-dialog
+    titulo="Confirmar inativação"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="confirmarInativar = false">
+    <p>Confirma a inativação de <strong>{{ paciente?.nome }}</strong>?</p>
+  </app-confirmar-dialog>
+}

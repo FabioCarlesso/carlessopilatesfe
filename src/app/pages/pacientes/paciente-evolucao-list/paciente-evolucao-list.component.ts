@@ -1,4 +1,4 @@
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -330,7 +330,7 @@ export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvoluc
 
 @Component({
   selector: 'app-paciente-evolucao-list',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, BreadcrumbComponent],
+  imports: [DatePipe, FormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-evolucao-list.component.html',
   styleUrl: './paciente-evolucao-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

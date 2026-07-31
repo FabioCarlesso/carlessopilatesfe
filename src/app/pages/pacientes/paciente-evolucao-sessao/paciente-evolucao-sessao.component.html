@@ -1,109 +1,119 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Sessões', link: ['/pacientes', pacienteId, 'sessoes'] },
   { label: 'Evolução' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Evolução da Sessão</h1>
-    <p *ngIf="sessao" class="page-subtitle">
-      {{ tipoLabel[sessao.tipo] }} — {{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}
-      <span *ngIf="paciente"> — {{ paciente.nome }}</span>
-    </p>
+    @if (sessao) {
+      <p class="page-subtitle">
+        {{ tipoLabel[sessao.tipo] }} — {{ sessao.dataHora | date:'dd/MM/yyyy HH:mm' }}
+        @if (paciente) {
+          <span> — {{ paciente.nome }}</span>
+        }
+      </p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId && sessaoId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar</a>
+    @if (pacienteId && sessaoId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<form *ngIf="!loading && !parametroInvalido" [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
-
-  <h2 class="form-section-title">Registro</h2>
-
-  <div class="form-group form-group-sm">
-    <label for="dataHoraRegistro">Data/hora do registro *</label>
-    <input id="dataHoraRegistro" type="datetime-local" formControlName="dataHoraRegistro" class="form-control"
-      aria-describedby="dataHoraRegistroError"
-      [class.is-invalid]="campo('dataHoraRegistro')?.invalid && campo('dataHoraRegistro')?.touched" />
-    <div id="dataHoraRegistroError" class="invalid-feedback"
-      *ngIf="campo('dataHoraRegistro')?.touched && campo('dataHoraRegistro')?.invalid">
-      Data/hora do registro é obrigatória.
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Registro</h2>
+    <div class="form-group form-group-sm">
+      <label for="dataHoraRegistro">Data/hora do registro *</label>
+      <input id="dataHoraRegistro" type="datetime-local" formControlName="dataHoraRegistro" class="form-control"
+        aria-describedby="dataHoraRegistroError"
+        [class.is-invalid]="campo('dataHoraRegistro')?.invalid && campo('dataHoraRegistro')?.touched" />
+      @if (campo('dataHoraRegistro')?.touched && campo('dataHoraRegistro')?.invalid) {
+        <div id="dataHoraRegistroError" class="invalid-feedback"
+          >
+          Data/hora do registro é obrigatória.
+        </div>
+      }
     </div>
-  </div>
-
-  <div class="form-group">
-    <label for="observacoesFisioterapeuta">Observações do fisioterapeuta</label>
-    <textarea id="observacoesFisioterapeuta" formControlName="observacoesFisioterapeuta" class="form-control" rows="3"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="exerciciosRealizados">Exercícios realizados</label>
-    <textarea id="exerciciosRealizados" formControlName="exerciciosRealizados" class="form-control" rows="3"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="equipamentosUtilizados">Equipamentos utilizados</label>
-    <textarea id="equipamentosUtilizados" formControlName="equipamentosUtilizados" class="form-control" rows="2"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="cargasMolas">Cargas/molas utilizadas</label>
-    <textarea id="cargasMolas" formControlName="cargasMolas" class="form-control" rows="2"></textarea>
-  </div>
-
-  <h2 class="form-section-title">Dor</h2>
-
-  <div class="form-group form-group-sm">
-    <label for="dorAntes">Dor antes (0–10)</label>
-    <input id="dorAntes" type="number" formControlName="dorAntes" class="form-control"
-      min="0" max="10" placeholder="Opcional"
-      aria-describedby="dorAntesError"
-      [class.is-invalid]="campo('dorAntes')?.invalid && campo('dorAntes')?.touched" />
-    <div id="dorAntesError" class="invalid-feedback"
-      *ngIf="campo('dorAntes')?.touched && campo('dorAntes')?.invalid">
-      A dor antes deve estar entre 0 e 10.
+    <div class="form-group">
+      <label for="observacoesFisioterapeuta">Observações do fisioterapeuta</label>
+      <textarea id="observacoesFisioterapeuta" formControlName="observacoesFisioterapeuta" class="form-control" rows="3"></textarea>
     </div>
-  </div>
-
-  <div class="form-group form-group-sm">
-    <label for="dorDepois">Dor depois (0–10)</label>
-    <input id="dorDepois" type="number" formControlName="dorDepois" class="form-control"
-      min="0" max="10" placeholder="Opcional"
-      aria-describedby="dorDepoisError"
-      [class.is-invalid]="campo('dorDepois')?.invalid && campo('dorDepois')?.touched" />
-    <div id="dorDepoisError" class="invalid-feedback"
-      *ngIf="campo('dorDepois')?.touched && campo('dorDepois')?.invalid">
-      A dor depois deve estar entre 0 e 10.
+    <div class="form-group">
+      <label for="exerciciosRealizados">Exercícios realizados</label>
+      <textarea id="exerciciosRealizados" formControlName="exerciciosRealizados" class="form-control" rows="3"></textarea>
     </div>
-  </div>
-
-  <h2 class="form-section-title">Resposta e orientações</h2>
-
-  <div class="form-group">
-    <label for="respostaPaciente">Resposta do paciente</label>
-    <textarea id="respostaPaciente" formControlName="respostaPaciente" class="form-control" rows="3"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="intercorrencias">Intercorrências</label>
-    <textarea id="intercorrencias" formControlName="intercorrencias" class="form-control" rows="2"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="orientacoes">Orientações fornecidas</label>
-    <textarea id="orientacoes" formControlName="orientacoes" class="form-control" rows="2"></textarea>
-  </div>
-
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="salvando">
-      {{ salvando ? 'Salvando...' : (evolucao ? 'Atualizar' : 'Cadastrar') }}
-    </button>
-    <a *ngIf="pacienteId && sessaoId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
-  </div>
-</form>
+    <div class="form-group">
+      <label for="equipamentosUtilizados">Equipamentos utilizados</label>
+      <textarea id="equipamentosUtilizados" formControlName="equipamentosUtilizados" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="cargasMolas">Cargas/molas utilizadas</label>
+      <textarea id="cargasMolas" formControlName="cargasMolas" class="form-control" rows="2"></textarea>
+    </div>
+    <h2 class="form-section-title">Dor</h2>
+    <div class="form-group form-group-sm">
+      <label for="dorAntes">Dor antes (0–10)</label>
+      <input id="dorAntes" type="number" formControlName="dorAntes" class="form-control"
+        min="0" max="10" placeholder="Opcional"
+        aria-describedby="dorAntesError"
+        [class.is-invalid]="campo('dorAntes')?.invalid && campo('dorAntes')?.touched" />
+      @if (campo('dorAntes')?.touched && campo('dorAntes')?.invalid) {
+        <div id="dorAntesError" class="invalid-feedback"
+          >
+          A dor antes deve estar entre 0 e 10.
+        </div>
+      }
+    </div>
+    <div class="form-group form-group-sm">
+      <label for="dorDepois">Dor depois (0–10)</label>
+      <input id="dorDepois" type="number" formControlName="dorDepois" class="form-control"
+        min="0" max="10" placeholder="Opcional"
+        aria-describedby="dorDepoisError"
+        [class.is-invalid]="campo('dorDepois')?.invalid && campo('dorDepois')?.touched" />
+      @if (campo('dorDepois')?.touched && campo('dorDepois')?.invalid) {
+        <div id="dorDepoisError" class="invalid-feedback"
+          >
+          A dor depois deve estar entre 0 e 10.
+        </div>
+      }
+    </div>
+    <h2 class="form-section-title">Resposta e orientações</h2>
+    <div class="form-group">
+      <label for="respostaPaciente">Resposta do paciente</label>
+      <textarea id="respostaPaciente" formControlName="respostaPaciente" class="form-control" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="intercorrencias">Intercorrências</label>
+      <textarea id="intercorrencias" formControlName="intercorrencias" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="orientacoes">Orientações fornecidas</label>
+      <textarea id="orientacoes" formControlName="orientacoes" class="form-control" rows="2"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : (evolucao ? 'Atualizar' : 'Cadastrar') }}
+      </button>
+      @if (pacienteId && sessaoId) {
+        <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-outline">Cancelar</a>
+      }
+    </div>
+  </form>
+}

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
-import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -21,7 +21,7 @@ const CARD_MODE_MAX_WIDTH = 640;
 
 @Component({
   selector: 'app-aula-list',
-  imports: [NgIf, NgFor, DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

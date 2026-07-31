@@ -1,90 +1,120 @@
-<app-breadcrumb *ngIf="pacienteId !== null" [items]="[
+@if (pacienteId !== null) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Avaliação Fisioterapêutica', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica'] },
   { label: 'Análise Postural' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Postural</h1>
-    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-outline">Voltar</a>
+    @if (pacienteId !== null) {
+      <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="!loading && !parametroInvalido">
-  <div *ngIf="avaliacaoFisioterapeuticaId === null" class="card sem-avaliacao">
-    <p>É necessário cadastrar a avaliação fisioterapêutica do paciente antes de iniciar uma análise postural.</p>
-    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-primary">
-      Cadastrar avaliação fisioterapêutica
-    </a>
-  </div>
-
-  <ng-container *ngIf="avaliacaoFisioterapeuticaId !== null">
-    <div class="lista-header">
-      <h2 class="form-section-title">Análises desta avaliação</h2>
-      <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
-        + Nova análise
-      </a>
-    </div>
-
-    <p *ngIf="analises.length === 0" class="empty-state">Nenhuma análise postural registrada ainda.</p>
-
-    <ul *ngIf="analises.length > 0" class="analises-list">
-      <li *ngFor="let analise of analises" class="analise-item">
-        <div class="analise-info">
-          <span class="vista">{{ vistaLabel[analise.vista] }}</span>
-          <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
-            {{ statusLabel[analise.status] }}
-          </span>
-          <span class="data">{{ analise.dataCriacao | date:'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-
-        <div class="analise-acoes">
-          <a
-            *ngIf="analise.temFoto && pacienteId !== null"
-            [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', analise.id, 'marcar']"
-            class="btn btn-primary btn-sm">
-            {{ analise.status === 'CONCLUIDA' ? 'Ver marcação' : 'Marcar pontos' }}
+@if (!loading && !parametroInvalido) {
+  <div>
+    @if (avaliacaoFisioterapeuticaId === null) {
+      <div class="card sem-avaliacao">
+        <p>É necessário cadastrar a avaliação fisioterapêutica do paciente antes de iniciar uma análise postural.</p>
+        @if (pacienteId !== null) {
+          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-primary">
+            Cadastrar avaliação fisioterapêutica
           </a>
-          <button
-            type="button"
-            class="btn btn-outline btn-sm"
-            *ngIf="analise.temFoto"
-            (click)="alternarFoto(analise)">
-            {{ fotoAbertaId === analise.id ? 'Ocultar foto' : 'Ver foto' }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            [disabled]="acaoEmAndamentoId !== null"
-            (click)="confirmarCancelar(analise.id)">
-            Cancelar análise
-          </button>
-        </div>
+        }
+      </div>
+    }
+    @if (avaliacaoFisioterapeuticaId !== null) {
+      <div class="lista-header">
+        <h2 class="form-section-title">Análises desta avaliação</h2>
+        @if (pacienteId !== null) {
+          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
+            + Nova análise
+          </a>
+        }
+      </div>
+      @if (analises.length === 0) {
+        <p class="empty-state">Nenhuma análise postural registrada ainda.</p>
+      }
+      @if (analises.length > 0) {
+        <ul class="analises-list">
+          @for (analise of analises; track analise) {
+            <li class="analise-item">
+              <div class="analise-info">
+                <span class="vista">{{ vistaLabel[analise.vista] }}</span>
+                <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
+                  {{ statusLabel[analise.status] }}
+                </span>
+                <span class="data">{{ analise.dataCriacao | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="analise-acoes">
+                @if (analise.temFoto && pacienteId !== null) {
+                  <a
+                    [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', analise.id, 'marcar']"
+                    class="btn btn-primary btn-sm">
+                    {{ analise.status === 'CONCLUIDA' ? 'Ver marcação' : 'Marcar pontos' }}
+                  </a>
+                }
+                @if (analise.temFoto) {
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm"
+                    (click)="alternarFoto(analise)">
+                    {{ fotoAbertaId === analise.id ? 'Ocultar foto' : 'Ver foto' }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  [disabled]="acaoEmAndamentoId !== null"
+                  (click)="confirmarCancelar(analise.id)">
+                  Cancelar análise
+                </button>
+              </div>
+              @if (fotoAbertaId === analise.id) {
+                <div class="foto-preview">
+                  @if (carregandoFotoId === analise.id) {
+                    <span>Carregando foto...</span>
+                  }
+                  @if (fotoUrl(analise.id)) {
+                    <img [src]="fotoUrl(analise.id)" [alt]="'Foto da análise postural - ' + vistaLabel[analise.vista]" />
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+}
 
-        <div class="foto-preview" *ngIf="fotoAbertaId === analise.id">
-          <span *ngIf="carregandoFotoId === analise.id">Carregando foto...</span>
-          <img *ngIf="fotoUrl(analise.id)" [src]="fotoUrl(analise.id)" [alt]="'Foto da análise postural - ' + vistaLabel[analise.vista]" />
-        </div>
-      </li>
-    </ul>
-  </ng-container>
-</div>
-
-<app-confirmar-dialog
-  *ngIf="confirmarCancelarId !== null"
-  titulo="Cancelar análise"
-  variante="perigo"
-  [processando]="acaoEmAndamentoId !== null"
-  (confirmar)="executarCancelamento()"
-  (cancelar)="fecharConfirmacaoCancelar()">
-  <p>Confirma o cancelamento da análise <strong>{{ vistaEmConfirmacao() }}</strong>? Essa ação não pode ser desfeita pela tela e a vista ficará disponível para uma nova análise.</p>
-</app-confirmar-dialog>
+@if (confirmarCancelarId !== null) {
+  <app-confirmar-dialog
+    titulo="Cancelar análise"
+    variante="perigo"
+    [processando]="acaoEmAndamentoId !== null"
+    (confirmar)="executarCancelamento()"
+    (cancelar)="fecharConfirmacaoCancelar()">
+    <p>Confirma o cancelamento da análise <strong>{{ vistaEmConfirmacao() }}</strong>? Essa ação não pode ser desfeita pela tela e a vista ficará disponível para uma nova análise.</p>
+  </app-confirmar-dialog>
+}

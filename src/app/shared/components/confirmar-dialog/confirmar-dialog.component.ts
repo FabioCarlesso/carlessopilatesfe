@@ -1,4 +1,4 @@
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -49,7 +49,7 @@ let proximoId = 0;
 
 @Component({
   selector: 'app-confirmar-dialog',
-  imports: [NgIf, NgClass],
+  imports: [NgClass],
   templateUrl: './confirmar-dialog.component.html',
   styleUrl: './confirmar-dialog.component.scss'
 })

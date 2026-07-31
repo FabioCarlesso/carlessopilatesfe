@@ -1,10 +1,22 @@
-<nav *ngIf="items.length" aria-label="breadcrumb" class="breadcrumb-nav">
-  <ol class="breadcrumb">
-    <li *ngFor="let item of items; let last = last" class="breadcrumb-item">
-      <a *ngIf="!last && item.link" [routerLink]="item.link" class="breadcrumb-link">{{ item.label }}</a>
-      <span *ngIf="!last && !item.link" class="breadcrumb-text">{{ item.label }}</span>
-      <span *ngIf="last" class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
-      <span *ngIf="!last" class="breadcrumb-separator" aria-hidden="true">/</span>
-    </li>
-  </ol>
-</nav>
+@if (items.length) {
+  <nav aria-label="breadcrumb" class="breadcrumb-nav">
+    <ol class="breadcrumb">
+      @for (item of items; track item; let last = $last) {
+        <li class="breadcrumb-item">
+          @if (!last && item.link) {
+            <a [routerLink]="item.link" class="breadcrumb-link">{{ item.label }}</a>
+          }
+          @if (!last && !item.link) {
+            <span class="breadcrumb-text">{{ item.label }}</span>
+          }
+          @if (last) {
+            <span class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
+          }
+          @if (!last) {
+            <span class="breadcrumb-separator" aria-hidden="true">/</span>
+          }
+        </li>
+      }
+    </ol>
+  </nav>
+}

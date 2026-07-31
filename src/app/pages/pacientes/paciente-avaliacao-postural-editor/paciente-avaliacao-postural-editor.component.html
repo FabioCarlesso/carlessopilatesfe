@@ -1,84 +1,109 @@
-<app-breadcrumb *ngIf="pacienteId !== null" [items]="[
+@if (pacienteId !== null) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Avaliação Fisioterapêutica', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica'] },
   { label: 'Análise Postural', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural'] },
   { label: 'Marcação' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Marcação postural</h1>
-    <p *ngIf="analise" class="page-subtitle">
-      {{ vistaLabel[analise.vista] }}
-      <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
-        {{ statusLabel[analise.status] }}
-      </span>
-    </p>
+    @if (analise) {
+      <p class="page-subtitle">
+        {{ vistaLabel[analise.vista] }}
+        <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
+          {{ statusLabel[analise.status] }}
+        </span>
+      </p>
+    }
   </div>
   <div class="acoes">
-    <button
-      *ngIf="!somenteLeitura && fotoUrl"
-      type="button"
-      class="btn btn-outline"
-      [disabled]="salvando || concluindo"
-      (click)="salvarRascunho()">
-      {{ salvando ? 'Salvando...' : 'Salvar rascunho' }}
-    </button>
-    <button
-      *ngIf="!somenteLeitura && fotoUrl"
-      type="button"
-      class="btn btn-primary"
-      [disabled]="!podeConcluir"
-      [title]="pontosCompletos ? '' : 'Marque todos os pontos da vista para concluir.'"
-      (click)="concluir()">
-      {{ concluindo ? 'Concluindo...' : 'Concluir análise' }}
-    </button>
-    <a *ngIf="pacienteId !== null" [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">
-      Voltar
-    </a>
+    @if (!somenteLeitura && fotoUrl) {
+      <button
+        type="button"
+        class="btn btn-outline"
+        [disabled]="salvando || concluindo"
+        (click)="salvarRascunho()">
+        {{ salvando ? 'Salvando...' : 'Salvar rascunho' }}
+      </button>
+    }
+    @if (!somenteLeitura && fotoUrl) {
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!podeConcluir"
+        [title]="pontosCompletos ? '' : 'Marque todos os pontos da vista para concluir.'"
+        (click)="concluir()">
+        {{ concluindo ? 'Concluindo...' : 'Concluir análise' }}
+      </button>
+    }
+    @if (pacienteId !== null) {
+      <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">
+        Voltar
+      </a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="aviso" class="alert alert-warning" role="status">{{ aviso }}</div>
-<div *ngIf="sucesso" class="alert alert-success" role="status">{{ sucesso }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (aviso) {
+  <div class="alert alert-warning" role="status">{{ aviso }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
-<div *ngIf="somenteLeitura && !loading" class="alert alert-success">
-  Análise concluída: a marcação é imutável e está aberta somente para consulta.
-</div>
+@if (somenteLeitura && !loading) {
+  <div class="alert alert-success">
+    Análise concluída: a marcação é imutável e está aberta somente para consulta.
+  </div>
+}
 
-<p *ngIf="alteracoesPendentes && !somenteLeitura" class="aviso-pendente" role="status">
-  Há alterações não salvas nesta marcação.
-</p>
-
-<app-simetrografo-editor
-  *ngIf="!loading && !parametroInvalido && analise && fotoUrl"
-  [fotoUrl]="fotoUrl"
-  [vista]="analise.vista"
-  [landmarks]="landmarksIniciais"
-  [linhaPrumoX]="prumoInicial"
-  [somenteLeitura]="somenteLeitura"
-  (marcacaoAlterada)="onMarcacaoAlterada($event)"
-  (imagemMedida)="onImagemMedida($event)">
-  <app-painel-medidas-posturais
-    [metricas]="metricasExibidas"
-    [landmarks]="landmarksAtuais"
-    [previa]="exibindoPrevia" />
-</app-simetrografo-editor>
-
-<section *ngIf="!loading && !parametroInvalido && analise" class="observacoes">
-  <label for="observacoes-analise">Observações clínicas</label>
-  <textarea
-    id="observacoes-analise"
-    class="form-control"
-    rows="4"
-    placeholder="Registre o que observou nesta análise."
-    [value]="observacoes"
-    [disabled]="somenteLeitura"
-    (input)="onObservacoesAlteradas($event)"></textarea>
-  <p *ngIf="!somenteLeitura" class="observacoes__dica">
-    Salvas junto com a marcação ao salvar o rascunho ou concluir a análise.
+@if (alteracoesPendentes && !somenteLeitura) {
+  <p class="aviso-pendente" role="status">
+    Há alterações não salvas nesta marcação.
   </p>
-</section>
+}
+
+@if (!loading && !parametroInvalido && analise && fotoUrl) {
+  <app-simetrografo-editor
+    [fotoUrl]="fotoUrl"
+    [vista]="analise.vista"
+    [landmarks]="landmarksIniciais"
+    [linhaPrumoX]="prumoInicial"
+    [somenteLeitura]="somenteLeitura"
+    (marcacaoAlterada)="onMarcacaoAlterada($event)"
+    (imagemMedida)="onImagemMedida($event)">
+    <app-painel-medidas-posturais
+      [metricas]="metricasExibidas"
+      [landmarks]="landmarksAtuais"
+      [previa]="exibindoPrevia" />
+  </app-simetrografo-editor>
+}
+
+@if (!loading && !parametroInvalido && analise) {
+  <section class="observacoes">
+    <label for="observacoes-analise">Observações clínicas</label>
+    <textarea
+      id="observacoes-analise"
+      class="form-control"
+      rows="4"
+      placeholder="Registre o que observou nesta análise."
+      [value]="observacoes"
+      [disabled]="somenteLeitura"
+    (input)="onObservacoesAlteradas($event)"></textarea>
+    @if (!somenteLeitura) {
+      <p class="observacoes__dica">
+        Salvas junto com a marcação ao salvar o rascunho ou concluir a análise.
+      </p>
+    }
+  </section>
+}

@@ -3,7 +3,9 @@
   <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
 
 <form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()">
   <div class="form-row">
@@ -19,9 +21,11 @@
         maxlength="7"
         (input)="formatarCompetencia()"
         [class.is-invalid]="form.get('competencia')?.invalid && form.get('competencia')?.touched" />
-      <div *ngIf="form.get('competencia')?.invalid && form.get('competencia')?.touched" class="invalid-feedback">
-        Informe a competência no formato MM/AAAA.
-      </div>
+      @if (form.get('competencia')?.invalid && form.get('competencia')?.touched) {
+        <div class="invalid-feedback">
+          Informe a competência no formato MM/AAAA.
+        </div>
+      }
     </div>
 
     <div class="form-group">
@@ -49,60 +53,69 @@
   </div>
 </form>
 
-<div *ngIf="loadingRelatorio || exportandoCsv || exportandoExcel" class="loading">
-  {{ exportandoCsv || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
-</div>
-
-<section *ngIf="consultado" class="relatorio-resultado">
-  <div class="summary-grid">
-    <div class="summary-item">
-      <span class="label">Competência</span>
-      <strong>{{ form.value.competencia }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Registros</span>
-      <strong>{{ registros.length }}</strong>
-    </div>
-    <div class="summary-item">
-      <span class="label">Valor pago</span>
-      <strong>{{ totalValorPago() | currency:'BRL' }}</strong>
-    </div>
+@if (loadingRelatorio || exportandoCsv || exportandoExcel) {
+  <div class="loading">
+    {{ exportandoCsv || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
   </div>
+}
 
-  <div *ngIf="registros.length === 0" class="empty-state">
-    Nenhum pagamento confirmado encontrado para a competência informada.
-  </div>
-
-  <p *ngIf="registros.length > 0" class="table-scroll-hint">
-    Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
-  </p>
-
-  <div *ngIf="registros.length > 0" class="table-responsive" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
-    <table class="table nfse-table table-sticky-first-col">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>CPF/CNPJ</th>
-          <th>Valor Pago</th>
-          <th>Competência</th>
-          <th>Descrição do Serviço</th>
-          <th>Nota Anterior Emitida</th>
-          <th>Data Pagamento</th>
-          <th>Observações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let registro of registros">
-          <td>{{ registro.nome }}</td>
-          <td>{{ registro.cpfCnpj }}</td>
-          <td>{{ registro.valorPago | currency:'BRL' }}</td>
-          <td>{{ registro.competencia }}</td>
-          <td>{{ registro.descricaoServico }}</td>
-          <td>{{ registro.notaAnteriorEmitida ? 'Sim' : 'Não' }}</td>
-          <td>{{ registro.dataPagamento | date:'dd/MM/yyyy' }}</td>
-          <td>{{ registro.observacoes || '-' }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+@if (consultado) {
+  <section class="relatorio-resultado">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="label">Competência</span>
+        <strong>{{ form.value.competencia }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Registros</span>
+        <strong>{{ registros.length }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Valor pago</span>
+        <strong>{{ totalValorPago() | currency:'BRL' }}</strong>
+      </div>
+    </div>
+    @if (registros.length === 0) {
+      <div class="empty-state">
+        Nenhum pagamento confirmado encontrado para a competência informada.
+      </div>
+    }
+    @if (registros.length > 0) {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+    }
+    @if (registros.length > 0) {
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
+        <table class="table nfse-table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF/CNPJ</th>
+              <th>Valor Pago</th>
+              <th>Competência</th>
+              <th>Descrição do Serviço</th>
+              <th>Nota Anterior Emitida</th>
+              <th>Data Pagamento</th>
+              <th>Observações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (registro of registros; track registro) {
+              <tr>
+                <td>{{ registro.nome }}</td>
+                <td>{{ registro.cpfCnpj }}</td>
+                <td>{{ registro.valorPago | currency:'BRL' }}</td>
+                <td>{{ registro.competencia }}</td>
+                <td>{{ registro.descricaoServico }}</td>
+                <td>{{ registro.notaAnteriorEmitida ? 'Sim' : 'Não' }}</td>
+                <td>{{ registro.dataPagamento | date:'dd/MM/yyyy' }}</td>
+                <td>{{ registro.observacoes || '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

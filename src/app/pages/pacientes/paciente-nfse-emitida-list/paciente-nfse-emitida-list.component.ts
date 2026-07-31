@@ -1,4 +1,4 @@
-import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-list',
-  imports: [NgIf, NgFor, CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent],
+  imports: [CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-nfse-emitida-list.component.html',
   styleUrl: './paciente-nfse-emitida-list.component.scss'
 })

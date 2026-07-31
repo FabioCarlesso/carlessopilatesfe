@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -18,7 +17,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
   styleUrl: './paciente-reavaliacao-form.component.scss'
 })

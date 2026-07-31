@@ -1,4 +1,3 @@
-import { NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,7 +14,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 @Component({
   selector: 'app-paciente-anamnese',
-  imports: [NgIf, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-anamnese.component.html',
   styleUrl: './paciente-anamnese.component.scss'
 })

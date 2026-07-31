@@ -1,213 +1,280 @@
-<app-breadcrumb *ngIf="pacienteId" [items]="[
+@if (pacienteId) {
+<app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
   { label: 'Histórico de Evoluções' }
 ]"></app-breadcrumb>
+}
 
 <div class="page-header">
   <div>
     <h1>Histórico de Evoluções</h1>
-    <p *ngIf="paciente" class="page-subtitle">{{ paciente.nome }}</p>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
   </div>
   <div class="acoes">
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Sessões</a>
-    <a *ngIf="pacienteId" [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Sessões</a>
+    }
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    }
   </div>
 </div>
 
-<div *ngIf="erro" class="alert alert-danger">{{ erro }}</div>
-<div *ngIf="loading" class="loading">Carregando...</div>
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
 
 <!-- Recorte client-side sobre a coleção já carregada: nenhuma requisição sai
-     daqui. Some quando não há o que recortar.
-     O disclosure só existe no mobile (issue #163): três campos empilhados
-     ocupam meia tela em 375px e empurrariam gráfico e linha do tempo para
-     fora da primeira dobra. O botão e o painel compartilham o mesmo `*ngIf`,
-     então o `aria-controls` sempre resolve. -->
-<button *ngIf="itensCarregados.length > 0" type="button" class="filtros-toggle"
-  (click)="alternarFiltros()" [attr.aria-expanded]="filtrosAbertos" aria-controls="filtros-evolucoes">
-  <span>Filtros</span>
-  <span *ngIf="filtrosAtivos() > 0" class="filtros-badge"
-    [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
-  <span class="filtros-caret" aria-hidden="true">▾</span>
-</button>
+daqui. Some quando não há o que recortar.
+O disclosure só existe no mobile (issue #163): três campos empilhados
+ocupam meia tela em 375px e empurrariam gráfico e linha do tempo para
+fora da primeira dobra. O botão e o painel compartilham o mesmo `@if`,
+então o `aria-controls` sempre resolve. -->
+@if (itensCarregados.length > 0) {
+  <button type="button" class="filtros-toggle"
+    (click)="alternarFiltros()" [attr.aria-expanded]="filtrosAbertos" aria-controls="filtros-evolucoes">
+    <span>Filtros</span>
+    @if (filtrosAtivos() > 0) {
+      <span class="filtros-badge"
+      [attr.aria-label]="filtrosAtivos() + ' filtros ativos'">{{ filtrosAtivos() }}</span>
+    }
+    <span class="filtros-caret" aria-hidden="true">▾</span>
+  </button>
+}
 
-<form *ngIf="itensCarregados.length > 0" id="filtros-evolucoes" class="filtros"
-  [class.filtros-recolhidos]="!filtrosAbertos" (ngSubmit)="aplicarFiltros()">
-  <div class="filtro-campo">
-    <label for="filtroDataInicial">Data inicial</label>
-    <input id="filtroDataInicial" type="date" class="form-control" name="dataInicial"
-      [(ngModel)]="filtro.dataInicial" (ngModelChange)="aplicarFiltros()"
-      [class.is-invalid]="periodoInvalido"
-      [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
-  </div>
-
-  <div class="filtro-campo">
-    <label for="filtroDataFinal">Data final</label>
-    <input id="filtroDataFinal" type="date" class="form-control" name="dataFinal"
-      [(ngModel)]="filtro.dataFinal" (ngModelChange)="aplicarFiltros()"
-      [class.is-invalid]="periodoInvalido"
-      [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
-  </div>
-
-  <div class="filtro-campo">
-    <label for="filtroTipo">Tipo de sessão</label>
-    <select id="filtroTipo" class="form-control" name="tipo"
-      [(ngModel)]="filtro.tipo" (ngModelChange)="aplicarFiltros()">
-      <option value="todos">Todos</option>
-      <option *ngFor="let opcao of opcoesTipo" [value]="opcao.valor">{{ opcao.rotulo }}</option>
-    </select>
-  </div>
-
-  <div class="filtro-acoes">
-    <button type="button" class="btn btn-outline" [disabled]="!temFiltroAtivo"
+@if (itensCarregados.length > 0) {
+  <form id="filtros-evolucoes" class="filtros"
+    [class.filtros-recolhidos]="!filtrosAbertos" (ngSubmit)="aplicarFiltros()">
+    <div class="filtro-campo">
+      <label for="filtroDataInicial">Data inicial</label>
+      <input id="filtroDataInicial" type="date" class="form-control" name="dataInicial"
+        [(ngModel)]="filtro.dataInicial" (ngModelChange)="aplicarFiltros()"
+        [class.is-invalid]="periodoInvalido"
+        [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
+    </div>
+    <div class="filtro-campo">
+      <label for="filtroDataFinal">Data final</label>
+      <input id="filtroDataFinal" type="date" class="form-control" name="dataFinal"
+        [(ngModel)]="filtro.dataFinal" (ngModelChange)="aplicarFiltros()"
+        [class.is-invalid]="periodoInvalido"
+        [attr.aria-describedby]="periodoInvalido ? 'filtroPeriodoErro' : null" />
+    </div>
+    <div class="filtro-campo">
+      <label for="filtroTipo">Tipo de sessão</label>
+      <select id="filtroTipo" class="form-control" name="tipo"
+        [(ngModel)]="filtro.tipo" (ngModelChange)="aplicarFiltros()">
+        <option value="todos">Todos</option>
+        @for (opcao of opcoesTipo; track opcao) {
+          <option [value]="opcao.valor">{{ opcao.rotulo }}</option>
+        }
+      </select>
+    </div>
+    <div class="filtro-acoes">
+      <button type="button" class="btn btn-outline" [disabled]="!temFiltroAtivo"
       (click)="limparFiltros()">Limpar filtros</button>
-  </div>
-
-  <p *ngIf="periodoInvalido" id="filtroPeriodoErro" class="invalid-feedback filtro-erro" role="alert">
-    A data final não pode ser anterior à data inicial.
-  </p>
-</form>
+    </div>
+    @if (periodoInvalido) {
+      <p id="filtroPeriodoErro" class="invalid-feedback filtro-erro" role="alert">
+        A data final não pode ser anterior à data inicial.
+      </p>
+    }
+  </form>
+}
 
 <!-- Região viva permanente, e não um `role="status"` no estado vazio: o leitor
-     de tela anuncia a mudança de texto de uma região que já está no DOM de
-     forma bem mais confiável do que a inserção de um elemento novo. Fica vazia
-     sem filtro ativo — e mudar para string vazia não anuncia nada. -->
-<p *ngIf="itensCarregados.length > 0" class="filtro-resumo" role="status">{{ resumoFiltro }}</p>
+de tela anuncia a mudança de texto de uma região que já está no DOM de
+forma bem mais confiável do que a inserção de um elemento novo. Fica vazia
+sem filtro ativo — e mudar para string vazia não anuncia nada. -->
+@if (itensCarregados.length > 0) {
+  <p class="filtro-resumo" role="status">{{ resumoFiltro }}</p>
+}
 
-<div *ngIf="!loading && itensCarregados.length === 0 && !erro" class="empty-state">
-  Nenhuma evolução registrada.
-</div>
+@if (!loading && itensCarregados.length === 0 && !erro) {
+  <div class="empty-state">
+    Nenhuma evolução registrada.
+  </div>
+}
 
 <!-- Recorte sem resultados é um estado diferente de paciente sem evolução: aqui
-     a saída é limpar o filtro, não registrar uma evolução (issue #146). -->
-<div *ngIf="!loading && !erro && itensCarregados.length > 0 && itens.length === 0"
-  class="empty-state empty-state-filtrado">
-  <p>Nenhuma evolução para os filtros aplicados.</p>
-  <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
-</div>
+a saída é limpar o filtro, não registrar uma evolução (issue #146). -->
+@if (!loading && !erro && itensCarregados.length > 0 && itens.length === 0) {
+  <div
+    class="empty-state empty-state-filtrado">
+    <p>Nenhuma evolução para os filtros aplicados.</p>
+    <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
+  </div>
+}
 
 <!-- Derivado da mesma coleção da linha do tempo: nenhuma requisição a mais.
-     Some quando há menos de duas sessões com dor informada. -->
-<figure *ngIf="grafico" class="grafico">
-  <h2 class="grafico-titulo">Evolução da dor</h2>
-
-  <!-- O desenho inteiro é um `role="img"` com rótulo textual: os elementos
-       internos não têm nome acessível e seriam ruído para o leitor de tela. -->
-  <svg class="grafico-svg" [attr.viewBox]="grafico.viewBox" preserveAspectRatio="xMidYMid meet"
-    role="img" [attr.aria-label]="grafico.ariaLabel" focusable="false">
-    <g class="grafico-grade" aria-hidden="true">
-      <line *ngFor="let marca of grafico.marcasY"
-        [attr.x1]="grafico.area.esquerda" [attr.y1]="marca.y"
-        [attr.x2]="grafico.area.direita" [attr.y2]="marca.y" />
-    </g>
-
-    <g class="grafico-eixo" aria-hidden="true">
-      <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.topo"
-        [attr.x2]="grafico.area.esquerda" [attr.y2]="grafico.area.base" />
-      <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.base"
-        [attr.x2]="grafico.area.direita" [attr.y2]="grafico.area.base" />
-    </g>
-
-    <g class="grafico-rotulos" aria-hidden="true">
-      <text *ngFor="let marca of grafico.marcasY" class="grafico-rotulo-y"
-        [attr.x]="grafico.area.esquerda - 6" [attr.y]="marca.y"
-        text-anchor="end" dominant-baseline="middle">{{ marca.rotulo }}</text>
-      <text *ngFor="let marca of grafico.marcasX" class="grafico-rotulo-x"
-        [attr.x]="marca.x" [attr.y]="grafico.area.base + 18"
-        [attr.text-anchor]="marca.ancora">{{ marca.rotulo }}</text>
-    </g>
-
-    <g *ngFor="let serie of grafico.series" [class]="'grafico-serie grafico-serie-' + serie.chave">
-      <polyline *ngFor="let linha of serie.linhas" class="grafico-linha" [attr.points]="linha" />
-      <circle *ngFor="let ponto of serie.marcadores" class="grafico-ponto"
-        [attr.cx]="ponto.x" [attr.cy]="ponto.y" r="3" />
-    </g>
-  </svg>
-
-  <figcaption class="grafico-legenda">
-    <span *ngFor="let serie of grafico.series" [class]="'grafico-legenda-item grafico-serie-' + serie.chave">
-      <span class="grafico-legenda-marca" aria-hidden="true"></span>{{ serie.rotulo }}
-    </span>
-  </figcaption>
-</figure>
-
-<div *ngIf="itens.length > 0" class="timeline">
-  <div *ngIf="temItensExpansiveis" class="timeline-controles">
-    <button type="button" class="btn btn-secondary btn-sm" (click)="expandirTudo()">Expandir tudo</button>
-    <button type="button" class="btn btn-outline btn-sm" (click)="recolherTudo()">Recolher tudo</button>
-  </div>
-
-  <div *ngFor="let item of itens; trackBy: trackByItem" class="evolucao-card"
-    [class.evolucao-card-pendente]="!item.evolucao">
-    <div class="evolucao-header">
-      <div class="evolucao-info">
-        <span class="evolucao-data">{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
-        <span *ngIf="item.tipo" class="evolucao-tipo">{{ item.tipo }}</span>
-        <span *ngIf="item.nomeProfissional" class="evolucao-profissional">{{ item.nomeProfissional }}</span>
-        <!-- Sem classe para `estavel`: a dor sem variação fica na cor neutra do
-             `.evolucao-dor`, só melhora e piora ganham cor própria. -->
-        <span *ngIf="item.descricaoDor" class="evolucao-dor" role="img" [attr.aria-label]="item.descricaoDor"
-          [class.dor-melhora]="item.tendenciaDor === 'melhora'"
-          [class.dor-piora]="item.tendenciaDor === 'piora'">
-          <span class="dor-rotulo">Dor</span>
-          <span>{{ item.dorAntes ?? '—' }}</span>
-          <span aria-hidden="true">→</span>
-          <span>{{ item.dorDepois ?? '—' }}</span>
-          <span *ngIf="item.tendenciaDor" class="dor-tendencia">{{ tendenciaLabel[item.tendenciaDor] }}</span>
+Some quando há menos de duas sessões com dor informada. -->
+@if (grafico) {
+  <figure class="grafico">
+    <h2 class="grafico-titulo">Evolução da dor</h2>
+    <!-- O desenho inteiro é um `role="img"` com rótulo textual: os elementos
+    internos não têm nome acessível e seriam ruído para o leitor de tela. -->
+    <svg class="grafico-svg" [attr.viewBox]="grafico.viewBox" preserveAspectRatio="xMidYMid meet"
+      role="img" [attr.aria-label]="grafico.ariaLabel" focusable="false">
+      <g class="grafico-grade" aria-hidden="true">
+        @for (marca of grafico.marcasY; track marca) {
+          <line
+            [attr.x1]="grafico.area.esquerda" [attr.y1]="marca.y"
+            [attr.x2]="grafico.area.direita" [attr.y2]="marca.y" />
+        }
+      </g>
+      <g class="grafico-eixo" aria-hidden="true">
+        <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.topo"
+          [attr.x2]="grafico.area.esquerda" [attr.y2]="grafico.area.base" />
+        <line [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.base"
+          [attr.x2]="grafico.area.direita" [attr.y2]="grafico.area.base" />
+      </g>
+      <g class="grafico-rotulos" aria-hidden="true">
+        @for (marca of grafico.marcasY; track marca) {
+          <text class="grafico-rotulo-y"
+            [attr.x]="grafico.area.esquerda - 6" [attr.y]="marca.y"
+          text-anchor="end" dominant-baseline="middle">{{ marca.rotulo }}</text>
+        }
+        @for (marca of grafico.marcasX; track marca) {
+          <text class="grafico-rotulo-x"
+            [attr.x]="marca.x" [attr.y]="grafico.area.base + 18"
+          [attr.text-anchor]="marca.ancora">{{ marca.rotulo }}</text>
+        }
+      </g>
+      @for (serie of grafico.series; track serie) {
+        <g [class]="'grafico-serie grafico-serie-' + serie.chave">
+          @for (linha of serie.linhas; track linha) {
+            <polyline class="grafico-linha" [attr.points]="linha" />
+          }
+          @for (ponto of serie.marcadores; track ponto) {
+            <circle class="grafico-ponto"
+              [attr.cx]="ponto.x" [attr.cy]="ponto.y" r="3" />
+          }
+        </g>
+      }
+    </svg>
+    <figcaption class="grafico-legenda">
+      @for (serie of grafico.series; track serie) {
+        <span [class]="'grafico-legenda-item grafico-serie-' + serie.chave">
+          <span class="grafico-legenda-marca" aria-hidden="true"></span>{{ serie.rotulo }}
         </span>
-        <span *ngIf="!item.evolucao" class="badge badge-pendente">Sem evolução registrada</span>
-      </div>
-      <div class="evolucao-acoes">
-        <a [routerLink]="['/pacientes', pacienteId, 'sessoes', item.sessaoId, 'evolucao']"
-          class="btn btn-secondary btn-sm">{{ item.evolucao ? 'Editar evolução' : 'Registrar evolução' }}</a>
-      </div>
-    </div>
+      }
+    </figcaption>
+  </figure>
+}
 
-    <div *ngIf="item.evolucao && item.temCorpo" class="evolucao-body">
-      <div *ngIf="item.evolucao.observacoesFisioterapeuta" class="detail-grid">
-        <div class="detail-item detail-item-largo">
-          <span class="label">Observações do fisioterapeuta</span>
-          <span class="evolucao-texto">{{ item.evolucao.observacoesFisioterapeuta }}</span>
-        </div>
+@if (itens.length > 0) {
+  <div class="timeline">
+    @if (temItensExpansiveis) {
+      <div class="timeline-controles">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="expandirTudo()">Expandir tudo</button>
+        <button type="button" class="btn btn-outline btn-sm" (click)="recolherTudo()">Recolher tudo</button>
       </div>
-
-      <button *ngIf="item.temDetalhes" type="button" class="btn btn-outline btn-sm evolucao-toggle"
-        [attr.aria-expanded]="item.expandido" [attr.aria-controls]="'evolucao-detalhes-' + item.chave"
-        (click)="alternar(item)">
-        {{ item.expandido ? 'Recolher detalhes' : 'Ver detalhes' }}
-      </button>
-
-      <!-- O painel fica sempre no DOM (escondido por classe, como os filtros de
-           `paciente-list`) para que o `aria-controls` do botão sempre resolva. -->
-      <div *ngIf="item.temDetalhes" class="detail-grid evolucao-detalhes"
-        [class.evolucao-detalhes-recolhido]="!item.expandido"
-        [id]="'evolucao-detalhes-' + item.chave">
-        <div *ngIf="item.evolucao.exerciciosRealizados" class="detail-item">
-          <span class="label">Exercícios realizados</span>
-          <span class="evolucao-texto">{{ item.evolucao.exerciciosRealizados }}</span>
+    }
+    @for (item of itens; track trackByItem($index, item)) {
+      <div class="evolucao-card"
+        [class.evolucao-card-pendente]="!item.evolucao">
+        <div class="evolucao-header">
+          <div class="evolucao-info">
+            <span class="evolucao-data">{{ item.dataHora | date:'dd/MM/yyyy HH:mm' }}</span>
+            @if (item.tipo) {
+              <span class="evolucao-tipo">{{ item.tipo }}</span>
+            }
+            @if (item.nomeProfissional) {
+              <span class="evolucao-profissional">{{ item.nomeProfissional }}</span>
+            }
+            <!-- Sem classe para `estavel`: a dor sem variação fica na cor neutra do
+            `.evolucao-dor`, só melhora e piora ganham cor própria. -->
+            @if (item.descricaoDor) {
+              <span class="evolucao-dor" role="img" [attr.aria-label]="item.descricaoDor"
+                [class.dor-melhora]="item.tendenciaDor === 'melhora'"
+                [class.dor-piora]="item.tendenciaDor === 'piora'">
+                <span class="dor-rotulo">Dor</span>
+                <span>{{ item.dorAntes ?? '—' }}</span>
+                <span aria-hidden="true">→</span>
+                <span>{{ item.dorDepois ?? '—' }}</span>
+                @if (item.tendenciaDor) {
+                  <span class="dor-tendencia">{{ tendenciaLabel[item.tendenciaDor] }}</span>
+                }
+              </span>
+            }
+            @if (!item.evolucao) {
+              <span class="badge badge-pendente">Sem evolução registrada</span>
+            }
+          </div>
+          <div class="evolucao-acoes">
+            <a [routerLink]="['/pacientes', pacienteId, 'sessoes', item.sessaoId, 'evolucao']"
+            class="btn btn-secondary btn-sm">{{ item.evolucao ? 'Editar evolução' : 'Registrar evolução' }}</a>
+          </div>
         </div>
-        <div *ngIf="item.evolucao.equipamentosUtilizados" class="detail-item">
-          <span class="label">Equipamentos utilizados</span>
-          <span class="evolucao-texto">{{ item.evolucao.equipamentosUtilizados }}</span>
-        </div>
-        <div *ngIf="item.evolucao.cargasMolas" class="detail-item">
-          <span class="label">Cargas / molas</span>
-          <span class="evolucao-texto">{{ item.evolucao.cargasMolas }}</span>
-        </div>
-        <div *ngIf="item.evolucao.respostaPaciente" class="detail-item">
-          <span class="label">Resposta do paciente</span>
-          <span class="evolucao-texto">{{ item.evolucao.respostaPaciente }}</span>
-        </div>
-        <div *ngIf="item.evolucao.intercorrencias" class="detail-item">
-          <span class="label">Intercorrências</span>
-          <span class="evolucao-texto">{{ item.evolucao.intercorrencias }}</span>
-        </div>
-        <div *ngIf="item.evolucao.orientacoes" class="detail-item">
-          <span class="label">Orientações</span>
-          <span class="evolucao-texto">{{ item.evolucao.orientacoes }}</span>
-        </div>
+        @if (item.evolucao && item.temCorpo) {
+          <div class="evolucao-body">
+            @if (item.evolucao.observacoesFisioterapeuta) {
+              <div class="detail-grid">
+                <div class="detail-item detail-item-largo">
+                  <span class="label">Observações do fisioterapeuta</span>
+                  <span class="evolucao-texto">{{ item.evolucao.observacoesFisioterapeuta }}</span>
+                </div>
+              </div>
+            }
+            @if (item.temDetalhes) {
+              <button type="button" class="btn btn-outline btn-sm evolucao-toggle"
+                [attr.aria-expanded]="item.expandido" [attr.aria-controls]="'evolucao-detalhes-' + item.chave"
+                (click)="alternar(item)">
+                {{ item.expandido ? 'Recolher detalhes' : 'Ver detalhes' }}
+              </button>
+            }
+            <!-- O painel fica sempre no DOM (escondido por classe, como os filtros de
+            `paciente-list`) para que o `aria-controls` do botão sempre resolva. -->
+            @if (item.temDetalhes) {
+              <div class="detail-grid evolucao-detalhes"
+                [class.evolucao-detalhes-recolhido]="!item.expandido"
+                [id]="'evolucao-detalhes-' + item.chave">
+                @if (item.evolucao.exerciciosRealizados) {
+                  <div class="detail-item">
+                    <span class="label">Exercícios realizados</span>
+                    <span class="evolucao-texto">{{ item.evolucao.exerciciosRealizados }}</span>
+                  </div>
+                }
+                @if (item.evolucao.equipamentosUtilizados) {
+                  <div class="detail-item">
+                    <span class="label">Equipamentos utilizados</span>
+                    <span class="evolucao-texto">{{ item.evolucao.equipamentosUtilizados }}</span>
+                  </div>
+                }
+                @if (item.evolucao.cargasMolas) {
+                  <div class="detail-item">
+                    <span class="label">Cargas / molas</span>
+                    <span class="evolucao-texto">{{ item.evolucao.cargasMolas }}</span>
+                  </div>
+                }
+                @if (item.evolucao.respostaPaciente) {
+                  <div class="detail-item">
+                    <span class="label">Resposta do paciente</span>
+                    <span class="evolucao-texto">{{ item.evolucao.respostaPaciente }}</span>
+                  </div>
+                }
+                @if (item.evolucao.intercorrencias) {
+                  <div class="detail-item">
+                    <span class="label">Intercorrências</span>
+                    <span class="evolucao-texto">{{ item.evolucao.intercorrencias }}</span>
+                  </div>
+                }
+                @if (item.evolucao.orientacoes) {
+                  <div class="detail-item">
+                    <span class="label">Orientações</span>
+                    <span class="evolucao-texto">{{ item.evolucao.orientacoes }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
       </div>
-    </div>
+    }
   </div>
-</div>
+}

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DatePipe, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -8,7 +8,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 
 @Component({
   selector: 'app-paciente-detail',
-  imports: [NgIf, DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-detail.component.html',
   styleUrl: './paciente-detail.component.scss'
 })

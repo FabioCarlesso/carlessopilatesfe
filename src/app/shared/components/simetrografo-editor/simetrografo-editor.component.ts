@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -58,7 +57,7 @@ type ModoInteracao = 'nenhum' | 'possivel-toque' | 'pan' | 'arrastar-ponto' | 'a
  */
 @Component({
   selector: 'app-simetrografo-editor',
-  imports: [NgIf, NgFor],
+  imports: [],
   templateUrl: './simetrografo-editor.component.html',
   styleUrl: './simetrografo-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
