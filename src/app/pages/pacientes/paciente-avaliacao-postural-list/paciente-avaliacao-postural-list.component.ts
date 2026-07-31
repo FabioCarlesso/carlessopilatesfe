@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -21,6 +21,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
   selector: 'app-paciente-avaliacao-postural-list',
   imports: [RouterLink, DatePipe, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-list.component.scss'
 })
 export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -10,6 +10,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
   selector: 'app-profissional-detail',
   imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './profissional-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-detail.component.scss'
 })
 export class ProfissionalDetailComponent implements OnInit {

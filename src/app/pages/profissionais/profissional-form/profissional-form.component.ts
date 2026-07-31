@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -11,6 +11,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
   selector: 'app-profissional-form',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './profissional-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-form.component.scss'
 })
 export class ProfissionalFormComponent implements OnInit, AfterViewInit {

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -36,6 +36,7 @@ function formatarDataHoraLocal(data: Date): string {
   selector: 'app-paciente-sessao-list',
   imports: [DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
   templateUrl: './paciente-sessao-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-sessao-list.component.scss'
 })
 export class PacienteSessaoListComponent implements OnInit, OnDestroy {

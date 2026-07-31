@@ -1,9 +1,10 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConfirmarDialogComponent } from './confirmar-dialog.component';
 
 @Component({
   imports: [ConfirmarDialogComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button type="button" #disparador (click)="aberto = true">Abrir</button>
     @if (aberto) {

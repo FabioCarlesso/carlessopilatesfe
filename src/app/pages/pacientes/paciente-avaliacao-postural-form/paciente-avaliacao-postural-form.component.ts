@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,6 +18,7 @@ import { ImageCompressorService } from '../../../shared/services/image-compresso
   selector: 'app-paciente-avaliacao-postural-form',
   imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-form.component.scss'
 })
 export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy {

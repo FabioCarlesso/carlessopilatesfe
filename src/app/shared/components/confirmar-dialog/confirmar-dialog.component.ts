@@ -8,7 +8,8 @@ import {
   Input,
   OnDestroy,
   Output,
-  ViewChild
+  ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 export type ConfirmarDialogVariante = 'primaria' | 'secundaria' | 'perigo';
@@ -51,6 +52,7 @@ let proximoId = 0;
   selector: 'app-confirmar-dialog',
   imports: [NgClass],
   templateUrl: './confirmar-dialog.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './confirmar-dialog.component.scss'
 })
 export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {

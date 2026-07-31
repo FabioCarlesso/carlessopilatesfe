@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -10,6 +10,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
   selector: 'app-paciente-detail',
   imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
   templateUrl: './paciente-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-detail.component.scss'
 })
 export class PacienteDetailComponent implements OnInit {

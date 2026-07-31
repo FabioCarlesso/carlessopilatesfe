@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RelatorioNfseFormatoExportacao, RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
@@ -12,6 +12,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
   selector: 'app-nfse-relatorio',
   imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './nfse-relatorio.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './nfse-relatorio.component.scss'
 })
 export class NfseRelatorioComponent implements OnInit, AfterViewInit {

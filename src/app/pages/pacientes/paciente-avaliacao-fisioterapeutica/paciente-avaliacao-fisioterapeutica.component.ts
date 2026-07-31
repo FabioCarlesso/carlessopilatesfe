@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,6 +15,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
   selector: 'app-paciente-avaliacao-fisioterapeutica',
   imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-fisioterapeutica.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-fisioterapeutica.component.scss'
 })
 export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDestroy {

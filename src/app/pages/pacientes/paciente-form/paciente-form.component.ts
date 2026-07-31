@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
   selector: 'app-paciente-form',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './paciente-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-form.component.scss'
 })
 export class PacienteFormComponent implements OnInit, AfterViewInit {

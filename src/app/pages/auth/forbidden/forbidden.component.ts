@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 @Component({
@@ -7,6 +7,7 @@ import { Router, RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './forbidden.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './forbidden.component.scss'
 })
 export class ForbiddenComponent {

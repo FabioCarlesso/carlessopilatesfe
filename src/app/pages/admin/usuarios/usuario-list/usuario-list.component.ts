@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { ConfirmarDialogComponent } from '../../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -22,6 +22,7 @@ interface Confirmacao {
   standalone: true,
   imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
   templateUrl: './usuario-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-list.component.scss'
 })
 export class UsuarioListComponent implements OnInit, OnDestroy {

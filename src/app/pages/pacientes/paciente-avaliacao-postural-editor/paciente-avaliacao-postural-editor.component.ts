@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -28,6 +28,7 @@ import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../sh
   selector: 'app-paciente-avaliacao-postural-editor',
   imports: [RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent],
   templateUrl: './paciente-avaliacao-postural-editor.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-editor.component.scss'
 })
 export class PacienteAvaliacaoPosturalEditorComponent implements OnInit, OnDestroy {

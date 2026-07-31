@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -13,6 +13,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
   selector: 'app-paciente-reavaliacao-list',
   imports: [LocalDatePipe, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-reavaliacao-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-list.component.scss'
 })
 export class PacienteReavaliacaoListComponent implements OnInit, OnDestroy {

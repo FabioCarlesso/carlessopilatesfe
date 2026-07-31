@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -13,6 +13,7 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
   selector: 'app-pagamento-form',
   imports: [CurrencyPipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
   templateUrl: './pagamento-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './pagamento-form.component.scss'
 })
 export class PagamentoFormComponent implements OnInit, AfterViewInit {

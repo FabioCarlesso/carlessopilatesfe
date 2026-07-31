@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, DestroyRef, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -15,6 +15,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
   selector: 'app-paciente-nfse-emitida-list',
   imports: [CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent],
   templateUrl: './paciente-nfse-emitida-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-nfse-emitida-list.component.scss'
 })
 export class PacienteNfseEmitidaListComponent implements OnInit {

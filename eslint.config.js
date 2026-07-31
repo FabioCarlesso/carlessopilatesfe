@@ -33,6 +33,17 @@ module.exports = tseslint.config(
           style: "kebab-case",
         },
       ],
+      // Desligada na migracao para o Angular 22 (issue #208). O v22 tornou o
+      // OnPush o padrao, e a migration `change-detection-eager` do proprio
+      // Angular marcou 35 componentes com `ChangeDetectionStrategy.Eager` para
+      // preservar o comportamento que eles ja tinham — e entao o "recommended"
+      // do angular-eslint 22 passa a acusar exatamente essas 35 marcacoes.
+      // Adotar OnPush nao e mudanca de estilo: sem `markForCheck()` nos
+      // callbacks assincronos a tela para de atualizar, e a falha nao aparece
+      // no build nem nos testes (os specs chamam `detectChanges()`). Foi por
+      // isso que a issue #25 converteu so cinco listagens, uma a uma. O resto
+      // merece o mesmo cuidado, em issue separada.
+      "@angular-eslint/prefer-on-push-component-change-detection": "off",
       // Desligada na migracao para o Angular 20 (issue #208), que a trouxe
       // habilitada pelo "recommended" do angular-eslint v20: 188 ocorrencias
       // em 51 arquivos. Converter para inject() nao e so estilo — o construtor
