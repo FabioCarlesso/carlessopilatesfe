@@ -816,8 +816,10 @@ O Dockerfile usa duas etapas:
 
 | Etapa | Imagem | Responsabilidade |
 |-------|--------|------------------|
-| `build` | `node:22-alpine` | Instalar dependências com `npm ci` e gerar `dist/carlessopilatesfe/browser` |
-| runtime | `nginx:1.27-alpine` | Servir a SPA e redirecionar `/api/*` para o backend |
+| `build` | `node:22-alpine3.24` | Instalar dependências com `npm ci` e gerar `dist/carlessopilatesfe/browser` |
+| runtime | `nginx:1.27-alpine3.21` | Servir a SPA e redirecionar `/api/*` para o backend |
+
+A tag da imagem de build é fixada com a versão do Alpine porque as tags antigas param de receber atualização: a `node:22-alpine3.21` usada antes ficou congelada no Node 22.21.1, abaixo do piso declarado em `engines`.
 
 ### Execução com Compose
 

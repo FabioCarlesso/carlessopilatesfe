@@ -15,7 +15,7 @@ A aplicação oferece dashboard inicial de indicadores, CRUDs administrativos pa
 
 ## Pré-requisitos
 
-- Node.js 22+ (mesma versão usada no build Docker e na CI)
+- Node.js 22.22.3+ (ou 24.15.0+), conforme o `engines` do `package.json` — mesmo piso usado no build Docker e na CI
 - Angular CLI: `npm install -g @angular/cli`
 - Backend rodando em `http://localhost:8080`
 - Docker e Docker Compose, para execução em container
@@ -80,7 +80,13 @@ A cada `push` na `master` e a cada `pull_request`, o workflow
 - **Lint** — `npm run lint`, que encadeia `ng lint` (ESLint + angular-eslint) e `lint:tokens` (nomes de custom property)
 - **Testes unitários** — `npm run test:ci` em Chrome headless, publicando o relatório de cobertura como artifact
 - **Build de produção** — `npm run build`, respeitando os *budgets* de bundle e publicando `dist/` como artifact
-- **Build da imagem Docker** — apenas em merges na `master`, valida o `Dockerfile` (sem publicar imagem)
+- **Build da imagem Docker** — em merges na `master`, valida o `Dockerfile` (sem publicar imagem)
+
+Em `pull_request`, o build da imagem roda pelo workflow
+[`docker-pr.yml`](.github/workflows/docker-pr.yml), mas apenas quando a PR altera
+algo que entra na imagem (`Dockerfile`, `nginx/`, `package.json`,
+`package-lock.json`). Assim uma quebra no container aparece na PR, e não só
+depois do merge, sem cobrar o build de PRs que mexem apenas no frontend.
 
 As dependências npm e as GitHub Actions são atualizadas automaticamente via
 [Dependabot](.github/dependabot.yml).

@@ -243,7 +243,7 @@ O `forbiddenInterceptor` complementa o `authInterceptor` tratando as respostas `
 O browser bloqueia requisições cross-origin de `localhost:4200` para `localhost:8080`. A solução adotada foi o proxy do Angular CLI: `proxy.conf.json` redireciona `/api/*` para `http://localhost:8080/*` no lado do servidor, eliminando o problema de CORS em desenvolvimento. O `PacienteService` usa a URL relativa `/api/pacientes`.
 
 ### Docker com Nginx
-A imagem Docker usa build multi-stage: `node:22-alpine` instala dependências e executa `npm run build`; `nginx:1.27-alpine` serve o conteúdo de `dist/carlessopilatesfe/browser`.
+A imagem Docker usa build multi-stage: `node:22-alpine3.24` instala dependências e executa `npm run build`; `nginx:1.27-alpine3.21` serve o conteúdo de `dist/carlessopilatesfe/browser`. A tag do estágio de build carrega a versão do Alpine porque as tags antigas deixam de ser atualizadas — a `node:22-alpine3.21` anterior parou no Node 22.21.1, abaixo do piso declarado em `engines`.
 
 O Nginx mantém o mesmo contrato de URL relativa do frontend:
 
@@ -381,7 +381,7 @@ Rotas com parâmetros numéricos, como `id`, `pacienteId` e `pagamentoId`, usam 
 ## Como Rodar Localmente
 
 ### Pré-requisitos
-- Node.js 18+
+- Node.js 22.22.3+ (ou 24.15.0+), conforme o `engines` do `package.json`
 - Angular CLI (`npm install -g @angular/cli`)
 - Backend rodando em `http://localhost:8080`
 - Docker e Docker Compose, para execução em container
