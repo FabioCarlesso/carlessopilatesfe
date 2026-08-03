@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -125,6 +126,41 @@ describe('PacientePlanoTratamentoListComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar planos de tratamento.');
     expect(component.loading).toBeFalse();
+  });
+
+  // O backend responde 404 em `/planos-tratamento/paciente/{id}` quando o paciente está
+  // inativo, tratando-o como inexistente (issue #203). Como o paciente já foi carregado
+  // antes da listagem, 404 aqui significa "sem planos" e deve cair no estado vazio, não na
+  // faixa de erro.
+  it('should show the empty state when the list responds 404 (inactive patient)', async () => {
+    await setup([mockPlanoAtivo]);
+    planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 404, error: { erro: 'Paciente não encontrado: 1' } }))
+    );
+
+    component['carregarPlanos']();
+    fixture.detectChanges();
+
+    expect(component.planos).toEqual([]);
+    expect(component.erro).toBeNull();
+    expect(component.loading).toBeFalse();
+    const vazio: HTMLElement | null = fixture.nativeElement.querySelector('.empty-state');
+    expect(vazio?.textContent?.trim()).toBe('Nenhum plano de tratamento cadastrado.');
+    expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+  });
+
+  it('should keep the error banner when the list fails with a status other than 404', async () => {
+    await setup([]);
+    planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    component['carregarPlanos']();
+    fixture.detectChanges();
+
+    expect(component.erro).toBe('Erro ao carregar planos de tratamento.');
+    expect(component.loading).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
   });
 
   it('should set parametroInvalido and erro when pacienteId is invalid', async () => {

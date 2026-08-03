@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { catchError, of, throwError } from 'rxjs';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { SessaoResponseDTO, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -109,7 +111,20 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
     if (this.pacienteId === null) return;
 
     this.sessaoService.listarPorPaciente(this.pacienteId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        // `GET /sessoes/paciente/{id}` responde 404 para paciente inativo, tratando-o como
+        // inexistente (issue #203). Aqui o paciente já foi carregado por `carregar()`, então
+        // 404 nesta chamada só pode significar "sem sessões" — paciente inexistente falha
+        // antes, com "Erro ao carregar dados do paciente.". Se alguma mudança futura passar a
+        // paralelizar as duas chamadas, esta garantia deixa de valer.
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return of<SessaoResponseDTO[]>([]);
+          }
+          return throwError(() => error);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: sessoes => {
           this.sessoes = sessoes;

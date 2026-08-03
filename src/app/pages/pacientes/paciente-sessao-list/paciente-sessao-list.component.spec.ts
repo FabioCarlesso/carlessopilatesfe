@@ -141,6 +141,41 @@ describe('PacienteSessaoListComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
+  // O backend responde 404 em `/sessoes/paciente/{id}` quando o paciente está inativo,
+  // tratando-o como inexistente (issue #203). Como o paciente já foi carregado antes da
+  // listagem, 404 aqui significa "sem sessões" e deve cair no estado vazio, não na faixa
+  // de erro.
+  it('should show the empty state when the list responds 404 (inactive patient)', async () => {
+    await setup([mockSessaoAgendada]);
+    sessaoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 404, error: { erro: 'Paciente não encontrado: 1' } }))
+    );
+
+    component['carregarSessoes']();
+    fixture.detectChanges();
+
+    expect(component.sessoes).toEqual([]);
+    expect(component.erro).toBeNull();
+    expect(component.loading).toBeFalse();
+    const vazio: HTMLElement | null = fixture.nativeElement.querySelector('.empty-state');
+    expect(vazio?.textContent?.trim()).toBe('Nenhuma sessão cadastrada.');
+    expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+  });
+
+  it('should keep the error banner when the list fails with a status other than 404', async () => {
+    await setup([]);
+    sessaoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    component['carregarSessoes']();
+    fixture.detectChanges();
+
+    expect(component.erro).toBe('Erro ao carregar sessões.');
+    expect(component.loading).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+  });
+
   it('should set erro when pacienteId is invalid', async () => {
     await setup([], 'abc');
 
