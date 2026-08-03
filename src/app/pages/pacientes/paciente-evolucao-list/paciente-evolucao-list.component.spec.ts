@@ -1117,6 +1117,56 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(component.loading).toBeFalse();
   });
 
+  // Mesmo contrato tratado em `paciente-sessao-list`: `/sessoes/paciente/{id}` responde 404
+  // para paciente inativo (issue #203). O paciente já foi carregado antes do `forkJoin`, então
+  // 404 aqui é "sem sessões" — sem isso esta tela mostraria a faixa de erro para a mesma
+  // resposta que a tela de sessões trata como listagem vazia.
+  it('should treat 404 on the sessions request as an empty session list', async () => {
+    await setup();
+    sessaoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 404, error: { erro: 'Paciente não encontrado: 1' } }))
+    );
+
+    component.carregar();
+    fixture.detectChanges();
+
+    expect(component.erro).toBeNull();
+    expect(component.loading).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+    // As evoluções seguem carregadas: sem a sessão correspondente elas caem no ramo da
+    // evolução órfã, que existe justamente para o registro clínico não sumir da tela.
+    expect(fixture.nativeElement.querySelectorAll('.evolucao-card').length).toBe(2);
+    expect(component.itens.every(item => item.tipoSessao === null)).toBeTrue();
+  });
+
+  it('should show the empty state when both the 404 and the evolucoes leave nothing to list', async () => {
+    await setup([], []);
+    sessaoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+
+    component.carregar();
+    fixture.detectChanges();
+
+    expect(component.erro).toBeNull();
+    expect(fixture.nativeElement.querySelector('.empty-state')?.textContent?.trim())
+      .toBe('Nenhuma evolução registrada.');
+  });
+
+  it('should keep the error banner when the sessions request fails with a status other than 404', async () => {
+    await setup();
+    sessaoServiceSpy.listarPorPaciente.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    component.carregar();
+    fixture.detectChanges();
+
+    expect(component.erro).toBe('Não foi possível carregar o histórico de evoluções.');
+    expect(component.loading).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.alert-danger')).not.toBeNull();
+  });
+
   it('should surface the backend message when the API explains the failure', async () => {
     await setup();
     evolucaoServiceSpy.listarPorPaciente.and.returnValue(throwError(() => new HttpErrorResponse({
