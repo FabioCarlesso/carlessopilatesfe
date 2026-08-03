@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of, throwError } from 'rxjs';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { EvolucaoSessaoResponseDTO } from '../../../core/models/evolucao-sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -406,7 +407,20 @@ export class PacienteEvolucaoListComponent implements OnInit {
     if (this.pacienteId === null) return;
 
     forkJoin({
-      sessoes: this.sessaoService.listarPorPaciente(this.pacienteId),
+      // `GET /sessoes/paciente/{id}` responde 404 para paciente inativo, tratando-o como
+      // inexistente (issue #203) — mesmo contrato que `paciente-sessao-list` trata. O paciente
+      // já foi carregado por `carregar()` antes deste `forkJoin`, então 404 aqui só pode
+      // significar "sem sessões"; paciente inexistente falha antes, com "Erro ao carregar
+      // dados do paciente.". Sem isso o `forkJoin` colapsaria o 404 na faixa de erro e esta
+      // tela contradiria a de sessões diante da mesma resposta da API.
+      sessoes: this.sessaoService.listarPorPaciente(this.pacienteId).pipe(
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 404) {
+            return of<SessaoResponseDTO[]>([]);
+          }
+          return throwError(() => error);
+        })
+      ),
       evolucoes: this.evolucaoSessaoService.listarPorPaciente(this.pacienteId)
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
