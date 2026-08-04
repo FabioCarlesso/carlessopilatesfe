@@ -72,6 +72,9 @@ describe('ProfissionalFormComponent', () => {
       expect(component.form.valid).toBeTrue();
     });
 
+    // Só alcançável por `setValue`: o `maxlength="30"` do template trunca a
+    // digitação e a colagem em 30 caracteres, então na UI o validador defende
+    // o valor que vier do servidor na edição, não avisa quem está digitando.
     it('should invalidate a numeroRegistro longer than 30 characters', () => {
       const campo = component.form.get('numeroRegistro');
       campo?.setValue('x'.repeat(31));
@@ -223,6 +226,21 @@ describe('ProfissionalFormComponent', () => {
         1,
         jasmine.objectContaining({ numeroRegistro: '350544-F' })
       );
+    });
+
+    // Regressão do review do PR #230: `''` é o que limpa o registro no
+    // servidor — `null` e campo omitido significam "não altere" e preservam o
+    // valor. Sanitizar o vazio para `null` aqui pareceria higiene de payload e
+    // tiraria do usuário a única forma de apagar um número digitado errado.
+    it('should send an empty numeroRegistro when the field is cleared', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockProfissional));
+      component.form.patchValue({ numeroRegistro: '' });
+
+      component.salvar();
+
+      const payload = serviceSpy.atualizar.calls.mostRecent().args[1];
+      expect(payload.numeroRegistro).toBe('');
+      expect(payload.numeroRegistro).not.toBeNull();
     });
 
     it('should send the edited numeroRegistro in the update payload', () => {

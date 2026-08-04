@@ -555,6 +555,12 @@ export class PacienteEvolucaoListComponent implements OnInit {
     const nome = evolucao?.profissionalNome ?? nomeProfissionalSessao;
     if (!nome) return null;
 
+    // O registro só acompanha o nome quando os dois saem do mesmo snapshot.
+    // Sem esta guarda, a evolução antiga (sem snapshot) cujo nome veio da
+    // sessão herdaria o `profissionalNumeroRegistro` da própria evolução —
+    // hoje sempre nulo nesse caso, mas basta o backend passar a preencher só
+    // um dos dois campos para o prontuário atribuir um registro a quem não é
+    // seu dono.
     const numeroRegistro = evolucao?.profissionalNome ? evolucao.profissionalNumeroRegistro : null;
     return numeroRegistro ? `${nome} — Nr. de Registro: ${numeroRegistro}` : nome;
   }

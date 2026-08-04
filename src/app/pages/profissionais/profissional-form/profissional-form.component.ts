@@ -97,6 +97,12 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           nome: valor.nome,
           email: valor.email,
           telefone: valor.telefone,
+          // Vai como veio do formulário — em branco é `''`, e **não** `null`.
+          // O `PUT` distingue os dois: `null` (ou campo omitido) significa "não
+          // altere" e preserva o valor no servidor, enquanto string vazia ou
+          // só com espaços limpa o registro. Sanitizar `''` para `null` aqui
+          // pareceria higiene de payload e tiraria do usuário a única forma
+          // de apagar um número digitado errado.
           numeroRegistro: valor.numeroRegistro,
           tipoContrato: valor.tipoContrato,
           percentualPagamentoAula: valor.percentualPagamentoAula,
