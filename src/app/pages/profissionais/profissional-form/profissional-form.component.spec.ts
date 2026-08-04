@@ -12,6 +12,7 @@ const mockProfissional: ProfissionalResponseDTO = {
   email: 'paula@carlessopilates.com',
   cpf: '123.456.111-00',
   telefone: '(11) 98888-1111',
+  numeroRegistro: '350544-F',
   tipoContrato: 'PJ',
   percentualPagamentoAula: 45,
   dataInicio: '2024-01-15',
@@ -50,9 +51,57 @@ describe('ProfissionalFormComponent', () => {
     });
 
     it('should initialize all form controls', () => {
-      ['nome', 'email', 'cpf', 'telefone', 'tipoContrato', 'percentualPagamentoAula', 'dataInicio'].forEach(ctrl => {
-        expect(component.form.contains(ctrl)).toBeTrue();
+      ['nome', 'email', 'cpf', 'telefone', 'numeroRegistro', 'tipoContrato', 'percentualPagamentoAula', 'dataInicio']
+        .forEach(ctrl => {
+          expect(component.form.contains(ctrl)).toBeTrue();
+        });
+    });
+
+    // Nem todo profissional do estúdio tem registro em conselho.
+    it('should keep the form valid without a numeroRegistro', () => {
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-00',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
       });
+
+      expect(component.form.get('numeroRegistro')?.errors).toBeNull();
+      expect(component.form.valid).toBeTrue();
+    });
+
+    it('should invalidate a numeroRegistro longer than 30 characters', () => {
+      const campo = component.form.get('numeroRegistro');
+      campo?.setValue('x'.repeat(31));
+      campo?.markAsTouched();
+      fixture.detectChanges();
+
+      expect(campo?.errors?.['maxlength']).toBeTruthy();
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('#numeroRegistro')?.closest('.form-group');
+      expect(grupo?.querySelector('.invalid-feedback')?.textContent?.trim())
+        .toBe('Nr. de Registro deve ter no máximo 30 caracteres.');
+    });
+
+    it('should send numeroRegistro in the create payload', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockProfissional));
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-00',
+        telefone: '(11) 98888-1111',
+        numeroRegistro: '350544-F',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+
+      component.salvar();
+
+      expect(serviceSpy.cadastrar).toHaveBeenCalledWith(
+        jasmine.objectContaining({ numeroRegistro: '350544-F' })
+      );
     });
 
     it('should call cadastrar and navigate on valid submit', () => {
@@ -156,6 +205,36 @@ describe('ProfissionalFormComponent', () => {
         jasmine.objectContaining({ nome: 'Paula Mendes', email: 'paula@carlessopilates.com' })
       );
       expect(router.navigate).toHaveBeenCalledWith(['/profissionais']);
+    });
+
+    it('should load numeroRegistro into the form', () => {
+      expect(component.form.get('numeroRegistro')?.value).toBe('350544-F');
+      expect(component.form.get('numeroRegistro')?.disabled).toBeFalse();
+    });
+
+    // O PUT monta o DTO campo a campo: sem `numeroRegistro` explícito, salvar
+    // sem tocar no campo apagaria o valor no servidor.
+    it('should keep the loaded numeroRegistro in the update payload', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockProfissional));
+
+      component.salvar();
+
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(
+        1,
+        jasmine.objectContaining({ numeroRegistro: '350544-F' })
+      );
+    });
+
+    it('should send the edited numeroRegistro in the update payload', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockProfissional));
+      component.form.patchValue({ numeroRegistro: '123456-TO' });
+
+      component.salvar();
+
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(
+        1,
+        jasmine.objectContaining({ numeroRegistro: '123456-TO' })
+      );
     });
 
     it('should set erro on atualizar failure', () => {

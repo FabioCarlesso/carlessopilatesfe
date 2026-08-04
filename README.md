@@ -304,7 +304,7 @@ Arquivos de teste:
 |--------|-----------|
 | **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica (com aba Postural do Simetrógrafo Virtual: nova análise por vista com upload de foto comprimida e editor de marcação com grade, linha de prumo, marcação guiada, zoom e desfazer), planos de tratamento, sessões de pilates/fisioterapia, evolução clínica da sessão, histórico de evoluções em linha do tempo e reavaliações periódicas |
-| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT, filtros por nome, e-mail, contrato, % por aula e status, e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API; acesso restrito a `ADMIN` |
+| **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT, número de registro no conselho profissional (opcional, exibido nas evoluções que o profissional assinou), filtros por nome, e-mail, contrato, % por aula e status, e paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API; acesso restrito a `ADMIN` |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
 | **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, e confirmação de presença com vínculo do profissional responsável |

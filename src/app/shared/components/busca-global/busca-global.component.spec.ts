@@ -38,6 +38,7 @@ function profissional(id: number, nome: string): ProfissionalResponseDTO {
     email: `${nome}@teste.com`,
     cpf: '98765432100',
     telefone: null,
+    numeroRegistro: null,
     tipoContrato: 'PJ',
     percentualPagamentoAula: 50,
     dataInicio: '2024-01-01',

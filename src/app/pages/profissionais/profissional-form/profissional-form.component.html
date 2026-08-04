@@ -56,6 +56,16 @@
         <input id="telefone" formControlName="telefone" type="tel" autocomplete="tel" class="form-control" />
       </div>
       <div class="form-group">
+        <label for="numeroRegistro">Nr. de Registro</label>
+        <input id="numeroRegistro" formControlName="numeroRegistro" type="text" maxlength="30" class="form-control"
+          [class.is-invalid]="campo('numeroRegistro')?.invalid && campo('numeroRegistro')?.touched" />
+        @if (campo('numeroRegistro')?.errors?.['maxlength'] && campo('numeroRegistro')?.touched) {
+          <div class="invalid-feedback">
+            Nr. de Registro deve ter no máximo 30 caracteres.
+          </div>
+        }
+      </div>
+      <div class="form-group">
         <label for="tipoContrato">Tipo de Contrato *</label>
         <select id="tipoContrato" formControlName="tipoContrato" class="form-control"
           [class.is-invalid]="campo('tipoContrato')?.invalid && campo('tipoContrato')?.touched">

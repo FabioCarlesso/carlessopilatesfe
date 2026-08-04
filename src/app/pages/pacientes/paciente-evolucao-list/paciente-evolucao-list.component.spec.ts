@@ -41,6 +41,9 @@ function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: stri
 
 function evolucao(dados: Partial<EvolucaoSessaoResponseDTO> & { id: number; sessaoId: number }): EvolucaoSessaoResponseDTO {
   return {
+    profissionalId: 3,
+    profissionalNome: 'Carla Fisio',
+    profissionalNumeroRegistro: '350544-F',
     dataHoraRegistro: '2026-05-10T10:30:00',
     exerciciosRealizados: null,
     equipamentosUtilizados: null,
@@ -142,6 +145,60 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(component.itens[0].tipo).toBe('Fisioterapia');
     expect(component.itens[0].nomeProfissional).toBe('Carla Fisio');
     expect(component.itens[1].evolucao).toEqual(evolucaoAntiga);
+  });
+
+  it('should show who signed the evolucao with the council registration number', async () => {
+    await setup([sessaoAntiga], [evolucaoAntiga]);
+
+    expect(component.itens[0].responsavel).toBe('Carla Fisio — Nr. de Registro: 350544-F');
+    const responsavel: HTMLElement = fixture.nativeElement.querySelector('.evolucao-profissional');
+    expect(responsavel.textContent?.trim()).toBe('Carla Fisio — Nr. de Registro: 350544-F');
+  });
+
+  it('should show only the name when the professional has no registration number', async () => {
+    await setup([sessaoAntiga], [evolucao({ id: 100, sessaoId: 1, profissionalNumeroRegistro: null })]);
+
+    expect(component.itens[0].responsavel).toBe('Carla Fisio');
+    const responsavel: HTMLElement = fixture.nativeElement.querySelector('.evolucao-profissional');
+    expect(responsavel.textContent?.trim()).toBe('Carla Fisio');
+  });
+
+  it('should omit the responsible line when neither the evolucao nor the session names a professional', async () => {
+    await setup(
+      [sessao({ id: 1, dataHora: '2026-05-01T08:00', profissionalId: null, nomeProfissional: null })],
+      [evolucao({ id: 100, sessaoId: 1, profissionalId: null, profissionalNome: null, profissionalNumeroRegistro: null })]
+    );
+
+    expect(component.itens[0].responsavel).toBeNull();
+    expect(fixture.nativeElement.querySelector('.evolucao-profissional')).toBeNull();
+  });
+
+  // O snapshot é a fonte da verdade do prontuário: o vínculo da sessão pode ter
+  // mudado depois que a evolução foi assinada.
+  it('should prefer the evolucao snapshot over the current professional of the session', async () => {
+    await setup(
+      [sessao({ id: 1, dataHora: '2026-05-01T08:00', nomeProfissional: 'Outra Fisio' })],
+      [evolucaoAntiga]
+    );
+
+    expect(component.itens[0].responsavel).toBe('Carla Fisio — Nr. de Registro: 350544-F');
+  });
+
+  // Evoluções anteriores ao snapshot no backend vêm com os campos nulos e
+  // perderiam a identificação que a linha do tempo já mostrava.
+  it('should fall back to the session professional when the evolucao has no snapshot', async () => {
+    await setup(
+      [sessaoAntiga],
+      [evolucao({ id: 100, sessaoId: 1, profissionalId: null, profissionalNome: null, profissionalNumeroRegistro: null })]
+    );
+
+    expect(component.itens[0].responsavel).toBe('Carla Fisio');
+  });
+
+  it('should show the session professional on a session still without evolucao', async () => {
+    await setup([sessaoAntiga], []);
+
+    expect(component.itens[0].responsavel).toBe('Carla Fisio');
   });
 
   it('should classify the pain trend of each card', async () => {

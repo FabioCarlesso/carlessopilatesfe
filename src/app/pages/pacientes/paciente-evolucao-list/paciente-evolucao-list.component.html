@@ -191,8 +191,10 @@ Some quando há menos de duas sessões com dor informada. -->
             @if (item.tipo) {
               <span class="evolucao-tipo">{{ item.tipo }}</span>
             }
-            @if (item.nomeProfissional) {
-              <span class="evolucao-profissional">{{ item.nomeProfissional }}</span>
+            <!-- Sai do snapshot da evolução, com o registro no conselho quando
+            houver (issue #214); ver `descreverResponsavel`. -->
+            @if (item.responsavel) {
+              <span class="evolucao-profissional">{{ item.responsavel }}</span>
             }
             <!-- Sem classe para `estavel`: a dor sem variação fica na cor neutra do
             `.evolucao-dor`, só melhora e piora ganham cor própria. -->

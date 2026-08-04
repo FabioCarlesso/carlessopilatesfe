@@ -44,6 +44,9 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       cpf: ['', Validators.required],
       telefone: [''],
+      // Opcional e sem máscara: o formato do registro varia por conselho
+      // (CREFITO, CREF etc.) e nem todo profissional do estúdio tem um.
+      numeroRegistro: ['', Validators.maxLength(30)],
       tipoContrato: ['', Validators.required],
       percentualPagamentoAula: [null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
       dataInicio: ['', Validators.required]
@@ -94,6 +97,7 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           nome: valor.nome,
           email: valor.email,
           telefone: valor.telefone,
+          numeroRegistro: valor.numeroRegistro,
           tipoContrato: valor.tipoContrato,
           percentualPagamentoAula: valor.percentualPagamentoAula,
           dataInicio: valor.dataInicio

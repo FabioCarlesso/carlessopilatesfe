@@ -15,6 +15,7 @@ const mockProfissional: ProfissionalResponseDTO = {
   email: 'paula@carlessopilates.com',
   cpf: '123.456.111-00',
   telefone: '(11) 98888-1111',
+  numeroRegistro: null,
   tipoContrato: 'PJ',
   percentualPagamentoAula: 45,
   dataInicio: '2024-01-15',
@@ -31,6 +32,7 @@ const mockRelatorio: ProfissionalPagamentoRelatorioDTO = {
     id: 1,
     nome: 'Paula Mendes',
     cpf: '123.456.111-00',
+    numeroRegistro: null,
     tipoContrato: 'PJ',
     percentualPagamentoAula: 45
   },

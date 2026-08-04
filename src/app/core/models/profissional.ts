@@ -8,6 +8,8 @@ export interface ProfissionalResponseDTO {
   email: string;
   cpf: string;
   telefone: string | null;
+  /** Registro no conselho profissional (ex.: `350544-F`). Texto livre: o formato varia por conselho. */
+  numeroRegistro: string | null;
   tipoContrato: TipoContrato;
   percentualPagamentoAula: number;
   dataInicio: string;
@@ -19,6 +21,7 @@ export interface ProfissionalRequestDTO {
   email: string;
   cpf: string;
   telefone?: string;
+  numeroRegistro?: string;
   tipoContrato: TipoContrato;
   percentualPagamentoAula: number;
   dataInicio: string;
@@ -28,6 +31,7 @@ export interface ProfissionalUpdateDTO {
   nome?: string;
   email?: string;
   telefone?: string;
+  numeroRegistro?: string;
   tipoContrato?: TipoContrato;
   percentualPagamentoAula?: number;
   dataInicio?: string;
@@ -50,6 +54,7 @@ export interface ProfissionalResumoDTO {
   id: number;
   nome: string;
   cpf: string;
+  numeroRegistro: string | null;
   tipoContrato: TipoContrato;
   percentualPagamentoAula: number;
 }

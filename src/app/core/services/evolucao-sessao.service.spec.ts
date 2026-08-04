@@ -10,6 +10,9 @@ import {
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
   id: 1,
   sessaoId: 5,
+  profissionalId: null,
+  profissionalNome: null,
+  profissionalNumeroRegistro: null,
   dataHoraRegistro: '2026-05-10T10:30:00',
   exerciciosRealizados: 'Agachamento, ponte, dead bug.',
   equipamentosUtilizados: 'Reformer',
