@@ -44,6 +44,9 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       cpf: ['', Validators.required],
       telefone: [''],
+      // Opcional e sem máscara: o formato do registro varia por conselho
+      // (CREFITO, CREF etc.) e nem todo profissional do estúdio tem um.
+      numeroRegistro: ['', Validators.maxLength(30)],
       tipoContrato: ['', Validators.required],
       percentualPagamentoAula: [null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
       dataInicio: ['', Validators.required]
@@ -94,6 +97,13 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           nome: valor.nome,
           email: valor.email,
           telefone: valor.telefone,
+          // Vai como veio do formulário — em branco é `''`, e **não** `null`.
+          // O `PUT` distingue os dois: `null` (ou campo omitido) significa "não
+          // altere" e preserva o valor no servidor, enquanto string vazia ou
+          // só com espaços limpa o registro. Sanitizar `''` para `null` aqui
+          // pareceria higiene de payload e tiraria do usuário a única forma
+          // de apagar um número digitado errado.
+          numeroRegistro: valor.numeroRegistro,
           tipoContrato: valor.tipoContrato,
           percentualPagamentoAula: valor.percentualPagamentoAula,
           dataInicio: valor.dataInicio

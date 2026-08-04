@@ -41,6 +41,12 @@ export interface EvolucaoTimelineItem {
   tipoSessao: SessaoTipo | null;
   tipo: string | null;
   nomeProfissional: string | null;
+  /**
+   * Quem assina a entrada no cabeçalho, já formatado (issue #214). Derivado do
+   * snapshot da evolução — e não do cadastro atual do profissional —, com
+   * `nomeProfissional` como retaguarda. `null` esconde a linha.
+   */
+  responsavel: string | null;
   evolucao: EvolucaoSessaoResponseDTO | null;
   /**
    * Normalizados para `null` no componente: a guarda do template não precisa
@@ -519,6 +525,7 @@ export class PacienteEvolucaoListComponent implements OnInit {
       tipoSessao: dados.tipoSessao,
       tipo: dados.tipo,
       nomeProfissional: dados.nomeProfissional,
+      responsavel: this.descreverResponsavel(evolucao, dados.nomeProfissional),
       evolucao,
       dorAntes,
       dorDepois,
@@ -528,6 +535,34 @@ export class PacienteEvolucaoListComponent implements OnInit {
       temDetalhes,
       expandido: false
     };
+  }
+
+  /**
+   * Quem registrou a evolução, com o registro no conselho quando houver
+   * (issue #214). A fonte é o snapshot gravado na própria evolução, e não o
+   * profissional atual da sessão: o vínculo da sessão pode mudar depois, e o
+   * prontuário tem que continuar apontando quem de fato assinou.
+   *
+   * Sem evolução registrada ainda, exibe o profissional da sessão — é quem vai
+   * registrar. Esse também é o retaguarda das evoluções anteriores ao snapshot
+   * no backend, que vêm com os campos nulos e de outra forma perderiam a
+   * identificação que a linha do tempo já mostrava.
+   */
+  private descreverResponsavel(
+    evolucao: EvolucaoSessaoResponseDTO | null,
+    nomeProfissionalSessao: string | null
+  ): string | null {
+    const nome = evolucao?.profissionalNome ?? nomeProfissionalSessao;
+    if (!nome) return null;
+
+    // O registro só acompanha o nome quando os dois saem do mesmo snapshot.
+    // Sem esta guarda, a evolução antiga (sem snapshot) cujo nome veio da
+    // sessão herdaria o `profissionalNumeroRegistro` da própria evolução —
+    // hoje sempre nulo nesse caso, mas basta o backend passar a preencher só
+    // um dos dois campos para o prontuário atribuir um registro a quem não é
+    // seu dono.
+    const numeroRegistro = evolucao?.profissionalNome ? evolucao.profissionalNumeroRegistro : null;
+    return numeroRegistro ? `${nome} — Nr. de Registro: ${numeroRegistro}` : nome;
   }
 
   private calcularTendenciaDor(dorAntes: number | null, dorDepois: number | null): TendenciaDor | null {

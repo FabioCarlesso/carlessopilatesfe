@@ -12,6 +12,7 @@ const mockProfissional: ProfissionalResponseDTO = {
   email: 'paula@carlessopilates.com',
   cpf: '123.456.111-00',
   telefone: '(11) 98888-1111',
+  numeroRegistro: '350544-F',
   tipoContrato: 'PJ',
   percentualPagamentoAula: 45,
   dataInicio: '2024-01-15',
@@ -23,6 +24,13 @@ describe('ProfissionalDetailComponent', () => {
   let fixture: ComponentFixture<ProfissionalDetailComponent>;
   let serviceSpy: jasmine.SpyObj<ProfissionalService>;
   let router: Router;
+
+  /** Valor exibido no `detail-item` de um rótulo, sem depender da ordem do grid. */
+  function textoDoItem(rotulo: string): string | undefined {
+    const itens = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.detail-item'));
+    const item = itens.find(el => el.querySelector('.label')?.textContent?.trim() === rotulo);
+    return item?.querySelector('span:not(.label)')?.textContent?.trim();
+  }
 
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('ProfissionalService', ['buscar', 'ativar', 'inativar']);
@@ -47,6 +55,17 @@ describe('ProfissionalDetailComponent', () => {
   it('should load profissional on init', () => {
     expect(serviceSpy.buscar).toHaveBeenCalledWith(1);
     expect(component.profissional).toEqual(mockProfissional);
+  });
+
+  it('should render numeroRegistro', () => {
+    expect(textoDoItem('Nr. de Registro')).toBe('350544-F');
+  });
+
+  it('should fall back to a dash when the profissional has no numeroRegistro', () => {
+    component.profissional = { ...mockProfissional, numeroRegistro: null };
+    fixture.detectChanges();
+
+    expect(textoDoItem('Nr. de Registro')).toBe('-');
   });
 
   it('should navigate after ativar succeeds', () => {
