@@ -155,6 +155,17 @@ describe('PacienteCalendarioComponent', () => {
     expect(todos('.calendario-celula').length).toBe(42);
   });
 
+  // `table`, e não `grid`: a ARIA APG define `grid` como widget interativo com
+  // navegação por setas, que esta tela somente leitura não implementa.
+  it('should expose the grid as static tabular data', async () => {
+    await setup();
+
+    expect(todos('.calendario-grade')[0].getAttribute('role')).toBe('table');
+    expect(todos('.calendario-linha')[0].getAttribute('role')).toBe('row');
+    expect(todos('.calendario-coluna')[0].getAttribute('role')).toBe('columnheader');
+    expect(todos('.calendario-celula')[0].getAttribute('role')).toBe('cell');
+  });
+
   it('should distinguish the events by origin and status', async () => {
     await setup();
 
@@ -166,6 +177,37 @@ describe('PacienteCalendarioComponent', () => {
     expect(eventos[1].classList).toContain('evento-realizada');
     expect(eventos[2].classList).toContain('evento-sessao');
     expect(eventos[2].classList).toContain('evento-cancelada');
+  });
+
+  // Regressão: as regras de base (`.evento`, `.agenda-evento`, `.evento-marca`)
+  // e as de origem têm a mesma especificidade, então uma shorthand
+  // `border: 1px solid transparent` na base vencia por ordem de origem e
+  // apagava o tracejado da aula — na grade e na agenda, enquanto a legenda
+  // continuava tracejada e contradizia o desenho. Só o `border-style` é
+  // conferido: a cor sai de `--evento-cor`, e os tokens vivem no `styles.scss`
+  // global, que o TestBed não carrega.
+  it('should keep the class outline dashed and the session outline solid', async () => {
+    await setup();
+
+    document.body.appendChild(fixture.nativeElement);
+    try {
+      const alvos = [
+        '.calendario-grade .evento-aula',
+        '.agenda-evento.evento-aula',
+        '.calendario-legenda .evento-aula'
+      ];
+      alvos.forEach(seletor => {
+        const elemento = (fixture.nativeElement as HTMLElement).querySelector(seletor) as HTMLElement;
+        expect(elemento).withContext(seletor).toBeTruthy();
+        expect(getComputedStyle(elemento).borderStyle).withContext(seletor).toBe('dashed');
+      });
+
+      const sessao = (fixture.nativeElement as HTMLElement)
+        .querySelector('.calendario-grade .evento-sessao') as HTMLElement;
+      expect(getComputedStyle(sessao).borderStyle).toBe('solid');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
   });
 
   it('should link a session to its edit route and a class to the class list', async () => {
@@ -263,6 +305,10 @@ describe('PacienteCalendarioComponent', () => {
     expect(todos('.agenda-dia').length).toBe(3);
     expect(todos('.agenda-dia')[0].querySelector('.agenda-data')?.textContent)
       .toContain('20 de maio de 2026');
+    // A aula não tem tipo: a linha traz só "Aula", e não "Aula: Aula".
+    expect(todos('.agenda-dia')[1].querySelector('.agenda-titulo')?.textContent?.trim()).toBe('Aula');
+    expect(todos('.agenda-dia')[0].querySelector('.agenda-titulo')?.textContent?.trim())
+      .toBe('Sessão: Pilates');
   });
 
   it('should show the empty state when the period has no events', async () => {

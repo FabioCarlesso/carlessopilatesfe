@@ -71,8 +71,10 @@
   width: 14px;
   height: 14px;
   border-radius: var(--r-sm);
-  /* A borda vem do bloco de origem/status compartilhado com o chip. */
-  border: 1px solid transparent;
+  /* Só a espessura: estilo e cor da borda pertencem ao bloco de origem/status
+     abaixo. Declarar a shorthand `border` aqui reintroduziria o defeito que
+     apagava o tracejado — ver o comentário desse bloco. */
+  border-width: 1px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -88,6 +90,19 @@
    não são clareados em `[data-theme="dark"]`, onde renderiam texto escuro
    sobre superfície escura. "Agendada" usa `--text-brand`, o único token de
    marca com versão própria no tema escuro — não existe `--c-info-text`.
+
+   A borda é sempre pintada em `--evento-cor`, e não no próprio fundo: no tema
+   escuro `--c-info-bg` (#1a2330) e `--bg-elev` (#182230) diferem em dois
+   pontos por canal, e o chip "agendada" desapareceria dentro da célula, sem
+   nem a forma para dizer que é uma sessão.
+
+   Estilo e cor da borda vivem **só** aqui, e as regras de base (`.evento`,
+   `.agenda-evento`, `.evento-marca`) declaram apenas `border-width`. Estes
+   seletores e os de base têm a mesma especificidade (0,1,0), então uma
+   shorthand `border: 1px solid transparent` na base venceria por ordem de
+   origem e apagaria o tracejado — foi o que aconteceu na primeira versão, em
+   que a aula perdeu o contorno na grade e na agenda enquanto a legenda (cuja
+   base vinha antes) continuava tracejada, contradizendo o desenho.
 --------------------------------------------------------------------------- */
 .evento-agendada {
   --evento-cor: var(--text-brand);
@@ -106,14 +121,15 @@
 
 .evento-sessao {
   background-color: var(--evento-fundo);
-  border-color: var(--evento-fundo);
+  border-style: solid;
+  border-color: var(--evento-cor);
   color: var(--evento-cor);
 }
 
 .evento-aula {
   background-color: transparent;
-  border-color: var(--evento-cor);
   border-style: dashed;
+  border-color: var(--evento-cor);
   color: var(--evento-cor);
 }
 
@@ -197,7 +213,8 @@
   align-items: baseline;
   gap: var(--sp-1);
   padding: 2px var(--sp-2);
-  border: 1px solid transparent;
+  /* Só a espessura; estilo e cor vêm do bloco de origem/status. */
+  border-width: 1px;
   border-radius: var(--r-md);
   font-size: var(--fs-micro);
   line-height: var(--lh-snug);
@@ -285,7 +302,8 @@
   /* Alvo de toque do projeto para telas de toque. */
   min-height: 44px;
   padding: var(--sp-2) var(--sp-3);
-  border: 1px solid transparent;
+  /* Só a espessura; estilo e cor vêm do bloco de origem/status. */
+  border-width: 1px;
   border-radius: var(--r-md);
   font-size: var(--fs-body-sm);
   text-decoration: none;

@@ -80,6 +80,12 @@ export interface CalendarioEvento {
   /** `HH:mm`, ou `null` na aula — a API de aulas só guarda a data. */
   horario: string | null;
   titulo: string;
+  /**
+   * "Sessão: Pilates" — origem e tipo juntos, para a linha da agenda e para a
+   * descrição. A aula não tem tipo (`titulo` e `origemLabel` são a mesma
+   * palavra) e fica só com "Aula", em vez de "Aula: Aula".
+   */
+  rotulo: string;
   status: CalendarioStatus;
   statusLabel: string;
   profissional: string | null;
@@ -202,8 +208,12 @@ export function formatarIntervalo(inicio: string, fim: string): string {
   return `${de.getDate()} a ${ate.getDate()} de ${mesAte} de ${ate.getFullYear()}`;
 }
 
+function rotular(origemLabel: string, titulo: string): string {
+  return origemLabel === titulo ? origemLabel : `${origemLabel}: ${titulo}`;
+}
+
 function descrever(evento: Omit<CalendarioEvento, 'descricao'>): string {
-  const partes = [`${evento.origemLabel}: ${evento.titulo}`];
+  const partes = [evento.rotulo];
   partes.push(evento.horario ? `às ${evento.horario}` : 'sem horário definido');
   partes.push(evento.statusLabel.toLowerCase());
   if (evento.profissional) partes.push(`com ${evento.profissional}`);
@@ -238,6 +248,7 @@ export function mapearEventos(
       dia,
       horario,
       titulo: SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo,
+      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo),
       status: sessao.status,
       statusLabel: CALENDARIO_STATUS_LABEL[sessao.status] ?? sessao.status,
       profissional: sessao.nomeProfissional,
@@ -257,6 +268,7 @@ export function mapearEventos(
       // que não vem no DTO. Fica nulo em vez de virar "00:00", que mentiria.
       horario: null,
       titulo: CALENDARIO_ORIGEM_LABEL.AULA,
+      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
       status: (aula.realizada ? 'REALIZADA' : 'AGENDADA') as CalendarioStatus,
       statusLabel: aula.realizada ? CALENDARIO_STATUS_LABEL.REALIZADA : CALENDARIO_STATUS_LABEL.AGENDADA,
       profissional: aula.profissionalNome ?? null,

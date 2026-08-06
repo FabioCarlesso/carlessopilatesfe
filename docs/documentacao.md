@@ -714,7 +714,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Clique numa sessão abre `/pacientes/:pacienteId/sessoes/:id/editar`; a aula, que não tem tela individual, leva a `/aulas/paciente/:pacienteId`
 - A aula não tem status próprio na API (só `realizada`) nem horário: é traduzida para o vocabulário da sessão (`AGENDADA`/`REALIZADA`) e ordenada depois das sessões marcadas do mesmo dia
 - Abaixo de 768px a grade dá lugar a uma agenda com os dias do período que têm evento, em linhas de largura total (alvo de toque de 44px); as duas leituras derivam da mesma coleção de dias
-- `role="grid"`/`row`/`columnheader`/`gridcell`, célula rotulada com a data por extenso (e ", hoje" quando for o caso) e chip com a frase completa do evento no `aria-label`
+- `role="table"`/`row`/`columnheader`/`cell` (e não `grid`, que a ARIA APG define como widget interativo com navegação por setas), célula rotulada com a data por extenso (e ", hoje" quando for o caso) e chip com a frase completa do evento no `aria-label`
 - Região viva (`role="status"`) anuncia período e contagem de eventos a cada navegação
 - Aritmética de datas e montagem da grade isoladas em `shared/utils/calendario.ts`, com cobertura própria; nenhuma data é construída com `new Date(iso)`, que seria interpretada como UTC e devolveria o dia anterior no fuso do estúdio
 

@@ -91,6 +91,7 @@ describe('calendario', () => {
       expect(evento.dia).toBe('2026-05-20');
       expect(evento.horario).toBe('14:00');
       expect(evento.titulo).toBe('Pilates');
+      expect(evento.rotulo).toBe('Sessão: Pilates');
       expect(evento.status).toBe('AGENDADA');
       expect(evento.statusLabel).toBe('Agendada');
       expect(evento.profissional).toBe('Carla Fisio');
@@ -109,9 +110,12 @@ describe('calendario', () => {
       expect(evento.origem).toBe('AULA');
       expect(evento.horario).toBeNull();
       expect(evento.titulo).toBe('Aula');
+      // A aula nao tem tipo: origem e titulo sao a mesma palavra, e concatenar
+      // os dois renderizaria "Aula: Aula".
+      expect(evento.rotulo).toBe('Aula');
       expect(evento.status).toBe('REALIZADA');
       expect(evento.link).toEqual(['/aulas', 'paciente', 10]);
-      expect(evento.descricao).toBe('21 de maio de 2026, Aula: Aula, sem horário definido, realizada');
+      expect(evento.descricao).toBe('21 de maio de 2026, Aula, sem horário definido, realizada');
     });
 
     it('should translate the class boolean into the session vocabulary', () => {

@@ -80,7 +80,11 @@
   inclusive), e por isso some no mobile, onde a coluna de 46px não comportaria
   nem o chip nem o alvo de toque de 44px. Lá vale a agenda logo abaixo, que
   deriva das mesmas células. -->
-  <div class="calendario-grade" role="grid" [attr.aria-label]="'Calendário de ' + grade.titulo">
+  <!-- `role="table"`, e não `grid`: a ARIA APG define `grid` como widget
+  interativo, com navegação por setas e roving tabindex. Aqui a grade é dado
+  tabular somente leitura cujos links são alcançados por Tab — anunciá-la como
+  `grid` prometeria ao leitor de tela uma interação que a tela não tem. -->
+  <div class="calendario-grade" role="table" [attr.aria-label]="'Calendário de ' + grade.titulo">
     <div class="calendario-linha calendario-cabecalho" role="row">
       @for (coluna of diasSemana; track coluna.abreviado) {
         <span class="calendario-coluna" role="columnheader" [attr.aria-label]="coluna.extenso">
@@ -91,7 +95,7 @@
     @for (semana of grade.semanas; track semana.chave) {
       <div class="calendario-linha" role="row">
         @for (dia of semana.dias; track trackByDia($index, dia)) {
-          <div class="calendario-celula" role="gridcell"
+          <div class="calendario-celula" role="cell"
             [class.celula-fora]="!dia.doPeriodo" [class.celula-hoje]="dia.hoje"
             [attr.aria-label]="dia.hoje ? dia.rotulo + ', hoje' : dia.rotulo">
             <span class="celula-numero" aria-hidden="true">{{ dia.numero }}</span>
@@ -127,7 +131,7 @@
             [routerLink]="evento.link" [attr.aria-label]="evento.descricao">
             <span class="agenda-hora" aria-hidden="true">{{ evento.horario || '—' }}</span>
             <span class="agenda-descricao" aria-hidden="true">
-              <span class="agenda-titulo">{{ evento.origemLabel }}: {{ evento.titulo }}</span>
+              <span class="agenda-titulo">{{ evento.rotulo }}</span>
               <span class="agenda-status">{{ evento.statusLabel }}</span>
               @if (evento.profissional) {
                 <span class="agenda-profissional">{{ evento.profissional }}</span>
