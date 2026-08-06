@@ -600,6 +600,7 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 | `/pacientes/:pacienteId/sessoes/:id/editar` | `PacienteSessaoFormComponent` | Edição de sessão |
 | `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | `PacienteEvolucaoSessaoComponent` | Cadastro e edição da evolução clínica da sessão |
 | `/pacientes/:pacienteId/evolucoes` | `PacienteEvolucaoListComponent` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor e filtros de período/tipo (somente leitura) |
+| `/pacientes/:pacienteId/calendario` | `PacienteCalendarioComponent` | Calendário mensal/semanal das sessões e aulas do paciente (somente leitura) |
 | `/pacientes/:pacienteId/plano-tratamento` | `PacientePlanoTratamentoListComponent` | Lista planos de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | `PacientePlanoTratamentoFormComponent` | Cadastro de plano de tratamento |
 | `/pacientes/:pacienteId/plano-tratamento/:id/editar` | `PacientePlanoTratamentoFormComponent` | Edição de plano de tratamento |
@@ -700,6 +701,22 @@ Os parâmetros numéricos das rotas são validados antes de qualquer chamada à 
 - Resumo do recorte numa região viva permanente (`role="status"`, "4 de 9 sessões no recorte") — sem ela a troca de filtro seria silenciosa para o leitor de tela; fica vazia e fora do layout quando não há filtro ativo
 - Barra recolhível no mobile pelo disclosure do issue #163 (`.filtros-toggle` com `aria-expanded`/`aria-controls` e badge de filtros ativos), no mesmo padrão de `paciente-list` e `profissional-list`
 - Evolução cuja sessão não veio na listagem tem tipo desconhecido e fica fora de qualquer recorte por tipo, voltando em "todos"
+
+### `PacienteCalendarioComponent`
+- Calendário somente leitura das sessões e aulas do paciente em `/pacientes/:pacienteId/calendario` (`ChangeDetectionStrategy.OnPush`)
+- Valida `pacienteId` antes de chamar a API e carrega paciente e, em seguida, `forkJoin` de `GET /sessoes/paciente/{id}` e `GET /aulas/paciente/{id}`; `404` em qualquer das duas listagens é tratado como coleção vazia, e os demais status exibem a faixa de erro
+- Coleção carregada uma única vez: alternar visão e navegar entre períodos são recorte no cliente, sem requisição nova
+- Visões **Mensal** e **Semanal** alternadas por botões com `aria-pressed`; a troca preserva o dia âncora do período
+- Navegação por **‹ / ›** (rotulados "Mês anterior"/"Semana anterior" conforme a visão) e botão **Hoje**, desabilitado quando o período exibido já contém a data corrente
+- Grade de 7 colunas começando no domingo, com apenas as linhas de que o mês precisa (4 a 6); dias do mês vizinho aparecem esmaecidos e fora da contagem do período
+- Evento distinguido em dois eixos: cor por situação (agendada/realizada/cancelada) e preenchimento por origem (sessão sólida, aula contornada e tracejada), com a cancelada riscada — cor sozinha não é sinal suficiente (WCAG 1.4.1)
+- Cores por token: `--c-info-bg`/`--text-brand`, `--c-success-bg`/`--c-success-text` e `--c-danger-bg`/`--c-danger-text`; as variantes `-text` porque `--c-success`/`--c-danger` também servem de fundo e não são clareadas no tema escuro
+- Clique numa sessão abre `/pacientes/:pacienteId/sessoes/:id/editar`; a aula, que não tem tela individual, leva a `/aulas/paciente/:pacienteId`
+- A aula não tem status próprio na API (só `realizada`) nem horário: é traduzida para o vocabulário da sessão (`AGENDADA`/`REALIZADA`) e ordenada depois das sessões marcadas do mesmo dia
+- Abaixo de 768px a grade dá lugar a uma agenda com os dias do período que têm evento, em linhas de largura total (alvo de toque de 44px); as duas leituras derivam da mesma coleção de dias
+- `role="grid"`/`row`/`columnheader`/`gridcell`, célula rotulada com a data por extenso (e ", hoje" quando for o caso) e chip com a frase completa do evento no `aria-label`
+- Região viva (`role="status"`) anuncia período e contagem de eventos a cada navegação
+- Aritmética de datas e montagem da grade isoladas em `shared/utils/calendario.ts`, com cobertura própria; nenhuma data é construída com `new Date(iso)`, que seria interpretada como UTC e devolveria o dia anterior no fuso do estúdio
 
 ### `PacientePlanoTratamentoListComponent`
 - Lista planos de tratamento por paciente
