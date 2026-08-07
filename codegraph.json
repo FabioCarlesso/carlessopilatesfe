@@ -1,7 +1,7 @@
 {
   "exclude": [
     "assets/",
-    "docs/documentacao.html",
+    "docs/",
     "nginx/",
     "public/"
   ]
