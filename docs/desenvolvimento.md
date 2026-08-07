@@ -5,7 +5,8 @@ projeto, veja o [README](../README.md).
 
 ## Testes
 
-Os testes unitários cobrem o serviço e todos os componentes de página:
+Os testes unitários cobrem os serviços, interceptors, guards, pipes, utilitários
+e todos os componentes de página:
 
 ```bash
 npm test

@@ -9,6 +9,7 @@
 | [`desenvolvimento.md`](desenvolvimento.md) | Testes, integração contínua e CodeGraph |
 | [`deploy.md`](deploy.md) | Docker/Nginx e Vercel |
 | [`context.md`](context.md) | Histórico de decisões técnicas e evolução do projeto |
+| [`../CLAUDE.md`](../CLAUDE.md) | Contexto de entrada para agentes de IA: comandos, camadas e regra dos tokens |
 
 Para instalar e rodar o projeto, veja o [README](../README.md).
 
@@ -30,3 +31,7 @@ um parágrafo a ele. Para não repetir isso, cada tipo de informação tem um do
 
 Regra prática: se a informação não ajuda alguém a colocar o projeto no ar nos
 primeiros cinco minutos, ela não pertence ao `README.md`.
+
+> Esta tabela é espelhada em [`../CLAUDE.md`](../CLAUDE.md), que é o arquivo
+> carregado por agentes de IA e precisa ser autossuficiente. Ao mudar o dono de um
+> assunto ou acrescentar um arquivo a `docs/`, **atualize as duas cópias**.

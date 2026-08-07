@@ -70,6 +70,7 @@ Detalhes de build sem Compose e do deploy na Vercel em [`docs/deploy.md`](docs/d
 | [`docs/desenvolvimento.md`](docs/desenvolvimento.md) | Testes, CI e CodeGraph |
 | [`docs/deploy.md`](docs/deploy.md) | Docker/Nginx e Vercel |
 | [`docs/context.md`](docs/context.md) | Histórico de decisões técnicas |
+| [`CLAUDE.md`](CLAUDE.md) | Contexto de entrada para agentes de IA |
 
 Antes de documentar uma mudança, veja em [`docs/README.md`](docs/README.md) qual arquivo é o dono do assunto.
 

@@ -14,7 +14,11 @@ pilates. Consome uma API REST Spring Boot através do proxy `/api/*`.
 | `npm run build` | Build de produção, respeitando os budgets de bundle |
 
 Antes de abrir PR, rode `npm run lint`, `npm run test:ci` e `npm run build` — são
-exatamente os três jobs da CI.
+os três primeiros jobs do `ci.yml`. O quarto job (`docker`) só roda em merge na
+`master`, mas o workflow `docker-pr.yml` valida a imagem já na PR sempre que ela
+toca `Dockerfile`, `nginx/`, `package.json` ou `package-lock.json`. Nesses casos
+os três comandos acima passarem **não** significa que a CI vai passar: valide o
+container com `docker compose up --build` antes de abrir a PR.
 
 ## Arquitetura
 
@@ -28,11 +32,16 @@ Detalhes em [`docs/arquitetura.md`](docs/arquitetura.md).
 
 ## Estilos: use apenas tokens existentes
 
-A nomenclatura é `--bg-*` (superfície), `--text-*` (texto), `--border-*` (borda),
-`--sp-*` (espaçamento) e `--r-*` (raio). Nomes comuns de outros design systems
-(`--surface`, `--space-md`, `--radius-lg`, `--c-primary`) **não existem aqui** e
-um token inexistente não quebra build, lint nem teste — apenas some da tela. Por
-isso `npm run lint:tokens` valida todo `var(--token)` de `src/`.
+`src/styles/_tokens.scss` é a única fonte: **não invente nome de token**. As
+famílias são `--c-*` (paleta e cores semânticas, a maior delas), `--bg-*`
+(superfície), `--text-*` (texto), `--border-*` (borda), `--sp-*` (espaçamento),
+`--r-*` (raio), `--fs-*`/`--lh-*`/`--ls-*`/`--font-*` (tipografia) e `--shadow-*`,
+além de tokens de componente como `--btn-h`, `--input-h` e `--select-chevron`.
+
+Nomes comuns de outros design systems (`--surface`, `--space-md`, `--radius-lg`,
+`--c-primary`) **não existem aqui**, e um token inexistente não quebra build, lint
+nem teste — apenas some da tela. Por isso `npm run lint:tokens` valida todo
+`var(--token)` de `src/`. Na dúvida, consulte o arquivo antes de escrever o nome.
 
 As demais armadilhas (não sobrescrever o interior de componentes globais no SCSS
 da página, `background-color:` em vez da shorthand `background:`) estão em
@@ -57,3 +66,7 @@ parágrafo a ele. Não volte a fazer isso. Cada assunto tem um dono:
 Não mantenha à mão listas que o repositório já responde: árvores de pastas
 componente a componente e listas de arquivos `.spec.ts` nascem desatualizadas e
 foram removidas de propósito.
+
+Esta tabela é espelhada em [`docs/README.md`](docs/README.md), o índice voltado a
+pessoas. Ao mudar o dono de um assunto ou acrescentar um arquivo a `docs/`,
+**atualize as duas cópias**.

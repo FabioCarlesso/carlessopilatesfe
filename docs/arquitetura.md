@@ -18,34 +18,39 @@ ser testada isoladamente do componente que a consome.
 ## Estrutura de pastas
 
 ```
-src/
-├── app/
-│   ├── core/
-│   │   ├── models/                 # DTOs e interfaces
-│   │   ├── services/               # Integração com a API REST
-│   │   ├── interceptors/           # HTTP interceptors (auth e 403)
-│   │   └── guards/                 # Route guards (auth e role)
-│   ├── pages/
-│   │   ├── admin/                  # Hub administrativo e gestão de usuários
-│   │   ├── aulas/                  # Aulas geradas e confirmação de presença
-│   │   ├── auth/                   # Login, recuperação de senha e tela 403
-│   │   ├── dashboard/              # Tela inicial com indicadores
-│   │   ├── pacientes/              # CRUD e prontuário completo do paciente
-│   │   ├── pagamentos/             # Registro e confirmação de pagamentos
-│   │   ├── perfil/                 # Troca de senha do usuário autenticado
-│   │   ├── planos/                 # Planos do paciente
-│   │   ├── profissionais/          # CRUD de profissionais
-│   │   └── relatorios/             # Relatórios administrativos
-│   └── shared/
-│       ├── components/             # Componentes reutilizáveis
-│       ├── pipes/                  # Pipes de formatação
-│       ├── services/               # Serviços utilitários injetáveis
-│       └── utils/                  # Funções utilitárias puras
-├── styles/
-│   └── _tokens.scss                # Tokens do Design System Carlesso
-├── testing/                        # Helpers compartilhados pelos specs
-└── styles.scss
-assets/                             # Referências estáticas do Design System
+.
+├── src/
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── models/             # DTOs e interfaces
+│   │   │   ├── services/           # Integração com a API REST
+│   │   │   ├── interceptors/       # HTTP interceptors (auth e 403)
+│   │   │   └── guards/             # Route guards (auth e role)
+│   │   ├── pages/
+│   │   │   ├── admin/              # Hub administrativo e gestão de usuários
+│   │   │   ├── aulas/              # Aulas geradas e confirmação de presença
+│   │   │   ├── auth/               # Login, recuperação de senha e tela 403
+│   │   │   ├── dashboard/          # Tela inicial com indicadores
+│   │   │   ├── pacientes/          # CRUD e prontuário completo do paciente
+│   │   │   ├── pagamentos/         # Registro e confirmação de pagamentos
+│   │   │   ├── perfil/             # Troca de senha do usuário autenticado
+│   │   │   ├── planos/             # Planos do paciente
+│   │   │   ├── profissionais/      # CRUD de profissionais
+│   │   │   └── relatorios/         # Relatórios administrativos
+│   │   └── shared/
+│   │       ├── components/         # Componentes reutilizáveis
+│   │       ├── pipes/              # Pipes de formatação
+│   │       ├── services/           # Serviços utilitários injetáveis
+│   │       └── utils/              # Funções utilitárias puras
+│   ├── styles/
+│   │   └── _tokens.scss            # Tokens do Design System Carlesso
+│   ├── testing/                    # Helpers compartilhados pelos specs
+│   └── styles.scss
+├── assets/                         # Referências estáticas do Design System
+├── nginx/                          # Template de configuração do Nginx (Docker)
+├── public/                         # Arquivos servidos como estão
+└── scripts/
+    └── lint-tokens.mjs             # Validação dos var(--token) de src/
 ```
 
 A pasta `pages/pacientes/` concentra o prontuário e é, de longe, a maior:
