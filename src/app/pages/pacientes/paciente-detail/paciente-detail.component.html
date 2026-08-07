@@ -113,6 +113,10 @@
           <span class="link-icon">📈</span>
           <span>Histórico de Evoluções</span>
         </a>
+        <a [routerLink]="['/pacientes', paciente.id, 'calendario']" class="link-card">
+          <span class="link-icon">📅</span>
+          <span>Calendário</span>
+        </a>
         <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
           <span class="link-icon">📊</span>
           <span>Reavaliações</span>

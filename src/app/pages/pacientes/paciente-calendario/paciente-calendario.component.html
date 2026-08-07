@@ -1,0 +1,148 @@
+@if (pacienteId) {
+<app-breadcrumb [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Calendário' }
+]"></app-breadcrumb>
+}
+
+<div class="page-header">
+  <div>
+    <h1>Calendário</h1>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
+  </div>
+  <div class="acoes">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Sessões</a>
+    }
+    @if (pacienteId) {
+      <a [routerLink]="['/aulas/paciente', pacienteId]" class="btn btn-secondary">Aulas</a>
+    }
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    }
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !erro && pacienteId) {
+  <div class="calendario-barra">
+    <div class="calendario-navegacao">
+      <!-- Os chevrons são decorativos; quem nomeia o botão é o `aria-label`, que
+      muda junto com a visão ("Mês anterior"/"Semana anterior"). -->
+      <button type="button" class="btn btn-outline btn-sm calendario-seta"
+        [attr.aria-label]="rotuloAnterior" (click)="navegar(-1)">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <h2 class="calendario-titulo">{{ grade.titulo }}</h2>
+      <button type="button" class="btn btn-outline btn-sm calendario-seta"
+        [attr.aria-label]="rotuloProximo" (click)="navegar(1)">
+        <span aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm"
+        [disabled]="noPeriodoAtual" (click)="irParaHoje()">Hoje</button>
+    </div>
+    <!-- Alternador de visão: dois botões com `aria-pressed`, e não um `select`,
+    porque o estado atual precisa ficar visível sem abrir nada. -->
+    <div class="calendario-visoes" role="group" aria-label="Visão do calendário">
+      <button type="button" class="btn btn-sm"
+        [class.btn-primary]="visao === 'mensal'" [class.btn-outline]="visao !== 'mensal'"
+        [attr.aria-pressed]="visao === 'mensal'" (click)="alterarVisao('mensal')">Mensal</button>
+      <button type="button" class="btn btn-sm"
+        [class.btn-primary]="visao === 'semanal'" [class.btn-outline]="visao !== 'semanal'"
+        [attr.aria-pressed]="visao === 'semanal'" (click)="alterarVisao('semanal')">Semanal</button>
+    </div>
+  </div>
+
+  <!-- Região viva do período: a navegação troca a grade inteira, e sem isto o
+  leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
+  <p class="calendario-resumo" role="status">{{ resumoPeriodo }}</p>
+
+  <!-- A legenda usa exatamente as mesmas classes dos chips da grade, para que
+  cor e forma não possam divergir entre o exemplo e o evento real. -->
+  <ul class="calendario-legenda">
+    @for (item of legenda; track item.chave) {
+      <li class="legenda-item">
+        <span [class]="item.classes" aria-hidden="true"></span>{{ item.rotulo }}
+      </li>
+    }
+  </ul>
+
+  <!-- Grade de 7 colunas: é o que mostra a distribuição no período (dias vazios
+  inclusive), e por isso some no mobile, onde a coluna de 46px não comportaria
+  nem o chip nem o alvo de toque de 44px. Lá vale a agenda logo abaixo, que
+  deriva das mesmas células. -->
+  <!-- `role="table"`, e não `grid`: a ARIA APG define `grid` como widget
+  interativo, com navegação por setas e roving tabindex. Aqui a grade é dado
+  tabular somente leitura cujos links são alcançados por Tab — anunciá-la como
+  `grid` prometeria ao leitor de tela uma interação que a tela não tem. -->
+  <div class="calendario-grade" role="table" [attr.aria-label]="'Calendário de ' + grade.titulo">
+    <div class="calendario-linha calendario-cabecalho" role="row">
+      @for (coluna of diasSemana; track coluna.abreviado) {
+        <span class="calendario-coluna" role="columnheader" [attr.aria-label]="coluna.extenso">
+          <span aria-hidden="true">{{ coluna.abreviado }}</span>
+        </span>
+      }
+    </div>
+    @for (semana of grade.semanas; track semana.chave) {
+      <div class="calendario-linha" role="row">
+        @for (dia of semana.dias; track trackByDia($index, dia)) {
+          <div class="calendario-celula" role="cell"
+            [class.celula-fora]="!dia.doPeriodo" [class.celula-hoje]="dia.hoje"
+            [attr.aria-label]="dia.hoje ? dia.rotulo + ', hoje' : dia.rotulo">
+            <span class="celula-numero" aria-hidden="true">{{ dia.numero }}</span>
+            @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+              <a [class]="classesDoEvento(evento, 'evento')"
+                [routerLink]="evento.link" [attr.aria-label]="evento.descricao" [title]="evento.descricao">
+                @if (evento.horario) {
+                  <span class="evento-hora" aria-hidden="true">{{ evento.horario }}</span>
+                }
+                <span class="evento-titulo" aria-hidden="true">{{ evento.titulo }}</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Agenda do período: no mobile substitui a grade; no desktop fica oculta.
+  Lista só os dias com evento — num telefone, rolar 42 dias vazios para achar
+  os cinco que importam não ajuda ninguém. -->
+  <div class="calendario-agenda">
+    @for (dia of diasComEventos; track trackByDia($index, dia)) {
+      <section class="agenda-dia" [class.agenda-dia-hoje]="dia.hoje">
+        <h3 class="agenda-data">
+          {{ dia.rotulo }}
+          @if (dia.hoje) {
+            <span class="agenda-hoje">Hoje</span>
+          }
+        </h3>
+        @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+          <a [class]="classesDoEvento(evento, 'agenda-evento')"
+            [routerLink]="evento.link" [attr.aria-label]="evento.descricao">
+            <span class="agenda-hora" aria-hidden="true">{{ evento.horario || '—' }}</span>
+            <span class="agenda-descricao" aria-hidden="true">
+              <span class="agenda-titulo">{{ evento.rotulo }}</span>
+              <span class="agenda-status">{{ evento.statusLabel }}</span>
+              @if (evento.profissional) {
+                <span class="agenda-profissional">{{ evento.profissional }}</span>
+              }
+            </span>
+          </a>
+        }
+      </section>
+    }
+    @if (diasComEventos.length === 0) {
+      <div class="empty-state">Nenhuma sessão ou aula neste período.</div>
+    }
+  </div>
+}

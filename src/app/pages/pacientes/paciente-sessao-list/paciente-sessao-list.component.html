@@ -21,6 +21,9 @@
       <a [routerLink]="['/pacientes', pacienteId, 'evolucoes']" class="btn btn-secondary">Histórico de Evoluções</a>
     }
     @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'calendario']" class="btn btn-secondary">Calendário</a>
+    }
+    @if (pacienteId) {
       <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
     }
   </div>

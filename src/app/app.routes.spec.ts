@@ -40,6 +40,7 @@ describe('app routes', () => {
       'pacientes/:pacienteId/sessoes/:sessaoId/evolucao',
       'pacientes/:pacienteId/sessoes',
       'pacientes/:pacienteId/evolucoes',
+      'pacientes/:pacienteId/calendario',
       'pacientes/:pacienteId/plano-tratamento/novo',
       'pacientes/:pacienteId/plano-tratamento/:id/editar',
       'pacientes/:pacienteId/plano-tratamento',
@@ -83,6 +84,7 @@ describe('app routes', () => {
     const sessoesEvolucaoIndex = paths.indexOf('pacientes/:pacienteId/sessoes/:sessaoId/evolucao');
     const sessoesListIndex = paths.indexOf('pacientes/:pacienteId/sessoes');
     const evolucoesListIndex = paths.indexOf('pacientes/:pacienteId/evolucoes');
+    const calendarioIndex = paths.indexOf('pacientes/:pacienteId/calendario');
     const planoTratamentoNovoIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/novo');
     const planoTratamentoEditarIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento/:id/editar');
     const planoTratamentoListIndex = paths.indexOf('pacientes/:pacienteId/plano-tratamento');
@@ -108,7 +110,8 @@ describe('app routes', () => {
     expect(sessoesEditarIndex).toBeLessThan(sessoesEvolucaoIndex);
     expect(sessoesEvolucaoIndex).toBeLessThan(sessoesListIndex);
     expect(sessoesListIndex).toBeLessThan(evolucoesListIndex);
-    expect(evolucoesListIndex).toBeLessThan(planoTratamentoNovoIndex);
+    expect(evolucoesListIndex).toBeLessThan(calendarioIndex);
+    expect(calendarioIndex).toBeLessThan(planoTratamentoNovoIndex);
     expect(planoTratamentoNovoIndex).toBeLessThan(planoTratamentoEditarIndex);
     expect(planoTratamentoEditarIndex).toBeLessThan(planoTratamentoListIndex);
     expect(planoTratamentoListIndex).toBeLessThan(reavaliacaoNovaIndex);
