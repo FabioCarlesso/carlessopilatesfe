@@ -73,7 +73,6 @@ export interface CalendarioEvento {
   /** Estável entre remontagens da grade, para o `track` do template. */
   chave: string;
   origem: CalendarioOrigem;
-  origemLabel: string;
   id: number;
   /** `yyyy-MM-dd`. */
   dia: string;
@@ -82,8 +81,8 @@ export interface CalendarioEvento {
   titulo: string;
   /**
    * "Sessão: Pilates" — origem e tipo juntos, para a linha da agenda e para a
-   * descrição. A aula não tem tipo (`titulo` e `origemLabel` são a mesma
-   * palavra) e fica só com "Aula", em vez de "Aula: Aula".
+   * descrição. A aula não tem tipo (o `titulo` já é a própria palavra "Aula") e
+   * fica só com "Aula", em vez de "Aula: Aula".
    */
   rotulo: string;
   status: CalendarioStatus;
@@ -240,15 +239,18 @@ export function mapearEventos(
   sessoes.forEach(sessao => {
     const dia = sessao.dataHora.slice(0, 10);
     const horario = sessao.dataHora.slice(11, 16) || null;
+    // O `??` cobre um tipo que o backend passe a devolver e o front ainda não
+    // conheça: cai na string crua em vez de `undefined`. Fica em constante
+    // porque `titulo` e `rotulo` consomem o mesmo valor.
+    const titulo = SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo;
     const base = {
       chave: `sessao-${sessao.id}`,
       origem: 'SESSAO' as const,
-      origemLabel: CALENDARIO_ORIGEM_LABEL.SESSAO,
       id: sessao.id,
       dia,
       horario,
-      titulo: SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo,
-      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo),
+      titulo,
+      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, titulo),
       status: sessao.status,
       statusLabel: CALENDARIO_STATUS_LABEL[sessao.status] ?? sessao.status,
       profissional: sessao.nomeProfissional,
@@ -261,7 +263,6 @@ export function mapearEventos(
     const base = {
       chave: `aula-${aula.id}`,
       origem: 'AULA' as const,
-      origemLabel: CALENDARIO_ORIGEM_LABEL.AULA,
       id: aula.id,
       dia: aula.data.slice(0, 10),
       // A API de aulas guarda apenas a data: o horário da aula é o do plano,

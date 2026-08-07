@@ -10,6 +10,7 @@ import { AulaService } from '../../../core/services/aula.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
+import { CalendarioEvento } from '../../../shared/utils/calendario';
 import { PacienteCalendarioComponent } from './paciente-calendario.component';
 
 /** Quarta-feira, 20/05/2026 — o dia âncora de todos os cenários. */
@@ -208,6 +209,50 @@ describe('PacienteCalendarioComponent', () => {
     } finally {
       document.body.removeChild(fixture.nativeElement);
     }
+  });
+
+  // Regressão da outra metade do contorno: a borda é pintada em `--evento-cor`
+  // (a cor do texto) e não em `--evento-fundo`. No tema escuro `--c-info-bg`
+  // (#1a2330) e `--bg-elev` (#182230) diferem em dois pontos por canal, e a
+  // sessão agendada desaparecia dentro da célula, sem nem a forma para dizer que
+  // era uma sessão. Os tokens vivem no `styles.scss` global, que o TestBed não
+  // carrega, então entram aqui como dois valores deliberadamente contrastantes
+  // injetados na raiz: o que o teste precisa saber é só de qual dos dois a borda
+  // herda, e assertar a cor real do token não acrescentaria nada.
+  it('should paint the event outline with the text color, not the background', async () => {
+    await setup();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    raiz.style.setProperty('--text-brand', 'rgb(0, 0, 255)');
+    raiz.style.setProperty('--c-info-bg', 'rgb(255, 0, 0)');
+    document.body.appendChild(raiz);
+    try {
+      const agendada = raiz.querySelector('.calendario-grade .evento-sessao.evento-agendada') as HTMLElement;
+      expect(agendada).toBeTruthy();
+
+      const estilo = getComputedStyle(agendada);
+      expect(estilo.backgroundColor).toBe('rgb(255, 0, 0)');
+      expect(estilo.borderTopColor).toBe('rgb(0, 0, 255)');
+    } finally {
+      document.body.removeChild(raiz);
+    }
+  });
+
+  // O tipo não vale como garantia do que chega no JSON: `mapearEventos` já trata
+  // uma situação fora da união (`?? sessao.status`), e a classe correspondente
+  // chegaria aqui como `undefined`, virando a classe literal "undefined" no DOM.
+  it('should omit the status class when the API sends a status outside the union', async () => {
+    await setup();
+
+    const evento = {
+      ...component.diasComEventos[0].eventos[0],
+      status: 'FALTOU'
+    } as unknown as CalendarioEvento;
+
+    const classes = component.classesDoEvento(evento, 'evento');
+
+    expect(classes).toBe('evento evento-sessao');
+    expect(classes).not.toContain('undefined');
   });
 
   it('should link a session to its edit route and a class to the class list', async () => {

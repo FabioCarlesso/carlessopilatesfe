@@ -218,8 +218,18 @@ export class PacienteCalendarioComponent implements OnInit {
     return this.grade.dias.filter(dia => dia.doPeriodo && dia.eventos.length > 0);
   }
 
+  /**
+   * Os dois mapas são totais sobre as uniões declaradas, mas o tipo não vale
+   * como garantia do que chega no JSON: o `mapearEventos` já trata uma situação
+   * fora da união (`?? sessao.status`) e cairia aqui como `undefined`, virando a
+   * classe literal `"undefined"` no DOM. A classe ausente é omitida — sem os
+   * tokens de situação o chip degrada para um contorno neutro em `currentColor`,
+   * e a situação real continua escrita no `aria-label` e na linha da agenda.
+   */
   classesDoEvento(evento: CalendarioEvento, base: string): string {
-    return `${base} ${this.classeOrigem[evento.origem]} ${this.classeStatus[evento.status]}`;
+    return [base, this.classeOrigem[evento.origem], this.classeStatus[evento.status]]
+      .filter(Boolean)
+      .join(' ');
   }
 
   get noPeriodoAtual(): boolean {
