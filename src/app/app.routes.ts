@@ -36,6 +36,12 @@ export const routes: Routes = [
       import('./pages/auth/forbidden/forbidden.component').then(m => m.ForbiddenComponent)
   },
   {
+    path: 'agenda',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/agenda/agenda/agenda.component').then(m => m.AgendaComponent)
+  },
+  {
     path: 'pacientes',
     canActivate: [authGuard],
     loadComponent: () =>

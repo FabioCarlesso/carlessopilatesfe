@@ -163,7 +163,7 @@ export class PacienteCalendarioComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ sessoes, aulas }) => {
-          this.eventos = mapearEventos(sessoes, aulas, pacienteId);
+          this.eventos = mapearEventos(sessoes, aulas);
           this.atualizarGrade();
           this.loading = false;
           this.cdr.markForCheck();

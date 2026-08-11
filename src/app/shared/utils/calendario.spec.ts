@@ -5,7 +5,9 @@ import {
   formatarIntervalo,
   hojeIso,
   inicioDaSemana,
+  intervaloDoPeriodo,
   mapearEventos,
+  mapearEventosDoEstudio,
   montarGrade,
   navegarPeriodo,
   ordenarEventos,
@@ -84,7 +86,7 @@ describe('calendario', () => {
 
   describe('mapearEventos', () => {
     it('should map a session with its time, type, status and edit link', () => {
-      const [evento] = mapearEventos([sessao({ id: 7, dataHora: '2026-05-20T14:00' })], [], 10);
+      const [evento] = mapearEventos([sessao({ id: 7, dataHora: '2026-05-20T14:00' })], []);
 
       expect(evento.chave).toBe('sessao-7');
       expect(evento.origem).toBe('SESSAO');
@@ -104,7 +106,7 @@ describe('calendario', () => {
     // virar "00:00", e o clique cai na listagem de aulas — a aula não tem tela
     // individual.
     it('should map a class without a time and link to the class list', () => {
-      const [evento] = mapearEventos([], [aula({ id: 3, data: '2026-05-21', realizada: true })], 10);
+      const [evento] = mapearEventos([], [aula({ id: 3, data: '2026-05-21', realizada: true })]);
 
       expect(evento.chave).toBe('aula-3');
       expect(evento.origem).toBe('AULA');
@@ -122,7 +124,7 @@ describe('calendario', () => {
       const eventos = mapearEventos([], [
         aula({ id: 1, data: '2026-05-21', realizada: false }),
         aula({ id: 2, data: '2026-05-22', realizada: true })
-      ], 10);
+      ]);
 
       expect(eventos.map(evento => evento.statusLabel)).toEqual(['Agendada', 'Realizada']);
     });
@@ -134,8 +136,7 @@ describe('calendario', () => {
           sessao({ id: 2, dataHora: '2026-05-20T08:30' }),
           sessao({ id: 3, dataHora: '2026-05-19T10:00' })
         ],
-        [aula({ id: 4, data: '2026-05-20' })],
-        10
+        [aula({ id: 4, data: '2026-05-20' })]
       );
 
       expect(eventos.map(evento => evento.chave))
@@ -143,10 +144,66 @@ describe('calendario', () => {
     });
 
     it('should not mutate the received collection when ordering', () => {
-      const eventos = mapearEventos([sessao({ id: 1, dataHora: '2026-05-20T16:00' })], [], 10);
+      const eventos = mapearEventos([sessao({ id: 1, dataHora: '2026-05-20T16:00' })], []);
       const ordenados = ordenarEventos(eventos);
 
       expect(ordenados).not.toBe(eventos);
+    });
+  });
+
+  // Agenda do estúdio (issue #125): as mesmas duas coleções, mas de pacientes
+  // diferentes — o nome de cada um passa a identificar o evento.
+  describe('mapearEventosDoEstudio', () => {
+    it('should title the event with the patient and keep the type in the label', () => {
+      const [evento] = mapearEventosDoEstudio(
+        [sessao({ id: 7, dataHora: '2026-05-20T14:00', pacienteId: 42, nomePaciente: 'Bruno Costa' })],
+        []
+      );
+
+      expect(evento.titulo).toBe('Bruno Costa');
+      expect(evento.paciente).toBe('Bruno Costa');
+      expect(evento.rotulo).toBe('Sessão: Pilates');
+      expect(evento.pacienteId).toBe(42);
+      expect(evento.profissionalId).toBe(3);
+      expect(evento.link).toEqual(['/pacientes', 42, 'sessoes', 7, 'editar']);
+      expect(evento.descricao)
+        .toBe('20 de maio de 2026, Sessão: Pilates, Bruno Costa, às 14:00, agendada, com Carla Fisio');
+    });
+
+    it('should title the class with the patient and link to that patient class list', () => {
+      const [evento] = mapearEventosDoEstudio(
+        [],
+        [aula({ id: 3, data: '2026-05-21', pacienteId: 42, pacienteNome: 'Bruno Costa', profissionalId: 8 })]
+      );
+
+      expect(evento.titulo).toBe('Bruno Costa');
+      expect(evento.rotulo).toBe('Aula');
+      expect(evento.profissionalId).toBe(8);
+      expect(evento.link).toEqual(['/aulas', 'paciente', 42]);
+      expect(evento.descricao).toBe('21 de maio de 2026, Aula, Bruno Costa, sem horário definido, agendada');
+    });
+
+    // O calendário do paciente não repete o nome em cada chip: o cabeçalho da
+    // tela já o nomeia, e a frase acessível segue idêntica à de antes da #125.
+    it('should leave the patient out of the single-patient calendar', () => {
+      const [evento] = mapearEventos([sessao({ id: 7, dataHora: '2026-05-20T14:00' })], []);
+
+      expect(evento.paciente).toBeNull();
+      expect(evento.titulo).toBe('Pilates');
+      expect(evento.descricao)
+        .toBe('20 de maio de 2026, Sessão: Pilates, às 14:00, agendada, com Carla Fisio');
+    });
+
+    it('should order events of different patients chronologically', () => {
+      const eventos = mapearEventosDoEstudio(
+        [
+          sessao({ id: 1, dataHora: '2026-05-20T16:00', pacienteId: 1, nomePaciente: 'Ana' }),
+          sessao({ id: 2, dataHora: '2026-05-20T08:30', pacienteId: 2, nomePaciente: 'Bruno' })
+        ],
+        [aula({ id: 4, data: '2026-05-20', pacienteId: 3, pacienteNome: 'Carlos' })]
+      );
+
+      expect(eventos.map(evento => evento.chave)).toEqual(['sessao-2', 'sessao-1', 'aula-4']);
     });
   });
 
@@ -192,8 +249,7 @@ describe('calendario', () => {
     it('should place each event on its own day', () => {
       const eventos = mapearEventos(
         [sessao({ id: 1, dataHora: '2026-05-20T14:00' })],
-        [aula({ id: 2, data: '2026-05-21' })],
-        10
+        [aula({ id: 2, data: '2026-05-21' })]
       );
       const grade = montarGrade('mensal', '2026-05-20', eventos, '2026-05-20');
       const porDia = new Map(grade.dias.map(dia => [dia.dia, dia.eventos.map(evento => evento.chave)]));
@@ -211,8 +267,7 @@ describe('calendario', () => {
           sessao({ id: 1, dataHora: '2026-05-20T14:00' }),
           sessao({ id: 2, dataHora: '2026-04-27T09:00' })
         ],
-        [],
-        10
+        []
       );
       const grade = montarGrade('mensal', '2026-05-20', eventos, '2026-05-20');
 
@@ -242,6 +297,57 @@ describe('calendario', () => {
     });
   });
 
+  describe('montarGrade — visão diária', () => {
+    it('should build a single cell for the reference day', () => {
+      const grade = montarGrade('diaria', '2026-05-20', [], '2026-05-20');
+
+      expect(grade.dias.length).toBe(1);
+      expect(grade.semanas.length).toBe(1);
+      expect(grade.dias[0].dia).toBe('2026-05-20');
+      expect(grade.dias[0].doPeriodo).toBeTrue();
+      expect(grade.dias[0].hoje).toBeTrue();
+    });
+
+    // 20/05/2026 é quarta-feira. O dia da semana entra no título porque, sem a
+    // grade de 7 colunas, é a única pista de onde o dia cai.
+    it('should title the period with the weekday', () => {
+      expect(montarGrade('diaria', '2026-05-20', [], '2026-05-19').titulo)
+        .toBe('Quarta-feira, 20 de maio de 2026');
+    });
+
+    it('should count only the events of the day', () => {
+      const eventos = mapearEventosDoEstudio(
+        [
+          sessao({ id: 1, dataHora: '2026-05-20T14:00' }),
+          sessao({ id: 2, dataHora: '2026-05-21T09:00' })
+        ],
+        []
+      );
+      const grade = montarGrade('diaria', '2026-05-20', eventos, '2026-05-20');
+
+      expect(grade.totalEventos).toBe(1);
+      expect(grade.dias[0].eventos.map(evento => evento.chave)).toEqual(['sessao-1']);
+    });
+  });
+
+  // A agenda do estúdio busca por período no servidor e precisa do intervalo
+  // antes de montar a grade.
+  describe('intervaloDoPeriodo', () => {
+    it('should return the day itself in the daily view', () => {
+      expect(intervaloDoPeriodo('diaria', '2026-05-20')).toEqual({ inicio: '2026-05-20', fim: '2026-05-20' });
+    });
+
+    it('should return sunday to saturday in the weekly view', () => {
+      expect(intervaloDoPeriodo('semanal', '2026-05-20')).toEqual({ inicio: '2026-05-17', fim: '2026-05-23' });
+    });
+
+    // No mensal o intervalo cobre também as células de preenchimento: sem elas
+    // a primeira e a última semana da tela viriam vazias.
+    it('should cover the padding cells in the monthly view', () => {
+      expect(intervaloDoPeriodo('mensal', '2026-05-20')).toEqual({ inicio: '2026-04-26', fim: '2026-06-06' });
+    });
+  });
+
   describe('navegarPeriodo', () => {
     it('should move by month in the monthly view', () => {
       expect(navegarPeriodo('mensal', '2026-05-20', 1)).toBe('2026-06-20');
@@ -251,6 +357,11 @@ describe('calendario', () => {
     it('should move by week in the weekly view', () => {
       expect(navegarPeriodo('semanal', '2026-05-20', 1)).toBe('2026-05-27');
       expect(navegarPeriodo('semanal', '2026-05-20', -1)).toBe('2026-05-13');
+    });
+
+    it('should move by day in the daily view', () => {
+      expect(navegarPeriodo('diaria', '2026-05-31', 1)).toBe('2026-06-01');
+      expect(navegarPeriodo('diaria', '2026-05-01', -1)).toBe('2026-04-30');
     });
   });
 });

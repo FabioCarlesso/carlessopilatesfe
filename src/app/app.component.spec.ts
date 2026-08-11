@@ -178,7 +178,7 @@ describe('AppComponent', () => {
 
       // Uma única linha de links: todos compartilham o mesmo topo.
       const topos = new Set(links.map(link => Math.round(link.getBoundingClientRect().top)));
-      expect(links.length).toBe(5);
+      expect(links.length).toBe(6);
       expect(topos.size).toBe(1);
 
       // A marca cabe inteira, sem quebrar: com `nowrap` o conteúdo nunca excede

@@ -1,0 +1,288 @@
+<div class="page-header">
+  <div>
+    <h1>Agenda</h1>
+    <p class="page-subtitle">Aulas e sessões de todos os pacientes</p>
+  </div>
+</div>
+
+<!-- `role="alert"` porque a falha de carga também **apaga a grade** e esvazia o
+`role="status"` do resumo: sem ele, quem usa leitor de tela navegaria para outro
+período e não ouviria absolutamente nada. -->
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+
+<div class="calendario-barra">
+  <div class="calendario-navegacao">
+    <!-- Os chevrons são decorativos; quem nomeia o botão é o `aria-label`, que
+    muda junto com a visão ("Semana anterior"/"Dia anterior"). -->
+    <button type="button" class="btn btn-outline btn-sm calendario-seta"
+      [attr.aria-label]="rotuloAnterior" [disabled]="loading" (click)="navegar(-1)">
+      <span aria-hidden="true">‹</span>
+    </button>
+    <h2 class="calendario-titulo">{{ grade.titulo }}</h2>
+    <button type="button" class="btn btn-outline btn-sm calendario-seta"
+      [attr.aria-label]="rotuloProximo" [disabled]="loading" (click)="navegar(1)">
+      <span aria-hidden="true">›</span>
+    </button>
+    <button type="button" class="btn btn-secondary btn-sm"
+      [disabled]="loading || noPeriodoAtual" (click)="irParaHoje()">Hoje</button>
+  </div>
+  <!-- Alternador de visão: dois botões com `aria-pressed`, e não um `select`,
+  porque o estado atual precisa ficar visível sem abrir nada. -->
+  <div class="calendario-visoes" role="group" aria-label="Visão da agenda">
+    <button type="button" class="btn btn-sm"
+      [class.btn-primary]="visao === 'semanal'" [class.btn-outline]="visao !== 'semanal'"
+      [attr.aria-pressed]="visao === 'semanal'" [disabled]="loading"
+      (click)="alterarVisao('semanal')">Semanal</button>
+    <button type="button" class="btn btn-sm"
+      [class.btn-primary]="visao === 'diaria'" [class.btn-outline]="visao !== 'diaria'"
+      [attr.aria-pressed]="visao === 'diaria'" [disabled]="loading"
+      (click)="alterarVisao('diaria')">Diária</button>
+  </div>
+</div>
+
+<!-- O disclosure dos filtros só existe no mobile (issue #163): três campos
+empilhados ocupariam meia tela em 375px e empurrariam a agenda para fora da
+primeira dobra. -->
+<button type="button" class="filtros-toggle"
+  (click)="alternarFiltros()" [attr.aria-expanded]="filtrosAbertos" aria-controls="filtros-agenda">
+  <span>Filtros</span>
+  @if (filtrosAtivos > 0) {
+    <span class="filtros-badge" [attr.aria-label]="filtrosAtivos + ' filtros ativos'">{{ filtrosAtivos }}</span>
+  }
+  <span class="filtros-caret" aria-hidden="true">▾</span>
+</button>
+
+<!-- Recorte client-side sobre o período já carregado: nenhuma requisição sai
+daqui. Trocar de período, sim, busca de novo — a coleção é do período. -->
+<form id="filtros-agenda" class="filtros" [class.filtros-recolhidos]="!filtrosAbertos"
+  (ngSubmit)="aplicarFiltros()">
+  <div class="filtro-campo">
+    <label for="filtroProfissional">Profissional</label>
+    <select id="filtroProfissional" class="form-control" name="profissionalId"
+      [(ngModel)]="filtro.profissionalId" (ngModelChange)="aplicarFiltros()">
+      <option [ngValue]="'todos'">Todos</option>
+      @for (profissional of profissionais; track profissional.id) {
+        <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro-campo">
+    <label for="filtroTipo">Tipo</label>
+    <select id="filtroTipo" class="form-control" name="tipo"
+      [(ngModel)]="filtro.tipo" (ngModelChange)="aplicarFiltros()">
+      <option [ngValue]="'todos'">Todos</option>
+      @for (opcao of opcoesTipo; track opcao.valor) {
+        <option [ngValue]="opcao.valor">{{ opcao.rotulo }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro-campo">
+    <label for="filtroStatus">Situação</label>
+    <select id="filtroStatus" class="form-control" name="status"
+      [(ngModel)]="filtro.status" (ngModelChange)="aplicarFiltros()">
+      <option [ngValue]="'todos'">Todas</option>
+      @for (opcao of opcoesStatus; track opcao.valor) {
+        <option [ngValue]="opcao.valor">{{ opcao.rotulo }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro-acoes">
+    <button type="button" class="btn btn-outline" [disabled]="!temFiltroAtivo"
+      (click)="limparFiltros()">Limpar filtros</button>
+  </div>
+</form>
+
+<!-- Região viva do período: a navegação troca a grade inteira, e sem isto o
+leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
+<p class="calendario-resumo" role="status">{{ resumoPeriodo }}</p>
+
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !erro) {
+  <!-- A legenda usa exatamente as mesmas classes dos chips da grade, para que
+  cor e forma não possam divergir entre o exemplo e o evento real. -->
+  <ul class="calendario-legenda">
+    @for (item of legenda; track item.chave) {
+      <li class="legenda-item">
+        <span [class]="item.classes" aria-hidden="true"></span>{{ item.rotulo }}
+      </li>
+    }
+  </ul>
+
+  @if (eventoSelecionado; as evento) {
+    <!-- Detalhe e ações do evento clicado. É um painel na própria página, e não
+    um diálogo, porque a confirmação das ações já usa o diálogo global e dois
+    modais empilhados prenderiam o foco um dentro do outro. -->
+    <!-- O `aria-live` cobre a troca de evento com o painel já aberto: o `@if`
+    continua verdadeiro, a view é reaproveitada, o setter do `@ViewChild` não
+    dispara de novo e o foco fica no chip clicado. Sem a região viva, o painel
+    passaria a descrever outro evento em silêncio — e a ação seguinte agiria
+    sobre um evento que nunca foi anunciado. -->
+    <section #painelDetalhe class="detalhe-painel" tabindex="-1"
+      role="region" aria-live="polite" [attr.aria-label]="'Detalhes do evento: ' + evento.descricao">
+      <div class="detalhe-cabecalho">
+        <h3 class="detalhe-titulo">{{ evento.paciente }}</h3>
+        <button type="button" class="detalhe-fechar" aria-label="Fechar detalhes"
+          [disabled]="acaoEmAndamento" (click)="fecharDetalhe()">✕</button>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">Evento</span>
+          <span>{{ evento.rotulo }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Quando</span>
+          <span>{{ dataDoDetalhe }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Situação</span>
+          <span>{{ evento.statusLabel }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Profissional</span>
+          <span>{{ evento.profissional || 'Não atribuído' }}</span>
+        </div>
+      </div>
+
+      @if (erroAcao) {
+        <div class="alert alert-danger">{{ erroAcao }}</div>
+      }
+
+      <!-- A conclusão da aula exige o profissional no `PATCH`, e a aula pode
+      chegar sem nenhum atribuído: aí o select vira obrigatório. -->
+      @if (podeRealizar && exigeProfissional) {
+        <div class="filtro-campo detalhe-profissional">
+          <label for="profissionalDaAcao">Profissional que ministrou</label>
+          <select id="profissionalDaAcao" class="form-control" name="profissionalDaAcao"
+            [class.is-invalid]="profissionalInvalido" [(ngModel)]="profissionalDaAcao"
+            (ngModelChange)="aoSelecionarProfissional()" [disabled]="acaoEmAndamento">
+            <option [ngValue]="null">Selecione…</option>
+            @for (profissional of profissionais; track profissional.id) {
+              <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="detalhe-acoes">
+        @if (podeRealizar) {
+          <button type="button" class="btn btn-primary btn-sm"
+            [disabled]="acaoEmAndamento" (click)="solicitarAcao('realizar')">Marcar como realizada</button>
+        }
+        @if (podeCancelar) {
+          <button type="button" class="btn btn-danger btn-sm"
+            [disabled]="acaoEmAndamento" (click)="solicitarAcao('cancelar')">Cancelar sessão</button>
+        }
+        <!-- Reagendamento e edição continuam na tela que já sabe fazê-los: a
+        sessão abre a própria edição e a aula, sem tela individual, cai na
+        listagem de aulas do paciente. -->
+        <a [routerLink]="evento.link" class="btn btn-secondary btn-sm">
+          {{ evento.origem === 'SESSAO' ? 'Editar/reagendar' : 'Abrir aulas do paciente' }}
+        </a>
+        <a [routerLink]="['/pacientes', evento.pacienteId]" class="btn btn-outline btn-sm">Ver paciente</a>
+      </div>
+    </section>
+  }
+
+  <!-- Grade de 7 colunas da visão semanal: é o que mostra a distribuição no
+  período (dias vazios inclusive). Some no mobile, onde a coluna de 46px não
+  comportaria nem o chip nem o alvo de toque de 44px, e na visão diária, que é
+  uma coluna só. Nos dois casos vale a lista abaixo, que deriva das mesmas
+  células. -->
+  <!-- `role="table"`, e não `grid`: a ARIA APG define `grid` como widget
+  interativo, com navegação por setas e roving tabindex. Aqui a grade é dado
+  tabular cujos botões são alcançados por Tab — anunciá-la como `grid`
+  prometeria ao leitor de tela uma interação que a tela não tem. -->
+  @if (visao === 'semanal') {
+    <div class="calendario-grade" role="table" [attr.aria-label]="'Agenda de ' + grade.titulo">
+      <div class="calendario-linha calendario-cabecalho" role="row">
+        @for (coluna of diasSemana; track coluna.abreviado) {
+          <span class="calendario-coluna" role="columnheader" [attr.aria-label]="coluna.extenso">
+            <span aria-hidden="true">{{ coluna.abreviado }}</span>
+          </span>
+        }
+      </div>
+      @for (semana of grade.semanas; track semana.chave) {
+        <div class="calendario-linha" role="row">
+          @for (dia of semana.dias; track trackByDia($index, dia)) {
+            <div class="calendario-celula" role="cell"
+              [class.celula-hoje]="dia.hoje"
+              [attr.aria-label]="dia.hoje ? dia.rotulo + ', hoje' : dia.rotulo">
+              <span class="celula-numero" aria-hidden="true">{{ dia.numero }}</span>
+              @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+                <button type="button" [class]="classesDoEvento(evento, 'evento')"
+                  [class.evento-selecionado]="eventoSelecionado?.chave === evento.chave"
+                  [attr.aria-label]="evento.descricao" [title]="evento.descricao"
+                  (click)="abrirDetalhe(evento)">
+                  @if (evento.horario) {
+                    <span class="evento-hora" aria-hidden="true">{{ evento.horario }}</span>
+                  }
+                  <span class="evento-titulo" aria-hidden="true">{{ evento.titulo }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Lista do período: única leitura na visão diária, e substituta da grade no
+  mobile. Lista só os dias com evento — num telefone, rolar sete dias vazios
+  para achar os dois que importam não ajuda ninguém. -->
+  <div class="calendario-lista" [class.lista-sempre]="visao === 'diaria'">
+    @for (dia of diasComEventos; track trackByDia($index, dia)) {
+      <section class="agenda-dia" [class.agenda-dia-hoje]="dia.hoje">
+        <h3 class="agenda-data">
+          {{ dia.rotulo }}
+          @if (dia.hoje) {
+            <span class="agenda-hoje">Hoje</span>
+          }
+        </h3>
+        @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+          <button type="button" [class]="classesDoEvento(evento, 'agenda-evento')"
+            [class.evento-selecionado]="eventoSelecionado?.chave === evento.chave"
+            [attr.aria-label]="evento.descricao" (click)="abrirDetalhe(evento)">
+            <span class="agenda-hora" aria-hidden="true">{{ evento.horario || '—' }}</span>
+            <span class="agenda-descricao" aria-hidden="true">
+              <span class="agenda-titulo">{{ evento.paciente }}</span>
+              <span class="agenda-rotulo">{{ evento.rotulo }}</span>
+              <span class="agenda-status">{{ evento.statusLabel }}</span>
+              @if (evento.profissional) {
+                <span class="agenda-profissional">{{ evento.profissional }}</span>
+              }
+            </span>
+          </button>
+        }
+      </section>
+    }
+    @if (diasComEventos.length === 0) {
+      <div class="empty-state">
+        {{ temFiltroAtivo
+          ? 'Nenhuma sessão ou aula neste período com os filtros aplicados.'
+          : 'Nenhuma sessão ou aula neste período.' }}
+      </div>
+    }
+  </div>
+}
+
+@if (acaoPendente) {
+  <app-confirmar-dialog
+    [titulo]="tituloConfirmacao"
+    [mensagem]="mensagemConfirmacao"
+    [textoConfirmar]="acaoPendente === 'cancelar' ? 'Cancelar sessão' : 'Marcar como realizada'"
+    textoCancelar="Voltar"
+    [variante]="acaoPendente === 'cancelar' ? 'perigo' : 'primaria'"
+    [processando]="acaoEmAndamento"
+    (confirmar)="confirmarAcao()"
+    (cancelar)="cancelarConfirmacao()"
+  />
+}

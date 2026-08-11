@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { SessaoRequestDTO, SessaoResponseDTO, SessaoUpdateDTO } from '../models/sessao';
 
@@ -48,6 +48,18 @@ export class SessaoService {
 
   listarPorPaciente(pacienteId: number): Observable<SessaoResponseDTO[]> {
     return this.http.get<SessaoApiResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`)
+      .pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
+  }
+
+  /**
+   * Sessões de **todos** os pacientes no período, para a agenda do estúdio
+   * (issue #125). Mesmo contrato do endpoint de aulas: as duas pontas são
+   * obrigatórias, em `yyyy-MM-dd`, e o período é limitado a 92 dias. Sessões de
+   * paciente inativo continuam vindo — são registro clínico.
+   */
+  listarPorPeriodo(inicio: string, fim: string): Observable<SessaoResponseDTO[]> {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    return this.http.get<SessaoApiResponseDTO[]>(this.apiUrl, { params })
       .pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
   }
 

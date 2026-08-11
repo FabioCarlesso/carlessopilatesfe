@@ -8,6 +8,7 @@ Mapa de todas as rotas da aplicação. O comportamento de cada tela está em
 | Caminho                 | Função                                      |
 |-------------------------|---------------------------------------------|
 | `/`                     | Dashboard inicial com indicadores do sistema |
+| `/agenda`               | Agenda geral do estúdio: aulas e sessões de todos os pacientes no período, com visões semanal e diária |
 | `/pacientes`            | Lista de pacientes com filtros e paginação  |
 | `/pacientes/novo`       | Formulário de cadastro                      |
 | `/pacientes/:id/editar` | Formulário de edição                        |

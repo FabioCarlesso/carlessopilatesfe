@@ -728,7 +728,7 @@ body.dialog-aberto {
   }
 }
 
-// Faixa de tablet + mobile (≤ 1024px): a navbar completa (marca + até 5 links +
+// Faixa de tablet + mobile (≤ 1024px): a navbar completa (marca + até 6 links +
 // busca + menu de conta) não cabe na barra e transborda/sobrepõe. Colapsa num
 // painel acionado pelo botão do menu. O breakpoint acompanha DESKTOP_MIN_WIDTH
 // em shared/utils/breakpoints.ts, que fecha o menu ao voltar para o desktop e

@@ -1,0 +1,504 @@
+/* Agenda geral do estúdio (issue #125). A aparência dos eventos repete a do
+   calendário do paciente (issue #119): as duas telas mostram os mesmos objetos,
+   e a leitura aprendida numa precisa valer na outra. */
+
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+/* Navegação à esquerda, alternador de visão à direita; quebram em linhas
+   próprias quando não cabem lado a lado. */
+.calendario-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.calendario-navegacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Só o rótulo do período: o `h2` global viria com margem e tamanho de seção. */
+.calendario-titulo {
+  margin: 0;
+  min-width: 12ch;
+  font-size: var(--fs-h3);
+  text-align: center;
+}
+
+/* Só largura: o chevron não pode ficar num botão do tamanho de "Próxima
+   semana". */
+.calendario-seta {
+  min-width: var(--btn-h-sm);
+}
+
+.calendario-visoes {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* Filtros: mesma superfície e mesmo grid de `paciente-list` e
+   `paciente-evolucao-list` — `auto-fit` com piso de 180px empilha sozinho em
+   375px, sem media query. */
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+  align-items: end;
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  box-shadow: var(--shadow-1);
+}
+
+.filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  label {
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 600;
+  }
+}
+
+.filtro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Disclosure dos filtros (issue #163): só existe no mobile; no desktop o
+   painel fica sempre aberto, como nas demais listagens. */
+.filtros-toggle {
+  display: none;
+}
+
+/* O texto é a literal `#f0ede8`, e não `--c-cloud-dancer`: o token é
+   re-tematizado para `#0e1620` em `[data-theme="dark"]` enquanto o fundo
+   `--c-horizonte` continua `#374f6c`, e a contagem renderiza a 2,16:1 no tema
+   escuro — medido nas outras três telas que trazem este mesmo bloco. Contra o
+   fundo fixo, a literal rende 7,20:1 nos dois temas; é o mesmo motivo pelo qual
+   o gatilho do menu de conta usa literais (ver design-system.md). */
+.filtros-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-pill);
+  background: var(--c-horizonte);
+  color: #f0ede8;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+}
+
+.calendario-resumo {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.calendario-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.evento-marca {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-sm);
+  /* Só a espessura; estilo e cor vêm do bloco de origem/status. */
+  border-width: 1px;
+}
+
+/* Painel de detalhe do evento. */
+.detalhe-painel {
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  /* A barra de marca à esquerda liga o painel ao evento que o abriu, que fica
+     realçado na grade pela mesma cor. */
+  border-left: 4px solid var(--text-brand);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+  box-shadow: var(--shadow-1);
+
+  /* O painel recebe o foco ao abrir (`tabindex="-1"`): sem contorno próprio
+     não haveria pista visual de onde o foco parou. */
+  &:focus-visible {
+    outline: 2px solid var(--text-brand);
+    outline-offset: 2px;
+  }
+}
+
+.detalhe-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.detalhe-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.detalhe-fechar {
+  /* Alvo de toque do projeto para telas de toque. */
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--bg-sunken);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-brand);
+    outline-offset: 1px;
+  }
+}
+
+/* Conclusão da aula: uma coluna só, sem esticar até a largura do painel. */
+.detalhe-profissional {
+  max-width: 320px;
+  margin: var(--sp-4) 0 0;
+}
+
+.detalhe-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+/* Aparência dos eventos: a **cor** diz a situação e o **preenchimento** diz a
+   origem (sessão sólida, aula tracejada), compartilhada pelo chip da grade,
+   pela linha da lista e pela legenda. As escolhas de token e a regra de só
+   declarar `border-width` nas bases estão documentadas em detalhe no bloco
+   equivalente de `paciente-calendario.component.scss`, que esta tela repete
+   para que as duas leituras do mesmo objeto não divirjam. */
+.evento-agendada {
+  --evento-cor: var(--text-brand);
+  --evento-fundo: var(--c-info-bg);
+}
+
+.evento-realizada {
+  --evento-cor: var(--c-success-text);
+  --evento-fundo: var(--c-success-bg);
+}
+
+.evento-cancelada {
+  --evento-cor: var(--c-danger-text);
+  --evento-fundo: var(--c-danger-bg);
+}
+
+.evento-sessao {
+  background-color: var(--evento-fundo);
+  border-style: solid;
+  border-color: var(--evento-cor);
+  color: var(--evento-cor);
+}
+
+.evento-aula {
+  background-color: transparent;
+  border-style: dashed;
+  border-color: var(--evento-cor);
+  color: var(--evento-cor);
+}
+
+/* Evento aberto no painel: anel de marca em vez de troca de fundo, que apagaria
+   a situação. */
+.evento-selecionado {
+  box-shadow: 0 0 0 2px var(--text-brand);
+}
+
+/* Grade de 7 colunas (visão semanal). */
+.calendario-grade {
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.calendario-linha {
+  display: grid;
+  /* `minmax(0, 1fr)`: sem o piso zero um chip largo estouraria a largura. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+
+  & + .calendario-linha {
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+.calendario-cabecalho {
+  background-color: var(--bg-sunken);
+}
+
+.calendario-coluna {
+  padding: var(--sp-2);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-caps-tight);
+  text-transform: uppercase;
+}
+
+.calendario-celula {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  /* A agenda do estúdio empilha vários pacientes no mesmo dia: a célula é mais
+     alta que a do calendário do paciente para caber uma tarde cheia sem que a
+     semana vire uma escada. */
+  min-height: 120px;
+  padding: var(--sp-2);
+
+  & + .calendario-celula {
+    border-left: 1px solid var(--border-subtle);
+  }
+}
+
+/* Dia corrente por barra superior: um fundo colorido competiria com as cores
+   de situação dos chips da própria célula. */
+.celula-hoje {
+  box-shadow: inset 0 3px 0 0 var(--text-brand);
+
+  .celula-numero {
+    color: var(--text-brand);
+    font-weight: 700;
+  }
+}
+
+.celula-numero {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.evento {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  width: 100%;
+  padding: 2px var(--sp-2);
+  /* Só a espessura; estilo e cor vêm do bloco de origem/status. */
+  border-width: 1px;
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: var(--fs-micro);
+  line-height: var(--lh-snug);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+
+  &:hover {
+    /* Só o realce: trocar a cor de fundo apagaria a situação do evento. */
+    box-shadow: var(--shadow-1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-brand);
+    outline-offset: 1px;
+  }
+}
+
+.evento-hora {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Coluna estreita: corta com reticências em vez de quebrar o chip em três
+   linhas. O texto completo está no `title` e no `aria-label`. */
+.evento-titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cancelada continua legível, mas riscada: a cor sozinha não é sinal suficiente
+   (WCAG 1.4.1). */
+.evento-cancelada .evento-titulo,
+.evento-cancelada .agenda-titulo {
+  text-decoration: line-through;
+}
+
+/* Lista do período: única leitura na visão diária e substituta da grade no
+   mobile. */
+.calendario-lista {
+  display: none;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Na visão diária não há grade: a lista vale em qualquer largura. */
+.lista-sempre {
+  display: flex;
+}
+
+.agenda-dia {
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3);
+}
+
+.agenda-dia-hoje {
+  /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
+  border-left: 4px solid var(--text-brand);
+}
+
+.agenda-data {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.agenda-hoje {
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  background-color: var(--c-info-bg);
+  color: var(--text-brand);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps-tight);
+}
+
+.agenda-evento {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  /* Alvo de toque do projeto para telas de toque. */
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  /* Só a espessura; estilo e cor vêm do bloco de origem/status. */
+  border-width: 1px;
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: var(--fs-body-sm);
+  text-align: left;
+  cursor: pointer;
+
+  & + .agenda-evento {
+    margin-top: var(--sp-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-brand);
+    outline-offset: 1px;
+  }
+}
+
+.agenda-hora {
+  min-width: 5ch;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-descricao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+}
+
+.agenda-titulo {
+  font-weight: 600;
+}
+
+.agenda-rotulo,
+.agenda-status,
+.agenda-profissional {
+  color: var(--text-secondary);
+  font-size: var(--fs-micro);
+}
+
+/* Abaixo de 768px a coluna da semana mede ~46px: não cabe o chip nem o alvo de
+   toque de 44px. A grade sai e entra a lista, que deriva da mesma `grade.dias`,
+   então as duas não podem mostrar períodos diferentes. */
+@media (max-width: 768px) {
+  .calendario-grade {
+    display: none;
+  }
+
+  .calendario-lista {
+    display: flex;
+  }
+
+  .calendario-barra {
+    /* Empilhado, o alternador de visão fica alinhado à navegação. */
+    justify-content: flex-start;
+  }
+
+  .filtros-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    /* Alvo de toque de 44px, como no #163. */
+    min-height: 44px;
+    padding: var(--sp-2) var(--sp-4);
+    margin-bottom: var(--sp-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-elev);
+    color: var(--text-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .filtros-caret {
+    margin-left: auto;
+    transition: transform .2s ease;
+  }
+
+  .filtros-toggle[aria-expanded="true"] .filtros-caret {
+    transform: rotate(180deg);
+  }
+
+  .filtros.filtros-recolhidos {
+    display: none;
+  }
+}
