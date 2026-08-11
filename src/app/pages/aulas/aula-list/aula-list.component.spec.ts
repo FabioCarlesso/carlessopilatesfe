@@ -357,6 +357,29 @@ describe('AulaListComponent', () => {
       expect(component.erro).toBe('Aula já realizada não pode ser remarcada');
     });
 
+    // No modo card (≤640px) as duas ações empilham em largura total; lado a lado
+    // ficariam estreitas demais para o alvo de toque. Em iframe de largura fixa,
+    // como as demais regressões de breakpoint desta suíte: a janela do Karma é
+    // sempre larga e o ramo mobile ficaria sem teste efetivo.
+    it('should stack the row actions only in card mode', () => {
+      document.body.appendChild(fixture.nativeElement);
+
+      [375, 1200].forEach(largura => {
+        const viewport = renderizarEmViewport(fixture.nativeElement, largura);
+
+        try {
+          const acoes: HTMLElement = fixture.nativeElement.querySelector('.acoes-aula');
+          expect(viewport.janela.getComputedStyle(acoes).flexDirection)
+            .withContext(`ações em ${largura}px`)
+            .toBe(largura === 375 ? 'column' : 'row');
+        } finally {
+          viewport.destruir();
+        }
+      });
+
+      document.body.removeChild(fixture.nativeElement);
+    });
+
     it('should fall back to a generic message when remarcar fails without a body', () => {
       serviceSpy.remarcar.and.returnValue(throwError(() => new Error('fail')));
       component.solicitarRemarcar(mockAula);
