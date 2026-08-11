@@ -47,7 +47,13 @@
 
   <!-- Contadores do período. Aulas e sessões ficam em cards separados porque só
   a aula gera comissão: somá-las num "realizadas" único faria o valor parecer
-  cobrir também as sessões. -->
+  cobrir também as sessões.
+
+  Nada disto aparece durante a carga nem quando o período falha: os contadores
+  seriam zeros que se leem como "semana vazia", e a comissão — que vem de outra
+  requisição, capaz de responder sozinha — mostraria dinheiro ao lado de uma
+  agenda que não pôde ser lida. -->
+  @if (!loading && !erro) {
   <div class="summary-grid">
     <div class="summary-item">
       <span class="label">Aulas realizadas</span>
@@ -81,6 +87,7 @@
       }
     </div>
   </div>
+  }
 
   <!-- Região viva do período: a navegação troca a grade inteira, e sem isto o
   leitor de tela não teria nenhum retorno do que passou a estar na tela. -->

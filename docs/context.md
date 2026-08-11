@@ -392,14 +392,14 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `PUT /planos-tratamento/{id}` (body: `PlanoTratamentoUpdateDTO`) → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/encerrar` → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/suspender` → `PlanoTratamentoResponseDTO`
-- `GET /sessoes?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `SessaoResponseDTO[]` (agenda do estúdio; período obrigatório, limitado a 92 dias e 5000 registros)
+- `GET /sessoes?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `SessaoResponseDTO[]` (agenda do estúdio; período obrigatório, limitado a 92 dias e 5000 registros; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId`, `tipo` e `status`, que o frontend ainda não usa)
 - `GET /sessoes/paciente/{pacienteId}` → `SessaoResponseDTO[]`
 - `GET /sessoes/{id}` → `SessaoResponseDTO`
 - `POST /sessoes` (body: `SessaoRequestDTO`) → `SessaoResponseDTO`
 - `PUT /sessoes/{id}` (body: `SessaoUpdateDTO`) → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/realizar` → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/cancelar` → `SessaoResponseDTO`
-- `GET /aulas?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `AulaResponseDTO[]` (agenda do estúdio; mesmos limites de período do endpoint de sessões)
+- `GET /aulas?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `AulaResponseDTO[]` (agenda do estúdio; mesmos limites de período do endpoint de sessões; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId` e `realizada`, que o frontend ainda não usa)
 - `GET /aulas/paciente/{pacienteId}` → `AulaResponseDTO[]`
 - `GET /aulas/pagamento/{pagamentoId}` → `AulaResponseDTO[]`
 - `PATCH /aulas/{id}/realizar?profissionalId={id}` → `AulaResponseDTO`

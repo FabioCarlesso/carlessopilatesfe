@@ -23,9 +23,15 @@ export class AulaService {
    * **do servidor**, e não do cliente: a agenda de um profissional não tem por
    * que baixar o estúdio inteiro para descartar quase tudo.
    */
-  listarPorPeriodo(inicio: string, fim: string, profissionalId?: number): Observable<AulaResponseDTO[]> {
+  listarPorPeriodo(inicio: string, fim: string, profissionalId?: number | null): Observable<AulaResponseDTO[]> {
     let params = new HttpParams().set('inicio', inicio).set('fim', fim);
-    if (profissionalId !== undefined) params = params.set('profissionalId', profissionalId);
+    // `null` é tratado como ausente, e não serializado: o `profissionalId` que
+    // circula na tela vem de `CalendarioEvento`, onde é `number | null`, e
+    // `?profissionalId=null` viraria 400 no binding do `Long` do backend em vez
+    // de cair na listagem sem filtro. Mesma guarda de `ProfissionalService.listar`.
+    if (profissionalId !== undefined && profissionalId !== null) {
+      params = params.set('profissionalId', profissionalId);
+    }
     return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas`, { params });
   }
 

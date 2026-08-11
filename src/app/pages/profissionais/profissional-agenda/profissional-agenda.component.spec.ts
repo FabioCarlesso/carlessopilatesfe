@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import {
   ProfissionalPagamentoRelatorioDTO,
@@ -17,6 +17,8 @@ import { ProfissionalAgendaComponent } from './profissional-agenda.component';
 
 /** Quarta-feira, 20/05/2026 — o dia âncora de todos os cenários. */
 const HOJE = new Date(2026, 4, 20, 9, 0);
+/** Domingo da semana de `HOJE`: o início do período que a tela abre pedindo. */
+const SEMANA_DE_HOJE = '2026-05-17';
 
 const profissional: ProfissionalResponseDTO = {
   id: 3,
@@ -119,11 +121,17 @@ describe('ProfissionalAgendaComponent', () => {
       opcoes.erroProfissional ? throwError(() => opcoes.erroProfissional) : of(profissional));
     profissionalServiceSpy.relatorioPagamento.and.returnValue(
       opcoes.erroComissao ? throwError(() => opcoes.erroComissao) : of(relatorio(180, 2)));
-    sessaoServiceSpy.listarPorPeriodo.and.returnValue(
+    // Os spies respondem **por período**: fora da semana de 17/05 as listagens
+    // vêm vazias. Devolver sempre a mesma carga faria os testes de navegação
+    // passarem mesmo que o componente aplicasse a resposta da semana anterior.
+    const sessoes = opcoes.sessoes ?? [sessaoDoDia, sessaoRealizada, sessaoCancelada];
+    const aulas = opcoes.aulas ?? [aulaPendente, aulaRealizada];
+    sessaoServiceSpy.listarPorPeriodo.and.callFake((inicio: string) =>
       opcoes.erroSessoes
         ? throwError(() => opcoes.erroSessoes)
-        : of(opcoes.sessoes ?? [sessaoDoDia, sessaoRealizada, sessaoCancelada]));
-    aulaServiceSpy.listarPorPeriodo.and.returnValue(of(opcoes.aulas ?? [aulaPendente, aulaRealizada]));
+        : of(inicio === SEMANA_DE_HOJE ? sessoes : []));
+    aulaServiceSpy.listarPorPeriodo.and.callFake((inicio: string) =>
+      of(inicio === SEMANA_DE_HOJE ? aulas : []));
 
     await TestBed.configureTestingModule({
       imports: [ProfissionalAgendaComponent, RouterTestingModule],
@@ -284,6 +292,36 @@ describe('ProfissionalAgendaComponent', () => {
     expect(aulaServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-24', '2026-05-30', 3);
     expect(profissionalServiceSpy.relatorioPagamento).toHaveBeenCalledWith(3, '2026-05-24', '2026-05-30');
     expect(texto('.calendario-titulo')).toBe('24 a 30 de maio de 2026');
+    // A semana seguinte veio vazia: o que está na tela é a resposta dela, e não
+    // a carga da semana anterior sobrevivendo à navegação.
+    expect(todos('.calendario-grade .evento').length).toBe(0);
+    expect(valorDoCard('Sessões agendadas')).toBe('0');
+  });
+
+  // O relatório de pagamento é a única requisição da tela que não trava a
+  // navegação enquanto responde: a semana abandonada não pode voltar como
+  // dinheiro sobre a semana que está na tela.
+  it('should ignore the commission of a period the user already left', async () => {
+    await setup();
+    const semanaSeguinte = new Subject<ProfissionalPagamentoRelatorioDTO>();
+    const semanaRetrasada = new Subject<ProfissionalPagamentoRelatorioDTO>();
+    profissionalServiceSpy.relatorioPagamento.and.returnValues(
+      semanaSeguinte.asObservable(),
+      semanaRetrasada.asObservable()
+    );
+
+    clicar('[aria-label="Próxima semana"]');
+    clicar('[aria-label="Próxima semana"]');
+
+    // Resposta atrasada da semana que ficou para trás.
+    semanaSeguinte.next(relatorio(999, 9));
+    fixture.detectChanges();
+    expect(component.comissao).toBeNull();
+    expect(valorDoCard('Comissão do período')).toBe('—');
+
+    semanaRetrasada.next(relatorio(180, 2));
+    fixture.detectChanges();
+    expect(component.comissao).toEqual({ total: 180, aulas: 2 });
   });
 
   it('should disable "Hoje" on the current week and re-enable it after navigating away', async () => {
@@ -333,6 +371,10 @@ describe('ProfissionalAgendaComponent', () => {
     expect(component.erro).toBe('Não foi possível carregar a agenda do profissional.');
     expect(todos('.calendario-grade').length).toBe(0);
     expect(texto('.alert-danger')).toBe('Não foi possível carregar a agenda do profissional.');
+    // Os contadores e a comissão saem junto com a grade: a comissão vem de outra
+    // requisição, que pode ter respondido, e mostrar dinheiro ao lado de quatro
+    // zeros seria uma contradição sobre a mesma semana.
+    expect(todos('.summary-item').length).toBe(0);
   });
 
   it('should not request the period when the profissional is not found', async () => {

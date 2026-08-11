@@ -58,9 +58,13 @@ export class SessaoService {
    * `profissionalId` recorta no servidor. Sessões de paciente inativo continuam
    * vindo — são registro clínico.
    */
-  listarPorPeriodo(inicio: string, fim: string, profissionalId?: number): Observable<SessaoResponseDTO[]> {
+  listarPorPeriodo(inicio: string, fim: string, profissionalId?: number | null): Observable<SessaoResponseDTO[]> {
     let params = new HttpParams().set('inicio', inicio).set('fim', fim);
-    if (profissionalId !== undefined) params = params.set('profissionalId', profissionalId);
+    // `null` é tratado como ausente pelo mesmo motivo do serviço de aulas:
+    // `?profissionalId=null` seria 400 no binding do `Long`, não lista completa.
+    if (profissionalId !== undefined && profissionalId !== null) {
+      params = params.set('profissionalId', profissionalId);
+    }
     return this.http.get<SessaoApiResponseDTO[]>(this.apiUrl, { params })
       .pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
   }

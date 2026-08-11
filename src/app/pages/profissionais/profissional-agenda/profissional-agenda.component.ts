@@ -78,6 +78,13 @@ export class ProfissionalAgendaComponent implements OnInit {
   eventos: CalendarioEvento[] = [];
   grade: CalendarioGrade = montarGrade('semanal', this.referencia, [], this.hoje);
   resumo: ProfissionalAgendaResumo = { aulasRealizadas: 0, aulasAgendadas: 0, sessoesRealizadas: 0, sessoesAgendadas: 0 };
+  /**
+   * Dias do período que têm evento — a leitura do mobile, onde a grade de 7
+   * colunas não cabe. Campo, e não getter: o template a lê duas vezes por ciclo
+   * de detecção, e um `filter` por leitura devolveria um array novo a cada vez,
+   * refazendo o diff do `@for` mesmo sem nada ter mudado.
+   */
+  diasComEventos: CalendarioDia[] = [];
 
   /**
    * Comissão do período, ou `null` enquanto ela não chegou. A carga é separada
@@ -86,6 +93,13 @@ export class ProfissionalAgendaComponent implements OnInit {
    */
   comissao: ProfissionalAgendaComissao | null = null;
   comissaoIndisponivel = false;
+  /**
+   * Período da comissão em curso. O relatório de pagamento é a requisição mais
+   * pesada da tela e a única que **não** trava a navegação enquanto responde:
+   * sem esta marca, a resposta atrasada da semana que o usuário acabou de
+   * deixar sobrescreveria o card com o dinheiro de outro período.
+   */
+  private comissaoPedida: string | null = null;
 
   loading = false;
   erro: string | null = null;
@@ -173,6 +187,11 @@ export class ProfissionalAgendaComponent implements OnInit {
 
     this.loading = true;
     this.erro = null;
+    // Remonta a grade **antes** de pedir: o título sai da mesma `referencia` que
+    // a requisição, e sem isto o cabeçalho anunciaria a semana anterior durante
+    // a carga da nova. Os contadores zerados ficam escondidos pelo `loading`.
+    this.eventos = [];
+    this.atualizarGrade();
     this.carregarComissao(profissionalId, inicio, fim);
 
     forkJoin({
@@ -209,13 +228,19 @@ export class ProfissionalAgendaComponent implements OnInit {
    * estúdio de fato paga.
    */
   private carregarComissao(profissionalId: number, inicio: string, fim: string): void {
+    const periodo = `${inicio}..${fim}`;
+    this.comissaoPedida = periodo;
     this.comissao = null;
     this.comissaoIndisponivel = false;
 
     this.profissionalService.relatorioPagamento(profissionalId, inicio, fim)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
+        // As duas respostas são descartadas quando o usuário já trocou de
+        // semana: a agenda dela é a que está na tela, e o dinheiro desta aqui
+        // seria de um período que ninguém está mais olhando.
         next: relatorio => {
+          if (this.comissaoPedida !== periodo) return;
           this.comissao = {
             total: relatorio.resumo.totalProfissional,
             aulas: relatorio.resumo.totalAulas
@@ -225,6 +250,7 @@ export class ProfissionalAgendaComponent implements OnInit {
         // Sem faixa de erro: a agenda continua legível sem o valor, e o card
         // mostra "—" em vez de um número que não foi apurado.
         error: () => {
+          if (this.comissaoPedida !== periodo) return;
           this.comissao = null;
           this.comissaoIndisponivel = true;
           this.cdr.markForCheck();
@@ -233,25 +259,35 @@ export class ProfissionalAgendaComponent implements OnInit {
   }
 
   /**
-   * Único ponto que remonta a grade e recalcula os contadores: navegação e carga
-   * passam as duas por aqui, então não há como o cabeçalho anunciar um período e
+   * Único ponto que remonta a grade, a lista e os contadores: navegação e carga
+   * passam todas por aqui, então não há como o cabeçalho anunciar um período e
    * as células ou os contadores mostrarem outro. Com `OnPush` o `markForCheck` é
    * obrigatório — os cliques já marcam a view suja, mas a remontagem disparada
    * pela carga não marcaria.
    */
   private atualizarGrade(): void {
     this.grade = montarGrade('semanal', this.referencia, this.eventos, this.hoje);
-    this.resumo = {
-      aulasRealizadas: this.contar('AULA', 'REALIZADA'),
-      aulasAgendadas: this.contar('AULA', 'AGENDADA'),
-      sessoesRealizadas: this.contar('SESSAO', 'REALIZADA'),
-      sessoesAgendadas: this.contar('SESSAO', 'AGENDADA')
-    };
+    this.diasComEventos = this.grade.dias.filter(dia => dia.doPeriodo && dia.eventos.length > 0);
+    this.resumo = this.contar();
     this.cdr.markForCheck();
   }
 
-  private contar(origem: CalendarioOrigem, status: CalendarioStatus): number {
-    return this.eventos.filter(evento => evento.origem === origem && evento.status === status).length;
+  /**
+   * Uma passada só sobre os eventos: quatro `filter` fariam quatro varreduras e
+   * quatro arrays intermediários a cada remontagem, e o período pode trazer até
+   * os 5000 registros que a API permite.
+   */
+  private contar(): ProfissionalAgendaResumo {
+    return this.eventos.reduce<ProfissionalAgendaResumo>((total, evento) => {
+      if (evento.origem === 'AULA') {
+        if (evento.status === 'REALIZADA') total.aulasRealizadas++;
+        else if (evento.status === 'AGENDADA') total.aulasAgendadas++;
+      } else {
+        if (evento.status === 'REALIZADA') total.sessoesRealizadas++;
+        else if (evento.status === 'AGENDADA') total.sessoesAgendadas++;
+      }
+      return total;
+    }, { aulasRealizadas: 0, aulasAgendadas: 0, sessoesRealizadas: 0, sessoesAgendadas: 0 });
   }
 
   navegar(direcao: -1 | 1): void {
@@ -267,15 +303,6 @@ export class ProfissionalAgendaComponent implements OnInit {
 
   get noPeriodoAtual(): boolean {
     return this.grade.dias.some(dia => dia.hoje && dia.doPeriodo);
-  }
-
-  /**
-   * Dias do período que têm evento. É a leitura do mobile, onde a grade de 7
-   * colunas não cabe. Sai da mesma `grade.dias` da grade, então as duas leituras
-   * não podem divergir.
-   */
-  get diasComEventos(): CalendarioDia[] {
-    return this.grade.dias.filter(dia => dia.doPeriodo && dia.eventos.length > 0);
   }
 
   /**
