@@ -4,7 +4,18 @@
 .badge-pendente { background: var(--bg-sunken); color: var(--text-light); }
 .empty-state { color: var(--text-light); margin-top: 2rem; text-align: center; }
 
-:host {
+// Só no `select`, e não no `:host`: a regra é resquício de quando esta tela era
+// toda branca (fundos `--white`, trocados por tokens na issue #164) e, no host,
+// alcançava todo controle nativo descendente — inclusive o `input[type=date]` de
+// remarcar (issue #131), que não tem nada a ver com ela.
+//
+// Isto **não** conserta o ícone de calendário apagado no tema escuro: a aplicação
+// não declara `color-scheme` em lugar nenhum, então o navegador desenha controle
+// nativo para fundo claro em *todas* as 12 telas com campo de data, e o glifo some
+// no campo escuro. O conserto é global (declarar `color-scheme: dark` no tema
+// escuro) e vale por si; o que esta linha garante é que, quando ele vier, o
+// aula-list não fique de fora por causa de um resquício no host.
+select.form-control-sm {
   color-scheme: light;
 }
 
@@ -34,6 +45,12 @@
   margin-top: 4px;
   font-size: 0.8rem;
   color: var(--text-light);
+}
+
+// A faixa de erro dentro do diálogo, e não no topo da página: o motivo da recusa
+// precisa estar ao lado do campo que vai ser corrigido.
+.remarcar-erro {
+  margin: var(--sp-3) 0 0;
 }
 
 .confirmacao-detalhes {
@@ -122,6 +139,13 @@
   .form-control-sm {
     max-width: none;
     width: 100%;
+  }
+
+  // No card cada ação ocupa a largura toda, empilhada — lado a lado os dois
+  // botões ficariam estreitos demais para o alvo de toque. O resto do
+  // `.table .acoes` (flex, wrap e gap) já vem do global.
+  .table .acoes {
+    flex-direction: column;
   }
 
   .btn-sm {

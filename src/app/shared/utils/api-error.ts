@@ -6,8 +6,14 @@ import { HttpErrorResponse } from '@angular/common/http';
  *
  * - `401`/`403`: mensagem de autorização/sessão.
  * - `429`: mensagem de excesso de requisições.
- * - Demais status: usa `message`/`error`/`detail` do corpo, ou junta as
+ * - Demais status: usa `message`/`error`/`detail`/`erro` do corpo, ou junta as
  *   mensagens de erro por campo; cai no `fallback` quando nada é aproveitável.
+ *
+ * `erro` é a chave que este backend de fato usa (`{"erro": "Aula já realizada…"}`).
+ * Ela chegava ao usuário pelo ramo final, que junta os valores string do objeto —
+ * o que só funciona enquanto o corpo tem um campo string só: em
+ * `{"erro": "Dados inválidos", "campos": {...}}` a junção já devolve apenas
+ * "Dados inválidos", e dois campos string virariam uma frase costurada.
  */
 export function extrairMensagemErro(err: unknown, fallback: string): string {
   if (!(err instanceof HttpErrorResponse)) {
@@ -30,7 +36,7 @@ export function extrairMensagemErro(err: unknown, fallback: string): string {
 
   if (corpo && typeof corpo === 'object' && !Array.isArray(corpo)) {
     const registro = corpo as Record<string, unknown>;
-    const explicita = registro['message'] ?? registro['error'] ?? registro['detail'];
+    const explicita = registro['message'] ?? registro['error'] ?? registro['detail'] ?? registro['erro'];
     if (typeof explicita === 'string' && explicita.trim()) {
       return explicita.trim();
     }

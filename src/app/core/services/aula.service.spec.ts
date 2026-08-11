@@ -95,4 +95,24 @@ describe('AulaService', () => {
       req.flush(mockAula);
     });
   });
+
+  describe('remarcar', () => {
+    it('should PATCH /api/aulas/:id/remarcar with the new date in the body', () => {
+      const remarcada = { ...mockAula, data: '2026-05-12' };
+      service.remarcar(1, '2026-05-12').subscribe(aula => expect(aula).toEqual(remarcada));
+      const req = httpMock.expectOne('/api/aulas/1/remarcar');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ data: '2026-05-12' });
+      req.flush(remarcada);
+    });
+
+    // O `horario` do contrato está reservado para a #106 da API e por ora volta
+    // `400` com qualquer valor — nem mesmo `null` deve sair daqui.
+    it('should not send horario in the body', () => {
+      service.remarcar(1, '2026-05-12').subscribe();
+      const req = httpMock.expectOne('/api/aulas/1/remarcar');
+      expect(Object.keys(req.request.body as object)).toEqual(['data']);
+      req.flush(mockAula);
+    });
+  });
 });

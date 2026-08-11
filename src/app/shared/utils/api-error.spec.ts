@@ -26,6 +26,21 @@ describe('extrairMensagemErro', () => {
     expect(extrairMensagemErro(err, fallback)).toBe('Competência inválida.');
   });
 
+  // `erro` é a chave que este backend usa de fato; antes ela só chegava ao usuário
+  // pela junção dos valores string, que costuraria dois campos numa frase só.
+  it('should use the erro field the API actually returns', () => {
+    const err = new HttpErrorResponse({ status: 409, error: { erro: 'Aula já realizada não pode ser remarcada' } });
+    expect(extrairMensagemErro(err, fallback)).toBe('Aula já realizada não pode ser remarcada');
+  });
+
+  it('should not concatenate other string fields alongside erro', () => {
+    const err = new HttpErrorResponse({
+      status: 409,
+      error: { erro: 'Paciente já possui aula na data 2026-08-17', path: '/aulas/2/remarcar' }
+    });
+    expect(extrairMensagemErro(err, fallback)).toBe('Paciente já possui aula na data 2026-08-17');
+  });
+
   it('should join field-error messages when there is no message field', () => {
     const err = new HttpErrorResponse({
       status: 422,

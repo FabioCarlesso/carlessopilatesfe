@@ -15,7 +15,7 @@ validações, tratamento de erro e decisões de UX. As rotas estão em
 | **Profissionais** | CRUD completo com ativação/inativação, atualização via PUT, número de registro no conselho profissional (opcional, exibido nas evoluções que o profissional assinou), filtros por nome, e-mail, contrato, % por aula e status, paginação com janela limitada, guarda de limites e sincronização dos metadados retornados pela API, e agenda semanal individual em `/profissionais/:id/agenda` com contadores do período e comissão; acesso restrito a `ADMIN` |
 | **Planos** | Criação de planos (mensal/trimestral/anual) com frequência semanal, seleção de dias e labels centralizados no model |
 | **Pagamentos** | Registro e confirmação de pagamentos; geração de aulas é automática no backend |
-| **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, e confirmação de presença com vínculo do profissional responsável |
+| **Aulas** | Visualização das aulas geradas com estado de carregamento inicial, confirmação de presença com vínculo do profissional responsável e remarcação da data de aulas ainda não realizadas |
 | **Relatórios** | Seção administrativa restrita a `ADMIN`, com relatório de pagamento de profissional por período, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
 | **Administração** | Seção administrativa restrita a `ADMIN` em `/admin`, com hub inicial e listagem de usuários em `/admin/usuarios` (paginação server-side, criar/editar/inativar/reativar/excluir com confirmação) |
 | **Autenticação e Autorização** | Login com JWT via `POST /api/auth/login`, armazenamento centralizado do token e do usuário logado, helpers de perfil, identificação do usuário autenticado na navbar, `authGuard`, `roleGuard`, rota `/403`, interceptors HTTP, logout, tratamento de `401` por token expirado e tratamento global de `403` da API |
@@ -111,6 +111,8 @@ Quando o usuário inativa o último item de uma página e o total de páginas é
 As telas de planos reutilizam as constantes `TIPO_LABEL`, `FREQUENCIA_LABEL` e `DIAS_SEMANA_LABEL` exportadas por `src/app/core/models/plano.ts`, mantendo as opções e exibições alinhadas entre formulário, listagem e demais fluxos.
 
 A tela de aulas carrega os profissionais ativos e exige a seleção do profissional antes de marcar uma aula pendente como realizada. Ao abrir a rota por pagamento, a tela exibe o estado de carregamento enquanto busca o pagamento inicial para resolver o paciente vinculado e então listar as aulas. A confirmação envia `PATCH /aulas/{id}/realizar?profissionalId={id}`; aulas já realizadas exibem o profissional vinculado quando retornado pela API.
+
+Aulas ainda **não realizadas** oferecem também a ação **Remarcar**, que abre um diálogo com a data atual da aula já preenchida e envia `PATCH /aulas/{id}/remarcar` com `{ "data": "YYYY-MM-DD" }`. A data é obrigatória, mas **pode estar no passado** — a API aceita de propósito, para registrar reposições já ocorridas. O sucesso recarrega a listagem (a data é o critério de ordenação, e a aula muda de lugar) e exibe "Aula remarcada."; a recusa mostra a mensagem da própria API, que no `409` diz o motivo (aula já realizada, ou paciente com outra aula na data escolhida), com "Erro ao remarcar aula." apenas como retaguarda. Aulas já realizadas não exibem a ação. O **horário** da aula não entra nesta versão: a entidade ainda não tem o campo, e o `horario` reservado no contrato da API é recusado com `400` até a issue #106 do backend.
 
 ## Relatórios
 
