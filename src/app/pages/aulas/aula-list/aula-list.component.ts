@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -20,6 +20,15 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
  */
 const CARD_MODE_MAX_WIDTH = 640;
 
+/**
+ * `yyyy-MM-dd`, o formato que o `input[type=date]` produz e o único que o
+ * `LocalDate` do backend aceita. O campo nativo parece impedir qualquer outra
+ * coisa, mas aceita ano de até seis dígitos: digitar `20261` no segmento de ano
+ * gera `20261-05-12`, que passaria por uma checagem de obrigatoriedade e voltaria
+ * como `400 Dados inválidos` — erro que não diz nada a quem está remarcando.
+ */
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
 @Component({
   selector: 'app-aula-list',
   imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
@@ -38,6 +47,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
   remarcarAulaId: number | null = null;
   remarcarData = '';
   remarcarDataInvalida = false;
+  remarcarErro: string | null = null;
   acaoEmAndamento = false;
   loading = false;
   erro: string | null = null;
@@ -47,6 +57,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
   modoCard = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   private cardModeQuery: MediaQueryList | null = null;
+  @ViewChild('remarcarDataInput') private remarcarDataInput?: ElementRef<HTMLInputElement>;
   private readonly onCardModeChange = (evento: MediaQueryListEvent): void => {
     this.modoCard = evento.matches;
     this.cdr.markForCheck();
@@ -247,12 +258,15 @@ export class AulaListComponent implements OnInit, OnDestroy {
     // dias, e partir do valor vigente poupa a digitação inteira.
     this.remarcarData = aula.data;
     this.remarcarDataInvalida = false;
+    this.remarcarErro = null;
     this.erro = null;
   }
 
   aoAlterarDataRemarcacao(): void {
-    if (!this.remarcarDataInvalida) return;
     this.remarcarDataInvalida = false;
+    // A recusa era sobre a data anterior; mantê-la ao lado de um campo já
+    // alterado afirmaria de novo algo que deixou de valer.
+    this.remarcarErro = null;
   }
 
   cancelarRemarcar(): void {
@@ -263,32 +277,52 @@ export class AulaListComponent implements OnInit, OnDestroy {
   confirmarRemarcar(): void {
     if (this.remarcarAulaId === null || this.acaoEmAndamento) return;
 
-    // Só obrigatoriedade: a API aceita data passada de propósito, para registrar
-    // reposições já ocorridas, então não cabe exigir data futura aqui.
-    if (!this.remarcarData) {
+    // Obrigatoriedade e formato. Data passada não é validada aqui de propósito: a
+    // API a aceita, para registrar reposições já ocorridas.
+    if (!DATA_ISO.test(this.remarcarData)) {
       this.remarcarDataInvalida = true;
+      this.remarcarErro = null;
+      // Sem mover o foco, quem usa teclado ou leitor de tela fica no botão de
+      // confirmar e não recebe aviso nenhum: a mensagem está ligada ao campo por
+      // `aria-describedby`, que só é lido quando ele ganha foco.
+      this.remarcarDataInput?.nativeElement.focus();
+      return;
+    }
+
+    const aula = this.aulaEmRemarcacao;
+    // Confirmar sem trocar a data é o caminho de um Enter distraído: o diálogo
+    // abre com a data atual e o foco já no botão. A API trata como no-op e
+    // responde 200, mas o PATCH e o recarregamento da lista seriam desperdício.
+    if (aula !== null && this.remarcarData === aula.data) {
+      this.remarcarAulaId = null;
       return;
     }
 
     const id = this.remarcarAulaId;
     this.acaoEmAndamento = true;
+    this.remarcarErro = null;
     this.erro = null;
     this.service.remarcar(id, this.remarcarData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.acaoEmAndamento = false;
         this.remarcarAulaId = null;
         this.exibirSucesso('Aula remarcada.');
+        // Sem `markForCheck` o diálogo continuaria na tela, congelado no estado
+        // "processando", até a resposta do recarregamento: o callback do HTTP não
+        // marca a view OnPush como suja.
+        this.cdr.markForCheck();
         // Recarrega em vez de trocar a aula na lista: a data é o critério de
         // ordenação da listagem, e a aula remarcada muda de lugar.
         this.carregar();
       },
       error: err => {
         this.acaoEmAndamento = false;
-        this.remarcarAulaId = null;
-        // 409 traz o motivo real (aula já realizada, paciente já tem aula na data);
-        // repetir "Erro ao remarcar aula." esconderia justamente o que a recepção
-        // precisa saber para escolher outro dia.
-        this.erro = extrairMensagemErro(err, 'Erro ao remarcar aula.');
+        // O diálogo fica aberto com o motivo dentro: o 409 diz por que a data não
+        // serve (aula já realizada, paciente já tem aula no dia) e existe para que
+        // se escolha outra ali mesmo. Fechar e jogar o texto na faixa do topo
+        // desfaria isso — reabrir o diálogo limparia a mensagem e devolveria o
+        // campo à data original, apagando o aviso na hora exata de agir sobre ele.
+        this.remarcarErro = extrairMensagemErro(err, 'Erro ao remarcar aula.');
         this.cdr.markForCheck();
       }
     });

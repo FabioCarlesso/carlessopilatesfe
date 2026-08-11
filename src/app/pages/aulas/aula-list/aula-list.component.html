@@ -32,7 +32,7 @@
 </div>
 
 @if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
 @if (sucesso) {
   <div class="alert alert-success" role="status">{{ sucesso }}</div>
@@ -96,7 +96,7 @@
             </td>
             <td class="acoes-cell">
               @if (!aula.realizada) {
-                <div class="acoes-aula">
+                <div class="acoes" aria-label="Ações da aula">
                   <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
                     [disabled]="profissionais.length === 0 || acaoEmAndamento">
                     Marcar como Realizada
@@ -148,7 +148,7 @@
     <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}.</p>
     <div class="form-group">
       <label for="remarcarData">Nova data *</label>
-      <input id="remarcarData" type="date" class="form-control"
+      <input #remarcarDataInput id="remarcarData" type="date" class="form-control"
         [class.is-invalid]="remarcarDataInvalida"
         [attr.aria-invalid]="remarcarDataInvalida || null"
         [attr.aria-describedby]="remarcarDataInvalida ? 'remarcarDataErro' : null"
@@ -160,5 +160,8 @@
         </div>
       }
     </div>
+    @if (remarcarErro) {
+      <div class="alert alert-danger remarcar-erro" role="alert">{{ remarcarErro }}</div>
+    }
   </app-confirmar-dialog>
 }

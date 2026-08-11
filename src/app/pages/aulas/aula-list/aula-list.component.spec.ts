@@ -329,9 +329,10 @@ describe('AulaListComponent', () => {
     });
 
     // O 409 diz por que a data não serve (aula já realizada, paciente com aula no
-    // dia); trocar isso por um texto genérico esconderia o que resolve o problema.
-    // O corpo é o `{ erro: ... }` real da API, verificado contra o backend local.
-    it('should surface the API message when remarcar is refused', () => {
+    // dia) e existe para que se escolha outra ali mesmo — por isso o diálogo fica
+    // aberto com a mensagem dentro. O corpo é o `{ erro: ... }` real da API,
+    // verificado contra o backend local.
+    it('should keep the dialog open with the API message when remarcar is refused', () => {
       serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
         status: 409,
         error: { erro: 'Paciente já possui aula na data 2026-05-12' }
@@ -340,12 +341,14 @@ describe('AulaListComponent', () => {
       component.remarcarData = '2026-05-12';
       component.confirmarRemarcar();
 
-      expect(component.erro).toBe('Paciente já possui aula na data 2026-05-12');
-      expect(component.remarcarAulaId).toBeNull();
+      expect(component.remarcarErro).toBe('Paciente já possui aula na data 2026-05-12');
+      expect(component.remarcarAulaId).toBe(1);
       expect(component.acaoEmAndamento).toBeFalse();
+      // A faixa do topo continua livre: o erro pertence ao diálogo.
+      expect(component.erro).toBeNull();
     });
 
-    it('should surface the API message when the aula is already realizada', () => {
+    it('should render the refusal inside the dialog as a live region', () => {
       serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
         status: 409,
         error: { erro: 'Aula já realizada não pode ser remarcada' }
@@ -353,8 +356,48 @@ describe('AulaListComponent', () => {
       component.solicitarRemarcar(mockAula);
       component.remarcarData = '2026-05-12';
       component.confirmarRemarcar();
+      fixture.detectChanges();
 
-      expect(component.erro).toBe('Aula já realizada não pode ser remarcada');
+      const dialogo: HTMLElement = fixture.nativeElement.querySelector('app-confirmar-dialog');
+      const alerta: HTMLElement = dialogo.querySelector('.remarcar-erro')!;
+      expect(alerta).toBeTruthy();
+      expect(alerta.getAttribute('role')).toBe('alert');
+      expect(alerta.textContent?.trim()).toBe('Aula já realizada não pode ser remarcada');
+    });
+
+    it('should clear the refusal when the date changes', () => {
+      serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { erro: 'Paciente já possui aula na data 2026-05-12' }
+      })));
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      component.confirmarRemarcar();
+      expect(component.remarcarErro).not.toBeNull();
+
+      component.remarcarData = '2026-05-14';
+      component.aoAlterarDataRemarcacao();
+      expect(component.remarcarErro).toBeNull();
+    });
+
+    // O `color-scheme: light` estava no `:host` e alcançava todo controle nativo
+    // descendente, inclusive o campo de data novo, que não tem a ver com ele. Não
+    // é o conserto do ícone apagado no tema escuro — esse é global, porque a
+    // aplicação não declara `color-scheme` em lugar nenhum; é o que impede o
+    // aula-list de ficar de fora quando o conserto global vier.
+    it('should scope color-scheme to the select, leaving the date field on the page theme', () => {
+      component.solicitarRemarcar(mockAula);
+      fixture.detectChanges();
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+        const data: HTMLInputElement = fixture.nativeElement.querySelector('#remarcarData');
+        expect(getComputedStyle(select).colorScheme).toBe('light');
+        expect(getComputedStyle(data).colorScheme).not.toBe('light');
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
     });
 
     // No modo card (≤640px) as duas ações empilham em largura total; lado a lado
@@ -368,7 +411,9 @@ describe('AulaListComponent', () => {
         const viewport = renderizarEmViewport(fixture.nativeElement, largura);
 
         try {
-          const acoes: HTMLElement = fixture.nativeElement.querySelector('.acoes-aula');
+          // `.table .acoes`, e não `.acoes`: o `page-header` tem um contêiner de
+          // mesma classe, que vem antes no DOM e não é o alvo desta regra.
+          const acoes: HTMLElement = fixture.nativeElement.querySelector('.table .acoes');
           expect(viewport.janela.getComputedStyle(acoes).flexDirection)
             .withContext(`ações em ${largura}px`)
             .toBe(largura === 375 ? 'column' : 'row');
@@ -385,7 +430,60 @@ describe('AulaListComponent', () => {
       component.solicitarRemarcar(mockAula);
       component.remarcarData = '2026-05-12';
       component.confirmarRemarcar();
-      expect(component.erro).toBe('Erro ao remarcar aula.');
+      expect(component.remarcarErro).toBe('Erro ao remarcar aula.');
+    });
+
+    // O campo nativo aceita ano de até seis dígitos; sem esta guarda o valor
+    // seguiria para a API e voltaria como 400 "Dados inválidos".
+    it('should reject a malformed date without calling the API', () => {
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '20261-05-12';
+      component.confirmarRemarcar();
+
+      expect(component.remarcarDataInvalida).toBeTrue();
+      expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+      expect(component.remarcarAulaId).toBe(1);
+    });
+
+    it('should move focus to the date field when it is rejected', () => {
+      component.solicitarRemarcar(mockAula);
+      fixture.detectChanges();
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('#remarcarData');
+      const focusSpy = spyOn(input, 'focus');
+      component.remarcarData = '';
+      component.confirmarRemarcar();
+
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    // O diálogo abre com a data atual e o foco no botão de confirmar: um Enter
+    // distraído mandaria um PATCH que a API trata como no-op, mais o recarregamento.
+    it('should close without calling the API when the date is unchanged', () => {
+      component.solicitarRemarcar(mockAula);
+      component.confirmarRemarcar();
+
+      expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+      expect(serviceSpy.listarPorPaciente).toHaveBeenCalledTimes(1);
+      expect(component.remarcarAulaId).toBeNull();
+    });
+
+    // Sem `markForCheck` o diálogo ficaria congelado no estado "processando" até
+    // a resposta do recarregamento chegar.
+    it('should mark for check as soon as remarcar succeeds, before the reload resolves', () => {
+      const recarga = new Subject<AulaResponseDTO[]>();
+      serviceSpy.remarcar.and.returnValue(of({ ...mockAula, data: '2026-05-12' }));
+      serviceSpy.listarPorPaciente.and.returnValue(recarga.asObservable());
+
+      const cdr = (component as unknown as { cdr: ChangeDetectorRef }).cdr;
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      const markForCheckSpy = spyOn(cdr, 'markForCheck');
+      component.confirmarRemarcar();
+
+      expect(component.remarcarAulaId).toBeNull();
+      expect(markForCheckSpy).toHaveBeenCalled();
+      recarga.complete();
     });
 
     // A shorthand `background` do `.form-control-sm` local zerava o
