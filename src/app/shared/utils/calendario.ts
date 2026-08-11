@@ -1,11 +1,21 @@
 import { AulaResponseDTO } from '../../core/models/plano';
-import { SessaoResponseDTO, SessaoStatus, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../core/models/sessao';
+import {
+  SessaoResponseDTO,
+  SessaoStatus,
+  SessaoTipo,
+  SESSAO_STATUS_LABEL,
+  SESSAO_TIPO_LABEL
+} from '../../core/models/sessao';
 
 /**
  * Montagem da grade do calendário e mapeamento de sessões e aulas para os
- * eventos exibidos (issue #119). Tudo aqui é função pura, sem DOM e sem
+ * eventos exibidos (issues #119 e #125). Tudo aqui é função pura, sem DOM e sem
  * injeção: a tela só decide o período visível e delega o resto, e o spec
  * asserta a grade sem precisar renderizar o componente.
+ *
+ * Duas telas consomem estas funções: o calendário de um paciente
+ * (`mapearEventos`) e a agenda do estúdio (`mapearEventosDoEstudio`), que
+ * mostra os eventos de todos os pacientes no período.
  *
  * Nenhuma data é construída a partir de string ISO com `new Date(iso)`: o
  * construtor interpreta `2026-05-20` como **UTC** e devolveria 19/05 em
@@ -15,7 +25,12 @@ import { SessaoResponseDTO, SessaoStatus, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL
  * operações que exigem calendário de verdade (dia da semana, fim de mês).
  */
 
-export type CalendarioVisao = 'mensal' | 'semanal';
+/**
+ * A visão diária existe para a agenda do estúdio (issue #125), onde um único
+ * dia já reúne os atendimentos de todos os pacientes; o calendário do paciente
+ * continua oferecendo só mensal e semanal.
+ */
+export type CalendarioVisao = 'mensal' | 'semanal' | 'diaria';
 
 /** De onde o evento veio: os dois recursos já consumidos pelo prontuário. */
 export type CalendarioOrigem = 'SESSAO' | 'AULA';
@@ -87,7 +102,20 @@ export interface CalendarioEvento {
   rotulo: string;
   status: CalendarioStatus;
   statusLabel: string;
+  /**
+   * Tipo da sessão, `null` na aula — que não tem tipo na API. É o que a agenda
+   * do estúdio filtra; o `titulo` não serve, porque lá ele é o nome do paciente.
+   */
+  tipo: SessaoTipo | null;
   profissional: string | null;
+  /** Necessário para "realizar" a aula, que exige o profissional no `PATCH`. */
+  profissionalId: number | null;
+  pacienteId: number;
+  /**
+   * Nome do paciente, ou `null` no calendário de um paciente só — ali o
+   * cabeçalho da tela já o nomeia, e repeti-lo em cada chip seria ruído.
+   */
+  paciente: string | null;
   /**
    * Frase completa do evento. É o `aria-label` do chip (que na célula mostra
    * apenas horário e tipo) e também o `title` do mouse.
@@ -213,10 +241,63 @@ function rotular(origemLabel: string, titulo: string): string {
 
 function descrever(evento: Omit<CalendarioEvento, 'descricao'>): string {
   const partes = [evento.rotulo];
+  // Só a agenda do estúdio preenche `paciente`; no calendário de um paciente
+  // só, a frase segue idêntica ao que era antes da issue #125.
+  if (evento.paciente) partes.push(evento.paciente);
   partes.push(evento.horario ? `às ${evento.horario}` : 'sem horário definido');
   partes.push(evento.statusLabel.toLowerCase());
   if (evento.profissional) partes.push(`com ${evento.profissional}`);
   return `${formatarDiaExtenso(evento.dia)}, ${partes.join(', ')}`;
+}
+
+function eventoDaSessao(sessao: SessaoResponseDTO, comPaciente: boolean): CalendarioEvento {
+  // O `??` cobre um tipo que o backend passe a devolver e o front ainda não
+  // conheça: cai na string crua em vez de `undefined`. Fica em constante
+  // porque `titulo` e `rotulo` consomem o mesmo valor.
+  const tipo = SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo;
+  const base = {
+    chave: `sessao-${sessao.id}`,
+    origem: 'SESSAO' as const,
+    id: sessao.id,
+    dia: sessao.dataHora.slice(0, 10),
+    horario: sessao.dataHora.slice(11, 16) || null,
+    // Na agenda do estúdio quem identifica a linha é o paciente: o tipo se
+    // repete a tarde inteira e o nome é o que a recepção procura na grade.
+    titulo: comPaciente ? sessao.nomePaciente : tipo,
+    rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, tipo),
+    status: sessao.status,
+    statusLabel: CALENDARIO_STATUS_LABEL[sessao.status] ?? sessao.status,
+    tipo: sessao.tipo,
+    profissional: sessao.nomeProfissional,
+    profissionalId: sessao.profissionalId,
+    pacienteId: sessao.pacienteId,
+    paciente: comPaciente ? sessao.nomePaciente : null,
+    link: ['/pacientes', sessao.pacienteId, 'sessoes', sessao.id, 'editar']
+  };
+  return { ...base, descricao: descrever(base) };
+}
+
+function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEvento {
+  const base = {
+    chave: `aula-${aula.id}`,
+    origem: 'AULA' as const,
+    id: aula.id,
+    dia: aula.data.slice(0, 10),
+    // A API de aulas guarda apenas a data: o horário da aula é o do plano,
+    // que não vem no DTO. Fica nulo em vez de virar "00:00", que mentiria.
+    horario: null,
+    titulo: comPaciente ? aula.pacienteNome : CALENDARIO_ORIGEM_LABEL.AULA,
+    rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
+    status: (aula.realizada ? 'REALIZADA' : 'AGENDADA') as CalendarioStatus,
+    statusLabel: aula.realizada ? CALENDARIO_STATUS_LABEL.REALIZADA : CALENDARIO_STATUS_LABEL.AGENDADA,
+    tipo: null,
+    profissional: aula.profissionalNome ?? null,
+    profissionalId: aula.profissionalId ?? null,
+    pacienteId: aula.pacienteId,
+    paciente: comPaciente ? aula.pacienteNome : null,
+    link: ['/aulas', 'paciente', aula.pacienteId]
+  };
+  return { ...base, descricao: descrever(base) };
 }
 
 /**
@@ -225,60 +306,30 @@ function descrever(evento: Omit<CalendarioEvento, 'descricao'>): string {
  * com contratos diferentes — a sessão tem data e hora, tipo e status; a aula
  * tem só a data e o booleano `realizada` —, e é aqui que essa diferença acaba.
  *
- * O `pacienteId` entra porque o destino do clique depende dele: a sessão abre
- * a própria edição e a aula, que não tem tela individual, cai na listagem de
- * aulas do paciente, onde a presença é confirmada.
+ * O destino do clique sai do próprio DTO: a sessão abre a própria edição e a
+ * aula, que não tem tela individual, cai na listagem de aulas do paciente,
+ * onde a presença é confirmada.
  */
-export function mapearEventos(
+export function mapearEventos(sessoes: SessaoResponseDTO[], aulas: AulaResponseDTO[]): CalendarioEvento[] {
+  return ordenarEventos([
+    ...sessoes.map(sessao => eventoDaSessao(sessao, false)),
+    ...aulas.map(aula => eventoDaAula(aula, false))
+  ]);
+}
+
+/**
+ * Mesma tradução, para a agenda do estúdio (issue #125): as listas vêm dos
+ * endpoints por período (`/sessoes` e `/aulas`) e misturam pacientes, então o
+ * nome de cada um entra no título do chip e na frase acessível.
+ */
+export function mapearEventosDoEstudio(
   sessoes: SessaoResponseDTO[],
-  aulas: AulaResponseDTO[],
-  pacienteId: number
+  aulas: AulaResponseDTO[]
 ): CalendarioEvento[] {
-  const eventos: CalendarioEvento[] = [];
-
-  sessoes.forEach(sessao => {
-    const dia = sessao.dataHora.slice(0, 10);
-    const horario = sessao.dataHora.slice(11, 16) || null;
-    // O `??` cobre um tipo que o backend passe a devolver e o front ainda não
-    // conheça: cai na string crua em vez de `undefined`. Fica em constante
-    // porque `titulo` e `rotulo` consomem o mesmo valor.
-    const titulo = SESSAO_TIPO_LABEL[sessao.tipo] ?? sessao.tipo;
-    const base = {
-      chave: `sessao-${sessao.id}`,
-      origem: 'SESSAO' as const,
-      id: sessao.id,
-      dia,
-      horario,
-      titulo,
-      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, titulo),
-      status: sessao.status,
-      statusLabel: CALENDARIO_STATUS_LABEL[sessao.status] ?? sessao.status,
-      profissional: sessao.nomeProfissional,
-      link: ['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']
-    };
-    eventos.push({ ...base, descricao: descrever(base) });
-  });
-
-  aulas.forEach(aula => {
-    const base = {
-      chave: `aula-${aula.id}`,
-      origem: 'AULA' as const,
-      id: aula.id,
-      dia: aula.data.slice(0, 10),
-      // A API de aulas guarda apenas a data: o horário da aula é o do plano,
-      // que não vem no DTO. Fica nulo em vez de virar "00:00", que mentiria.
-      horario: null,
-      titulo: CALENDARIO_ORIGEM_LABEL.AULA,
-      rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
-      status: (aula.realizada ? 'REALIZADA' : 'AGENDADA') as CalendarioStatus,
-      statusLabel: aula.realizada ? CALENDARIO_STATUS_LABEL.REALIZADA : CALENDARIO_STATUS_LABEL.AGENDADA,
-      profissional: aula.profissionalNome ?? null,
-      link: ['/aulas', 'paciente', pacienteId]
-    };
-    eventos.push({ ...base, descricao: descrever(base) });
-  });
-
-  return ordenarEventos(eventos);
+  return ordenarEventos([
+    ...sessoes.map(sessao => eventoDaSessao(sessao, true)),
+    ...aulas.map(aula => eventoDaAula(aula, true))
+  ]);
 }
 
 /**
@@ -318,6 +369,9 @@ function agruparPorDia(eventos: CalendarioEvento[]): Map<string, CalendarioEvent
  * ou sexta linha vazia só empurraria o conteúdo para fora da dobra.
  */
 function limitesDoPeriodo(visao: CalendarioVisao, referencia: string): { inicio: string; celulas: number } {
+  if (visao === 'diaria') {
+    return { inicio: referencia, celulas: 1 };
+  }
   if (visao === 'semanal') {
     return { inicio: inicioDaSemana(referencia), celulas: 7 };
   }
@@ -331,6 +385,30 @@ function limitesDoPeriodo(visao: CalendarioVisao, referencia: string): { inicio:
     inicio: somarDias(primeiro, -deslocamento),
     celulas: Math.ceil((deslocamento + diasNoMes(ano, mes)) / 7) * 7
   };
+}
+
+/**
+ * Primeiro e último dia visíveis do período, ambos inclusive. A agenda do
+ * estúdio (issue #125) busca por período no servidor e precisa desse intervalo
+ * **antes** de montar a grade; no mensal ele cobre também os dias do mês
+ * vizinho que aparecem nas pontas, senão a primeira e a última semana da tela
+ * viriam vazias.
+ */
+export function intervaloDoPeriodo(visao: CalendarioVisao, referencia: string): { inicio: string; fim: string } {
+  const { inicio, celulas } = limitesDoPeriodo(visao, referencia);
+  return { inicio, fim: somarDias(inicio, celulas - 1) };
+}
+
+/** "Quarta-feira, 20 de maio de 2026" — título da visão diária. */
+function formatarDiaComSemana(dia: string): string {
+  return `${capitalizar(DIAS_SEMANA_EXTENSO[paraData(dia).getDay()])}, ${formatarDiaExtenso(dia)}`;
+}
+
+function tituloDoPeriodo(visao: CalendarioVisao, referencia: string, dias: CalendarioDia[]): string {
+  if (visao === 'diaria') return formatarDiaComSemana(referencia);
+  if (visao === 'semanal') return formatarIntervalo(dias[0].dia, dias[dias.length - 1].dia);
+  const data = paraData(referencia);
+  return capitalizar(`${MESES_LABEL[data.getMonth()]} de ${data.getFullYear()}`);
 }
 
 /**
@@ -353,8 +431,9 @@ export function montarGrade(
     dias.push({
       dia,
       numero: paraData(dia).getDate(),
-      // No semanal toda célula é do período: a semana não tem "dia de fora".
-      doPeriodo: visao === 'semanal' || dia.slice(0, 7) === mesReferencia,
+      // Fora do mensal toda célula é do período: nem a semana nem o dia têm
+      // "célula de fora" — só a grade do mês completa as pontas.
+      doPeriodo: visao !== 'mensal' || dia.slice(0, 7) === mesReferencia,
       hoje: dia === hoje,
       rotulo: formatarDiaExtenso(dia),
       eventos: porDia.get(dia) ?? []
@@ -370,10 +449,7 @@ export function montarGrade(
   return {
     visao,
     referencia,
-    titulo:
-      visao === 'mensal'
-        ? capitalizar(`${MESES_LABEL[paraData(referencia).getMonth()]} de ${paraData(referencia).getFullYear()}`)
-        : formatarIntervalo(dias[0].dia, dias[dias.length - 1].dia),
+    titulo: tituloDoPeriodo(visao, referencia, dias),
     semanas,
     dias,
     // Só o que está dentro do período: as células de preenchimento do mês
@@ -384,5 +460,6 @@ export function montarGrade(
 
 /** Dia âncora do período anterior (`-1`) ou seguinte (`1`) da visão atual. */
 export function navegarPeriodo(visao: CalendarioVisao, referencia: string, direcao: -1 | 1): string {
-  return visao === 'mensal' ? somarMeses(referencia, direcao) : somarDias(referencia, 7 * direcao);
+  if (visao === 'mensal') return somarMeses(referencia, direcao);
+  return somarDias(referencia, (visao === 'diaria' ? 1 : 7) * direcao);
 }

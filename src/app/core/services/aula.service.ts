@@ -13,6 +13,17 @@ export class AulaService {
     return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/paciente/${pacienteId}`);
   }
 
+  /**
+   * Aulas de **todos** os pacientes no período, para a agenda do estúdio
+   * (issue #125). As datas vão em `yyyy-MM-dd`; a API exige as duas pontas,
+   * limita o período a 92 dias e a resposta a 5000 registros — folga larga para
+   * as visões semanal e diária da agenda.
+   */
+  listarPorPeriodo(inicio: string, fim: string): Observable<AulaResponseDTO[]> {
+    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas`, { params });
+  }
+
   listarPorPagamento(pagamentoId: number): Observable<AulaResponseDTO[]> {
     return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/pagamento/${pagamentoId}`);
   }

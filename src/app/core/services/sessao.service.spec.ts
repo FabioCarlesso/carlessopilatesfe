@@ -63,6 +63,20 @@ describe('SessaoService', () => {
     req.flush([mockSessaoApi]);
   });
 
+  // Agenda do estúdio (issue #125): mesma tradução do payload da API, agora
+  // sobre a listagem global por período.
+  it('should GET /api/sessoes with the period as query params', () => {
+    service.listarPorPeriodo('2026-05-17', '2026-05-23').subscribe(s => expect(s).toEqual([mockSessao]));
+
+    const req = httpMock.expectOne(request =>
+      request.url === '/api/sessoes'
+      && request.params.get('inicio') === '2026-05-17'
+      && request.params.get('fim') === '2026-05-23'
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([mockSessaoApi]);
+  });
+
   it('should GET /api/sessoes/:id', () => {
     service.buscar(1).subscribe(s => expect(s).toEqual(mockSessao));
 

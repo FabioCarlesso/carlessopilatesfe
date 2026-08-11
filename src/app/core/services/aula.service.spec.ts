@@ -40,6 +40,19 @@ describe('AulaService', () => {
     });
   });
 
+  describe('listarPorPeriodo', () => {
+    it('should GET /api/aulas with the period as query params', () => {
+      service.listarPorPeriodo('2026-05-17', '2026-05-23').subscribe(aulas => expect(aulas).toEqual([mockAula]));
+      const req = httpMock.expectOne(request =>
+        request.url === '/api/aulas'
+        && request.params.get('inicio') === '2026-05-17'
+        && request.params.get('fim') === '2026-05-23'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([mockAula]);
+    });
+  });
+
   describe('listarPorPagamento', () => {
     it('should GET /api/aulas/pagamento/:id', () => {
       service.listarPorPagamento(1).subscribe(aulas => expect(aulas).toEqual([mockAula]));

@@ -28,6 +28,7 @@ ser testada isoladamente do componente que a consome.
 │   │   │   └── guards/             # Route guards (auth e role)
 │   │   ├── pages/
 │   │   │   ├── admin/              # Hub administrativo e gestão de usuários
+│   │   │   ├── agenda/             # Agenda geral do estúdio (todos os pacientes)
 │   │   │   ├── aulas/              # Aulas geradas e confirmação de presença
 │   │   │   ├── auth/               # Login, recuperação de senha e tela 403
 │   │   │   ├── dashboard/          # Tela inicial com indicadores

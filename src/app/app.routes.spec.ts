@@ -27,6 +27,7 @@ describe('app routes', () => {
       'esqueci-senha',
       'resetar-senha',
       '403',
+      'agenda',
       'pacientes',
       'pacientes/novo',
       'pacientes/:id/editar',
