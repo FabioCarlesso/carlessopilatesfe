@@ -174,10 +174,19 @@ export class AgendaComponent implements OnInit, OnDestroy {
   }));
 
   /**
+   * Elemento que abriu o painel, para devolver o foco ao fechar — mesmo
+   * contrato do `ConfirmarDialogComponent`. Sem isso o Tab seguinte recomeça do
+   * topo da página, já que fechar destrói o elemento que estava focado.
+   */
+  private disparadorDoPainel: HTMLElement | null = null;
+
+  /**
    * O painel de detalhe abre longe do chip clicado (fica sob a barra de
    * período), então o foco precisa ir junto — senão o Tab seguinte continuaria
    * de onde estava e o leitor de tela não anunciaria nada. O setter dispara na
-   * resolução da query, isto é, quando o painel entra no DOM.
+   * resolução da query, isto é, **quando o painel entra no DOM**: trocar de
+   * evento com o painel já aberto não o reexecuta, e é o `aria-live` do painel
+   * que anuncia o conteúdo novo nesse caso.
    */
   @ViewChild('painelDetalhe') set painelDetalhe(painel: ElementRef<HTMLElement> | undefined) {
     painel?.nativeElement.focus();
@@ -372,6 +381,11 @@ export class AgendaComponent implements OnInit, OnDestroy {
   // ---------------------------------------------------------------------------
 
   abrirDetalhe(evento: CalendarioEvento): void {
+    // O clique já deixou o chip focado; é para ele que o foco volta ao fechar.
+    // Foco vindo de dentro do próprio painel não serve de destino — o painel
+    // some ao fechar —, então nesse caso o disparador original é preservado.
+    const ativo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (ativo?.closest('.detalhe-painel') === null) this.disparadorDoPainel = ativo;
     this.eventoSelecionado = evento;
     this.profissionalDaAcao = evento.profissionalId;
     this.profissionalInvalido = false;
@@ -380,11 +394,18 @@ export class AgendaComponent implements OnInit, OnDestroy {
 
   fecharDetalhe(): void {
     if (this.acaoEmAndamento) return;
+
+    const disparador = this.disparadorDoPainel;
+    this.disparadorDoPainel = null;
     this.eventoSelecionado = null;
     this.acaoPendente = null;
     this.profissionalDaAcao = null;
     this.profissionalInvalido = false;
     this.erroAcao = null;
+
+    // Só devolve o foco se o chip ainda estiver na página: depois de uma ação a
+    // grade é recarregada e o elemento que abriu o painel deixa o DOM.
+    if (disparador?.isConnected) disparador.focus();
   }
 
   /** Sessão e aula compartilham a conclusão; só a sessão pode ser cancelada. */
@@ -423,7 +444,9 @@ export class AgendaComponent implements OnInit, OnDestroy {
   solicitarAcao(acao: AgendaAcao): void {
     if (this.eventoSelecionado === null || this.acaoEmAndamento) return;
 
-    if (acao === 'realizar' && this.exigeProfissional && !this.profissionalDaAcao) {
+    // `=== null` e não `!valor`: id é number, e o falsy barraria o profissional
+    // de id 0 mostrando "selecione um profissional" com um nome no select.
+    if (acao === 'realizar' && this.exigeProfissional && this.profissionalDaAcao === null) {
       this.profissionalInvalido = true;
       this.erroAcao = 'Selecione um profissional para marcar a aula como realizada.';
       return;
@@ -457,15 +480,19 @@ export class AgendaComponent implements OnInit, OnDestroy {
     const acao = this.acaoPendente;
     if (evento === null || acao === null || this.acaoEmAndamento) return;
 
+    // A conclusão da aula é revalidada aqui, e não só em `solicitarAcao`: as
+    // duas rodam em cliques diferentes, com o estado mutável no meio, e o que
+    // sairia daqui é `?profissionalId=null`.
+    const profissionalDaAula = this.profissionalDaAcao;
+    if (acao === 'realizar' && evento.origem === 'AULA' && profissionalDaAula === null) return;
+
     // O DTO devolvido é descartado — a grade é remontada pela recarga do
     // período —, então o tipo do ramo escolhido não importa aqui.
     const requisicao$: Observable<unknown> = acao === 'cancelar'
       ? this.sessaoService.cancelar(evento.id)
       : evento.origem === 'SESSAO'
         ? this.sessaoService.realizar(evento.id)
-        // O `!` é seguro: `solicitarAcao` barra a aula sem profissional antes
-        // de chegar à confirmação.
-        : this.aulaService.realizar(evento.id, this.profissionalDaAcao!);
+        : this.aulaService.realizar(evento.id, profissionalDaAula as number);
 
     this.acaoEmAndamento = true;
     requisicao$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -473,10 +500,15 @@ export class AgendaComponent implements OnInit, OnDestroy {
         this.acaoEmAndamento = false;
         this.acaoPendente = null;
         this.eventoSelecionado = null;
+        this.disparadorDoPainel = null;
         this.exibirSucesso(acao === 'cancelar' ? 'Sessão cancelada.' : 'Evento marcado como realizado.');
         // Recarrega o período: a ação mudou o status no servidor, e a grade
         // precisa refletir isso sem que o usuário navegue.
         this.carregar();
+        // Obrigatório com `OnPush`: a resposta chega fora de qualquer evento de
+        // template, e sem isto o diálogo continuaria na tela, travando o scroll
+        // do fundo, até a recarga do período responder.
+        this.cdr.markForCheck();
       },
       error: err => {
         this.acaoEmAndamento = false;

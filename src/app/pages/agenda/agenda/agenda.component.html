@@ -5,8 +5,11 @@
   </div>
 </div>
 
+<!-- `role="alert"` porque a falha de carga também **apaga a grade** e esvazia o
+`role="status"` do resumo: sem ele, quem usa leitor de tela navegaria para outro
+período e não ouviria absolutamente nada. -->
 @if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
 @if (sucesso) {
   <div class="alert alert-success" role="status">{{ sucesso }}</div>
@@ -117,8 +120,13 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
     <!-- Detalhe e ações do evento clicado. É um painel na própria página, e não
     um diálogo, porque a confirmação das ações já usa o diálogo global e dois
     modais empilhados prenderiam o foco um dentro do outro. -->
+    <!-- O `aria-live` cobre a troca de evento com o painel já aberto: o `@if`
+    continua verdadeiro, a view é reaproveitada, o setter do `@ViewChild` não
+    dispara de novo e o foco fica no chip clicado. Sem a região viva, o painel
+    passaria a descrever outro evento em silêncio — e a ação seguinte agiria
+    sobre um evento que nunca foi anunciado. -->
     <section #painelDetalhe class="detalhe-painel" tabindex="-1"
-      role="region" [attr.aria-label]="'Detalhes do evento: ' + evento.descricao">
+      role="region" aria-live="polite" [attr.aria-label]="'Detalhes do evento: ' + evento.descricao">
       <div class="detalhe-cabecalho">
         <h3 class="detalhe-titulo">{{ evento.paciente }}</h3>
         <button type="button" class="detalhe-fechar" aria-label="Fechar detalhes"

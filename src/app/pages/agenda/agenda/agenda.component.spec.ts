@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
@@ -100,6 +100,7 @@ describe('AgendaComponent', () => {
     aulas?: AulaResponseDTO[];
     erroSessoes?: HttpErrorResponse;
     erroProfissionais?: HttpErrorResponse;
+    profissionais?: ProfissionalResponseDTO[];
   } = {}) {
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', ['listarPorPeriodo', 'realizar', 'cancelar']);
     aulaServiceSpy = jasmine.createSpyObj('AulaService', ['listarPorPeriodo', 'realizar']);
@@ -112,7 +113,11 @@ describe('AgendaComponent', () => {
     sessaoServiceSpy.cancelar.and.returnValue(of(sessao({ id: 7, dataHora: '2026-05-20T14:00', status: 'CANCELADA' })));
     aulaServiceSpy.realizar.and.returnValue(of(aula({ id: 3, data: '2026-05-21', realizada: true })));
     profissionalServiceSpy.listar.and.returnValue(
-      opcoes.erroProfissionais ? throwError(() => opcoes.erroProfissionais) : of(paginaProfissionais));
+      opcoes.erroProfissionais
+        ? throwError(() => opcoes.erroProfissionais)
+        : of(opcoes.profissionais
+          ? { ...paginaProfissionais, content: opcoes.profissionais }
+          : paginaProfissionais));
 
     await TestBed.configureTestingModule({
       imports: [AgendaComponent, RouterTestingModule],
@@ -465,6 +470,112 @@ describe('AgendaComponent', () => {
       clicar('.dialog-actions .btn');
 
       expect(aulaServiceSpy.realizar).toHaveBeenCalledWith(3, 5);
+    });
+
+    // Regressão da revisão da PR: a resposta do `PATCH` chega fora de qualquer
+    // evento de template, então sem `markForCheck` nada do que o ramo de
+    // sucesso muda chega ao DOM — o diálogo continuaria na tela, com o scroll
+    // do fundo travado, até a recarga do período responder. O `Subject` separa
+    // as duas respostas; com `of(...)` síncrono o defeito é invisível.
+    it('should render the outcome as soon as the action responds, before the reload', async () => {
+      await setup();
+      const acao = new Subject<SessaoResponseDTO>();
+      sessaoServiceSpy.realizar.and.returnValue(acao);
+      const recarga = new Subject<SessaoResponseDTO[]>();
+      abrirPrimeiroEvento();
+
+      clicar('.detalhe-acoes .btn-primary');
+      clicar('.dialog-actions .btn');
+      expect(todos('app-confirmar-dialog').length).toBe(1);
+
+      // A recarga do período fica pendente de propósito.
+      sessaoServiceSpy.listarPorPeriodo.and.returnValue(recarga);
+      acao.next(sessao({ id: 7, dataHora: '2026-05-20T14:00', status: 'REALIZADA' }));
+      fixture.detectChanges();
+
+      expect(todos('app-confirmar-dialog').length).toBe(0);
+      expect(todos('.detalhe-painel').length).toBe(0);
+      expect(texto('.alert-success')).toBe('Evento marcado como realizado.');
+      expect(texto('.loading')).toBe('Carregando...');
+    });
+
+    // O painel some ao fechar; sem devolver o foco, o Tab seguinte recomeçaria
+    // do topo da página. É o contrato que o `ConfirmarDialogComponent` já segue.
+    // Pela linha da lista, e não pelo chip da grade: a janela do Karma tem
+    // 765px, dentro do `@media (max-width: 768px)` que esconde a grade, e
+    // elemento com `display: none` não recebe foco.
+    it('should return focus to the element that opened the panel', async () => {
+      await setup();
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const linha = (fixture.nativeElement as HTMLElement)
+          .querySelector('.calendario-lista .agenda-evento') as HTMLButtonElement;
+        linha.focus();
+        linha.click();
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(
+          (fixture.nativeElement as HTMLElement).querySelector('.detalhe-painel'));
+
+        clicar('.detalhe-fechar');
+
+        expect(document.activeElement).toBe(linha);
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    // Com o painel aberto e focado, trocar de evento não pode eleger o próprio
+    // painel como destino do foco: ele é o elemento que vai sumir ao fechar.
+    it('should keep the original trigger when the panel swaps events', async () => {
+      await setup();
+      document.body.appendChild(fixture.nativeElement);
+
+      try {
+        const linhas = todos('.calendario-lista .agenda-evento') as HTMLButtonElement[];
+        linhas[0].focus();
+        linhas[0].click();
+        fixture.detectChanges();
+        // Foco está no painel; a troca de evento parte de dentro dele.
+        linhas[1].click();
+        fixture.detectChanges();
+
+        clicar('.detalhe-fechar');
+
+        expect(document.activeElement).toBe(linhas[0]);
+      } finally {
+        document.body.removeChild(fixture.nativeElement);
+      }
+    });
+
+    // Trocar de evento com o painel aberto reaproveita a view: o setter do
+    // `@ViewChild` não dispara, o foco fica no chip e só a região viva conta ao
+    // leitor de tela que o painel passou a descrever outro evento.
+    it('should announce the panel content when it swaps to another event', async () => {
+      await setup();
+      abrirPrimeiroEvento();
+      const painel = (fixture.nativeElement as HTMLElement).querySelector('.detalhe-painel') as HTMLElement;
+      expect(painel.getAttribute('aria-live')).toBe('polite');
+
+      clicar('.calendario-grade .evento-aula');
+
+      expect(texto('.detalhe-titulo')).toBe('Bruno Costa');
+      // Mesmo elemento, conteúdo novo: é isso que a região viva anuncia.
+      expect((fixture.nativeElement as HTMLElement).querySelector('.detalhe-painel')).toBe(painel);
+    });
+
+    // `!valor` barraria o profissional de id 0 exibindo "selecione um
+    // profissional" com o nome dele visível no select.
+    it('should accept a professional whose id is zero', async () => {
+      await setup({ profissionais: [{ ...profissionais[0], id: 0, nome: 'Zero Fisio' }] });
+      clicar('.calendario-grade .evento-aula');
+
+      component.profissionalDaAcao = 0;
+      clicar('.detalhe-acoes .btn-primary');
+      clicar('.dialog-actions .btn');
+
+      expect(component.profissionalInvalido).toBeFalse();
+      expect(aulaServiceSpy.realizar).toHaveBeenCalledWith(3, 0);
     });
 
     // Uma ação que falha não pode apagar da tela a agenda que continua válida.

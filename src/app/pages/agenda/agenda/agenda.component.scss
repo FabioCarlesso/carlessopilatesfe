@@ -84,6 +84,12 @@
   display: none;
 }
 
+/* O texto é a literal `#f0ede8`, e não `--c-cloud-dancer`: o token é
+   re-tematizado para `#0e1620` em `[data-theme="dark"]` enquanto o fundo
+   `--c-horizonte` continua `#374f6c`, e a contagem renderiza a 2,16:1 no tema
+   escuro — medido nas outras três telas que trazem este mesmo bloco. Contra o
+   fundo fixo, a literal rende 7,20:1 nos dois temas; é o mesmo motivo pelo qual
+   o gatilho do menu de conta usa literais (ver design-system.md). */
 .filtros-badge {
   display: inline-flex;
   align-items: center;
@@ -93,7 +99,7 @@
   padding: 0 var(--sp-1);
   border-radius: var(--r-pill);
   background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
+  color: #f0ede8;
   font-size: var(--fs-micro);
   font-weight: 700;
 }
