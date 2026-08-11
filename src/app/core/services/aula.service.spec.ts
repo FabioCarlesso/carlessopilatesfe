@@ -51,6 +51,28 @@ describe('AulaService', () => {
       expect(req.request.method).toBe('GET');
       req.flush([mockAula]);
     });
+
+    // Sem o parâmetro a agenda do estúdio pediria o período inteiro; com ele, a
+    // agenda de um profissional recorta no servidor (issue #126).
+    it('should not send profissionalId when it is omitted', () => {
+      service.listarPorPeriodo('2026-05-17', '2026-05-23').subscribe();
+      const req = httpMock.expectOne(request => request.url === '/api/aulas');
+      expect(req.request.params.has('profissionalId')).toBeFalse();
+      req.flush([mockAula]);
+    });
+
+    it('should send profissionalId when informed', () => {
+      service.listarPorPeriodo('2026-05-17', '2026-05-23', 3)
+        .subscribe(aulas => expect(aulas).toEqual([mockAula]));
+      const req = httpMock.expectOne(request =>
+        request.url === '/api/aulas'
+        && request.params.get('inicio') === '2026-05-17'
+        && request.params.get('fim') === '2026-05-23'
+        && request.params.get('profissionalId') === '3'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([mockAula]);
+    });
   });
 
   describe('listarPorPagamento', () => {

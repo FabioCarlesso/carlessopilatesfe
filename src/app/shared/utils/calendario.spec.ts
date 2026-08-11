@@ -7,7 +7,7 @@ import {
   inicioDaSemana,
   intervaloDoPeriodo,
   mapearEventos,
-  mapearEventosDoEstudio,
+  mapearEventosComPaciente,
   montarGrade,
   navegarPeriodo,
   ordenarEventos,
@@ -153,9 +153,9 @@ describe('calendario', () => {
 
   // Agenda do estúdio (issue #125): as mesmas duas coleções, mas de pacientes
   // diferentes — o nome de cada um passa a identificar o evento.
-  describe('mapearEventosDoEstudio', () => {
+  describe('mapearEventosComPaciente', () => {
     it('should title the event with the patient and keep the type in the label', () => {
-      const [evento] = mapearEventosDoEstudio(
+      const [evento] = mapearEventosComPaciente(
         [sessao({ id: 7, dataHora: '2026-05-20T14:00', pacienteId: 42, nomePaciente: 'Bruno Costa' })],
         []
       );
@@ -171,7 +171,7 @@ describe('calendario', () => {
     });
 
     it('should title the class with the patient and link to that patient class list', () => {
-      const [evento] = mapearEventosDoEstudio(
+      const [evento] = mapearEventosComPaciente(
         [],
         [aula({ id: 3, data: '2026-05-21', pacienteId: 42, pacienteNome: 'Bruno Costa', profissionalId: 8 })]
       );
@@ -195,7 +195,7 @@ describe('calendario', () => {
     });
 
     it('should order events of different patients chronologically', () => {
-      const eventos = mapearEventosDoEstudio(
+      const eventos = mapearEventosComPaciente(
         [
           sessao({ id: 1, dataHora: '2026-05-20T16:00', pacienteId: 1, nomePaciente: 'Ana' }),
           sessao({ id: 2, dataHora: '2026-05-20T08:30', pacienteId: 2, nomePaciente: 'Bruno' })
@@ -316,7 +316,7 @@ describe('calendario', () => {
     });
 
     it('should count only the events of the day', () => {
-      const eventos = mapearEventosDoEstudio(
+      const eventos = mapearEventosComPaciente(
         [
           sessao({ id: 1, dataHora: '2026-05-20T14:00' }),
           sessao({ id: 2, dataHora: '2026-05-21T09:00' })

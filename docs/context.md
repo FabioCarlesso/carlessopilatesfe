@@ -244,6 +244,13 @@ Na evolução da sessão o registro chega como **snapshot**: `EvolucaoSessaoResp
 
 O registro fica visível a **todos os perfis autenticados** pela linha do tempo, e não só a `ADMIN`: `/pacientes/:pacienteId/evolucoes` está sob `authGuard`, enquanto o cadastro em `/profissionais` exige `roleGuard(['ADMIN'])`. É intencional — a rastreabilidade clínica serve justamente a quem lê o prontuário, e o número do conselho é público —, mas é o primeiro dado do cadastro de profissional a cruzar essa fronteira, e vale saber disso antes de acrescentar outros campos ao snapshot.
 
+### Agenda individual do profissional
+A tela `/profissionais/:id/agenda` (`ProfissionalAgendaComponent`, issue #126) mostra a semana de um profissional: aulas e sessões do período, contadores e comissão. A issue previa dois endpoints novos no backend (`GET /sessoes/profissional/{id}` e `GET /aulas/profissional/{id}`), que **não foram necessários**: as listagens por período criadas para a agenda do estúdio (issue #125) já aceitam `profissionalId` como filtro opcional, e `SessaoService.listarPorPeriodo`/`AulaService.listarPorPeriodo` ganharam um terceiro parâmetro opcional para isso. O recorte fica no servidor — a agenda de uma pessoa não tem por que baixar o estúdio inteiro para descartar quase tudo no cliente — e a assinatura antiga continua valendo para a agenda do estúdio, que pede o período sem filtro.
+
+A comissão sai de `ProfissionalService.relatorioPagamento` (`GET /profissionais/{id}/relatorio-pagamento`), e não de uma conta local com `percentualPagamentoAula` como a issue sugeria. O percentual incide sobre o valor da aula, que vem do pagamento (`valor / quantidade de aulas`) e **não** existe no `AulaResponseDTO`: qualquer estimativa local seria um segundo número sobre a mesma semana, divergente do relatório que o estúdio usa para pagar. O preço dessa escolha é que só entram aulas **realizadas** de pacientes ativos — não há valor previsto para a aula agendada —, e por isso o card declara a base do cálculo. A requisição fica fora do `forkJoin` da agenda de propósito: falha nela mostra `—` e mantém a semana na tela.
+
+A tela é somente leitura: realizar/cancelar continuam na agenda do estúdio (que já tem o painel de ações) e nas telas do prontuário. Ela reaproveita `shared/utils/calendario.ts` inteiro — grade, aritmética de datas e mapeamento —, e o mapeador `mapearEventosDoEstudio` foi renomeado para `mapearEventosComPaciente` na mesma mudança: o que ele decide é se o nome do paciente identifica o evento, e isso agora vale para duas telas. Uma consequência do filtro por `profissionalId` é que a aula pendente **sem** profissional atribuído não aparece na agenda de ninguém; o estado vazio diz isso, para que a semana não distribuída não se leia como semana livre.
+
 ### Confirmação de aulas com profissional
 A confirmação de presença em aulas usa `PATCH /aulas/{id}/realizar?profissionalId={id}`. O frontend carrega profissionais ativos via `GET /profissionais?page=0&size=100&sort=nome`, exige seleção antes de confirmar e exibe o profissional retornado em aulas já realizadas. Antes do `PATCH`, o `AulaListComponent` abre o `ConfirmarDialogComponent` compartilhado exibindo a data e o profissional selecionado, protegendo o vínculo (que não tem desfazer na UI) contra cliques acidentais, e mantém o estado `acaoEmAndamento` bindado no input `processando` para evitar duplo disparo. Se o usuário aciona **Marcar como Realizada** sem escolher profissional, o `select` da linha é destacado com `is-invalid`/`aria-invalid` e uma mensagem `invalid-feedback` em vez de a ação falhar em silêncio. Quando não há profissionais ativos, além de o botão ficar desabilitado, um `field-hint` orienta "Cadastre um profissional ativo para confirmar aulas". Cada `select` de profissional recebe `aria-label` descritivo com a data da aula ("Profissional responsável pela aula de {data}").
 
@@ -385,14 +392,14 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `PUT /planos-tratamento/{id}` (body: `PlanoTratamentoUpdateDTO`) → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/encerrar` → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/suspender` → `PlanoTratamentoResponseDTO`
-- `GET /sessoes?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `SessaoResponseDTO[]` (agenda do estúdio; período obrigatório, limitado a 92 dias e 5000 registros)
+- `GET /sessoes?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `SessaoResponseDTO[]` (agenda do estúdio; período obrigatório, limitado a 92 dias e 5000 registros; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId`, `tipo` e `status`, que o frontend ainda não usa)
 - `GET /sessoes/paciente/{pacienteId}` → `SessaoResponseDTO[]`
 - `GET /sessoes/{id}` → `SessaoResponseDTO`
 - `POST /sessoes` (body: `SessaoRequestDTO`) → `SessaoResponseDTO`
 - `PUT /sessoes/{id}` (body: `SessaoUpdateDTO`) → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/realizar` → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/cancelar` → `SessaoResponseDTO`
-- `GET /aulas?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `AulaResponseDTO[]` (agenda do estúdio; mesmos limites de período do endpoint de sessões)
+- `GET /aulas?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `AulaResponseDTO[]` (agenda do estúdio; mesmos limites de período do endpoint de sessões; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId` e `realizada`, que o frontend ainda não usa)
 - `GET /aulas/paciente/{pacienteId}` → `AulaResponseDTO[]`
 - `GET /aulas/pagamento/{pagamentoId}` → `AulaResponseDTO[]`
 - `PATCH /aulas/{id}/realizar?profissionalId={id}` → `AulaResponseDTO`

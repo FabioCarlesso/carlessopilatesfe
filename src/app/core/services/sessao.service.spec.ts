@@ -74,6 +74,22 @@ describe('SessaoService', () => {
       && request.params.get('fim') === '2026-05-23'
     );
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('profissionalId')).toBeFalse();
+    req.flush([mockSessaoApi]);
+  });
+
+  // Agenda de um profissional (issue #126): o recorte é do servidor, e não do
+  // cliente sobre o estúdio inteiro.
+  it('should GET /api/sessoes filtered by profissional when informed', () => {
+    service.listarPorPeriodo('2026-05-17', '2026-05-23', 3).subscribe(s => expect(s).toEqual([mockSessao]));
+
+    const req = httpMock.expectOne(request =>
+      request.url === '/api/sessoes'
+      && request.params.get('inicio') === '2026-05-17'
+      && request.params.get('fim') === '2026-05-23'
+      && request.params.get('profissionalId') === '3'
+    );
+    expect(req.request.method).toBe('GET');
     req.flush([mockSessaoApi]);
   });
 

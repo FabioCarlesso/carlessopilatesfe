@@ -305,6 +305,13 @@ export const routes: Routes = [
       import('./pages/profissionais/profissional-form/profissional-form.component').then(m => m.ProfissionalFormComponent)
   },
   {
+    path: 'profissionais/:id/agenda',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/profissionais/profissional-agenda/profissional-agenda.component')
+        .then(m => m.ProfissionalAgendaComponent)
+  },
+  {
     path: 'profissionais/:id',
     canActivate: [roleGuard(['ADMIN'])],
     loadComponent: () =>

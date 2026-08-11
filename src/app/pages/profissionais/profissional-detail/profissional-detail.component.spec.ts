@@ -57,6 +57,15 @@ describe('ProfissionalDetailComponent', () => {
     expect(component.profissional).toEqual(mockProfissional);
   });
 
+  // A agenda do profissional (issue #126) é alcançada a partir do detalhe: é a
+  // tela que já identifica de quem se está falando.
+  it('should link to the agenda of the profissional', () => {
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.acoes a'));
+    const agenda = links.find(link => link.textContent?.trim() === 'Agenda');
+
+    expect(agenda?.getAttribute('href')).toBe('/profissionais/1/agenda');
+  });
+
   it('should render numeroRegistro', () => {
     expect(textoDoItem('Nr. de Registro')).toBe('350544-F');
   });
