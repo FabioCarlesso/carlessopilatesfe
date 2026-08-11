@@ -30,6 +30,14 @@
   max-width: 240px;
 }
 
+// Realizar e Remarcar lado a lado no modo tabela; o `wrap` evita que a coluna de
+// ações estoure quando a tabela já está apertada.
+.acoes-aula {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .field-hint {
   margin-top: 4px;
   font-size: 0.8rem;
@@ -122,6 +130,12 @@
   .form-control-sm {
     max-width: none;
     width: 100%;
+  }
+
+  // No card cada ação ocupa a largura toda, empilhada — lado a lado os dois
+  // botões ficariam estreitos demais para o alvo de toque.
+  .acoes-aula {
+    flex-direction: column;
   }
 
   .btn-sm {

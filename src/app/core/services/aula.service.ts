@@ -43,4 +43,17 @@ export class AulaService {
     const params = new HttpParams().set('profissionalId', profissionalId);
     return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/realizar`, {}, { params });
   }
+
+  /**
+   * Troca a data de uma aula ainda não realizada (issue #131). A data vai em
+   * `yyyy-MM-dd` e **pode estar no passado**: a API aceita de propósito, para que
+   * a recepção registre reposições já ocorridas.
+   *
+   * O corpo leva só `data`. O contrato tem um `horario` reservado para a #106 da
+   * API, mas enquanto a entidade não tiver o campo qualquer valor enviado ali
+   * volta como `400` — por isso ele não é sequer serializado aqui.
+   */
+  remarcar(aulaId: number, data: string): Observable<AulaResponseDTO> {
+    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/remarcar`, { data });
+  }
 }

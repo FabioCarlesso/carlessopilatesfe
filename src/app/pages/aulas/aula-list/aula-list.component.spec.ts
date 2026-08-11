@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { registerLocaleData } from '@angular/common';
@@ -53,7 +54,7 @@ describe('AulaListComponent', () => {
     let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar']);
+      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
       pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
       profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
       serviceSpy.listarPorPaciente.and.returnValue(of([mockAula]));
@@ -238,6 +239,132 @@ describe('AulaListComponent', () => {
       expect(component.acaoEmAndamento).toBeFalse();
     });
 
+    it('should open the remarcar dialog with the current date already filled in', () => {
+      component.solicitarRemarcar(mockAula);
+      expect(component.remarcarAulaId).toBe(1);
+      expect(component.remarcarData).toBe('2026-05-05');
+      expect(component.aulaEmRemarcacao).toEqual(mockAula);
+      expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+    });
+
+    // `tick()` porque o `ngModel` escreve o valor no campo só na microtask
+    // seguinte ao primeiro ciclo de detecção.
+    it('should render the remarcar dialog with a date field', fakeAsync(() => {
+      component.solicitarRemarcar(mockAula);
+      fixture.detectChanges();
+      tick();
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('#remarcarData');
+      expect(input).toBeTruthy();
+      expect(input.type).toBe('date');
+      expect(input.value).toBe('2026-05-05');
+    }));
+
+    it('should offer Remarcar only for aulas not yet realizadas', () => {
+      const acoes = (): string[] => Array.from(
+        fixture.nativeElement.querySelectorAll('td.acoes-cell button')
+      ).map(botao => (botao as HTMLButtonElement).textContent?.trim() ?? '');
+
+      expect(acoes()).toContain('Remarcar');
+
+      component.aulas = [{ ...mockAula, realizada: true }];
+      fixture.detectChanges();
+      expect(acoes()).toEqual([]);
+    });
+
+    it('should flag the date field and not call remarcar when the date is empty', () => {
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '';
+      component.confirmarRemarcar();
+      expect(component.remarcarDataInvalida).toBeTrue();
+      expect(component.remarcarAulaId).toBe(1);
+      expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+    });
+
+    it('should link the date error message to the field via aria-describedby', () => {
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '';
+      component.confirmarRemarcar();
+      fixture.detectChanges();
+
+      const input: HTMLInputElement = fixture.nativeElement.querySelector('#remarcarData');
+      const feedback: HTMLElement = fixture.nativeElement.querySelector('#remarcarDataErro');
+      expect(feedback).toBeTruthy();
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby')).toBe('remarcarDataErro');
+    });
+
+    it('should clear the invalid flag when the date changes', () => {
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '';
+      component.confirmarRemarcar();
+      expect(component.remarcarDataInvalida).toBeTrue();
+
+      component.remarcarData = '2026-05-12';
+      component.aoAlterarDataRemarcacao();
+      expect(component.remarcarDataInvalida).toBeFalse();
+    });
+
+    // A listagem vem ordenada por data e a aula remarcada muda de lugar, então a
+    // tela recarrega em vez de trocar o item no array.
+    it('should call remarcar and reload the list after confirming', fakeAsync(() => {
+      serviceSpy.remarcar.and.returnValue(of({ ...mockAula, data: '2026-05-12' }));
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      component.confirmarRemarcar();
+
+      expect(serviceSpy.remarcar).toHaveBeenCalledWith(1, '2026-05-12');
+      expect(serviceSpy.listarPorPaciente).toHaveBeenCalledTimes(2);
+      expect(component.remarcarAulaId).toBeNull();
+      expect(component.acaoEmAndamento).toBeFalse();
+      expect(component.sucesso).toBe('Aula remarcada.');
+      tick(4000);
+    }));
+
+    it('should close the remarcar dialog when cancelled', () => {
+      component.solicitarRemarcar(mockAula);
+      component.cancelarRemarcar();
+      expect(component.remarcarAulaId).toBeNull();
+      expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+    });
+
+    // O 409 diz por que a data não serve (aula já realizada, paciente com aula no
+    // dia); trocar isso por um texto genérico esconderia o que resolve o problema.
+    // O corpo é o `{ erro: ... }` real da API, verificado contra o backend local.
+    it('should surface the API message when remarcar is refused', () => {
+      serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { erro: 'Paciente já possui aula na data 2026-05-12' }
+      })));
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      component.confirmarRemarcar();
+
+      expect(component.erro).toBe('Paciente já possui aula na data 2026-05-12');
+      expect(component.remarcarAulaId).toBeNull();
+      expect(component.acaoEmAndamento).toBeFalse();
+    });
+
+    it('should surface the API message when the aula is already realizada', () => {
+      serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { erro: 'Aula já realizada não pode ser remarcada' }
+      })));
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      component.confirmarRemarcar();
+
+      expect(component.erro).toBe('Aula já realizada não pode ser remarcada');
+    });
+
+    it('should fall back to a generic message when remarcar fails without a body', () => {
+      serviceSpy.remarcar.and.returnValue(throwError(() => new Error('fail')));
+      component.solicitarRemarcar(mockAula);
+      component.remarcarData = '2026-05-12';
+      component.confirmarRemarcar();
+      expect(component.erro).toBe('Erro ao remarcar aula.');
+    });
+
     // A shorthand `background` do `.form-control-sm` local zerava o
     // `background-image` do global e, com `appearance: none` já aplicado, o
     // campo ficava sem seta alguma. O recuo também é menor que o do campo
@@ -369,7 +496,7 @@ describe('AulaListComponent', () => {
     let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar']);
+      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
       pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
       profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
       serviceSpy.listarPorPagamento.and.returnValue(of([mockAula]));
@@ -432,7 +559,7 @@ describe('AulaListComponent', () => {
   });
 
   it('should not load aulas when route param is invalid', () => {
-    const serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar']);
+    const serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
     const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
     const profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;

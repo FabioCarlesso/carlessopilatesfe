@@ -96,10 +96,16 @@
             </td>
             <td class="acoes-cell">
               @if (!aula.realizada) {
-                <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
-                  [disabled]="profissionais.length === 0 || acaoEmAndamento">
-                  Marcar como Realizada
-                </button>
+                <div class="acoes-aula">
+                  <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
+                    [disabled]="profissionais.length === 0 || acaoEmAndamento">
+                    Marcar como Realizada
+                  </button>
+                  <button class="btn btn-outline btn-sm" (click)="solicitarRemarcar(aula)"
+                    [disabled]="acaoEmAndamento">
+                    Remarcar
+                  </button>
+                </div>
                 @if (profissionais.length === 0) {
                   <div class="field-hint">
                     Cadastre um profissional ativo para confirmar aulas.
@@ -128,5 +134,31 @@
       <dt>Profissional</dt>
       <dd>{{ profissionalEmConfirmacaoNome }}</dd>
     </dl>
+  </app-confirmar-dialog>
+}
+
+@if (aulaEmRemarcacao; as aula) {
+  <app-confirmar-dialog
+    titulo="Remarcar aula"
+    textoConfirmar="Remarcar"
+    [processando]="acaoEmAndamento"
+    [fecharAoClicarFora]="false"
+    (confirmar)="confirmarRemarcar()"
+    (cancelar)="cancelarRemarcar()">
+    <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}.</p>
+    <div class="form-group">
+      <label for="remarcarData">Nova data *</label>
+      <input id="remarcarData" type="date" class="form-control"
+        [class.is-invalid]="remarcarDataInvalida"
+        [attr.aria-invalid]="remarcarDataInvalida || null"
+        [attr.aria-describedby]="remarcarDataInvalida ? 'remarcarDataErro' : null"
+        [(ngModel)]="remarcarData"
+        (ngModelChange)="aoAlterarDataRemarcacao()" />
+      @if (remarcarDataInvalida) {
+        <div id="remarcarDataErro" class="invalid-feedback">
+          Informe a nova data da aula.
+        </div>
+      }
+    </div>
   </app-confirmar-dialog>
 }

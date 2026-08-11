@@ -10,6 +10,7 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 /**
@@ -34,6 +35,9 @@ export class AulaListComponent implements OnInit, OnDestroy {
   profissionalSelecionadoPorAula: Record<number, number | null> = {};
   selectInvalidoPorAula: Record<number, boolean> = {};
   confirmarAulaId: number | null = null;
+  remarcarAulaId: number | null = null;
+  remarcarData = '';
+  remarcarDataInvalida = false;
   acaoEmAndamento = false;
   loading = false;
   erro: string | null = null;
@@ -168,6 +172,11 @@ export class AulaListComponent implements OnInit, OnDestroy {
     return this.aulas.find(aula => aula.id === this.confirmarAulaId) ?? null;
   }
 
+  get aulaEmRemarcacao(): AulaResponseDTO | null {
+    if (this.remarcarAulaId === null) return null;
+    return this.aulas.find(aula => aula.id === this.remarcarAulaId) ?? null;
+  }
+
   get profissionalEmConfirmacaoNome(): string {
     const aula = this.aulaEmConfirmacao;
     if (aula === null) return '';
@@ -225,6 +234,61 @@ export class AulaListComponent implements OnInit, OnDestroy {
         this.acaoEmAndamento = false;
         this.confirmarAulaId = null;
         this.erro = 'Erro ao marcar aula como realizada.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  solicitarRemarcar(aula: AulaResponseDTO): void {
+    if (this.acaoEmAndamento) return;
+
+    this.remarcarAulaId = aula.id;
+    // O campo abre na data atual da aula: remarcar costuma ser mover um ou dois
+    // dias, e partir do valor vigente poupa a digitação inteira.
+    this.remarcarData = aula.data;
+    this.remarcarDataInvalida = false;
+    this.erro = null;
+  }
+
+  aoAlterarDataRemarcacao(): void {
+    if (!this.remarcarDataInvalida) return;
+    this.remarcarDataInvalida = false;
+  }
+
+  cancelarRemarcar(): void {
+    if (this.acaoEmAndamento) return;
+    this.remarcarAulaId = null;
+  }
+
+  confirmarRemarcar(): void {
+    if (this.remarcarAulaId === null || this.acaoEmAndamento) return;
+
+    // Só obrigatoriedade: a API aceita data passada de propósito, para registrar
+    // reposições já ocorridas, então não cabe exigir data futura aqui.
+    if (!this.remarcarData) {
+      this.remarcarDataInvalida = true;
+      return;
+    }
+
+    const id = this.remarcarAulaId;
+    this.acaoEmAndamento = true;
+    this.erro = null;
+    this.service.remarcar(id, this.remarcarData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.acaoEmAndamento = false;
+        this.remarcarAulaId = null;
+        this.exibirSucesso('Aula remarcada.');
+        // Recarrega em vez de trocar a aula na lista: a data é o critério de
+        // ordenação da listagem, e a aula remarcada muda de lugar.
+        this.carregar();
+      },
+      error: err => {
+        this.acaoEmAndamento = false;
+        this.remarcarAulaId = null;
+        // 409 traz o motivo real (aula já realizada, paciente já tem aula na data);
+        // repetir "Erro ao remarcar aula." esconderia justamente o que a recepção
+        // precisa saber para escolher outro dia.
+        this.erro = extrairMensagemErro(err, 'Erro ao remarcar aula.');
         this.cdr.markForCheck();
       }
     });
