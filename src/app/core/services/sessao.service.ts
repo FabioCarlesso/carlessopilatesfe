@@ -52,13 +52,15 @@ export class SessaoService {
   }
 
   /**
-   * Sessões de **todos** os pacientes no período, para a agenda do estúdio
-   * (issue #125). Mesmo contrato do endpoint de aulas: as duas pontas são
-   * obrigatórias, em `yyyy-MM-dd`, e o período é limitado a 92 dias. Sessões de
-   * paciente inativo continuam vindo — são registro clínico.
+   * Sessões do período, para a agenda do estúdio (issue #125) e para a agenda de
+   * um profissional (issue #126). Mesmo contrato do endpoint de aulas: as duas
+   * pontas são obrigatórias, em `yyyy-MM-dd`, o período é limitado a 92 dias e
+   * `profissionalId` recorta no servidor. Sessões de paciente inativo continuam
+   * vindo — são registro clínico.
    */
-  listarPorPeriodo(inicio: string, fim: string): Observable<SessaoResponseDTO[]> {
-    const params = new HttpParams().set('inicio', inicio).set('fim', fim);
+  listarPorPeriodo(inicio: string, fim: string, profissionalId?: number): Observable<SessaoResponseDTO[]> {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (profissionalId !== undefined) params = params.set('profissionalId', profissionalId);
     return this.http.get<SessaoApiResponseDTO[]>(this.apiUrl, { params })
       .pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
   }

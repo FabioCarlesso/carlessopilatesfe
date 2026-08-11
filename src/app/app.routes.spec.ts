@@ -68,6 +68,7 @@ describe('app routes', () => {
       'profissionais',
       'profissionais/novo',
       'profissionais/:id/editar',
+      'profissionais/:id/agenda',
       'profissionais/:id',
     ];
     expect(paths).toEqual(expected);

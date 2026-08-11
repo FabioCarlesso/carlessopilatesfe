@@ -37,6 +37,7 @@ Mapa de todas as rotas da aplicação. O comportamento de cada tela está em
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
 | `/profissionais/:id`    | Detalhes do profissional (`ADMIN`)         |
 | `/profissionais/:id/editar` | Formulário de edição de profissional (`ADMIN`) |
+| `/profissionais/:id/agenda` | Agenda semanal do profissional: aulas e sessões do período, contadores e comissão (somente leitura, `ADMIN`) |
 | `/relatorios`           | Seção de relatórios (`ADMIN`)              |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (`ADMIN`) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (`ADMIN`) |

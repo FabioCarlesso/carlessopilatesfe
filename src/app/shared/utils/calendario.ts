@@ -9,13 +9,14 @@ import {
 
 /**
  * Montagem da grade do calendário e mapeamento de sessões e aulas para os
- * eventos exibidos (issues #119 e #125). Tudo aqui é função pura, sem DOM e sem
- * injeção: a tela só decide o período visível e delega o resto, e o spec
+ * eventos exibidos (issues #119, #125 e #126). Tudo aqui é função pura, sem DOM
+ * e sem injeção: a tela só decide o período visível e delega o resto, e o spec
  * asserta a grade sem precisar renderizar o componente.
  *
- * Duas telas consomem estas funções: o calendário de um paciente
- * (`mapearEventos`) e a agenda do estúdio (`mapearEventosDoEstudio`), que
- * mostra os eventos de todos os pacientes no período.
+ * O que muda entre as telas é apenas quem identifica o evento: no calendário de
+ * um paciente (`mapearEventos`) o cabeçalho já o nomeia, e o chip mostra o tipo;
+ * na agenda do estúdio e na de um profissional (`mapearEventosComPaciente`) os
+ * eventos misturam pacientes, e é o nome deles que identifica cada linha.
  *
  * Nenhuma data é construída a partir de string ISO com `new Date(iso)`: o
  * construtor interpreta `2026-05-20` como **UTC** e devolveria 19/05 em
@@ -318,11 +319,13 @@ export function mapearEventos(sessoes: SessaoResponseDTO[], aulas: AulaResponseD
 }
 
 /**
- * Mesma tradução, para a agenda do estúdio (issue #125): as listas vêm dos
- * endpoints por período (`/sessoes` e `/aulas`) e misturam pacientes, então o
- * nome de cada um entra no título do chip e na frase acessível.
+ * Mesma tradução para as agendas que misturam pacientes: a do estúdio
+ * (issue #125) e a de um profissional (issue #126). As listas vêm dos endpoints
+ * por período (`/sessoes` e `/aulas`), então o nome do paciente entra no título
+ * do chip e na frase acessível — é ele que identifica a linha quando o
+ * cabeçalho da tela não o nomeia.
  */
-export function mapearEventosDoEstudio(
+export function mapearEventosComPaciente(
   sessoes: SessaoResponseDTO[],
   aulas: AulaResponseDTO[]
 ): CalendarioEvento[] {

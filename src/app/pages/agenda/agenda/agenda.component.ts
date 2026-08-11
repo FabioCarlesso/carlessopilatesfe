@@ -32,7 +32,7 @@ import {
   formatarDiaExtenso,
   hojeIso,
   intervaloDoPeriodo,
-  mapearEventosDoEstudio,
+  mapearEventosComPaciente,
   montarGrade,
   navegarPeriodo
 } from '../../../shared/utils/calendario';
@@ -244,7 +244,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ sessoes, aulas }: { sessoes: SessaoResponseDTO[]; aulas: AulaResponseDTO[] }) => {
-          this.eventos = mapearEventosDoEstudio(sessoes, aulas);
+          this.eventos = mapearEventosComPaciente(sessoes, aulas);
           this.atualizarGrade();
           this.loading = false;
           this.cdr.markForCheck();

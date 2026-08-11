@@ -1,0 +1,180 @@
+@if (profissionalId) {
+  <app-breadcrumb [items]="[
+    { label: 'Profissionais', link: '/profissionais' },
+    { label: profissional?.nome || 'Profissional', link: ['/profissionais', profissionalId] },
+    { label: 'Agenda' }
+  ]"></app-breadcrumb>
+}
+
+<div class="page-header">
+  <div>
+    <h1>Agenda do profissional</h1>
+    @if (profissional) {
+      <p class="page-subtitle">{{ profissional.nome }}</p>
+    }
+  </div>
+  @if (profissionalId) {
+    <div class="acoes">
+      <a [routerLink]="['/profissionais', profissionalId]" class="btn btn-outline">Voltar</a>
+    </div>
+  }
+</div>
+
+@if (erro) {
+  <!-- `role="alert"` porque a falha de carga também **apaga a grade** e esvazia
+  o `role="status"` do resumo: sem ele, quem usa leitor de tela navegaria para
+  outro período e não ouviria absolutamente nada. -->
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+@if (profissional) {
+  <div class="calendario-barra">
+    <div class="calendario-navegacao">
+      <!-- Os chevrons são decorativos; quem nomeia o botão é o `aria-label`. -->
+      <button type="button" class="btn btn-outline btn-sm calendario-seta"
+        aria-label="Semana anterior" [disabled]="loading" (click)="navegar(-1)">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <h2 class="calendario-titulo">{{ grade.titulo }}</h2>
+      <button type="button" class="btn btn-outline btn-sm calendario-seta"
+        aria-label="Próxima semana" [disabled]="loading" (click)="navegar(1)">
+        <span aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm"
+        [disabled]="loading || noPeriodoAtual" (click)="irParaHoje()">Hoje</button>
+    </div>
+  </div>
+
+  <!-- Contadores do período. Aulas e sessões ficam em cards separados porque só
+  a aula gera comissão: somá-las num "realizadas" único faria o valor parecer
+  cobrir também as sessões. -->
+  <div class="summary-grid">
+    <div class="summary-item">
+      <span class="label">Aulas realizadas</span>
+      <strong>{{ resumo.aulasRealizadas }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="label">Aulas agendadas</span>
+      <strong>{{ resumo.aulasAgendadas }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="label">Sessões realizadas</span>
+      <strong>{{ resumo.sessoesRealizadas }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="label">Sessões agendadas</span>
+      <strong>{{ resumo.sessoesAgendadas }}</strong>
+    </div>
+    <div class="summary-item">
+      <span class="label">Comissão do período</span>
+      @if (comissao) {
+        <strong>{{ comissao.total | currency:'BRL' }}</strong>
+        <span class="summary-nota">
+          {{ profissional.percentualPagamentoAula }}% sobre
+          {{ comissao.aulas }} {{ comissao.aulas === 1 ? 'aula realizada' : 'aulas realizadas' }}
+        </span>
+      } @else {
+        <strong>—</strong>
+        <span class="summary-nota">
+          {{ comissaoIndisponivel ? 'Valor indisponível no momento.' : 'Calculando…' }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Região viva do período: a navegação troca a grade inteira, e sem isto o
+  leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
+  <p class="calendario-resumo" role="status">{{ resumoPeriodo }}</p>
+}
+
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (profissional && !loading && !erro) {
+  <!-- A legenda usa exatamente as mesmas classes dos chips da grade, para que
+  cor e forma não possam divergir entre o exemplo e o evento real. -->
+  <ul class="calendario-legenda">
+    @for (item of legenda; track item.chave) {
+      <li class="legenda-item">
+        <span [class]="item.classes" aria-hidden="true"></span>{{ item.rotulo }}
+      </li>
+    }
+  </ul>
+
+  <!-- `role="table"`, e não `grid`: a ARIA APG define `grid` como widget
+  interativo, com navegação por setas e roving tabindex. Aqui a grade é dado
+  tabular somente leitura cujos links são alcançados por Tab — anunciá-la como
+  `grid` prometeria ao leitor de tela uma interação que a tela não tem. -->
+  <div class="calendario-grade" role="table" [attr.aria-label]="'Agenda de ' + grade.titulo">
+    <div class="calendario-linha calendario-cabecalho" role="row">
+      @for (coluna of diasSemana; track coluna.abreviado) {
+        <span class="calendario-coluna" role="columnheader" [attr.aria-label]="coluna.extenso">
+          <span aria-hidden="true">{{ coluna.abreviado }}</span>
+        </span>
+      }
+    </div>
+    @for (semana of grade.semanas; track semana.chave) {
+      <div class="calendario-linha" role="row">
+        @for (dia of semana.dias; track trackByDia($index, dia)) {
+          <div class="calendario-celula" role="cell"
+            [class.celula-hoje]="dia.hoje"
+            [attr.aria-label]="dia.hoje ? dia.rotulo + ', hoje' : dia.rotulo">
+            <span class="celula-numero" aria-hidden="true">{{ dia.numero }}</span>
+            @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+              <a [class]="classesDoEvento(evento, 'evento')"
+                [routerLink]="evento.link" [attr.aria-label]="evento.descricao" [title]="evento.descricao">
+                @if (evento.horario) {
+                  <span class="evento-hora" aria-hidden="true">{{ evento.horario }}</span>
+                }
+                <span class="evento-titulo" aria-hidden="true">{{ evento.titulo }}</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Lista do período: no mobile substitui a grade, cuja coluna de ~46px não
+  comportaria nem o chip nem o alvo de toque de 44px. Lista só os dias com
+  evento — num telefone, rolar sete dias vazios para achar os dois que importam
+  não ajuda ninguém. -->
+  <div class="calendario-lista">
+    @for (dia of diasComEventos; track trackByDia($index, dia)) {
+      <section class="agenda-dia" [class.agenda-dia-hoje]="dia.hoje">
+        <h3 class="agenda-data">
+          {{ dia.rotulo }}
+          @if (dia.hoje) {
+            <span class="agenda-hoje">Hoje</span>
+          }
+        </h3>
+        @for (evento of dia.eventos; track trackByEvento($index, evento)) {
+          <a [class]="classesDoEvento(evento, 'agenda-evento')"
+            [routerLink]="evento.link" [attr.aria-label]="evento.descricao">
+            <span class="agenda-hora" aria-hidden="true">{{ evento.horario || '—' }}</span>
+            <span class="agenda-descricao" aria-hidden="true">
+              <span class="agenda-titulo">{{ evento.paciente }}</span>
+              <span class="agenda-rotulo">{{ evento.rotulo }}</span>
+              <span class="agenda-status">{{ evento.statusLabel }}</span>
+            </span>
+          </a>
+        }
+      </section>
+    }
+  </div>
+
+  <!-- Fora da lista, que só existe no mobile: a semana vazia precisa se explicar
+  também no desktop, onde a grade mostra sete células em branco.
+
+  A aula só entra na agenda de quem já foi atribuído a ela — o endpoint filtra
+  por `profissionalId`, e a aula pendente sem profissional não pertence a
+  ninguém. Dizer isso aqui evita a leitura de que a semana está livre quando ela
+  apenas não foi distribuída. -->
+  @if (diasComEventos.length === 0) {
+    <div class="empty-state">
+      Nenhuma sessão ou aula neste período.
+      Aulas aparecem aqui depois que o profissional é atribuído a elas.
+    </div>
+  }
+}
