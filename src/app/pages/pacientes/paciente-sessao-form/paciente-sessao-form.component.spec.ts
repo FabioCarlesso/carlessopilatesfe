@@ -301,6 +301,15 @@ describe('PacienteSessaoFormComponent', () => {
         .querySelector('.bloqueio-aviso')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     }
 
+    /**
+     * A consulta passa por `debounceTime(250)`: o segmento de ano do
+     * `datetime-local` emite um valor completo por dígito digitado, e sem a
+     * espera cada um viraria uma requisição.
+     */
+    async function aguardarDebounce(): Promise<void> {
+      await new Promise(resolve => setTimeout(resolve, 320));
+    }
+
     it('should not query the blocks before a date is chosen', async () => {
       await setup({ pacienteId: '10' });
 
@@ -313,6 +322,7 @@ describe('PacienteSessaoFormComponent', () => {
       await setup({ pacienteId: '10' });
 
       component.form.patchValue({ dataHora: '2026-05-10T09:00' });
+      await aguardarDebounce();
 
       expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-10', '2026-05-10');
     });
@@ -322,17 +332,34 @@ describe('PacienteSessaoFormComponent', () => {
     it('should not query again when only the time changes', async () => {
       await setup({ pacienteId: '10' });
       component.form.patchValue({ dataHora: '2026-05-10T09:00' });
+      await aguardarDebounce();
       bloqueioServiceSpy.listarPorPeriodo.calls.reset();
 
       component.form.patchValue({ dataHora: '2026-05-10T15:00' });
+      await aguardarDebounce();
 
       expect(bloqueioServiceSpy.listarPorPeriodo).not.toHaveBeenCalled();
+    });
+
+    // O `debounceTime` cobre o que o `distinct` não alcança: digitar o ano do
+    // `datetime-local` emite um dia completo e distinto por dígito.
+    it('should collapse the intermediate days typed into the year segment', async () => {
+      await setup({ pacienteId: '10' });
+
+      for (const dia of ['0002-05-10', '0020-05-10', '0202-05-10', '2026-05-10']) {
+        component.form.patchValue({ dataHora: `${dia}T09:00` });
+      }
+      await aguardarDebounce();
+
+      expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledTimes(1);
+      expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-10', '2026-05-10');
     });
 
     it('should warn when the chosen time falls inside a block', async () => {
       await setup({ pacienteId: '10' }, mockSessao, [bloqueioDaManha]);
 
       component.form.patchValue({ dataHora: '2026-05-10T09:00', duracao: 60 });
+      await aguardarDebounce();
       fixture.detectChanges();
 
       expect(component.avisoBloqueio)
@@ -345,6 +372,7 @@ describe('PacienteSessaoFormComponent', () => {
       await setup({ pacienteId: '10' }, mockSessao, [bloqueioDaManha]);
 
       component.form.patchValue({ dataHora: '2026-05-10T14:00', duracao: 60 });
+      await aguardarDebounce();
       fixture.detectChanges();
 
       expect(component.avisoBloqueio).toBeNull();
@@ -356,6 +384,7 @@ describe('PacienteSessaoFormComponent', () => {
     it('should warn when the duration pushes the session into the block', async () => {
       await setup({ pacienteId: '10' }, mockSessao, [bloqueioDaManha]);
       component.form.patchValue({ dataHora: '2026-05-10T07:00', duracao: 30 });
+      await aguardarDebounce();
       fixture.detectChanges();
       expect(component.avisoBloqueio).toBeNull();
 
@@ -374,6 +403,7 @@ describe('PacienteSessaoFormComponent', () => {
       bloqueioServiceSpy.listarPorPeriodo.and.returnValue(throwError(() => new Error('fail')));
 
       component.form.patchValue({ dataHora: '2026-05-10T09:00', duracao: 60 });
+      await aguardarDebounce();
       fixture.detectChanges();
 
       expect(component.avisoBloqueio).toBeNull();
@@ -385,6 +415,7 @@ describe('PacienteSessaoFormComponent', () => {
       sessaoServiceSpy.criar.and.returnValue(of(mockSessao));
       spyOn(router, 'navigate');
       component.form.patchValue({ dataHora: '2026-05-10T09:00', tipo: 'PILATES', duracao: 60 });
+      await aguardarDebounce();
 
       component.salvar();
 
@@ -395,6 +426,7 @@ describe('PacienteSessaoFormComponent', () => {
     // inscrição precisa já existir quando ele acontece.
     it('should evaluate the block of a session opened for editing', async () => {
       await setup({ pacienteId: '10', id: '1' }, mockSessao, [bloqueioDaManha]);
+      await aguardarDebounce();
       fixture.detectChanges();
 
       expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-10', '2026-05-10');

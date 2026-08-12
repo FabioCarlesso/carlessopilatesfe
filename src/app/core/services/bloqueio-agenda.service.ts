@@ -1,7 +1,20 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import { BloqueioAgendaRequestDTO, BloqueioAgendaResponseDTO } from '../models/bloqueio-agenda';
+
+/**
+ * As **leituras** saem marcadas para o `forbiddenInterceptor` não agir sozinho.
+ * Ele manda todo `GET` com `403` para `/403`, e isso acontece **antes** do
+ * `catchError` de quem chamou: a agenda e o formulário de sessão absorvem a
+ * falha dos bloqueios de propósito, mas sem esta marca o redirecionamento
+ * global tiraria o usuário da tela mesmo assim — a grade carregaria e seria
+ * descartada. Hoje a API abre a leitura a qualquer autenticado; a marca existe
+ * para que restringi-la depois vire "sem aviso de feriado", e não "recepção
+ * expulsa da agenda".
+ */
+const LEITURA_TRATADA_LOCALMENTE = () => new HttpContext().set(TRATA_403_LOCALMENTE, true);
 
 /**
  * Bloqueios de agenda (issue #135). A **leitura** é aberta a qualquer usuário
@@ -22,11 +35,16 @@ export class BloqueioAgendaService {
    */
   listarPorPeriodo(inicio: string, fim: string): Observable<BloqueioAgendaResponseDTO[]> {
     const params = new HttpParams().set('inicio', inicio).set('fim', fim);
-    return this.http.get<BloqueioAgendaResponseDTO[]>(this.apiUrl, { params });
+    return this.http.get<BloqueioAgendaResponseDTO[]>(this.apiUrl, {
+      params,
+      context: LEITURA_TRATADA_LOCALMENTE()
+    });
   }
 
   buscar(id: number): Observable<BloqueioAgendaResponseDTO> {
-    return this.http.get<BloqueioAgendaResponseDTO>(`${this.apiUrl}/${id}`);
+    return this.http.get<BloqueioAgendaResponseDTO>(`${this.apiUrl}/${id}`, {
+      context: LEITURA_TRATADA_LOCALMENTE()
+    });
   }
 
   criar(dto: BloqueioAgendaRequestDTO): Observable<BloqueioAgendaResponseDTO> {

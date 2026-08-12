@@ -34,9 +34,9 @@ describe('bloqueio-agenda utils', () => {
       expect(normalizarHora('08:30')).toBe('08:30');
     });
 
-    // O Jackson só escreve os segundos quando eles não são zero, então as duas
-    // formas chegam do mesmo endpoint.
-    it('should drop the seconds the API may send', () => {
+    // A API sempre devolve `HH:mm:ss`, inclusive para um `POST` que mandou
+    // `08:00`; o formulário trabalha em `HH:mm`.
+    it('should drop the seconds the API sends', () => {
       expect(normalizarHora('08:30:00')).toBe('08:30');
       expect(normalizarHora('08:30:45')).toBe('08:30');
     });

@@ -13,9 +13,10 @@ export interface BloqueioAgendaResponseDTO {
   /** `yyyy-MM-dd`, **inclusiva**: feriado de um dia repete a mesma data nas duas pontas. */
   dataFim: string;
   /**
-   * `HH:mm` ou `HH:mm:ss` — o Jackson omite os segundos quando são zero, então
-   * o horário nunca deve ser comparado como string crua. Use
-   * `normalizarHora` de `shared/utils/bloqueio-agenda`.
+   * `HH:mm:ss` — a API sempre devolve os segundos, mesmo quando o `POST` mandou
+   * só `HH:mm`. O formulário trabalha em `HH:mm`, então o horário nunca deve ser
+   * comparado nem exibido como string crua: use `normalizarHora` de
+   * `shared/utils/bloqueio-agenda`.
    */
   horaInicio: string | null;
   horaFim: string | null;

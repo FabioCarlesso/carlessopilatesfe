@@ -40,5 +40,9 @@
   /* Alvo de toque confortável na recepção, onde a tela é de tablet. */
   width: 18px;
   height: 18px;
-  accent-color: var(--primary);
+  /* `--text-brand` e não `--primary`: o azul de marca não tem versão própria no
+     tema escuro (`--c-horizonte` é o mesmo nos dois), e a caixa marcada renderia
+     ~1,8:1 sobre `--bg-elev` no escuro. `--text-brand` é o único token de marca
+     com variante escura, como manda o design-system. */
+  accent-color: var(--text-brand);
 }

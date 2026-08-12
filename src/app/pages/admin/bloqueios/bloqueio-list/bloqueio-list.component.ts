@@ -41,6 +41,13 @@ export class BloqueioListComponent implements OnInit, OnDestroy {
   };
 
   bloqueios: BloqueioAgendaResponseDTO[] = [];
+  /**
+   * Período que de fato produziu a lista na tela. Separado de `periodo`, que o
+   * `[(ngModel)]` move a cada tecla: o rodapé existe para explicar por que um
+   * feriado não está na lista, e ler "4 bloqueios entre 01/01/2027 e 31/12/2026"
+   * sobre linhas de 2026 faria exatamente o contrário.
+   */
+  periodoAplicado: { inicio: string; fim: string } = { ...this.periodo };
   loading = false;
   erro: string | null = null;
   sucesso: string | null = null;
@@ -80,6 +87,7 @@ export class BloqueioListComponent implements OnInit, OnDestroy {
       .subscribe({
         next: bloqueios => {
           this.bloqueios = bloqueios;
+          this.periodoAplicado = { ...this.periodo };
           this.loading = false;
         },
         error: err => {

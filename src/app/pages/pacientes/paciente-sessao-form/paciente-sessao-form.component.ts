@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
-import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import {
   SessaoRequestDTO,
   SessaoResponseDTO,
@@ -112,9 +112,14 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Consulta os bloqueios sempre que o **dia** de `dataHora` muda. O
-   * `distinctUntilChanged` sobre o dia é o que impede uma requisição por
-   * digitação: trocar só a hora não muda o dia consultado.
+   * Consulta os bloqueios sempre que o **dia** de `dataHora` muda.
+   *
+   * São duas guardas, e as duas fazem falta. O `distinctUntilChanged` sobre o
+   * dia descarta a troca de hora, que não muda o dia consultado. O
+   * `debounceTime` cobre o que ele não alcança: o segmento de ano do
+   * `datetime-local` emite um valor **completo e distinto** a cada dígito
+   * digitado (`0002-…`, `0020-…`, `0202-…`, `2026-…`), e sem a espera cada um
+   * viraria uma requisição — três delas abortadas na sequência pelo `switchMap`.
    *
    * A falha vira lista vazia em vez de faixa de erro — o aviso é um extra, e
    * impedir o agendamento porque a consulta de feriados caiu seria pior do que
@@ -124,6 +129,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     this.form.get('dataHora')?.valueChanges
       .pipe(
         map(valor => (typeof valor === 'string' ? valor.slice(0, 10) : '')),
+        debounceTime(250),
         distinctUntilChanged(),
         switchMap(dia => (DIA_ISO.test(dia)
           ? this.bloqueioService.listarPorPeriodo(dia, dia).pipe(

@@ -203,6 +203,37 @@ describe('BloqueioFormComponent', () => {
       expect(component.form.hasError('faixaInvertida')).toBeTrue();
     });
 
+    // O `required` do Angular aceita "   ", mas o motivo sai daqui com `trim()`
+    // e o `@NotBlank` da API recusaria a string vazia com 400.
+    it('should reject a whitespace-only motivo without calling the API', () => {
+      component.form.patchValue({ dataInicio: '2026-12-25', dataFim: '2026-12-25', motivo: '   ' });
+
+      component.salvar();
+
+      expect(serviceSpy.criar).not.toHaveBeenCalled();
+      expect(component.campo('motivo')?.hasError('required')).toBeTrue();
+    });
+
+    // O caminho que o usuário de fato percorre: o `(change)` do template depende
+    // de o CheckboxControlValueAccessor já ter escrito o valor no controle.
+    it('should toggle the range by clicking the checkbox itself', () => {
+      const caixa = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#diaInteiro')!;
+
+      caixa.click();
+      fixture.detectChanges();
+
+      expect(component.diaInteiro).toBeFalse();
+      expect(existe('#horaInicio')).toBeTrue();
+      expect(component.campo('horaInicio')?.enabled).toBeTrue();
+
+      caixa.click();
+      fixture.detectChanges();
+
+      expect(component.diaInteiro).toBeTrue();
+      expect(existe('#horaInicio')).toBeFalse();
+      expect(component.campo('horaInicio')?.enabled).toBeFalse();
+    });
+
     it('should show the API message when saving fails', () => {
       serviceSpy.criar.and.returnValue(throwError(() => new HttpErrorResponse({
         status: 400,
@@ -284,6 +315,21 @@ describe('BloqueioFormComponent', () => {
 
       expect(texto('.alert-danger')).toBe('Bloqueio não encontrado.');
       expect(component.loading).toBeFalse();
+    });
+
+    // O PUT é substituição completa: um formulário em branco mas editável, ainda
+    // apontando para o id, sobrescreveria o bloqueio real com o que fosse
+    // digitado por cima — e apagaria a faixa de horário junto.
+    it('should hide the form when loading fails, so a save cannot overwrite the block', async () => {
+      await setup({ id: '2' }, manutencao, new HttpErrorResponse({ status: 500 }));
+
+      expect(component.cargaFalhou).toBeTrue();
+      expect(existe('form')).toBeFalse();
+      expect(texto('.alert-danger')).toBe('Erro ao carregar bloqueio.');
+
+      component.salvar();
+
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
 
     it('should not call the API when the route id is invalid', async () => {

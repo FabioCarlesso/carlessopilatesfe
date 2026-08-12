@@ -11,13 +11,14 @@ import { BloqueioAgendaResponseDTO } from '../../core/models/bloqueio-agenda';
  * `shared/utils/calendario.ts`.
  */
 
-/** Minutos de um dia; o fim de um bloqueio até a meia-noite. */
-const MINUTOS_NO_DIA = 24 * 60;
-
 /**
- * `HH:mm` a partir do que a API mandar. O Jackson serializa `LocalTime` como
- * `HH:mm` quando os segundos são zero e como `HH:mm:ss` quando não são, então
- * comparar a string crua faria `"08:00"` e `"08:00:00"` divergirem.
+ * `HH:mm` a partir do que a API mandar.
+ *
+ * A API devolve `LocalTime` **sempre** com segundos — mandar `"08:00"` no
+ * `POST` traz `"08:00:00"` de volta (verificado contra o backend) —, enquanto o
+ * `<input type="time">` do formulário produz e consome `HH:mm`. Sem normalizar,
+ * as duas formas do mesmo horário divergiriam em qualquer comparação de string
+ * e o campo de edição receberia um valor que não é o dele.
  */
 export function normalizarHora(hora: string | null | undefined): string | null {
   if (!hora) return null;
@@ -108,9 +109,12 @@ export function bloqueiosDoHorario(
   const fim = inicio + (Number.isFinite(duracao) && duracao > 0 ? duracao : 1);
 
   return bloqueiosDoDia(bloqueios, dia).filter(bloqueio => {
+    // `ehDiaInteiro` já devolveu `true` para qualquer bloqueio cuja hora não
+    // normalize, então daqui para baixo as duas são números — sem fallback, que
+    // seria ramo morto anunciando um meio-aberto que não existe.
     if (ehDiaInteiro(bloqueio)) return true;
-    const faixaInicio = emMinutos(bloqueio.horaInicio) ?? 0;
-    const faixaFim = emMinutos(bloqueio.horaFim) ?? MINUTOS_NO_DIA;
+    const faixaInicio = emMinutos(bloqueio.horaInicio) as number;
+    const faixaFim = emMinutos(bloqueio.horaFim) as number;
     return inicio < faixaFim && fim > faixaInicio;
   });
 }

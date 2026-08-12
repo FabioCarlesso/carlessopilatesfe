@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnInit, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnInit,
+  inject
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -25,6 +34,16 @@ import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
  * período invertido e faixa de horário vazia ou invertida. A obrigatoriedade de
  * cada campo isolado continua nos validadores do controle.
  */
+/**
+ * `Validators.required` aceita `"   "`, mas o motivo sai daqui com `trim()` e o
+ * `@NotBlank` da API recusaria a string vazia com `400`. A checagem local existe
+ * justamente para não gastar essa ida ao servidor.
+ */
+function textoNaoVazio(controle: AbstractControl): ValidationErrors | null {
+  const valor = controle.value;
+  return typeof valor === 'string' && valor.trim().length === 0 ? { required: true } : null;
+}
+
 function periodoCoerente(grupo: AbstractControl): ValidationErrors | null {
   const dataInicio = grupo.get('dataInicio')?.value;
   const dataFim = grupo.get('dataFim')?.value;
@@ -63,11 +82,22 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
   private readonly service = inject(BloqueioAgendaService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly host = inject(ElementRef<HTMLElement>);
+  // Anotado em vez de inferido: `inject(ElementRef<HTMLElement>)` devolve
+  // `ElementRef<any>`, e `nativeElement` chega ao `querySelector` sem tipo.
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   bloqueioId: number | null = null;
   parametroInvalido = false;
+  /**
+   * Carga da edição que falhou. Esconde o formulário, e não é só cosmético: o
+   * `PUT` é substituição completa, então um formulário em branco mas editável,
+   * ainda apontando para `bloqueioId`, sobrescreveria o bloqueio real com o que
+   * fosse digitado por cima — inclusive apagando a faixa de horário, já que
+   * horas ausentes significam dia inteiro.
+   */
+  cargaFalhou = false;
   loading = false;
   salvando = false;
   erro: string | null = null;
@@ -81,7 +111,7 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
       diaInteiro: [true],
       horaInicio: [{ value: '', disabled: true }, Validators.required],
       horaFim: [{ value: '', disabled: true }, Validators.required],
-      motivo: ['', [Validators.required, Validators.maxLength(BLOQUEIO_MOTIVO_MAX)]]
+      motivo: ['', [Validators.required, textoNaoVazio, Validators.maxLength(BLOQUEIO_MOTIVO_MAX)]]
     }, { validators: periodoCoerente });
 
     if (!this.route.snapshot.paramMap.has('id')) return;
@@ -133,13 +163,14 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
     this.loading = true;
     this.erro = null;
 
-    this.service.buscar(id).subscribe({
+    this.service.buscar(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: bloqueio => {
         this.preencher(bloqueio);
         this.loading = false;
       },
       error: (err: HttpErrorResponse) => {
         this.erro = err?.status === 404 ? 'Bloqueio não encontrado.' : 'Erro ao carregar bloqueio.';
+        this.cargaFalhou = true;
         this.loading = false;
       }
     });
@@ -166,11 +197,14 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    if (this.salvando) return;
+    if (this.salvando || this.cargaFalhou) return;
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      focarPrimeiroInvalido(this.form, this.host);
+      // Erro só de grupo (período ou faixa invertidos) não marca nenhum
+      // `input` como inválido, e `focarPrimeiroInvalido` não tem o que focar:
+      // num celular a mensagem renderiza fora da tela e o botão parece morto.
+      if (!focarPrimeiroInvalido(this.form, this.host)) this.revelarErroDeGrupo();
       return;
     }
 
@@ -192,13 +226,19 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
       ? this.service.atualizar(this.bloqueioId, dto)
       : this.service.criar(dto);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/admin/bloqueios']),
       error: (err: HttpErrorResponse) => {
         this.erro = extrairMensagemErro(err, 'Erro ao salvar bloqueio.');
         this.salvando = false;
       }
     });
+  }
+
+  /** Rola até a mensagem de erro de grupo, que não pertence a nenhum campo. */
+  private revelarErroDeGrupo(): void {
+    const alvo = this.host.nativeElement.querySelector<HTMLElement>('.invalid-feedback[role="alert"]');
+    alvo?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   campo(nome: string) {

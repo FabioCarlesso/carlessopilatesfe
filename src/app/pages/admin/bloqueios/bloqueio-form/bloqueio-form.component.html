@@ -15,14 +15,15 @@
   <div class="loading">Carregando...</div>
 }
 
-@if (!loading && !parametroInvalido) {
+@if (!loading && !parametroInvalido && !cargaFalhou) {
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
     <h2 class="form-section-title">Período</h2>
     <div class="form-row">
       <div class="form-group">
         <label for="dataInicio">Data inicial *</label>
         <input id="dataInicio" type="date" formControlName="dataInicio" class="form-control"
-          aria-describedby="dataInicioError"
+          [attr.aria-describedby]="campo('dataInicio')?.touched && campo('dataInicio')?.invalid
+            ? 'dataInicioError' : null"
           [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
         @if (campo('dataInicio')?.touched && campo('dataInicio')?.invalid) {
           <div id="dataInicioError" class="invalid-feedback">Data inicial é obrigatória.</div>
@@ -31,7 +32,8 @@
       <div class="form-group">
         <label for="dataFim">Data final *</label>
         <input id="dataFim" type="date" formControlName="dataFim" class="form-control"
-          aria-describedby="dataFimHint"
+          [attr.aria-describedby]="campo('dataFim')?.touched && campo('dataFim')?.invalid
+            ? 'dataFimHint dataFimError' : 'dataFimHint'"
           [class.is-invalid]="campo('dataFim')?.invalid && campo('dataFim')?.touched" />
         <!-- A data final é inclusiva na API: um feriado de um dia repete a mesma
         data nas duas pontas, e é isso que a dica diz para quem preencher. -->
@@ -39,7 +41,7 @@
           Inclusiva. Para bloquear um único dia, repita a data inicial.
         </div>
         @if (campo('dataFim')?.touched && campo('dataFim')?.invalid) {
-          <div class="invalid-feedback">Data final é obrigatória.</div>
+          <div id="dataFimError" class="invalid-feedback">Data final é obrigatória.</div>
         }
       </div>
     </div>
@@ -93,11 +95,11 @@
       <div id="motivoHint" class="field-hint">
         Aparece na agenda e no aviso do formulário de sessão. Máximo de {{ motivoMax }} caracteres.
       </div>
+      <!-- Só o ramo de obrigatoriedade: o `maxlength` nativo trunca a digitação e
+      a colagem em 200 caracteres, então o validador de tamanho nunca dispara e a
+      mensagem correspondente seria código morto. O limite é anunciado na dica. -->
       @if (campo('motivo')?.touched && campo('motivo')?.hasError('required')) {
-        <div class="invalid-feedback">Motivo é obrigatório.</div>
-      }
-      @if (campo('motivo')?.touched && campo('motivo')?.hasError('maxlength')) {
-        <div class="invalid-feedback">Motivo deve ter no máximo {{ motivoMax }} caracteres.</div>
+        <div id="motivoError" class="invalid-feedback">Motivo é obrigatório.</div>
       }
     </div>
 

@@ -148,6 +148,24 @@ describe('BloqueioListComponent', () => {
     expect(component.erro).toBeNull();
   });
 
+  // O rodapé explica por que um feriado não está na lista; segui-lo pelo
+  // `[(ngModel)]` faria a frase descrever linhas que ainda não foram buscadas.
+  it('should keep the caption on the applied period until a new one is fetched', async () => {
+    await setup();
+    expect(texto('.bloqueio-resumo')).toBe('2 bloqueios entre 01/01/2026 e 31/12/2026.');
+
+    // Digitar no campo move `periodo` na hora; o rodapé não pode acompanhar.
+    component.periodo.inicio = '2026-02-01';
+    fixture.detectChanges();
+
+    expect(texto('.bloqueio-resumo')).toBe('2 bloqueios entre 01/01/2026 e 31/12/2026.');
+
+    component.carregar();
+    fixture.detectChanges();
+
+    expect(texto('.bloqueio-resumo')).toBe('2 bloqueios entre 01/02/2026 e 31/12/2026.');
+  });
+
   it('should show the API message when loading fails', async () => {
     await setup({
       erro: new HttpErrorResponse({ status: 400, error: { erro: 'Consulta por período limitada a 366 dias' } })

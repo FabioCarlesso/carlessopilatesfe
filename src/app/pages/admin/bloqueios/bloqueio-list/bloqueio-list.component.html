@@ -76,11 +76,13 @@ corrente porque feriado se confere para o ano inteiro de uma vez. -->
     </table>
   </div>
 
-  <!-- O período pedido, e não o dos bloqueios: é ele que explica por que um
-  feriado cadastrado para o ano que vem não está na lista. -->
+  <!-- O período que **produziu** a lista, e não o dos campos: é ele que explica
+  por que um feriado cadastrado para o ano que vem não está na tela. Ler
+  `periodo` aqui reescreveria a frase a cada tecla, descrevendo linhas que ainda
+  não foram buscadas. -->
   <p class="bloqueio-resumo" role="status">
     {{ bloqueios.length }} {{ bloqueios.length === 1 ? 'bloqueio' : 'bloqueios' }}
-    entre {{ periodo.inicio | localDate }} e {{ periodo.fim | localDate }}.
+    entre {{ periodoAplicado.inicio | localDate }} e {{ periodoAplicado.fim | localDate }}.
   </p>
 }
 
