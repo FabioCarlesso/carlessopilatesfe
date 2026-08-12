@@ -82,6 +82,16 @@
             Data e hora são obrigatórias.
           </div>
         }
+        <!-- Aviso, não impedimento: o bloqueio é informativo na API, e travar o
+        formulário inventaria uma regra que o backend não tem. `role="status"`
+        porque ele aparece enquanto se preenche, sem interromper a digitação. -->
+        @if (avisoBloqueio) {
+          <div class="alert alert-warning bloqueio-aviso" role="status">
+            <strong>Estúdio bloqueado neste horário.</strong>
+            {{ avisoBloqueio }}
+            O agendamento continua permitido — confirme antes de salvar.
+          </div>
+        }
       </div>
       <div class="form-group">
         <label for="duracao">Duração (minutos) *</label>

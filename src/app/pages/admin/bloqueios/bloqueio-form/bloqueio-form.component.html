@@ -1,0 +1,111 @@
+<div class="page-header">
+  <div>
+    <h1>{{ modoEdicao ? 'Editar' : 'Novo' }} bloqueio</h1>
+    <p class="page-subtitle">Feriado, manutenção ou evento em que o estúdio não funciona</p>
+  </div>
+  <div class="acoes">
+    <a routerLink="/admin/bloqueios" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Período</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="dataInicio">Data inicial *</label>
+        <input id="dataInicio" type="date" formControlName="dataInicio" class="form-control"
+          aria-describedby="dataInicioError"
+          [class.is-invalid]="campo('dataInicio')?.invalid && campo('dataInicio')?.touched" />
+        @if (campo('dataInicio')?.touched && campo('dataInicio')?.invalid) {
+          <div id="dataInicioError" class="invalid-feedback">Data inicial é obrigatória.</div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="dataFim">Data final *</label>
+        <input id="dataFim" type="date" formControlName="dataFim" class="form-control"
+          aria-describedby="dataFimHint"
+          [class.is-invalid]="campo('dataFim')?.invalid && campo('dataFim')?.touched" />
+        <!-- A data final é inclusiva na API: um feriado de um dia repete a mesma
+        data nas duas pontas, e é isso que a dica diz para quem preencher. -->
+        <div id="dataFimHint" class="field-hint">
+          Inclusiva. Para bloquear um único dia, repita a data inicial.
+        </div>
+        @if (campo('dataFim')?.touched && campo('dataFim')?.invalid) {
+          <div class="invalid-feedback">Data final é obrigatória.</div>
+        }
+      </div>
+    </div>
+    @if (erroDeGrupo('periodoInvertido')) {
+      <div class="invalid-feedback" role="alert">A data final não pode ser anterior à inicial.</div>
+    }
+
+    <h2 class="form-section-title">Horário</h2>
+    <div class="form-group form-group--checkbox">
+      <label for="diaInteiro">
+        <input id="diaInteiro" type="checkbox" formControlName="diaInteiro"
+          (change)="aoAlternarDiaInteiro()" />
+        Bloquear o dia inteiro
+      </label>
+      <div class="field-hint">
+        Desmarque para bloquear apenas uma faixa de horário, aplicada a cada dia do período.
+      </div>
+    </div>
+
+    @if (!diaInteiro) {
+      <div class="form-row">
+        <div class="form-group">
+          <label for="horaInicio">Hora inicial *</label>
+          <input id="horaInicio" type="time" formControlName="horaInicio" class="form-control"
+            [class.is-invalid]="campo('horaInicio')?.invalid && campo('horaInicio')?.touched" />
+          @if (campo('horaInicio')?.touched && campo('horaInicio')?.invalid) {
+            <div class="invalid-feedback">Hora inicial é obrigatória quando o dia não é bloqueado por inteiro.</div>
+          }
+        </div>
+        <div class="form-group">
+          <label for="horaFim">Hora final *</label>
+          <input id="horaFim" type="time" formControlName="horaFim" class="form-control"
+            [class.is-invalid]="campo('horaFim')?.invalid && campo('horaFim')?.touched" />
+          @if (campo('horaFim')?.touched && campo('horaFim')?.invalid) {
+            <div class="invalid-feedback">Hora final é obrigatória quando o dia não é bloqueado por inteiro.</div>
+          }
+        </div>
+      </div>
+      @if (erroDeGrupo('faixaInvertida')) {
+        <div class="invalid-feedback" role="alert">A hora final deve ser posterior à inicial.</div>
+      }
+    }
+
+    <h2 class="form-section-title">Motivo</h2>
+    <div class="form-group">
+      <label for="motivo">Motivo *</label>
+      <input id="motivo" type="text" formControlName="motivo" class="form-control"
+        [maxlength]="motivoMax" placeholder="Ex.: Natal, manutenção dos equipamentos"
+        aria-describedby="motivoHint"
+        [class.is-invalid]="campo('motivo')?.invalid && campo('motivo')?.touched" />
+      <div id="motivoHint" class="field-hint">
+        Aparece na agenda e no aviso do formulário de sessão. Máximo de {{ motivoMax }} caracteres.
+      </div>
+      @if (campo('motivo')?.touched && campo('motivo')?.hasError('required')) {
+        <div class="invalid-feedback">Motivo é obrigatório.</div>
+      }
+      @if (campo('motivo')?.touched && campo('motivo')?.hasError('maxlength')) {
+        <div class="invalid-feedback">Motivo deve ter no máximo {{ motivoMax }} caracteres.</div>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+      </button>
+      <a routerLink="/admin/bloqueios" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+}

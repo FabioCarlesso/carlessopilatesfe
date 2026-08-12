@@ -31,4 +31,12 @@ describe('AdminHomeComponent', () => {
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Usuários');
   });
+
+  it('should render link to agenda blocks', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/admin/bloqueios"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Bloqueios de agenda');
+  });
 });

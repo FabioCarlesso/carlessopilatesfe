@@ -45,6 +45,9 @@ Mapa de todas as rotas da aplicação. O comportamento de cada tela está em
 | `/admin/usuarios` | Listagem administrativa de usuários (`ADMIN`) |
 | `/admin/usuarios/novo` | Cadastro de usuário (`ADMIN`) |
 | `/admin/usuarios/:id/editar` | Edição de usuário (`ADMIN`) |
+| `/admin/bloqueios` | Bloqueios de agenda do período: feriados, manutenções e eventos em que o estúdio não funciona (`ADMIN`) |
+| `/admin/bloqueios/novo` | Cadastro de bloqueio de agenda (`ADMIN`) |
+| `/admin/bloqueios/:id/editar` | Edição de bloqueio de agenda (`ADMIN`) |
 | `/perfil/alterar-senha` | Troca de senha do usuário autenticado |
 | `/login` | Tela de autenticação (pública) |
 | `/esqueci-senha` | Solicitação de recuperação de senha por e-mail (pública) |

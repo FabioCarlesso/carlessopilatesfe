@@ -283,6 +283,21 @@ export const routes: Routes = [
         path: 'usuarios/:id/editar',
         loadComponent: () =>
           import('./pages/admin/usuarios/usuario-form/usuario-form.component').then(m => m.UsuarioFormComponent)
+      },
+      {
+        path: 'bloqueios',
+        loadComponent: () =>
+          import('./pages/admin/bloqueios/bloqueio-list/bloqueio-list.component').then(m => m.BloqueioListComponent)
+      },
+      {
+        path: 'bloqueios/novo',
+        loadComponent: () =>
+          import('./pages/admin/bloqueios/bloqueio-form/bloqueio-form.component').then(m => m.BloqueioFormComponent)
+      },
+      {
+        path: 'bloqueios/:id/editar',
+        loadComponent: () =>
+          import('./pages/admin/bloqueios/bloqueio-form/bloqueio-form.component').then(m => m.BloqueioFormComponent)
       }
     ]
   },

@@ -13,3 +13,13 @@
   color: var(--text-muted);
   font-size: var(--fs-micro);
 }
+
+/* Aviso de estúdio bloqueado (issue #135). Só posicionamento e escala: o
+   `.alert-warning` global monta cor, borda e padding. Ele nasce dentro do
+   `.form-group`, que já separa os campos, então a margem de baixo do alerta
+   global viraria um vão duplo. */
+.bloqueio-aviso {
+  margin-top: var(--sp-2);
+  margin-bottom: 0;
+  font-size: var(--fs-body-sm);
+}
