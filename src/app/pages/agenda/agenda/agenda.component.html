@@ -215,8 +215,17 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
           @for (dia of semana.dias; track trackByDia($index, dia)) {
             <div class="calendario-celula" role="cell"
               [class.celula-hoje]="dia.hoje"
-              [attr.aria-label]="dia.hoje ? dia.rotulo + ', hoje' : dia.rotulo">
+              [class.celula-bloqueada]="bloqueiosDoDia(dia).length > 0"
+              [attr.aria-label]="rotuloDaCelula(dia)">
               <span class="celula-numero" aria-hidden="true">{{ dia.numero }}</span>
+              <!-- O bloqueio não é um evento: não abre painel, não entra nos
+              filtros e não é clicável. É `aria-hidden` porque a frase completa
+              já está no rótulo da célula. -->
+              @if (bloqueiosDoDia(dia).length > 0) {
+                <span class="celula-bloqueio" [title]="rotuloBloqueios(dia)" aria-hidden="true">
+                  {{ marcaBloqueio(dia) }}
+                </span>
+              }
               @for (evento of dia.eventos; track trackByEvento($index, evento)) {
                 <button type="button" [class]="classesDoEvento(evento, 'evento')"
                   [class.evento-selecionado]="eventoSelecionado?.chave === evento.chave"
@@ -239,7 +248,7 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
   mobile. Lista só os dias com evento — num telefone, rolar sete dias vazios
   para achar os dois que importam não ajuda ninguém. -->
   <div class="calendario-lista" [class.lista-sempre]="visao === 'diaria'">
-    @for (dia of diasComEventos; track trackByDia($index, dia)) {
+    @for (dia of diasDaLista; track trackByDia($index, dia)) {
       <section class="agenda-dia" [class.agenda-dia-hoje]="dia.hoje">
         <h3 class="agenda-data">
           {{ dia.rotulo }}
@@ -247,6 +256,12 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
             <span class="agenda-hoje">Hoje</span>
           }
         </h3>
+        <!-- Aqui o bloqueio é texto corrido: a lista é a única leitura da visão
+        diária e do mobile, e um dia bloqueado sem nenhuma aula marcada entra
+        nela justamente para não se confundir com dia livre. -->
+        @if (bloqueiosDoDia(dia).length > 0) {
+          <p class="agenda-bloqueio">{{ rotuloBloqueios(dia) }}</p>
+        }
         @for (evento of dia.eventos; track trackByEvento($index, evento)) {
           <button type="button" [class]="classesDoEvento(evento, 'agenda-evento')"
             [class.evento-selecionado]="eventoSelecionado?.chave === evento.chave"
@@ -264,7 +279,7 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
         }
       </section>
     }
-    @if (diasComEventos.length === 0) {
+    @if (diasDaLista.length === 0) {
       <div class="empty-state">
         {{ temFiltroAtivo
           ? 'Nenhuma sessão ou aula neste período com os filtros aplicados.'

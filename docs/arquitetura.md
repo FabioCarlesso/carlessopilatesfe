@@ -27,7 +27,7 @@ ser testada isoladamente do componente que a consome.
 │   │   │   ├── interceptors/       # HTTP interceptors (auth e 403)
 │   │   │   └── guards/             # Route guards (auth e role)
 │   │   ├── pages/
-│   │   │   ├── admin/              # Hub administrativo e gestão de usuários
+│   │   │   ├── admin/              # Hub administrativo, usuários e bloqueios de agenda
 │   │   │   ├── agenda/             # Agenda geral do estúdio (todos os pacientes)
 │   │   │   ├── aulas/              # Aulas geradas e confirmação de presença
 │   │   │   ├── auth/               # Login, recuperação de senha e tela 403

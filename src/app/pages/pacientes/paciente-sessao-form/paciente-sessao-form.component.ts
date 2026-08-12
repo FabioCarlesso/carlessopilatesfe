@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import {
   SessaoRequestDTO,
   SessaoResponseDTO,
@@ -13,11 +14,16 @@ import {
   SessaoTipo,
   SessaoUpdateDTO
 } from '../../../core/models/sessao';
+import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { bloqueiosDoHorario, descreverBloqueio } from '../../../shared/utils/bloqueio-agenda';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+
+const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 @Component({
   selector: 'app-paciente-sessao-form',
@@ -37,6 +43,12 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
   erro: string | null = null;
   sucesso: string | null = null;
   parametroInvalido = false;
+  /**
+   * Bloqueios do dia escolhido em `dataHora` (issue #135), recarregados a cada
+   * troca de dia. Só do dia, e não de um período: o formulário agenda uma sessão
+   * de cada vez, e um `GET` por dia é mais barato que baixar o ano do estúdio.
+   */
+  bloqueiosDoDia: BloqueioAgendaResponseDTO[] = [];
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly tipos: SessaoTipo[] = ['PILATES', 'FISIOTERAPIA'];
@@ -48,6 +60,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private pacienteService: PacienteService,
     private sessaoService: SessaoService,
+    private bloqueioService: BloqueioAgendaService,
     private route: ActivatedRoute,
     private router: Router,
     private destroyRef: DestroyRef,
@@ -63,6 +76,10 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
       observacoes: [''],
       status: ['AGENDADA', Validators.required]
     });
+
+    // Antes de `carregar()`: na edição é o `patchValue` da sessão carregada que
+    // dispara a primeira consulta, e a inscrição precisa já existir.
+    this.observarBloqueios();
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.sessaoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
@@ -92,6 +109,55 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
 
   get modoEdicao(): boolean {
     return this.sessaoId !== null;
+  }
+
+  /**
+   * Consulta os bloqueios sempre que o **dia** de `dataHora` muda.
+   *
+   * São duas guardas, e as duas fazem falta. O `distinctUntilChanged` sobre o
+   * dia descarta a troca de hora, que não muda o dia consultado. O
+   * `debounceTime` cobre o que ele não alcança: o segmento de ano do
+   * `datetime-local` emite um valor **completo e distinto** a cada dígito
+   * digitado (`0002-…`, `0020-…`, `0202-…`, `2026-…`), e sem a espera cada um
+   * viraria uma requisição — três delas abortadas na sequência pelo `switchMap`.
+   *
+   * A falha vira lista vazia em vez de faixa de erro — o aviso é um extra, e
+   * impedir o agendamento porque a consulta de feriados caiu seria pior do que
+   * não avisar.
+   */
+  private observarBloqueios(): void {
+    this.form.get('dataHora')?.valueChanges
+      .pipe(
+        map(valor => (typeof valor === 'string' ? valor.slice(0, 10) : '')),
+        debounceTime(250),
+        distinctUntilChanged(),
+        switchMap(dia => (DIA_ISO.test(dia)
+          ? this.bloqueioService.listarPorPeriodo(dia, dia).pipe(
+              catchError(() => of([] as BloqueioAgendaResponseDTO[]))
+            )
+          : of([] as BloqueioAgendaResponseDTO[]))),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(bloqueios => {
+        this.bloqueiosDoDia = bloqueios;
+      });
+  }
+
+  /**
+   * Aviso do horário bloqueado, ou `null` quando o horário está livre. O
+   * bloqueio **não impede** o agendamento — nem na API, nem aqui: é a recepção
+   * que decide se a sessão acontece assim mesmo, e travar o formulário
+   * inventaria uma regra que o backend não tem.
+   *
+   * Reavaliado pelo template a cada ciclo, e não guardado num campo, para que
+   * mudar a duração — que estende a sessão até dentro da faixa bloqueada —
+   * atualize o aviso sem uma nova ida à API.
+   */
+  get avisoBloqueio(): string | null {
+    if (this.bloqueiosDoDia.length === 0) return null;
+    const valor = this.form.getRawValue();
+    const alcancados = bloqueiosDoHorario(this.bloqueiosDoDia, valor.dataHora, valor.duracao);
+    return alcancados.length > 0 ? alcancados.map(descreverBloqueio).join('; ') : null;
   }
 
   carregar(): void {

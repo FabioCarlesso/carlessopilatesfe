@@ -313,6 +313,26 @@
   font-weight: 600;
 }
 
+/* Dia bloqueado (issue #135): fundo âmbar de baixa saturação, que sinaliza a
+   célula inteira sem competir com as cores de situação dos chips — o bloqueio é
+   uma condição do dia, não um evento dele. */
+.celula-bloqueada {
+  background-color: var(--c-warning-bg);
+}
+
+/* Marca do bloqueio na célula: texto, e não só a cor de fundo, porque cor
+   sozinha não é sinal suficiente (WCAG 1.4.1). A frase completa está no `title`
+   e no `aria-label` da célula. */
+.celula-bloqueio {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-warning-text);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  line-height: var(--lh-snug);
+}
+
 .evento {
   display: flex;
   align-items: baseline;
@@ -392,6 +412,18 @@
   gap: var(--sp-2);
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+/* Bloqueio na lista: aqui cabe a frase inteira, então ela é lida por todo mundo
+   em vez de ficar só no `title` como na grade. */
+.agenda-bloqueio {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background-color: var(--c-warning-bg);
+  color: var(--c-warning-text);
+  font-size: var(--fs-body-sm);
   font-weight: 600;
 }
 

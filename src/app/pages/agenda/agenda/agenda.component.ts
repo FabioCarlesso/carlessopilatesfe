@@ -11,15 +11,18 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, Observable } from 'rxjs';
+import { catchError, forkJoin, Observable, of } from 'rxjs';
+import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO, SessaoTipo, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { AulaService } from '../../../core/services/aula.service';
+import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { agruparBloqueiosPorDia, descreverBloqueio } from '../../../shared/utils/bloqueio-agenda';
 import {
   CALENDARIO_STATUS_LABEL,
   CalendarioDia,
@@ -92,6 +95,18 @@ export class AgendaComponent implements OnInit, OnDestroy {
   eventos: CalendarioEvento[] = [];
   grade: CalendarioGrade = montarGrade('semanal', this.referencia, [], this.hoje);
   profissionais: ProfissionalResponseDTO[] = [];
+
+  /**
+   * Bloqueios do período (issue #135): feriados, manutenções e eventos em que o
+   * estúdio não funciona. Não passam pelos filtros, que recortam **eventos**.
+   */
+  bloqueios: BloqueioAgendaResponseDTO[] = [];
+  /**
+   * Índice `dia -> bloqueios`, montado uma vez por carga em vez de refiltrado em
+   * cada célula da grade — com `OnPush` o filtro seria refeito a cada ciclo de
+   * detecção de mudanças.
+   */
+  private bloqueiosPorDia = new Map<string, BloqueioAgendaResponseDTO[]>();
 
   filtro: { profissionalId: 'todos' | number; tipo: AgendaFiltroTipo; status: AgendaFiltroStatus } = {
     profissionalId: 'todos',
@@ -196,6 +211,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
     private sessaoService: SessaoService,
     private aulaService: AulaService,
     private profissionalService: ProfissionalService,
+    private bloqueioService: BloqueioAgendaService,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef
   ) {}
@@ -239,12 +255,25 @@ export class AgendaComponent implements OnInit, OnDestroy {
 
     forkJoin({
       sessoes: this.sessaoService.listarPorPeriodo(inicio, fim),
-      aulas: this.aulaService.listarPorPeriodo(inicio, fim)
+      aulas: this.aulaService.listarPorPeriodo(inicio, fim),
+      // Os bloqueios entram no mesmo `forkJoin` para não dessincronizar do
+      // período, mas com a falha absorvida: eles são um aviso sobre a agenda, e
+      // derrubar a grade inteira porque o feriado não carregou trocaria a
+      // informação principal pela acessória. Sem eles a agenda apenas deixa de
+      // marcar os dias bloqueados.
+      bloqueios: this.bloqueioService.listarPorPeriodo(inicio, fim).pipe(
+        catchError(() => of([] as BloqueioAgendaResponseDTO[]))
+      )
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ sessoes, aulas }: { sessoes: SessaoResponseDTO[]; aulas: AulaResponseDTO[] }) => {
+        next: ({ sessoes, aulas, bloqueios }: {
+          sessoes: SessaoResponseDTO[];
+          aulas: AulaResponseDTO[];
+          bloqueios: BloqueioAgendaResponseDTO[];
+        }) => {
           this.eventos = mapearEventosComPaciente(sessoes, aulas);
+          this.bloqueios = bloqueios;
           this.atualizarGrade();
           this.loading = false;
           this.cdr.markForCheck();
@@ -253,6 +282,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
         // pode culpar nenhuma das duas listagens em particular.
         error: err => {
           this.eventos = [];
+          this.bloqueios = [];
           this.atualizarGrade();
           this.erro = extrairMensagemErro(err, 'Não foi possível carregar a agenda.');
           this.loading = false;
@@ -270,6 +300,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
    */
   private atualizarGrade(): void {
     this.grade = montarGrade(this.visao, this.referencia, this.eventosFiltrados(), this.hoje);
+    this.bloqueiosPorDia = agruparBloqueiosPorDia(this.bloqueios, this.grade.dias.map(dia => dia.dia));
     this.cdr.markForCheck();
   }
 
@@ -342,12 +373,55 @@ export class AgendaComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Dias do período que têm evento. É a lista da visão diária e do mobile, onde
-   * a grade de 7 colunas não cabe. Sai da mesma `grade.dias` da grade, então as
-   * duas leituras não podem divergir.
+   * Dias do período que têm evento **ou bloqueio**. É a lista da visão diária e
+   * do mobile, onde a grade de 7 colunas não cabe. Sai da mesma `grade.dias` da
+   * grade, então as duas leituras não podem divergir. O bloqueio entra no
+   * critério porque um feriado sem nenhuma aula marcada é justamente o que
+   * precisa aparecer — na visão diária ele seria a única coisa a mostrar.
    */
-  get diasComEventos(): CalendarioDia[] {
-    return this.grade.dias.filter(dia => dia.doPeriodo && dia.eventos.length > 0);
+  get diasDaLista(): CalendarioDia[] {
+    return this.grade.dias.filter(
+      dia => dia.doPeriodo && (dia.eventos.length > 0 || this.bloqueiosDoDia(dia).length > 0)
+    );
+  }
+
+  /** Bloqueios que cobrem a célula; lista vazia no dia sem bloqueio. */
+  bloqueiosDoDia(dia: CalendarioDia): BloqueioAgendaResponseDTO[] {
+    return this.bloqueiosPorDia.get(dia.dia) ?? [];
+  }
+
+  /**
+   * Frase dos bloqueios do dia, usada no `title` do marcador, no rótulo
+   * acessível da célula e na lista: o marcador é visual, e sem ela o leitor de
+   * tela anunciaria um dia comum.
+   */
+  rotuloBloqueios(dia: CalendarioDia): string {
+    const doDia = this.bloqueiosDoDia(dia);
+    if (doDia.length === 0) return '';
+    return `Estúdio bloqueado: ${doDia.map(descreverBloqueio).join('; ')}`;
+  }
+
+  /**
+   * Marca curta da célula da grade, onde não cabe a frase inteira: o motivo do
+   * primeiro bloqueio e, quando há mais de um no mesmo dia, quantos ficaram de
+   * fora. A descrição completa continua no `title` e no rótulo da célula.
+   */
+  marcaBloqueio(dia: CalendarioDia): string {
+    const doDia = this.bloqueiosDoDia(dia);
+    if (doDia.length === 0) return '';
+    return doDia.length === 1 ? doDia[0].motivo : `${doDia[0].motivo} +${doDia.length - 1}`;
+  }
+
+  /** Rótulo acessível da célula, com o bloqueio quando houver. */
+  rotuloDaCelula(dia: CalendarioDia): string {
+    const base = dia.hoje ? `${dia.rotulo}, hoje` : dia.rotulo;
+    const bloqueio = this.rotuloBloqueios(dia);
+    return bloqueio ? `${base}. ${bloqueio}` : base;
+  }
+
+  /** Dias bloqueados dentro do período, para o resumo da região viva. */
+  get diasBloqueados(): number {
+    return this.grade.dias.filter(dia => dia.doPeriodo && this.bloqueiosDoDia(dia).length > 0).length;
   }
 
   /**
@@ -358,8 +432,12 @@ export class AgendaComponent implements OnInit, OnDestroy {
     if (this.loading || this.erro) return '';
     const total = this.grade.totalEventos;
     const recorte = this.temFiltroAtivo ? ' (com filtros)' : '';
-    if (total === 0) return `${this.grade.titulo}: nenhuma sessão ou aula no período${recorte}.`;
-    return `${this.grade.titulo}: ${total} ${total === 1 ? 'evento' : 'eventos'} no período${recorte}.`;
+    const bloqueados = this.diasBloqueados;
+    const aviso = bloqueados === 0
+      ? ''
+      : ` ${bloqueados} ${bloqueados === 1 ? 'dia bloqueado' : 'dias bloqueados'} no período.`;
+    if (total === 0) return `${this.grade.titulo}: nenhuma sessão ou aula no período${recorte}.${aviso}`;
+    return `${this.grade.titulo}: ${total} ${total === 1 ? 'evento' : 'eventos'} no período${recorte}.${aviso}`;
   }
 
   /**

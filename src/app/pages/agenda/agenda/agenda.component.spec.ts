@@ -2,10 +2,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, Subject, throwError } from 'rxjs';
+import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { AulaService } from '../../../core/services/aula.service';
+import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
@@ -88,23 +90,50 @@ const sessaoCancelada = sessao({
 });
 const aulaPendente = aula({ id: 3, data: '2026-05-21' });
 
+function bloqueio(
+  dados: Partial<BloqueioAgendaResponseDTO> & { id: number; dataInicio: string }
+): BloqueioAgendaResponseDTO {
+  const horaInicio = dados.horaInicio ?? null;
+  const horaFim = dados.horaFim ?? null;
+  return {
+    dataFim: dados.dataInicio,
+    horaInicio,
+    horaFim,
+    diaInteiro: horaInicio === null && horaFim === null,
+    motivo: 'Feriado municipal',
+    dataCriacao: '2026-01-02T09:00:00',
+    dataAtualizacao: null,
+    ...dados
+  };
+}
+
+/** Quinta (21/05/2026) bloqueada o dia inteiro. */
+const bloqueioDaQuinta = bloqueio({ id: 1, dataInicio: '2026-05-21', motivo: 'Feriado municipal' });
+
 describe('AgendaComponent', () => {
   let component: AgendaComponent;
   let fixture: ComponentFixture<AgendaComponent>;
   let sessaoServiceSpy: jasmine.SpyObj<SessaoService>;
   let aulaServiceSpy: jasmine.SpyObj<AulaService>;
   let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
+  let bloqueioServiceSpy: jasmine.SpyObj<BloqueioAgendaService>;
 
   async function setup(opcoes: {
     sessoes?: SessaoResponseDTO[];
     aulas?: AulaResponseDTO[];
+    bloqueios?: BloqueioAgendaResponseDTO[];
     erroSessoes?: HttpErrorResponse;
     erroProfissionais?: HttpErrorResponse;
+    erroBloqueios?: HttpErrorResponse;
     profissionais?: ProfissionalResponseDTO[];
   } = {}) {
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', ['listarPorPeriodo', 'realizar', 'cancelar']);
     aulaServiceSpy = jasmine.createSpyObj('AulaService', ['listarPorPeriodo', 'realizar']);
     profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
+    bloqueioServiceSpy = jasmine.createSpyObj('BloqueioAgendaService', ['listarPorPeriodo']);
+
+    bloqueioServiceSpy.listarPorPeriodo.and.returnValue(
+      opcoes.erroBloqueios ? throwError(() => opcoes.erroBloqueios) : of(opcoes.bloqueios ?? []));
 
     sessaoServiceSpy.listarPorPeriodo.and.returnValue(
       opcoes.erroSessoes ? throwError(() => opcoes.erroSessoes) : of(opcoes.sessoes ?? [sessaoDoDia, sessaoCancelada]));
@@ -124,7 +153,8 @@ describe('AgendaComponent', () => {
       providers: [
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: AulaService, useValue: aulaServiceSpy },
-        { provide: ProfissionalService, useValue: profissionalServiceSpy }
+        { provide: ProfissionalService, useValue: profissionalServiceSpy },
+        { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy }
       ]
     }).compileComponents();
 
@@ -590,6 +620,118 @@ describe('AgendaComponent', () => {
       expect(component.erroAcao).toBe('Erro ao marcar o evento como realizado.');
       expect(component.erro).toBeNull();
       expect(todos('.calendario-grade .evento').length).toBe(3);
+    });
+  });
+
+  // Bloqueios de agenda (issue #135): feriados, manutenções e eventos em que o
+  // estúdio não funciona. Aparecem na grade sem virar evento — não abrem painel,
+  // não entram nos filtros e não têm ação.
+  describe('bloqueios de agenda', () => {
+    /** Quinta-feira, 21/05/2026: a quinta célula da semana que abre em 17/05. */
+    const INDICE_QUINTA = 4;
+
+    it('should request the blocks for the same period as the events', async () => {
+      await setup();
+
+      expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-17', '2026-05-23');
+    });
+
+    it('should refetch the blocks when navigating to another period', async () => {
+      await setup();
+      bloqueioServiceSpy.listarPorPeriodo.calls.reset();
+
+      component.navegar(1);
+      fixture.detectChanges();
+
+      expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-24', '2026-05-30');
+    });
+
+    it('should mark only the blocked cell, with the reason visible', async () => {
+      await setup({ bloqueios: [bloqueioDaQuinta] });
+
+      const celulas = todos('.calendario-celula');
+      const marcas = todos('.calendario-celula .celula-bloqueio');
+      expect(marcas.length).toBe(1);
+      expect(marcas[0].textContent?.trim()).toBe('Feriado municipal');
+      expect(celulas[INDICE_QUINTA].classList).toContain('celula-bloqueada');
+      expect(celulas[0].classList).not.toContain('celula-bloqueada');
+    });
+
+    // A cor sozinha não distingue o dia bloqueado para quem usa leitor de tela:
+    // a frase completa entra no rótulo da célula.
+    it('should describe the block in the cell accessible label', async () => {
+      await setup({ bloqueios: [bloqueioDaQuinta] });
+
+      expect(todos('.calendario-celula')[INDICE_QUINTA].getAttribute('aria-label'))
+        .toBe('21 de maio de 2026. Estúdio bloqueado: Feriado municipal — 21/05/2026, dia inteiro');
+    });
+
+    it('should render a block with a time range with its hours', async () => {
+      const manutencao = bloqueio({
+        id: 2,
+        dataInicio: '2026-05-21',
+        horaInicio: '08:00:00',
+        horaFim: '12:00:00',
+        motivo: 'Manutenção'
+      });
+      await setup({ bloqueios: [manutencao] });
+
+      expect(todos('.calendario-celula')[INDICE_QUINTA].getAttribute('aria-label'))
+        .toBe('21 de maio de 2026. Estúdio bloqueado: Manutenção — 21/05/2026, das 08:00 às 12:00');
+    });
+
+    // O bloqueio é uma condição do dia, não um evento dele: não pode entrar na
+    // contagem do resumo nem abrir o painel de detalhe.
+    it('should not turn the block into an event', async () => {
+      await setup({ sessoes: [], aulas: [], bloqueios: [bloqueioDaQuinta] });
+
+      expect(todos('.calendario-grade .evento').length).toBe(0);
+      expect(component.grade.totalEventos).toBe(0);
+      expect(component.eventoSelecionado).toBeNull();
+    });
+
+    it('should announce the blocked days in the live region', async () => {
+      await setup({ sessoes: [], aulas: [], bloqueios: [bloqueioDaQuinta] });
+
+      expect(texto('.calendario-resumo'))
+        .toBe('17 a 23 de maio de 2026: nenhuma sessão ou aula no período. 1 dia bloqueado no período.');
+    });
+
+    // Um feriado sem nenhuma aula marcada é justamente o que precisa aparecer:
+    // na visão diária ele seria a única coisa a mostrar.
+    it('should list a blocked day that has no events', async () => {
+      await setup({ sessoes: [], aulas: [], bloqueios: [bloqueioDaQuinta] });
+      component.alterarVisao('diaria');
+      component.navegar(1);
+      fixture.detectChanges();
+
+      expect(component.diasDaLista.map(dia => dia.dia)).toEqual(['2026-05-21']);
+      expect(texto('.calendario-lista .agenda-bloqueio'))
+        .toBe('Estúdio bloqueado: Feriado municipal — 21/05/2026, dia inteiro');
+      expect((fixture.nativeElement as HTMLElement).querySelector('.calendario-lista .empty-state')).toBeNull();
+    });
+
+    // O bloqueio é um aviso sobre a agenda: derrubar a grade porque o feriado
+    // não carregou trocaria a informação principal pela acessória.
+    it('should keep the agenda when the blocks request fails', async () => {
+      await setup({ erroBloqueios: new HttpErrorResponse({ status: 500 }) });
+
+      expect(component.erro).toBeNull();
+      expect(component.bloqueios).toEqual([]);
+      expect(todos('.calendario-grade .evento').length).toBe(3);
+      expect(todos('.celula-bloqueio').length).toBe(0);
+    });
+
+    // Os filtros recortam eventos; o bloqueio é do dia e continua marcado.
+    it('should keep the block visible under an active filter', async () => {
+      await setup({ bloqueios: [bloqueioDaQuinta] });
+
+      component.filtro.tipo = 'FISIOTERAPIA';
+      component.aplicarFiltros();
+      fixture.detectChanges();
+
+      expect(todos('.calendario-grade .evento').length).toBe(1);
+      expect(todos('.calendario-celula .celula-bloqueio').length).toBe(1);
     });
   });
 });

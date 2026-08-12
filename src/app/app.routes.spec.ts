@@ -65,6 +65,9 @@ describe('app routes', () => {
       'admin/usuarios',
       'admin/usuarios/novo',
       'admin/usuarios/:id/editar',
+      'admin/bloqueios',
+      'admin/bloqueios/novo',
+      'admin/bloqueios/:id/editar',
       'profissionais',
       'profissionais/novo',
       'profissionais/:id/editar',
@@ -147,6 +150,17 @@ describe('app routes', () => {
     const listIndex = paths.indexOf('admin/usuarios');
     const novoIndex = paths.indexOf('admin/usuarios/novo');
     const editarIndex = paths.indexOf('admin/usuarios/:id/editar');
+
+    expect(homeIndex).toBeLessThan(listIndex);
+    expect(listIndex).toBeLessThan(novoIndex);
+    expect(novoIndex).toBeLessThan(editarIndex);
+  });
+
+  it('should group admin bloqueios routes with the list before the forms', () => {
+    const homeIndex = paths.indexOf('admin');
+    const listIndex = paths.indexOf('admin/bloqueios');
+    const novoIndex = paths.indexOf('admin/bloqueios/novo');
+    const editarIndex = paths.indexOf('admin/bloqueios/:id/editar');
 
     expect(homeIndex).toBeLessThan(listIndex);
     expect(listIndex).toBeLessThan(novoIndex);

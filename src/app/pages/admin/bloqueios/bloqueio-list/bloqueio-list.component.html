@@ -1,0 +1,99 @@
+<div class="page-header">
+  <div>
+    <h1>Bloqueios de agenda</h1>
+    <p class="page-subtitle">Feriados, manutenções e eventos em que o estúdio não funciona</p>
+  </div>
+  <a routerLink="/admin/bloqueios/novo" class="btn btn-primary">+ Novo bloqueio</a>
+</div>
+
+<!-- O bloqueio é informativo de propósito: a API não impede a geração de aulas
+do pagamento nem o agendamento de sessões no período. Dizer isso aqui evita a
+leitura de que cadastrar um feriado limpa a agenda sozinho. -->
+<p class="bloqueio-intro">
+  O bloqueio é um aviso: ele aparece na agenda e no formulário de sessão, mas não impede
+  o agendamento nem a geração automática de aulas.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+
+<!-- Período obrigatório nas duas pontas, como o endpoint exige. Abre no ano
+corrente porque feriado se confere para o ano inteiro de uma vez. -->
+<form class="filtros" (ngSubmit)="carregar()">
+  <div class="filtro-campo">
+    <label for="periodoInicio">De</label>
+    <input id="periodoInicio" type="date" class="form-control" name="inicio" [(ngModel)]="periodo.inicio" />
+  </div>
+  <div class="filtro-campo">
+    <label for="periodoFim">Até</label>
+    <input id="periodoFim" type="date" class="form-control" name="fim" [(ngModel)]="periodo.fim" />
+  </div>
+  <div class="filtro-acoes">
+    <button type="submit" class="btn btn-secondary" [disabled]="loading">Aplicar período</button>
+  </div>
+</form>
+
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !erro && bloqueios.length === 0) {
+  <div class="empty-state">
+    Nenhum bloqueio cadastrado no período.
+  </div>
+}
+
+@if (!loading && bloqueios.length > 0) {
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de bloqueios de agenda">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Período</th>
+          <th>Horário</th>
+          <th>Motivo</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (bloqueio of bloqueios; track bloqueio.id) {
+          <tr>
+            <td>{{ periodoDoBloqueio(bloqueio) }}</td>
+            <td>{{ faixaHoraria(bloqueio) }}</td>
+            <td>{{ bloqueio.motivo }}</td>
+            <td class="acoes">
+              <a [routerLink]="['/admin/bloqueios', bloqueio.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+              <button type="button" class="btn btn-sm btn-danger" (click)="confirmarExclusao(bloqueio)">
+                Excluir
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- O período que **produziu** a lista, e não o dos campos: é ele que explica
+  por que um feriado cadastrado para o ano que vem não está na tela. Ler
+  `periodo` aqui reescreveria a frase a cada tecla, descrevendo linhas que ainda
+  não foram buscadas. -->
+  <p class="bloqueio-resumo" role="status">
+    {{ bloqueios.length }} {{ bloqueios.length === 1 ? 'bloqueio' : 'bloqueios' }}
+    entre {{ periodoAplicado.inicio | localDate }} e {{ periodoAplicado.fim | localDate }}.
+  </p>
+}
+
+<a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
+
+@if (confirmacao) {
+  <app-confirmar-dialog
+    titulo="Excluir bloqueio"
+    [mensagem]="mensagemConfirmacao"
+    variante="perigo"
+    [processando]="acaoEmAndamento"
+    (confirmar)="executarExclusao()"
+    (cancelar)="cancelarConfirmacao()" />
+}
