@@ -31,17 +31,7 @@ import { ListaEsperaService } from '../../../core/services/lista-espera.service'
 import { PacienteService } from '../../../core/services/paciente.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
-
-/** Ordem da semana como o estúdio a lê, começando na segunda. */
-const DIAS_SEMANA: DiaSemana[] = [
-  'MONDAY',
-  'TUESDAY',
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-  'SUNDAY'
-];
+import { DIAS_SEMANA_EXIBICAO } from '../../../shared/utils/lista-espera';
 
 /**
  * Termos muito curtos trariam quase a base inteira; os mesmos números da busca
@@ -100,7 +90,7 @@ export class ListaEsperaFormComponent implements OnInit, AfterViewInit {
   salvando = false;
   erro: string | null = null;
 
-  readonly diasSemana = DIAS_SEMANA;
+  readonly diasSemana = DIAS_SEMANA_EXIBICAO;
   readonly diaSemanaLabel = DIAS_SEMANA_LABEL;
   readonly observacaoMax = LISTA_ESPERA_OBSERVACAO_MAX;
   readonly listaId = 'lista-espera-sugestoes';
@@ -130,8 +120,15 @@ export class ListaEsperaFormComponent implements OnInit, AfterViewInit {
     this.busca.valueChanges
       .pipe(
         map(termo => termo.trim()),
-        debounceTime(DEBOUNCE_MS),
+        // `distinctUntilChanged` **antes** do debounce: depois dele, a limpeza
+        // emitida por `selecionarPaciente` seria engolida por qualquer tecla
+        // digitada dentro dos 300 ms, o `distinct` seguiria com o termo antigo
+        // e trocar de paciente redigitando o mesmo nome não buscaria nada. Nesta
+        // ordem o `distinct` vê cada tecla (e só descarta repetição literal,
+        // como apagar e redigitar a mesma letra) e o debounce continua
+        // garantindo uma requisição por pausa.
         distinctUntilChanged(),
+        debounceTime(DEBOUNCE_MS),
         switchMap(termo => {
           if (termo.length < TAMANHO_MINIMO_TERMO) {
             this.buscando = false;

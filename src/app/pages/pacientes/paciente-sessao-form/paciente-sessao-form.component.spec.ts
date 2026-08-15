@@ -206,27 +206,41 @@ describe('PacienteSessaoFormComponent', () => {
   // Conversão de uma entrada da lista de espera (issue #137): a tela abre com o
   // horário pedido já preenchido, e o resto do fluxo é o de sempre.
   describe('pré-preenchimento vindo da lista de espera', () => {
-    it('should prefill dataHora and duracao from the query params', async () => {
-      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-05-27T08:00', duracao: '60' });
-
-      expect(component.form.get('dataHora')?.value).toBe('2026-05-27T08:00');
-      expect(component.form.get('duracao')?.value).toBe(60);
-    });
-
-    it('should leave duracao empty when the entry has no usable range', async () => {
+    it('should prefill dataHora from the query param', async () => {
       await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-05-27T08:00' });
 
       expect(component.form.get('dataHora')?.value).toBe('2026-05-27T08:00');
+    });
+
+    // A faixa da inscrição é uma janela de disponibilidade, não a duração da
+    // sessão: a duração continua sendo digitada, como em qualquer sessão nova.
+    it('should never prefill duracao, even when the URL carries one', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-05-27T08:00', duracao: '240' });
+
       expect(component.form.get('duracao')?.value).toBeNull();
     });
 
     // Uma URL torta não pode impedir o agendamento manual, que é o caminho
     // normal desta tela.
-    it('should ignore malformed values instead of failing', async () => {
-      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '27/05/2026', duracao: '999' });
+    it('should ignore a malformed value instead of failing', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '27/05/2026' });
 
       expect(component.form.get('dataHora')?.value).toBe('');
-      expect(component.form.get('duracao')?.value).toBeNull();
+    });
+
+    // O formato sozinho não basta: o `input[type=datetime-local]` recusa a data
+    // impossível e renderiza vazio, e o campo obrigatório pareceria em branco
+    // com o formulário se dando por válido.
+    it('should reject an out-of-range instant that matches the shape', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '9999-99-99T99:99' });
+
+      expect(component.form.get('dataHora')?.value).toBe('');
+    });
+
+    it('should reject a day that does not exist in the month', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-02-31T08:00' });
+
+      expect(component.form.get('dataHora')?.value).toBe('');
     });
 
     it('should not prefill in edit mode, where the session is the source', async () => {

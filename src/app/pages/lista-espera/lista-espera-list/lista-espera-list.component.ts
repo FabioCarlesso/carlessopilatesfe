@@ -10,21 +10,10 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import {
   descreverEspera,
-  duracaoDaFaixa,
+  DIAS_SEMANA_EXIBICAO,
   formatarFaixa,
   proximoAgendamento
 } from '../../../shared/utils/lista-espera';
-
-/** Ordem da semana como o estúdio a lê, começando na segunda. */
-const DIAS_SEMANA: DiaSemana[] = [
-  'MONDAY',
-  'TUESDAY',
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-  'SUNDAY'
-];
 
 /**
  * Uma linha da fila, montada na carga. A conversão em sessão precisa da próxima
@@ -37,8 +26,13 @@ interface LinhaDaFila {
   ordem: number;
   dia: string;
   faixa: string;
-  /** `queryParams` do formulário de sessão, já pré-preenchidos. */
-  conversao: { dataHora: string; duracao?: number };
+  /**
+   * `queryParams` do formulário de sessão. Só o início: a faixa da inscrição é
+   * uma **janela de disponibilidade** ("posso das 08:00 às 12:00"), e não a
+   * duração da sessão — pré-preencher 240 minutos a partir dela marcaria o
+   * estúdio por quatro horas.
+   */
+  conversao: { dataHora: string };
 }
 
 /**
@@ -67,6 +61,14 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
     horaFim: ''
   };
 
+  /**
+   * Filtro que de fato produziu a lista na tela. Separado de `filtro`, que o
+   * `[(ngModel)]` move a cada tecla: é ele que a recarga pós-remoção repete, de
+   * modo que um filtro digitado pela metade e nunca aplicado não transforme uma
+   * remoção bem-sucedida em faixa de erro sobre uma tabela vazia.
+   */
+  private filtroAplicado = { ...this.filtro };
+
   linhas: LinhaDaFila[] = [];
   /** Verdadeiro quando a lista na tela veio de uma consulta com filtro. */
   filtrada = false;
@@ -77,7 +79,7 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
   confirmacao: ListaEsperaResponseDTO | null = null;
   acaoEmAndamento = false;
 
-  readonly diasSemana = DIAS_SEMANA;
+  readonly diasSemana = DIAS_SEMANA_EXIBICAO;
   readonly diaSemanaLabel = DIAS_SEMANA_LABEL;
 
   private successTimer: ReturnType<typeof setTimeout> | null = null;
@@ -95,6 +97,7 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
     if (this.successTimer !== null) clearTimeout(this.successTimer);
   }
 
+  /** Aplica o que está nos campos. É o único caminho que move `filtroAplicado`. */
   carregar(): void {
     const invalido = this.validarFiltro();
     if (invalido !== null) {
@@ -104,10 +107,20 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.filtroAplicado = { ...this.filtro };
+    this.buscar();
+  }
+
+  /**
+   * Consulta com o filtro **aplicado**, e não com o que estiver nos campos: a
+   * recarga que segue uma remoção não pode arrastar um filtro que o usuário
+   * começou a digitar e ainda não submeteu.
+   */
+  private buscar(): void {
     this.loading = true;
     this.erro = null;
 
-    const { diaSemana, horaInicio, horaFim } = this.filtro;
+    const { diaSemana, horaInicio, horaFim } = this.filtroAplicado;
     const comFiltro = diaSemana !== 'todos' || horaInicio !== '';
 
     this.service.listar({
@@ -151,18 +164,12 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
   }
 
   private montarLinha(entrada: ListaEsperaResponseDTO, indice: number, agora: Date): LinhaDaFila {
-    const duracao = duracaoDaFaixa(entrada);
     return {
       entrada,
       ordem: indice + 1,
       dia: DIAS_SEMANA_LABEL[entrada.diaSemana] ?? entrada.diaSemana,
       faixa: formatarFaixa(entrada),
-      // A duração só entra quando a faixa tem uma: `duracao=0` reprovaria no
-      // `min` do formulário de sessão sem explicar por quê, e omiti-la deixa o
-      // campo em branco, obrigatório como já é.
-      conversao: duracao === null
-        ? { dataHora: proximoAgendamento(entrada, agora) }
-        : { dataHora: proximoAgendamento(entrada, agora), duracao }
+      conversao: { dataHora: proximoAgendamento(entrada, agora) }
     };
   }
 
@@ -197,7 +204,7 @@ export class ListaEsperaListComponent implements OnInit, OnDestroy {
           this.exibirSucesso('Entrada removida da lista de espera.');
           // A remoção muda as posições de quem ficou: recarrega em vez de
           // recortar a lista no cliente, que deixaria a coluna de ordem errada.
-          this.carregar();
+          this.buscar();
         },
         error: err => {
           this.erro = extrairMensagemErro(err, 'Erro ao remover a entrada.');

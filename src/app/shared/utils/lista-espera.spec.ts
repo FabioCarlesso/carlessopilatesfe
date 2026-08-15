@@ -4,7 +4,6 @@ import {
   avisoDeInteressados,
   descreverEspera,
   diaSemanaDoDia,
-  duracaoDaFaixa,
   faixaDoAgendamento,
   formatarDiaEFaixa,
   formatarFaixa,
@@ -106,19 +105,6 @@ describe('lista-espera utils', () => {
     });
   });
 
-  describe('duracaoDaFaixa', () => {
-    it('should measure the slot in minutes', () => {
-      expect(duracaoDaFaixa(entrada())).toBe(60);
-      expect(duracaoDaFaixa(entrada({ horaInicio: '08:00:00', horaFim: '08:50:00' }))).toBe(50);
-    });
-
-    // Zero reprovaria no `min` do formulário de sessão sem explicar por quê.
-    it('should return null for a range without positive duration', () => {
-      expect(duracaoDaFaixa(entrada({ horaFim: '08:00:00' }))).toBeNull();
-      expect(duracaoDaFaixa(entrada({ horaFim: 'manhã' }))).toBeNull();
-    });
-  });
-
   describe('formatação', () => {
     it('should format the time range', () => {
       expect(formatarFaixa(entrada())).toBe('Das 08:00 às 09:00');
@@ -130,6 +116,13 @@ describe('lista-espera utils', () => {
 
     it('should describe an entry with the patient name', () => {
       expect(descreverEspera(entrada())).toBe('Ana Souza — Quarta, das 08:00 às 09:00');
+    });
+
+    // "Das 08:00 às null" seria pior do que mostrar o que a API mandou.
+    it('should fall back to the raw values instead of printing null', () => {
+      expect(formatarFaixa(entrada({ horaFim: 'manhã' }))).toBe('Das 08:00 às manhã');
+      expect(formatarDiaEFaixa(entrada({ diaSemana: 'FUNDAY' as DiaSemana })))
+        .toBe('FUNDAY, das 08:00 às 09:00');
     });
   });
 

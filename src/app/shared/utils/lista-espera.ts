@@ -107,25 +107,36 @@ export function proximoAgendamento(entrada: ListaEsperaResponseDTO, agora: Date)
 }
 
 /**
- * Duração da faixa em minutos, para pré-preencher a duração da sessão. `null`
- * quando as horas não são reconhecíveis ou a faixa não tem duração positiva —
- * mandar `0` reprovaria no `min` do formulário sem explicar por quê.
+ * Ordem da semana como o estúdio a lê, começando na segunda. Existe separada de
+ * `DIA_SEMANA_POR_INDICE` (que é a ordem do `Date.getDay()`, começando no
+ * domingo) porque uma é de exibição e a outra é de conversão — e existe **aqui**
+ * para que a fila e o formulário de inscrição não declarem cada um a sua.
  */
-export function duracaoDaFaixa(entrada: ListaEsperaResponseDTO): number | null {
-  const inicio = minutosDoDia(entrada.horaInicio);
-  const fim = minutosDoDia(entrada.horaFim);
-  if (inicio === null || fim === null || fim <= inicio) return null;
-  return fim - inicio;
-}
+export const DIAS_SEMANA_EXIBICAO: DiaSemana[] = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY'
+];
 
-/** "Das 08:00 às 09:00". */
+/**
+ * "Das 08:00 às 09:00". Hora que a API devolva num formato inesperado cai na
+ * string crua, e não em `null` interpolado — "Das 08:00 às null" seria pior do
+ * que mostrar o que veio.
+ */
 export function formatarFaixa(entrada: ListaEsperaResponseDTO): string {
-  return `Das ${normalizarHora(entrada.horaInicio)} às ${normalizarHora(entrada.horaFim)}`;
+  const inicio = normalizarHora(entrada.horaInicio) ?? entrada.horaInicio;
+  const fim = normalizarHora(entrada.horaFim) ?? entrada.horaFim;
+  return `Das ${inicio} às ${fim}`;
 }
 
 /** "Quarta, das 08:00 às 09:00". */
 export function formatarDiaEFaixa(entrada: ListaEsperaResponseDTO): string {
-  return `${DIAS_SEMANA_LABEL[entrada.diaSemana]}, ${formatarFaixa(entrada).toLowerCase()}`;
+  const dia = DIAS_SEMANA_LABEL[entrada.diaSemana] ?? entrada.diaSemana;
+  return `${dia}, ${formatarFaixa(entrada).toLowerCase()}`;
 }
 
 /**

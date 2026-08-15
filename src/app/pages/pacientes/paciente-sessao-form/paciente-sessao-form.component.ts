@@ -25,7 +25,26 @@ import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils
 
 const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 /** Formato que o `input[type=datetime-local]` aceita — sem segundos. */
-const DATA_HORA_LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+const DATA_HORA_LOCAL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+
+/**
+ * Verdadeiro só para um instante que existe de fato. O formato sozinho não
+ * basta: `9999-99-99T99:99` casa com o padrão, mas o `input[type=datetime-local]`
+ * o recusa e renderiza vazio — o campo obrigatório pareceria em branco enquanto
+ * o formulário se dá por válido e manda a data impossível para a API.
+ */
+function ehDataHoraLocalValida(valor: string): boolean {
+  const match = DATA_HORA_LOCAL.exec(valor);
+  if (match === null) return false;
+
+  const [, ano, mes, dia, hora, minuto] = match.map(Number);
+  if (hora > 23 || minuto > 59) return false;
+
+  // Construtor numérico (local, nunca UTC): a data volta diferente do que
+  // entrou quando o dia não existe no mês — 31/02 vira 03/03.
+  const data = new Date(ano, mes - 1, dia);
+  return data.getFullYear() === ano && data.getMonth() === mes - 1 && data.getDate() === dia;
+}
 
 @Component({
   selector: 'app-paciente-sessao-form',
@@ -117,25 +136,24 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
 
   /**
    * Pré-preenchimento vindo da lista de espera (issue #137): a conversão de uma
-   * entrada da fila abre esta tela com `?dataHora=&duracao=`, já na próxima
-   * ocorrência do dia da semana pedido.
+   * entrada da fila abre esta tela com `?dataHora=`, já na próxima ocorrência do
+   * dia da semana pedido.
    *
-   * É **sugestão**, não imposição: os campos continuam editáveis, e um valor
-   * fora do formato é ignorado em silêncio em vez de acender faixa de erro —
-   * uma URL torta não pode impedir o agendamento manual, que é o caminho normal
-   * desta tela. Por isso também não há validação de futuro aqui: a fila guarda
-   * o horário pedido, e quem agenda decide a data.
+   * Só o **início**. A faixa da inscrição é uma janela de disponibilidade
+   * ("posso das 08:00 às 12:00"), não a duração da sessão, e derivar a duração
+   * dela marcaria o estúdio por quatro horas; a duração continua sendo digitada,
+   * como em qualquer sessão nova.
+   *
+   * É **sugestão**, não imposição: o campo continua editável, e um valor que não
+   * descreva um instante real é ignorado em silêncio em vez de acender faixa de
+   * erro — uma URL torta não pode impedir o agendamento manual, que é o caminho
+   * normal desta tela. Por isso também não há validação de futuro aqui: a fila
+   * guarda o horário pedido, e quem agenda decide a data.
    */
   private aplicarPreenchimentoDaEspera(): void {
-    const { dataHora, duracao } = this.route.snapshot.queryParams;
-
-    if (typeof dataHora === 'string' && DATA_HORA_LOCAL.test(dataHora)) {
+    const { dataHora } = this.route.snapshot.queryParams;
+    if (typeof dataHora === 'string' && ehDataHoraLocalValida(dataHora)) {
       this.form.get('dataHora')?.setValue(dataHora);
-    }
-
-    const minutos = Number(duracao);
-    if (Number.isInteger(minutos) && minutos >= 1 && minutos <= 480) {
-      this.form.get('duracao')?.setValue(minutos);
     }
   }
 

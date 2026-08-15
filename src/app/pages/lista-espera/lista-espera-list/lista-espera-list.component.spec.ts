@@ -101,12 +101,36 @@ describe('ListaEsperaListComponent', () => {
 
   // A inscrição vale para o dia da semana: a conversão pré-preenche a próxima
   // ocorrência dele, pulando a de hoje quando o horário já passou.
-  it('should prefill the session form with the next occurrence and the slot length', async () => {
+  //
+  // Só o início: a faixa é uma janela de disponibilidade, e não a duração da
+  // sessão — derivar 240 minutos de uma janela das 08:00 às 12:00 marcaria o
+  // estúdio por quatro horas.
+  it('should prefill only the start of the next occurrence', async () => {
     await setup();
 
-    expect(component.linhas[0].conversao).toEqual({ dataHora: '2026-05-27T08:00', duracao: 60 });
-    expect(component.linhas[1].conversao).toEqual({ dataHora: '2026-05-22T19:00', duracao: 60 });
+    expect(component.linhas[0].conversao).toEqual({ dataHora: '2026-05-27T08:00' });
+    expect(component.linhas[1].conversao).toEqual({ dataHora: '2026-05-22T19:00' });
     expect(todos('.acoes a').length).toBe(2);
+  });
+
+  // A recarga que segue a remoção não pode arrastar um filtro que o usuário
+  // começou a digitar e nunca aplicou.
+  it('should reload with the applied filter, not with unsubmitted edits', async () => {
+    await setup();
+    component.filtro = { diaSemana: 'FRIDAY', horaInicio: '19:00', horaFim: '20:00' };
+    component.carregar();
+    // Usuário limpa a ponta final para redigitá-la; o `ngModel` move na hora.
+    component.filtro.horaFim = '';
+    serviceSpy.listar.calls.reset();
+
+    component.confirmarRemocao(ana);
+    component.executarRemocao();
+    fixture.detectChanges();
+
+    expect(serviceSpy.listar)
+      .toHaveBeenCalledWith({ diaSemana: 'FRIDAY', horaInicio: '19:00', horaFim: '20:00' });
+    expect(component.erro).toBeNull();
+    expect(texto('.alert-success')).toBe('Entrada removida da lista de espera.');
   });
 
   it('should send the filters to the API', async () => {

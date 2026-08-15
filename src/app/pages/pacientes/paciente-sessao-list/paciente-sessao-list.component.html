@@ -107,11 +107,15 @@
     [processando]="acaoEmAndamentoId !== null"
     (confirmar)="executarAcao()"
     (cancelar)="cancelarAcao()">
-    <!-- Quem espera pela faixa que o cancelamento libera. Chega depois da
-    consulta à fila, então aparece com o diálogo já aberto. -->
-    @if (avisoListaEspera; as aviso) {
-      <p class="alert alert-warning" role="status">{{ aviso }}</p>
-    }
+    <!-- Quem espera pela faixa que o cancelamento libera. O `role="status"` fica
+    **fora** do `@if`: a região precisa existir antes de a consulta responder,
+    senão o leitor de tela não anuncia o aviso — que chega depois de o diálogo já
+    ter lido o `aria-describedby`. -->
+    <div role="status">
+      @if (avisoListaEspera; as aviso) {
+        <p class="alert alert-warning">{{ aviso }}</p>
+      }
+    </div>
   </app-confirmar-dialog>
 }
 

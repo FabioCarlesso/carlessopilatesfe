@@ -138,7 +138,6 @@ describe('ListaEsperaFormComponent', () => {
       await setup();
       buscar('ana');
       (todos('.sugestao')[0] as HTMLButtonElement).click();
-      tick(300);
       component.limparPaciente();
       fixture.detectChanges();
       pacienteServiceSpy.listar.calls.reset();
