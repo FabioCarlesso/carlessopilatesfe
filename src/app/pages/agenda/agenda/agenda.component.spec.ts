@@ -3,11 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
+import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { AulaService } from '../../../core/services/aula.service';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
+import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
@@ -117,11 +119,13 @@ describe('AgendaComponent', () => {
   let aulaServiceSpy: jasmine.SpyObj<AulaService>;
   let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
   let bloqueioServiceSpy: jasmine.SpyObj<BloqueioAgendaService>;
+  let listaEsperaServiceSpy: jasmine.SpyObj<ListaEsperaService>;
 
   async function setup(opcoes: {
     sessoes?: SessaoResponseDTO[];
     aulas?: AulaResponseDTO[];
     bloqueios?: BloqueioAgendaResponseDTO[];
+    fila?: ListaEsperaResponseDTO[];
     erroSessoes?: HttpErrorResponse;
     erroProfissionais?: HttpErrorResponse;
     erroBloqueios?: HttpErrorResponse;
@@ -131,7 +135,9 @@ describe('AgendaComponent', () => {
     aulaServiceSpy = jasmine.createSpyObj('AulaService', ['listarPorPeriodo', 'realizar']);
     profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     bloqueioServiceSpy = jasmine.createSpyObj('BloqueioAgendaService', ['listarPorPeriodo']);
+    listaEsperaServiceSpy = jasmine.createSpyObj('ListaEsperaService', ['listar']);
 
+    listaEsperaServiceSpy.listar.and.returnValue(of(opcoes.fila ?? []));
     bloqueioServiceSpy.listarPorPeriodo.and.returnValue(
       opcoes.erroBloqueios ? throwError(() => opcoes.erroBloqueios) : of(opcoes.bloqueios ?? []));
 
@@ -154,7 +160,8 @@ describe('AgendaComponent', () => {
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: AulaService, useValue: aulaServiceSpy },
         { provide: ProfissionalService, useValue: profissionalServiceSpy },
-        { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy }
+        { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy },
+        { provide: ListaEsperaService, useValue: listaEsperaServiceSpy }
       ]
     }).compileComponents();
 
@@ -465,6 +472,78 @@ describe('AgendaComponent', () => {
 
       expect(sessaoServiceSpy.cancelar).toHaveBeenCalledWith(7);
       expect(texto('.alert-success')).toBe('Sessão cancelada.');
+    });
+
+    // Aviso da lista de espera no cancelamento (issue #137).
+    describe('aviso da lista de espera', () => {
+      const interessado: ListaEsperaResponseDTO = {
+        id: 5,
+        pacienteId: 20,
+        pacienteNome: 'Bruno Lima',
+        diaSemana: 'WEDNESDAY',
+        horaInicio: '13:30:00',
+        horaFim: '15:00:00',
+        dataEntrada: '2026-05-01T08:00:00',
+        observacao: null
+      };
+
+      // A sessão âncora é quarta, 14:00, com 50 minutos de duração — a faixa
+      // consultada é a dela, e não só o instante inicial.
+      it('should ask the queue for the slot the cancellation frees', async () => {
+        await setup({ fila: [interessado] });
+        abrirPrimeiroEvento();
+
+        clicar('.detalhe-acoes .btn-danger');
+
+        expect(listaEsperaServiceSpy.listar).toHaveBeenCalledWith({
+          diaSemana: 'WEDNESDAY',
+          horaInicio: '14:00',
+          horaFim: '14:50'
+        });
+      });
+
+      it('should name the interested patients in the confirmation', async () => {
+        await setup({ fila: [interessado] });
+        abrirPrimeiroEvento();
+
+        clicar('.detalhe-acoes .btn-danger');
+
+        expect(texto('.dialog .alert-warning'))
+          .toBe('1 pessoa na lista de espera para este horário: Bruno Lima — Quarta, das 13:30 às 15:00.');
+      });
+
+      it('should not consult the queue when marking an event as done', async () => {
+        await setup({ fila: [interessado] });
+        abrirPrimeiroEvento();
+
+        clicar('.detalhe-acoes .btn-primary');
+
+        expect(listaEsperaServiceSpy.listar).not.toHaveBeenCalled();
+      });
+
+      // O aviso é um extra: derrubar o cancelamento porque a fila não carregou
+      // trocaria a ação principal pela acessória.
+      it('should stay silent when the queue fails to load', async () => {
+        await setup();
+        listaEsperaServiceSpy.listar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        abrirPrimeiroEvento();
+
+        clicar('.detalhe-acoes .btn-danger');
+
+        expect(component.avisoListaEspera).toBeNull();
+        expect(component.erroAcao).toBeNull();
+        expect(component.acaoPendente).toBe('cancelar');
+      });
+
+      it('should drop the queue when the confirmation is dismissed', async () => {
+        await setup({ fila: [interessado] });
+        abrirPrimeiroEvento();
+        clicar('.detalhe-acoes .btn-danger');
+
+        clicar('.dialog-actions .btn-outline');
+
+        expect(component.interessados).toEqual([]);
+      });
     });
 
     // A aula não tem cancelamento na API: só o booleano `realizada`.

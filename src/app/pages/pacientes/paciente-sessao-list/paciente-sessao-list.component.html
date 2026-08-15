@@ -106,7 +106,17 @@
     variante="perigo"
     [processando]="acaoEmAndamentoId !== null"
     (confirmar)="executarAcao()"
-    (cancelar)="cancelarAcao()" />
+    (cancelar)="cancelarAcao()">
+    <!-- Quem espera pela faixa que o cancelamento libera. O `role="status"` fica
+    **fora** do `@if`: a região precisa existir antes de a consulta responder,
+    senão o leitor de tela não anuncia o aviso — que chega depois de o diálogo já
+    ter lido o `aria-describedby`. -->
+    <div role="status">
+      @if (avisoListaEspera; as aviso) {
+        <p class="alert alert-warning">{{ aviso }}</p>
+      }
+    </div>
+  </app-confirmar-dialog>
 }
 
 @if (reagendarId !== null) {

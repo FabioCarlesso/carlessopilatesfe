@@ -13,16 +13,19 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, Observable, of } from 'rxjs';
 import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
+import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO, SessaoTipo, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { AulaService } from '../../../core/services/aula.service';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
+import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { agruparBloqueiosPorDia, descreverBloqueio } from '../../../shared/utils/bloqueio-agenda';
+import { avisoDeInteressados, faixaDoAgendamento } from '../../../shared/utils/lista-espera';
 import {
   CALENDARIO_STATUS_LABEL,
   CalendarioDia,
@@ -136,6 +139,12 @@ export class AgendaComponent implements OnInit, OnDestroy {
   profissionalInvalido = false;
   acaoPendente: AgendaAcao | null = null;
   acaoEmAndamento = false;
+  /**
+   * Interessados na faixa da sessão que está para ser cancelada (issue #137).
+   * Consultados ao pedir a confirmação e limpos ao fechá-la: a fila muda, e uma
+   * lista guardada da confirmação anterior descreveria outro horário.
+   */
+  interessados: ListaEsperaResponseDTO[] = [];
 
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -212,6 +221,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
     private aulaService: AulaService,
     private profissionalService: ProfissionalService,
     private bloqueioService: BloqueioAgendaService,
+    private listaEsperaService: ListaEsperaService,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef
   ) {}
@@ -533,11 +543,47 @@ export class AgendaComponent implements OnInit, OnDestroy {
     this.profissionalInvalido = false;
     this.erroAcao = null;
     this.acaoPendente = acao;
+    this.interessados = [];
+    if (acao === 'cancelar') this.consultarListaEspera(this.eventoSelecionado);
+  }
+
+  /**
+   * Quem espera pelo horário que o cancelamento vai liberar (issue #137). A
+   * faixa é a da própria sessão — daí a duração no evento —, e a API cruza
+   * faixas por interseção: quem pediu 07:30–09:30 também aparece para uma
+   * sessão das 08:00 às 09:00.
+   *
+   * A falha vira silêncio, e não faixa de erro: o aviso é um extra, e impedir o
+   * cancelamento porque a fila não carregou seria pior do que não avisar.
+   */
+  private consultarListaEspera(evento: CalendarioEvento): void {
+    const faixa = faixaDoAgendamento(`${evento.dia}T${evento.horario}`, evento.duracao);
+    if (faixa === null) return;
+
+    this.listaEsperaService.listar(faixa)
+      .pipe(
+        catchError(() => of<ListaEsperaResponseDTO[]>([])),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(fila => {
+        // A confirmação pode ter sido fechada enquanto a consulta ia e voltava;
+        // guardar a fila então acenderia o aviso na confirmação seguinte.
+        if (this.acaoPendente !== 'cancelar' || this.eventoSelecionado !== evento) return;
+        this.interessados = fila;
+        // Obrigatório com `OnPush`: a resposta chega fora de qualquer evento de
+        // template, e sem isto o aviso só apareceria no ciclo seguinte.
+        this.cdr.markForCheck();
+      });
+  }
+
+  get avisoListaEspera(): string | null {
+    return avisoDeInteressados(this.interessados);
   }
 
   cancelarConfirmacao(): void {
     if (this.acaoEmAndamento) return;
     this.acaoPendente = null;
+    this.interessados = [];
   }
 
   get tituloConfirmacao(): string {
@@ -577,6 +623,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
       next: () => {
         this.acaoEmAndamento = false;
         this.acaoPendente = null;
+        this.interessados = [];
         this.eventoSelecionado = null;
         this.disparadorDoPainel = null;
         this.exibirSucesso(acao === 'cancelar' ? 'Sessão cancelada.' : 'Evento marcado como realizado.');

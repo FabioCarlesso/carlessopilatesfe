@@ -25,8 +25,9 @@ import {
 } from '../../../../core/models/bloqueio-agenda';
 import { BloqueioAgendaService } from '../../../../core/services/bloqueio-agenda.service';
 import { extrairMensagemErro } from '../../../../shared/utils/api-error';
-import { ehDiaInteiro, normalizarHora } from '../../../../shared/utils/bloqueio-agenda';
+import { ehDiaInteiro } from '../../../../shared/utils/bloqueio-agenda';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/utils/form-focus';
+import { normalizarHora } from '../../../../shared/utils/hora';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
 
 /**

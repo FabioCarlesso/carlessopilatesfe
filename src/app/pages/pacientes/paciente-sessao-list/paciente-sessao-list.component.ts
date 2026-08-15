@@ -6,11 +6,14 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, throwError } from 'rxjs';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
+import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { SessaoResponseDTO, SESSAO_STATUS_LABEL, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { avisoDeInteressados, faixaDoAgendamento } from '../../../shared/utils/lista-espera';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -54,6 +57,12 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   reagendarId: number | null = null;
   reagendarForm!: FormGroup;
   reagendarMinDataHora = '';
+  /**
+   * Interessados na faixa da sessão que está para ser cancelada (issue #137).
+   * Consultados ao abrir a confirmação e limpos ao fechá-la: a fila muda, e uma
+   * lista guardada da confirmação anterior descreveria outro horário.
+   */
+  interessados: ListaEsperaResponseDTO[] = [];
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = SESSAO_STATUS_LABEL;
@@ -62,6 +71,7 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
   constructor(
     private sessaoService: SessaoService,
     private pacienteService: PacienteService,
+    private listaEsperaService: ListaEsperaService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef,
@@ -142,11 +152,45 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
 
     this.confirmarAcaoId = id;
     this.acaoPendente = acao;
+    this.interessados = [];
+    if (acao === 'cancelar') this.consultarListaEspera(id);
+  }
+
+  /**
+   * Quem espera pelo horário que o cancelamento vai liberar (issue #137). A
+   * faixa é a da própria sessão, e a API cruza faixas por interseção: quem
+   * pediu 07:30–09:30 também aparece para uma sessão das 08:00 às 09:00.
+   *
+   * A falha vira silêncio, e não faixa de erro: o aviso é um extra, e impedir o
+   * cancelamento porque a fila não carregou seria pior do que não avisar.
+   */
+  private consultarListaEspera(sessaoId: number): void {
+    const sessao = this.sessoes.find(atual => atual.id === sessaoId);
+    const faixa = faixaDoAgendamento(sessao?.dataHora, sessao?.duracao);
+    if (faixa === null) return;
+
+    this.listaEsperaService.listar(faixa)
+      .pipe(
+        catchError(() => of<ListaEsperaResponseDTO[]>([])),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(fila => {
+        // A confirmação pode ter sido fechada enquanto a consulta ia e voltava;
+        // guardar a fila então acenderia o aviso na confirmação seguinte.
+        if (this.confirmarAcaoId === sessaoId && this.acaoPendente === 'cancelar') {
+          this.interessados = fila;
+        }
+      });
+  }
+
+  get avisoListaEspera(): string | null {
+    return avisoDeInteressados(this.interessados);
   }
 
   cancelarAcao(): void {
     this.confirmarAcaoId = null;
     this.acaoPendente = null;
+    this.interessados = [];
   }
 
   executarAcao(): void {

@@ -32,6 +32,7 @@ ser testada isoladamente do componente que a consome.
 │   │   │   ├── aulas/              # Aulas geradas e confirmação de presença
 │   │   │   ├── auth/               # Login, recuperação de senha e tela 403
 │   │   │   ├── dashboard/          # Tela inicial com indicadores
+│   │   │   ├── lista-espera/       # Fila de interessados por dia da semana e horário
 │   │   │   ├── pacientes/          # CRUD e prontuário completo do paciente
 │   │   │   ├── pagamentos/         # Registro e confirmação de pagamentos
 │   │   │   ├── perfil/             # Troca de senha do usuário autenticado

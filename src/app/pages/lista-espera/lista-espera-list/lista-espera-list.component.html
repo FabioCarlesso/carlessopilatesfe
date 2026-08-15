@@ -1,0 +1,124 @@
+<div class="page-header">
+  <div>
+    <h1>Lista de espera</h1>
+    <p class="page-subtitle">Quem aguarda vaga num dia da semana e faixa de horário lotados</p>
+  </div>
+  <a routerLink="/lista-espera/nova" class="btn btn-primary">+ Nova inscrição</a>
+</div>
+
+<!-- A fila é por dia da semana, e não por data: quem espera pela quarta das
+08:00 continua esperando na semana seguinte. Dizer isso aqui evita a leitura de
+que a inscrição vale para uma data só. -->
+<p class="espera-intro">
+  A inscrição vale para o dia da semana e a faixa de horário, não para uma data.
+  A ordem é a de chegada e não pode ser alterada.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+
+<!-- Os filtros são do servidor: a faixa casa por interseção, então buscar
+08:00–09:00 encontra também quem se inscreveu para 07:30–09:30. -->
+<form class="filtros" (ngSubmit)="carregar()">
+  <div class="filtro-campo">
+    <label for="filtroDiaSemana">Dia da semana</label>
+    <select id="filtroDiaSemana" class="form-control" name="diaSemana" [(ngModel)]="filtro.diaSemana">
+      <option value="todos">Todos</option>
+      @for (dia of diasSemana; track dia) {
+        <option [value]="dia">{{ diaSemanaLabel[dia] }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro-campo">
+    <label for="filtroHoraInicio">A partir de</label>
+    <input id="filtroHoraInicio" type="time" class="form-control" name="horaInicio"
+      [(ngModel)]="filtro.horaInicio" />
+  </div>
+  <div class="filtro-campo">
+    <label for="filtroHoraFim">Até</label>
+    <input id="filtroHoraFim" type="time" class="form-control" name="horaFim"
+      [(ngModel)]="filtro.horaFim" />
+  </div>
+  <div class="filtro-acoes">
+    <button type="submit" class="btn btn-secondary" [disabled]="loading">Aplicar filtros</button>
+    <button type="button" class="btn btn-outline" [disabled]="loading" (click)="limparFiltro()">Limpar</button>
+  </div>
+</form>
+
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !erro && linhas.length === 0) {
+  <div class="empty-state">
+    {{ filtrada
+      ? 'Nenhum interessado nesse dia e faixa de horário.'
+      : 'Nenhum paciente na lista de espera.' }}
+  </div>
+}
+
+@if (!loading && linhas.length > 0) {
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de espera por horário">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Ordem</th>
+          <th scope="col">Paciente</th>
+          <th scope="col">Dia</th>
+          <th scope="col">Horário</th>
+          <th scope="col">Entrou em</th>
+          <th scope="col">Observação</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (linha of linhas; track linha.entrada.id) {
+          <tr>
+            <td class="espera-ordem">{{ linha.ordem }}º</td>
+            <td>
+              <a [routerLink]="['/pacientes', linha.entrada.pacienteId]">{{ linha.entrada.pacienteNome }}</a>
+            </td>
+            <td>{{ linha.dia }}</td>
+            <td>{{ linha.faixa }}</td>
+            <td>{{ linha.entrada.dataEntrada | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ linha.entrada.observacao || '—' }}</td>
+            <td class="acoes">
+              <!-- Abre o formulário de sessão já preenchido com a próxima
+              ocorrência do dia da semana e a duração da faixa; a inscrição
+              continua na fila até ser removida, porque só a recepção sabe se a
+              sessão foi mesmo marcada. -->
+              <a
+                [routerLink]="['/pacientes', linha.entrada.pacienteId, 'sessoes', 'nova']"
+                [queryParams]="linha.conversao"
+                class="btn btn-sm btn-secondary"
+              >Converter em sessão</a>
+              <button type="button" class="btn btn-sm btn-danger"
+                (click)="confirmarRemocao(linha.entrada)">
+                Remover
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p class="espera-resumo" role="status">
+    {{ linhas.length }} {{ linhas.length === 1 ? 'pessoa' : 'pessoas' }} na fila{{ filtrada ? ' com os filtros aplicados' : '' }}.
+  </p>
+}
+
+@if (confirmacao) {
+  <app-confirmar-dialog
+    titulo="Remover da lista de espera"
+    [mensagem]="mensagemConfirmacao"
+    variante="perigo"
+    textoConfirmar="Remover"
+    [processando]="acaoEmAndamento"
+    (confirmar)="executarRemocao()"
+    (cancelar)="cancelarConfirmacao()" />
+}

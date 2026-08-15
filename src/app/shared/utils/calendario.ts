@@ -94,6 +94,13 @@ export interface CalendarioEvento {
   dia: string;
   /** `HH:mm`, ou `null` na aula — a API de aulas só guarda a data. */
   horario: string | null;
+  /**
+   * Duração em minutos da sessão; `null` na aula, que não tem duração na API.
+   * A agenda a usa para descobrir a faixa que um cancelamento libera e
+   * consultar a lista de espera (issue #137) — sem ela, o aviso encontraria
+   * apenas quem espera pelo instante inicial, e não pelo horário inteiro.
+   */
+  duracao: number | null;
   titulo: string;
   /**
    * "Sessão: Pilates" — origem e tipo juntos, para a linha da agenda e para a
@@ -262,6 +269,7 @@ function eventoDaSessao(sessao: SessaoResponseDTO, comPaciente: boolean): Calend
     id: sessao.id,
     dia: sessao.dataHora.slice(0, 10),
     horario: sessao.dataHora.slice(11, 16) || null,
+    duracao: sessao.duracao,
     // Na agenda do estúdio quem identifica a linha é o paciente: o tipo se
     // repete a tarde inteira e o nome é o que a recepção procura na grade.
     titulo: comPaciente ? sessao.nomePaciente : tipo,
@@ -287,6 +295,7 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
     // A API de aulas guarda apenas a data: o horário da aula é o do plano,
     // que não vem no DTO. Fica nulo em vez de virar "00:00", que mentiria.
     horario: null,
+    duracao: null,
     titulo: comPaciente ? aula.pacienteNome : CALENDARIO_ORIGEM_LABEL.AULA,
     rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
     status: (aula.realizada ? 'REALIZADA' : 'AGENDADA') as CalendarioStatus,

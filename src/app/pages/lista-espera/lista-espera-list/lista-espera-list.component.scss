@@ -1,0 +1,86 @@
+/* Lista de espera por horário (issue #137). Repete o desenho das demais
+   listagens: cabeçalho com ação primária, filtros em cartão elevado e tabela
+   dentro do `.table-wrap`. */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--text-primary);
+  }
+}
+
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.espera-intro {
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-5);
+}
+
+/* Mesmo grid dos filtros da agenda e das listagens: `auto-fit` com piso de
+   180px empilha sozinho em 375px, sem media query. */
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+  align-items: end;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  box-shadow: var(--shadow-1);
+}
+
+.filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  label {
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 600;
+  }
+}
+
+.filtro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Largura mínima para o scroll horizontal ficar contido no `.table-wrap` em vez
+   de estourar a página no celular. */
+.table {
+  min-width: 860px;
+
+  .acoes {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+
+/* A posição é o dado que a fila existe para responder: destacada, e alinhada à
+   direita para os números de dois dígitos não deslocarem a coluna. */
+.espera-ordem {
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.espera-resumo {
+  margin-top: var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
