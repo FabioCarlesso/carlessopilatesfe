@@ -59,7 +59,8 @@ describe('PacienteSessaoFormComponent', () => {
   async function setup(
     params: { pacienteId: string; id?: string } = { pacienteId: '10' },
     sessao: SessaoResponseDTO = mockSessao,
-    bloqueios: BloqueioAgendaResponseDTO[] = []
+    bloqueios: BloqueioAgendaResponseDTO[] = [],
+    queryParams: Record<string, string> = {}
   ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', [
@@ -85,7 +86,10 @@ describe('PacienteSessaoFormComponent', () => {
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(params) } } }
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap(params), queryParams } }
+        }
       ]
     }).compileComponents();
 
@@ -196,6 +200,39 @@ describe('PacienteSessaoFormComponent', () => {
 
       expect(component.erro).toBe('Erro ao carregar dados da sessão.');
       expect(component.loading).toBeFalse();
+    });
+  });
+
+  // Conversão de uma entrada da lista de espera (issue #137): a tela abre com o
+  // horário pedido já preenchido, e o resto do fluxo é o de sempre.
+  describe('pré-preenchimento vindo da lista de espera', () => {
+    it('should prefill dataHora and duracao from the query params', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-05-27T08:00', duracao: '60' });
+
+      expect(component.form.get('dataHora')?.value).toBe('2026-05-27T08:00');
+      expect(component.form.get('duracao')?.value).toBe(60);
+    });
+
+    it('should leave duracao empty when the entry has no usable range', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '2026-05-27T08:00' });
+
+      expect(component.form.get('dataHora')?.value).toBe('2026-05-27T08:00');
+      expect(component.form.get('duracao')?.value).toBeNull();
+    });
+
+    // Uma URL torta não pode impedir o agendamento manual, que é o caminho
+    // normal desta tela.
+    it('should ignore malformed values instead of failing', async () => {
+      await setup({ pacienteId: '10' }, mockSessao, [], { dataHora: '27/05/2026', duracao: '999' });
+
+      expect(component.form.get('dataHora')?.value).toBe('');
+      expect(component.form.get('duracao')?.value).toBeNull();
+    });
+
+    it('should not prefill in edit mode, where the session is the source', async () => {
+      await setup({ pacienteId: '10', id: '1' }, mockSessao, [], { dataHora: '2026-05-27T08:00' });
+
+      expect(component.form.get('dataHora')?.value).toBe(mockSessao.dataHora);
     });
   });
 

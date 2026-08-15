@@ -1,4 +1,5 @@
 import { BloqueioAgendaResponseDTO } from '../../core/models/bloqueio-agenda';
+import { minutosDoDia, normalizarHora } from './hora';
 
 /**
  * Leitura dos bloqueios de agenda (issue #135), compartilhada pela tela
@@ -8,31 +9,9 @@ import { BloqueioAgendaResponseDTO } from '../../core/models/bloqueio-agenda';
  * nunca sobre `Date`: o dia circula como string justamente para não passar por
  * um construtor de `Date` a partir de ISO, que o interpretaria como UTC e
  * mostraria o dia anterior no fuso do estúdio — mesma decisão de
- * `shared/utils/calendario.ts`.
+ * `shared/utils/calendario.ts`. A normalização das horas do contrato vive em
+ * `shared/utils/hora.ts`, compartilhada com a lista de espera (issue #137).
  */
-
-/**
- * `HH:mm` a partir do que a API mandar.
- *
- * A API devolve `LocalTime` **sempre** com segundos — mandar `"08:00"` no
- * `POST` traz `"08:00:00"` de volta (verificado contra o backend) —, enquanto o
- * `<input type="time">` do formulário produz e consome `HH:mm`. Sem normalizar,
- * as duas formas do mesmo horário divergiriam em qualquer comparação de string
- * e o campo de edição receberia um valor que não é o dele.
- */
-export function normalizarHora(hora: string | null | undefined): string | null {
-  if (!hora) return null;
-  const match = /^(\d{2}):(\d{2})/.exec(hora);
-  return match ? `${match[1]}:${match[2]}` : null;
-}
-
-/** Minutos desde a meia-noite, ou `null` quando a hora não é reconhecida. */
-function emMinutos(hora: string | null | undefined): number | null {
-  const normalizada = normalizarHora(hora);
-  if (normalizada === null) return null;
-  const [h, m] = normalizada.split(':').map(Number);
-  return h * 60 + m;
-}
 
 /**
  * O bloqueio vale para o dia inteiro quando não tem faixa de horário. O flag
@@ -102,7 +81,7 @@ export function bloqueiosDoHorario(
 ): BloqueioAgendaResponseDTO[] {
   if (!dataHora) return [];
   const [dia, hora] = dataHora.split('T');
-  const inicio = emMinutos(hora);
+  const inicio = minutosDoDia(hora);
   if (inicio === null) return [];
 
   const duracao = Number(duracaoMinutos);
@@ -113,8 +92,8 @@ export function bloqueiosDoHorario(
     // normalize, então daqui para baixo as duas são números — sem fallback, que
     // seria ramo morto anunciando um meio-aberto que não existe.
     if (ehDiaInteiro(bloqueio)) return true;
-    const faixaInicio = emMinutos(bloqueio.horaInicio) as number;
-    const faixaFim = emMinutos(bloqueio.horaFim) as number;
+    const faixaInicio = minutosDoDia(bloqueio.horaInicio) as number;
+    const faixaFim = minutosDoDia(bloqueio.horaFim) as number;
     return inicio < faixaFim && fim > faixaInicio;
   });
 }

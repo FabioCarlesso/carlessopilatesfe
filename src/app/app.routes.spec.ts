@@ -28,6 +28,8 @@ describe('app routes', () => {
       'resetar-senha',
       '403',
       'agenda',
+      'lista-espera',
+      'lista-espera/nova',
       'pacientes',
       'pacientes/novo',
       'pacientes/:id/editar',

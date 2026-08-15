@@ -24,6 +24,8 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 
 const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+/** Formato que o `input[type=datetime-local]` aceita — sem segundos. */
+const DATA_HORA_LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 @Component({
   selector: 'app-paciente-sessao-form',
@@ -96,6 +98,8 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
       this.form.get('tipo')?.disable();
       this.form.get('profissionalId')?.disable();
       this.form.get('status')?.disable();
+    } else {
+      this.aplicarPreenchimentoDaEspera();
     }
 
     this.carregar();
@@ -109,6 +113,30 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
 
   get modoEdicao(): boolean {
     return this.sessaoId !== null;
+  }
+
+  /**
+   * Pré-preenchimento vindo da lista de espera (issue #137): a conversão de uma
+   * entrada da fila abre esta tela com `?dataHora=&duracao=`, já na próxima
+   * ocorrência do dia da semana pedido.
+   *
+   * É **sugestão**, não imposição: os campos continuam editáveis, e um valor
+   * fora do formato é ignorado em silêncio em vez de acender faixa de erro —
+   * uma URL torta não pode impedir o agendamento manual, que é o caminho normal
+   * desta tela. Por isso também não há validação de futuro aqui: a fila guarda
+   * o horário pedido, e quem agenda decide a data.
+   */
+  private aplicarPreenchimentoDaEspera(): void {
+    const { dataHora, duracao } = this.route.snapshot.queryParams;
+
+    if (typeof dataHora === 'string' && DATA_HORA_LOCAL.test(dataHora)) {
+      this.form.get('dataHora')?.setValue(dataHora);
+    }
+
+    const minutos = Number(duracao);
+    if (Number.isInteger(minutos) && minutos >= 1 && minutos <= 480) {
+      this.form.get('duracao')?.setValue(minutos);
+    }
   }
 
   /**

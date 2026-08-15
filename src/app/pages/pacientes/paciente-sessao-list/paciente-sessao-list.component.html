@@ -106,7 +106,13 @@
     variante="perigo"
     [processando]="acaoEmAndamentoId !== null"
     (confirmar)="executarAcao()"
-    (cancelar)="cancelarAcao()" />
+    (cancelar)="cancelarAcao()">
+    <!-- Quem espera pela faixa que o cancelamento libera. Chega depois da
+    consulta à fila, então aparece com o diálogo já aberto. -->
+    @if (avisoListaEspera; as aviso) {
+      <p class="alert alert-warning" role="status">{{ aviso }}</p>
+    }
+  </app-confirmar-dialog>
 }
 
 @if (reagendarId !== null) {

@@ -1,0 +1,130 @@
+<div class="page-header">
+  <div>
+    <h1>Nova inscrição na lista de espera</h1>
+    <p class="page-subtitle">Dia da semana e faixa de horário em que o paciente quer entrar</p>
+  </div>
+  <div class="acoes">
+    <a routerLink="/lista-espera" class="btn btn-outline">Voltar</a>
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+  <h2 class="form-section-title">Paciente</h2>
+
+  @if (pacienteSelecionado) {
+    <div class="paciente-selecionado">
+      <div>
+        <strong>{{ pacienteSelecionado.nome }}</strong>
+        <span class="paciente-detalhe">{{ pacienteSelecionado.email }}</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline" (click)="limparPaciente()">Trocar</button>
+    </div>
+  } @else {
+    <div class="form-group">
+      <label for="buscaPaciente">Buscar paciente *</label>
+      <input
+        id="buscaPaciente"
+        type="text"
+        class="form-control"
+        [formControl]="busca"
+        autocomplete="off"
+        placeholder="Digite ao menos 2 letras do nome"
+        aria-describedby="buscaPacienteHint"
+        [attr.aria-controls]="listaId"
+        [class.is-invalid]="campo('pacienteId')?.touched && campo('pacienteId')?.invalid" />
+      <!-- Só pacientes ativos: a API recusa a inscrição de paciente inativo com 422. -->
+      <div id="buscaPacienteHint" class="field-hint">Somente pacientes ativos.</div>
+
+      <div [id]="listaId" class="sugestoes" aria-live="polite">
+        @if (buscando) {
+          <p class="sugestao-status">Buscando...</p>
+        } @else if (buscaFalhou) {
+          <p class="sugestao-status">Não foi possível buscar agora.</p>
+        } @else {
+          @for (paciente of sugestoes; track paciente.id) {
+            <button type="button" class="sugestao" (click)="selecionarPaciente(paciente)">
+              <span class="sugestao-nome">{{ paciente.nome }}</span>
+              <span class="sugestao-detalhe">{{ paciente.email }}</span>
+            </button>
+          }
+        }
+      </div>
+
+      @if (campo('pacienteId')?.touched && campo('pacienteId')?.invalid) {
+        <div class="invalid-feedback" role="alert">Selecione o paciente interessado.</div>
+      }
+    </div>
+  }
+
+  <h2 class="form-section-title">Horário desejado</h2>
+  <div class="form-group">
+    <label for="diaSemana">Dia da semana *</label>
+    <select id="diaSemana" formControlName="diaSemana" class="form-control"
+      [class.is-invalid]="campo('diaSemana')?.invalid && campo('diaSemana')?.touched">
+      <option value="">Selecione</option>
+      @for (dia of diasSemana; track dia) {
+        <option [value]="dia">{{ diaSemanaLabel[dia] }}</option>
+      }
+    </select>
+    @if (campo('diaSemana')?.touched && campo('diaSemana')?.invalid) {
+      <div class="invalid-feedback">Dia da semana é obrigatório.</div>
+    }
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="horaInicio">Hora inicial *</label>
+      <input id="horaInicio" type="time" formControlName="horaInicio" class="form-control"
+        [class.is-invalid]="campo('horaInicio')?.invalid && campo('horaInicio')?.touched" />
+      @if (campo('horaInicio')?.touched && campo('horaInicio')?.invalid) {
+        <div class="invalid-feedback">Hora inicial é obrigatória.</div>
+      }
+    </div>
+    <div class="form-group">
+      <label for="horaFim">Hora final *</label>
+      <input id="horaFim" type="time" formControlName="horaFim" class="form-control"
+        aria-describedby="horaFimHint"
+        [class.is-invalid]="campo('horaFim')?.invalid && campo('horaFim')?.touched" />
+      <!-- A busca da fila cruza faixas por interseção: uma faixa mais larga
+      aparece também nas consultas por horários contidos nela. -->
+      <div id="horaFimHint" class="field-hint">
+        Uma faixa mais larga aumenta as chances: ela aparece em qualquer horário que a cruze.
+      </div>
+      @if (campo('horaFim')?.touched && campo('horaFim')?.invalid) {
+        <div class="invalid-feedback">Hora final é obrigatória.</div>
+      }
+    </div>
+  </div>
+  @if (faixaInvertida) {
+    <div class="invalid-feedback" role="alert">A hora final deve ser posterior à inicial.</div>
+  }
+
+  <h2 class="form-section-title">Observação</h2>
+  <div class="form-group">
+    <label for="observacao">Observação</label>
+    <textarea id="observacao" formControlName="observacao" class="form-control" rows="3"
+      [maxlength]="observacaoMax" aria-describedby="observacaoHint"
+      placeholder="Ex.: prefere aparelho, aceita qualquer horário da manhã"></textarea>
+    <div id="observacaoHint" class="field-hint">
+      Opcional. Máximo de {{ observacaoMax }} caracteres.
+    </div>
+  </div>
+
+  <!-- A posição na fila é a ordem de chegada, gravada pelo servidor: não há
+  edição depois, e corrigir a inscrição custa a posição. -->
+  <p class="espera-aviso">
+    A inscrição entra no fim da fila deste dia e faixa. Não há edição: para corrigir,
+    é preciso remover e inscrever de novo, perdendo a posição.
+  </p>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="salvando">
+      {{ salvando ? 'Salvando...' : 'Inscrever' }}
+    </button>
+    <a routerLink="/lista-espera" class="btn btn-outline">Cancelar</a>
+  </div>
+</form>

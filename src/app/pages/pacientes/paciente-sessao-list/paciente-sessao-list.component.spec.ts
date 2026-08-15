@@ -3,8 +3,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, Subject, throwError } from 'rxjs';
+import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteSessaoListComponent } from './paciente-sessao-list.component';
@@ -62,10 +64,12 @@ describe('PacienteSessaoListComponent', () => {
   let fixture: ComponentFixture<PacienteSessaoListComponent>;
   let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
   let sessaoServiceSpy: jasmine.SpyObj<SessaoService>;
+  let listaEsperaServiceSpy: jasmine.SpyObj<ListaEsperaService>;
 
   async function setup(
     sessoes: SessaoResponseDTO[] = [mockSessaoAgendada],
-    pacienteId = '10'
+    pacienteId = '10',
+    fila: ListaEsperaResponseDTO[] = []
   ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', [
@@ -74,15 +78,18 @@ describe('PacienteSessaoListComponent', () => {
       'cancelar',
       'atualizar'
     ]);
+    listaEsperaServiceSpy = jasmine.createSpyObj('ListaEsperaService', ['listar']);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
     sessaoServiceSpy.listarPorPaciente.and.returnValue(of(sessoes));
+    listaEsperaServiceSpy.listar.and.returnValue(of(fila));
 
     await TestBed.configureTestingModule({
       imports: [PacienteSessaoListComponent, RouterTestingModule],
       providers: [
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: SessaoService, useValue: sessaoServiceSpy },
+        { provide: ListaEsperaService, useValue: listaEsperaServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
       ]
     }).compileComponents();
@@ -269,6 +276,88 @@ describe('PacienteSessaoListComponent', () => {
 
       expect(sessaoServiceSpy.realizar).not.toHaveBeenCalled();
       expect(sessaoServiceSpy.cancelar).not.toHaveBeenCalled();
+    });
+  });
+
+  // Aviso da lista de espera no cancelamento (issue #137).
+  describe('aviso da lista de espera', () => {
+    const interessado: ListaEsperaResponseDTO = {
+      id: 5,
+      pacienteId: 20,
+      pacienteNome: 'Bruno Lima',
+      diaSemana: 'SUNDAY',
+      horaInicio: '09:30:00',
+      horaFim: '11:00:00',
+      dataEntrada: '2026-05-01T08:00:00',
+      observacao: null
+    };
+
+    function texto(seletor: string): string {
+      return (fixture.nativeElement as HTMLElement).querySelector(seletor)?.textContent?.trim() ?? '';
+    }
+
+    // 10/05/2026 é um domingo; a faixa consultada é a da própria sessão.
+    it('should ask the queue for the slot the cancellation frees', async () => {
+      await setup([mockSessaoAgendada], '10', [interessado]);
+
+      component.confirmarAcao(1, 'cancelar');
+
+      expect(listaEsperaServiceSpy.listar).toHaveBeenCalledWith({
+        diaSemana: 'SUNDAY',
+        horaInicio: '10:00',
+        horaFim: '11:00'
+      });
+    });
+
+    it('should name the interested patients in the confirmation', async () => {
+      await setup([mockSessaoAgendada], '10', [interessado]);
+
+      component.confirmarAcao(1, 'cancelar');
+      fixture.detectChanges();
+
+      expect(texto('.dialog .alert-warning'))
+        .toBe('1 pessoa na lista de espera para este horário: Bruno Lima — Domingo, das 09:30 às 11:00.');
+    });
+
+    it('should not consult the queue when the session is being marked as done', async () => {
+      await setup([mockSessaoAgendada], '10', [interessado]);
+
+      component.confirmarAcao(1, 'realizar');
+
+      expect(listaEsperaServiceSpy.listar).not.toHaveBeenCalled();
+    });
+
+    it('should show no warning when nobody is waiting', async () => {
+      await setup([mockSessaoAgendada]);
+
+      component.confirmarAcao(1, 'cancelar');
+      fixture.detectChanges();
+
+      expect(component.avisoListaEspera).toBeNull();
+      expect(texto('.dialog .alert-warning')).toBe('');
+    });
+
+    // O aviso é um extra: impedir o cancelamento porque a fila não carregou
+    // seria pior do que não avisar.
+    it('should stay silent when the queue fails to load', async () => {
+      await setup([mockSessaoAgendada]);
+      listaEsperaServiceSpy.listar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+      component.confirmarAcao(1, 'cancelar');
+      fixture.detectChanges();
+
+      expect(component.avisoListaEspera).toBeNull();
+      expect(component.erro).toBeNull();
+      expect(component.confirmarAcaoId).toBe(1);
+    });
+
+    it('should drop the queue when the confirmation is dismissed', async () => {
+      await setup([mockSessaoAgendada], '10', [interessado]);
+      component.confirmarAcao(1, 'cancelar');
+
+      component.cancelarAcao();
+
+      expect(component.interessados).toEqual([]);
     });
   });
 

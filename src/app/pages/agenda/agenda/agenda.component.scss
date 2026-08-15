@@ -2,6 +2,12 @@
    calendário do paciente (issue #119): as duas telas mostram os mesmos objetos,
    e a leitura aprendida numa precisa valer na outra. */
 
+/* O link para a lista de espera (issue #137) desce para a linha de baixo em
+   telas estreitas; o `.page-header` global não quebra sozinho. */
+.page-header {
+  flex-wrap: wrap;
+}
+
 .page-subtitle {
   margin-top: var(--sp-2);
   color: var(--text-secondary);

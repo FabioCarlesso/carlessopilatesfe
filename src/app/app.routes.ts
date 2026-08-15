@@ -42,6 +42,20 @@ export const routes: Routes = [
       import('./pages/agenda/agenda/agenda.component').then(m => m.AgendaComponent)
   },
   {
+    path: 'lista-espera',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/lista-espera/lista-espera-list/lista-espera-list.component')
+        .then(m => m.ListaEsperaListComponent)
+  },
+  {
+    path: 'lista-espera/nova',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/lista-espera/lista-espera-form/lista-espera-form.component')
+        .then(m => m.ListaEsperaFormComponent)
+  },
+  {
     path: 'pacientes',
     canActivate: [authGuard],
     loadComponent: () =>

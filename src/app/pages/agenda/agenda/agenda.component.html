@@ -3,6 +3,10 @@
     <h1>Agenda</h1>
     <p class="page-subtitle">Aulas e sessões de todos os pacientes</p>
   </div>
+  <!-- A fila é lida a partir da agenda: é aqui que se vê o horário lotado e é
+  daqui que sai o cancelamento que abre a vaga. A entrada não vai para a navbar
+  porque ela já está no limite de uma linha em 1025px (issue #219). -->
+  <a routerLink="/lista-espera" class="btn btn-outline">Lista de espera</a>
 </div>
 
 <!-- `role="alert"` porque a falha de carga também **apaga a grade** e esvazia o
@@ -299,5 +303,11 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
     [processando]="acaoEmAndamento"
     (confirmar)="confirmarAcao()"
     (cancelar)="cancelarConfirmacao()"
-  />
+  >
+    <!-- Quem espera pela faixa que o cancelamento libera. Chega depois da
+    consulta à fila, então aparece com o diálogo já aberto. -->
+    @if (avisoListaEspera; as aviso) {
+      <p class="alert alert-warning" role="status">{{ aviso }}</p>
+    }
+  </app-confirmar-dialog>
 }

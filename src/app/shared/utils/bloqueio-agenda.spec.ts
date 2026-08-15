@@ -7,8 +7,7 @@ import {
   descreverBloqueio,
   ehDiaInteiro,
   formatarFaixaHoraria,
-  formatarPeriodo,
-  normalizarHora
+  formatarPeriodo
 } from './bloqueio-agenda';
 
 function bloqueio(
@@ -29,26 +28,6 @@ function bloqueio(
 }
 
 describe('bloqueio-agenda utils', () => {
-  describe('normalizarHora', () => {
-    it('should keep HH:mm untouched', () => {
-      expect(normalizarHora('08:30')).toBe('08:30');
-    });
-
-    // A API sempre devolve `HH:mm:ss`, inclusive para um `POST` que mandou
-    // `08:00`; o formulário trabalha em `HH:mm`.
-    it('should drop the seconds the API sends', () => {
-      expect(normalizarHora('08:30:00')).toBe('08:30');
-      expect(normalizarHora('08:30:45')).toBe('08:30');
-    });
-
-    it('should return null for absent or unrecognized values', () => {
-      expect(normalizarHora(null)).toBeNull();
-      expect(normalizarHora(undefined)).toBeNull();
-      expect(normalizarHora('')).toBeNull();
-      expect(normalizarHora('manhã')).toBeNull();
-    });
-  });
-
   describe('ehDiaInteiro', () => {
     it('should be true when there is no time range', () => {
       expect(ehDiaInteiro(bloqueio({ id: 1, dataInicio: '2026-12-25' }))).toBeTrue();
