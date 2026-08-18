@@ -1,0 +1,20 @@
+# Só a landing pública ("/") tem conteúdo indexável. Todo o resto exige sessão
+# e devolve a mesma casca da SPA para o robô, sem informação útil — daí o
+# bloqueio explícito das áreas autenticadas (issue #244).
+User-agent: *
+Allow: /$
+Disallow: /login
+Disallow: /esqueci-senha
+Disallow: /resetar-senha
+Disallow: /inicio
+Disallow: /agenda
+Disallow: /lista-espera
+Disallow: /pacientes
+Disallow: /profissionais
+Disallow: /planos
+Disallow: /pagamentos
+Disallow: /aulas
+Disallow: /relatorios
+Disallow: /admin
+Disallow: /perfil
+Disallow: /403

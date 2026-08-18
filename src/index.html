@@ -1,10 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Carlesso Pilates</title>
+  <title>Carlesso Pilates — gestão do estúdio</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!--
+    Descrição e Open Graph são estáticos de propósito: a aplicação não tem SSR,
+    então tags escritas em runtime pelo serviço `Meta` do Angular não chegam ao
+    crawler do WhatsApp nem ao do LinkedIn. Como só a landing é pública, um
+    conjunto fixo apontando para ela resolve a pré-visualização de link.
+  -->
+  <meta name="description" content="Sistema de gestão para estúdios de pilates e fisioterapia: agenda, prontuário clínico, planos, pagamentos e relatórios em uma única aplicação.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Carlesso Pilates">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Carlesso Pilates — o estúdio inteiro em uma tela">
+  <meta property="og:description" content="Agenda, prontuário clínico, planos, pagamentos e relatórios no mesmo lugar — do primeiro agendamento à evolução da sessão de hoje.">
+  <meta property="og:image" content="/landing/dashboard.webp">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

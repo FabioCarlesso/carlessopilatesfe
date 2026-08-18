@@ -1,10 +1,20 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { visitanteGuard } from './core/guards/visitante.guard';
 
 export const routes: Routes = [
   {
+    // Landing pública de produto. `layoutFluido` desliga o `.container` do
+    // `<main>` no AppComponent para as faixas sangrarem de ponta a ponta.
     path: '',
+    canActivate: [visitanteGuard],
+    data: { layoutFluido: true },
+    loadComponent: () =>
+      import('./pages/landing/landing/landing.component').then(m => m.LandingComponent)
+  },
+  {
+    path: 'inicio',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/dashboard/dashboard/dashboard.component').then(m => m.DashboardComponent)

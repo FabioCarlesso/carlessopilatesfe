@@ -1,0 +1,229 @@
+@use '../secao';
+
+.landing {
+  background: var(--bg-app);
+}
+
+// Hero
+
+.hero {
+  @include secao.faixa;
+  padding-top: var(--sp-11);
+  background: var(--bg-app);
+}
+
+.hero__inner {
+  @include secao.faixa-interna;
+  max-width: 900px;
+  text-align: center;
+}
+
+.hero__sobrancelha {
+  @include secao.sobrancelha;
+}
+
+.hero__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-lg);
+  font-weight: 400;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+  color: var(--text-primary);
+}
+
+.hero__subtitulo {
+  margin: var(--sp-5) auto 0;
+  max-width: 58ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-loose);
+}
+
+.hero__acoes {
+  margin-top: var(--sp-8);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+// Só métrica externa: o interior do `.btn` global (flex, padding, min-height)
+// fica intocado, senão o rótulo desalinha — issue #199.
+.hero__cta,
+.fechamento__cta {
+  min-height: 48px;
+  padding-left: var(--sp-7);
+  padding-right: var(--sp-7);
+  font-size: var(--fs-body);
+}
+
+// O que é
+
+.sobre {
+  @include secao.faixa;
+  background: var(--bg-paper);
+  border-block: 1px solid var(--border-subtle);
+}
+
+.sobre__inner {
+  @include secao.faixa-interna;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--sp-9);
+  align-items: center;
+}
+
+.sobre__sobrancelha {
+  @include secao.sobrancelha;
+}
+
+.sobre__titulo {
+  @include secao.titulo-secao;
+}
+
+.sobre__paragrafo {
+  margin-top: var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
+}
+
+.sobre__numeros {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.numero {
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid var(--border-brand);
+  padding-left: var(--sp-4);
+}
+
+// `dt` antes de `dd` no HTML mantém a semântica da lista de definição; a ordem
+// visual é invertida para o número aparecer acima do rótulo.
+.numero__rotulo {
+  order: 2;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--ls-caps-tight);
+  text-transform: uppercase;
+}
+
+.numero__valor {
+  order: 1;
+  font-family: var(--font-display);
+  font-size: var(--fs-display-sm);
+  line-height: var(--lh-tight);
+  color: var(--text-brand);
+}
+
+// Fechamento
+
+// Faixa escura nos dois temas: `--bg-headline` é o tempestade fixo, então o
+// texto usa `--text-on-dark` em vez dos tokens de texto do tema.
+.fechamento {
+  @include secao.faixa;
+  background: var(--bg-headline);
+  text-align: center;
+}
+
+.fechamento__inner {
+  @include secao.faixa-interna;
+}
+
+.fechamento__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-sm);
+  font-weight: 400;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-display);
+  color: var(--text-on-dark);
+}
+
+.fechamento__texto {
+  margin: var(--sp-3) auto 0;
+  max-width: 50ch;
+  color: var(--c-azul-soft);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
+}
+
+.fechamento__cta {
+  margin-top: var(--sp-6);
+  // A faixa de fechamento é escura nos dois temas (`--bg-headline`), então o
+  // botão precisa de cores que também não mudem: `--c-cloud-dancer` vira
+  // #0e1620 no tema escuro e o par ficava em 1,09:1 — ilegível.
+  background: var(--c-branco);
+  color: var(--c-tempestade);
+
+  // `--c-azul-soft` pelo mesmo motivo: é fixo nos dois temas, ao contrário das
+  // variantes de `--c-cloud-dancer`, que escurecem e apagariam o rótulo.
+  &:hover {
+    background: var(--c-azul-soft);
+  }
+}
+
+// Rodapé
+
+.rodape {
+  background: var(--bg-app);
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--sp-6) 0;
+}
+
+.rodape__inner {
+  @include secao.faixa-interna;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+// Responsivo
+
+@media (max-width: 1024px) {
+  .sobre__inner {
+    grid-template-columns: 1fr;
+    gap: var(--sp-7);
+  }
+
+  .sobre__numeros {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding-top: var(--sp-9);
+  }
+
+  .hero__titulo {
+    font-size: var(--fs-display-md);
+  }
+
+  .hero__subtitulo {
+    font-size: var(--fs-body);
+  }
+
+  // Alvo de toque cheio no mobile, como em `forbidden` e `aula-list`.
+  .hero__acoes {
+    flex-direction: column;
+  }
+
+  .hero__cta {
+    width: 100%;
+  }
+
+  .sobre__numeros {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero__titulo {
+    font-size: var(--fs-display-sm);
+  }
+}

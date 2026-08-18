@@ -1,0 +1,44 @@
+// Faixa da landing: o fundo sangra de ponta a ponta e o conteúdo se alinha ao
+// mesmo eixo de 1120px do `.container` das páginas e do `.navbar-inner` — daí a
+// repetição do `max-width` e do padding, que é o que faz o texto começar na
+// mesma coluna do resto do sistema.
+//
+// Partial em vez de regra global: só a landing usa, e o SCSS de componente é
+// carregado junto com ela em vez de pesar no `styles.css` de todas as telas.
+// Cada componente que o consome paga essas poucas linhas no próprio budget de
+// `anyComponentStyle` (4kB de warning, 8kB de erro).
+
+@mixin faixa {
+  display: block;
+  padding: var(--sp-10) 0;
+
+  @media (max-width: 768px) {
+    padding: var(--sp-8) 0;
+  }
+}
+
+@mixin faixa-interna {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--sp-4);
+}
+
+// Rótulo em caixa alta acima do título de cada faixa.
+@mixin sobrancelha {
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-brand);
+  margin-bottom: var(--sp-3);
+}
+
+@mixin titulo-secao {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-sm);
+  font-weight: 400;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-display);
+  color: var(--text-primary);
+}

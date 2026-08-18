@@ -19,6 +19,6 @@ export class ForbiddenComponent {
       this.location.back();
       return;
     }
-    this.router.navigateByUrl('/');
+    this.router.navigateByUrl('/inicio');
   }
 }

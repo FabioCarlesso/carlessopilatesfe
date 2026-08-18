@@ -1,0 +1,86 @@
+@use '../secao';
+
+.como-funciona {
+  @include secao.faixa;
+  background: var(--bg-app);
+}
+
+.como-funciona__inner {
+  @include secao.faixa-interna;
+}
+
+.como-funciona__sobrancelha {
+  @include secao.sobrancelha;
+}
+
+.como-funciona__titulo {
+  @include secao.titulo-secao;
+}
+
+.como-funciona__intro {
+  margin-top: var(--sp-3);
+  max-width: 60ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-loose);
+}
+
+.como-funciona__passos {
+  list-style: none;
+  margin-top: var(--sp-8);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-6);
+}
+
+.passo {
+  position: relative;
+  padding-top: var(--sp-6);
+  border-top: 2px solid var(--border-default);
+}
+
+// A linha do passo atual é o único destaque de cor da faixa; o número fica
+// sobre a borda para amarrar os dois.
+.passo__numero {
+  position: absolute;
+  top: calc(var(--sp-4) * -1);
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--c-horizonte);
+  color: var(--c-cloud-dancer);
+  font-family: var(--font-aux);
+  font-size: var(--fs-h3);
+  line-height: 1;
+}
+
+.passo__titulo {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: var(--lh-snug);
+}
+
+.passo__descricao {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
+}
+
+@media (max-width: 1024px) {
+  .como-funciona__passos {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-8) var(--sp-6);
+  }
+}
+
+@media (max-width: 768px) {
+  .como-funciona__passos {
+    grid-template-columns: 1fr;
+  }
+}

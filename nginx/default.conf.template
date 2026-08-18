@@ -20,7 +20,9 @@ server {
         proxy_send_timeout 30s;
     }
 
-    location ~* \.(js|css|png|jpg|ico|woff2|woff|ttf|svg)$ {
+    # `webp` entrou com os prints da landing: sem ele as capturas iriam a
+    # produção fora do cache imutável, rebaixadas ao no-cache padrão (issue #244).
+    location ~* \.(js|css|png|jpg|webp|ico|woff2|woff|ttf|svg)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }

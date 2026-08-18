@@ -41,7 +41,8 @@ describe('AppComponent', () => {
       imports: [
         AppComponent,
         RouterTestingModule.withRoutes([
-          { path: '', children: [] },
+          { path: '', data: { layoutFluido: true }, children: [] },
+          { path: 'inicio', children: [] },
           { path: 'outra-tela', children: [] }
         ]),
         HttpClientTestingModule
@@ -116,8 +117,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('a[href="/"]')?.textContent).toContain('Carlesso Pilates');
-    expect(el.querySelector('.navbar-menu a[href="/"]')?.textContent).toContain('Início');
+    expect(el.querySelector('a[href="/inicio"]')?.textContent).toContain('Carlesso Pilates');
+    expect(el.querySelector('.navbar-menu a[href="/inicio"]')?.textContent).toContain('Início');
   });
 
   it('should render the alterar senha link when authenticated', async () => {
@@ -456,7 +457,8 @@ describe('AppComponent', () => {
       imports: [
         AppComponent,
         RouterTestingModule.withRoutes([
-          { path: '', children: [] },
+          { path: '', data: { layoutFluido: true }, children: [] },
+          { path: 'inicio', children: [] },
           { path: 'pacientes', children: [] },
           { path: 'pacientes/:pacienteId/sessoes', children: [] }
         ]),
@@ -482,15 +484,15 @@ describe('AppComponent', () => {
     expect(pacientes.getAttribute('aria-current')).toBe('page');
   });
 
-  it('should activate Início only on the exact root route', async () => {
+  it('should activate Início only on the exact dashboard route', async () => {
     await setupComRotas();
     const fixture = TestBed.createComponent(AppComponent);
     const router = TestBed.inject(Router);
     fixture.detectChanges();
 
-    await router.navigateByUrl('/');
+    await router.navigateByUrl('/inicio');
     fixture.detectChanges();
-    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/"]') as HTMLElement;
+    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/inicio"]') as HTMLElement;
     expect(inicio.classList).toContain('is-active');
     expect(inicio.getAttribute('aria-current')).toBe('page');
 
@@ -512,7 +514,7 @@ describe('AppComponent', () => {
     expect(pacientes.classList).toContain('is-active');
     expect(pacientes.getAttribute('aria-current')).toBe('page');
 
-    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/"]') as HTMLElement;
+    const inicio = fixture.nativeElement.querySelector('.navbar-menu a[href="/inicio"]') as HTMLElement;
     expect(inicio.classList).not.toContain('is-active');
   });
 
@@ -532,5 +534,50 @@ describe('AppComponent', () => {
 
     expect(notificacoes.notificacao()).toBeNull();
     expect(fixture.nativeElement.querySelector('.notificacao-global')).toBeNull();
+  });
+
+  // A landing monta as próprias faixas de ponta a ponta; se o `.container`
+  // continuasse aplicado, o fundo de cada seção pararia em 1120px e ainda
+  // herdaria o gutter vertical (issue #244).
+  it('should drop the page container on routes that ask for a fluid layout', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.layoutFluido).toBeTrue();
+    expect(fixture.nativeElement.querySelector('main.container')).toBeNull();
+    expect(fixture.nativeElement.querySelector('main')).toBeTruthy();
+  });
+
+  it('should keep the page container on the regular screens', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.layoutFluido).toBeFalse();
+    expect(fixture.nativeElement.querySelector('main.container')).toBeTruthy();
+  });
+
+  it('should restore the page container when leaving a fluid route', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('main.container')).toBeNull();
+
+    await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('main.container')).toBeTruthy();
   });
 });

@@ -200,7 +200,11 @@ a {
 
 .btn-primary {
   background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
+  // Literal, e não `--c-cloud-dancer`: o tema escuro redefine esse token para
+  // #0e1620, e o rótulo caía para 2,16:1 sobre o fundo fixo `--c-horizonte` do
+  // botão — abaixo dos 4,5:1 da WCAG 1.4.3. Mesmo motivo das cores literais da
+  // navbar, que também vive sobre um fundo que não muda com o tema (issue #244).
+  color: #f0ede8;
 
   &:hover:not(:disabled) {
     background: var(--c-tempestade);
@@ -209,7 +213,10 @@ a {
 
 .btn-secondary {
   background: transparent;
-  color: var(--c-horizonte);
+  // `--text-brand` em vez de `--c-horizonte`: é o único token de marca com
+  // variante própria no tema escuro. Com o valor fixo, o rótulo rendia 2,2:1
+  // sobre `--bg-app` escuro (issue #244).
+  color: var(--text-brand);
   border-color: var(--border-default);
 
   &:hover:not(:disabled) {

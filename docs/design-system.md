@@ -25,6 +25,31 @@ O primeiro `input[type="checkbox"]` da aplicação nasceu no formulário de bloq
 
 Dia bloqueado na agenda usa a família âmbar: `--c-warning-bg` no fundo da célula e `--c-warning-text` no texto do motivo. O fundo sinaliza a célula inteira sem competir com as cores de situação dos chips — o bloqueio é uma condição do dia, não um evento dele —, e o motivo é escrito na célula porque cor sozinha não é sinal suficiente (WCAG 1.4.1); a frase completa fica no `title` e no `aria-label` da célula.
 
+### Faixas de largura total e cor de rótulo sobre fundo fixo
+
+Telas que montam o próprio layout de ponta a ponta declaram `data: { layoutFluido: true }`
+na rota. O `AppComponent` lê esse dado do nó mais profundo da árvore a cada `NavigationEnd`
+e só então aplica (ou não) a classe `.container` ao `<main>` — sem isso, o `max-width: 1120px`
+e o gutter vertical do contêiner cortariam as faixas de fundo no meio do viewport. A landing
+de produto é a primeira e única tela assim (issue #244). O contorno alternativo, `width: 100vw`
+com margem negativa, foi descartado porque `100vw` inclui a largura da barra de rolagem e
+produz scroll horizontal no desktop. Dentro dessas telas, cada faixa repete `max-width: 1120px`
+e o padding do `.container` num wrapper interno, exatamente como o `.navbar-inner` faz, para o
+conteúdo permanecer alinhado à mesma coluna do resto do sistema. Os mixins ficam em
+`pages/landing/_secao.scss`, e não em regra global, para o CSS acompanhar o componente
+lazy-loaded em vez de pesar no `styles.css` de todas as telas.
+
+**Rótulo sobre fundo que não muda com o tema não pode usar token que muda.** Essa é a regra
+que a navbar já seguia com cores literais e que o `.btn-primary` violava: o fundo é
+`--c-horizonte` (idêntico nos dois temas), mas o texto era `--c-cloud-dancer`, que o tema
+escuro redefine para `#0e1620` — o rótulo caía para **2,16:1**, abaixo do piso de 4,5:1 da
+WCAG 1.4.3, em todo botão primário do sistema. Hoje é o literal `#f0ede8` (7,2:1 nos dois
+temas). Pelo mesmo motivo, o CTA sobre a faixa `--bg-headline` da landing usa `--c-branco` e
+`--c-azul-soft`, fixos, em vez das variantes de `--c-cloud-dancer`. Quando o fundo **é** do
+tema, vale o oposto: o `.btn-secondary` passou de `--c-horizonte` para `--text-brand`, o único
+token de marca com variante escura própria, saindo de ~2,2:1 para ~9,6:1 sobre o `--bg-app`
+escuro.
+
 ### Responsividade
 
 O layout é pensado também para uso em tablet na recepção. A navbar colapsa num menu (botão ☰) em telas `≤1024px`, cobrindo a faixa de tablet (retrato e paisagem) em que os links e ações não caberiam na barra — o breakpoint tem fonte única em `shared/utils/breakpoints.ts` (`DESKTOP_MIN_WIDTH`/`MEDIA_QUERY_COMPACTO`), consumida pelo `AppComponent`, que fecha o menu ao voltar para o desktop, pelo `MenuContaComponent`, que alterna entre dropdown e lista plana, e espelhada no media query de `styles.scss`. Acima desse limite a barra nunca quebra: marca, navegação e menu de conta são `flex: none` com `white-space: nowrap`, e a busca global é o único elemento elástico (`flex: 0 1 260px`, `min-width: 160px`), de modo que a pressão de espaço estreita o campo em vez de empilhar a barra em duas linhas (issue #219). O conteúdo da navbar fica num `.navbar-inner` que repete o `max-width: 1120px` e o padding do `.container`, alinhando marca e ações às mesmas colunas do conteúdo das páginas enquanto só a faixa de fundo sangra de ponta a ponta. As tabelas rolam horizontalmente dentro do contêiner (`.table-responsive`/`.table-wrap`) sem gerar scroll da página — e esse contêiner sinaliza o transbordo com sombras nas bordas, feitas de quatro camadas de `background-image`: duas tampas opacas com `background-attachment: local`, que rolam junto com a tabela, sobre duas sombras presas ao contêiner (`scroll`); sem transbordo as tampas cobrem as sombras e nada aparece, e por isso a tabela dentro do contêiner não pode ter fundo próprio (issue #164). Tabelas largas podem congelar a coluna que identifica a linha com a classe utilitária `.table-sticky-first-col` (usada nos relatórios) e anunciar o scroll com um `.table-scroll-hint`, visível apenas em `≤768px`. O separador da coluna congelada é um pseudo-elemento, não `border-right` nem `box-shadow` da célula: em tabela com `border-collapse: collapse` a borda pertence à tabela — o WebKit não a repinta na posição sticky — e o Chromium não pinta box-shadow de célula colapsada. Todo contêiner de tabela é `tabindex="0"` + `role="region"` com `aria-label`, para o teclado alcançar o scroll horizontal (WCAG 2.1.1) — em `aula-list` os atributos são condicionais, porque em `≤640px` a tabela vira cards e deixa de rolar. O anel de foco aqui é `outline` sólido em `--text-brand`, e não o `--shadow-focus` do resto da aplicação: com 18% de alfa ele rende 1,32:1 sobre `--bg-app`, longe dos 3:1 da WCAG 2.4.11 — aceitável num botão, que já se distingue sozinho, não num alvo que só existe para o teclado. Além disso, os formulários passam de múltiplas colunas para uma coluna em `≤768px`, e botões de ação de linha e paginação usam alvo de toque de `≥44px` em `≤1024px`. Em `≤768px` a paginação das listagens (pacientes, profissionais e usuários) passa a um formato compacto de uma única linha — **Anterior / Página X de N / Próxima** —, ocultando a janela de páginas numeradas (mantida no desktop `≥769px`) para evitar quebra em várias linhas no mobile. Linha com **mais de uma ação** usa o contêiner global `.table .acoes` (flex com `wrap` e `gap: var(--sp-2)`, e alvo de toque de 44px por `.table .acoes .btn`) — não crie classe própria para isso; em `aula-list`, onde a tabela vira cards em `≤640px`, o SCSS da página só acrescenta `flex-direction: column`, porque lado a lado os botões ficariam estreitos demais para o toque (issue #131). Tema e densidade são preservados em todas as larguras.

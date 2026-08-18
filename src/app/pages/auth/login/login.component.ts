@@ -64,7 +64,7 @@ export class LoginComponent implements AfterViewInit {
     this.erro = '';
 
     this.authService.login(this.form.value).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => this.router.navigate(['/inicio']),
       error: (err) => {
         this.carregando = false;
         if (err.status === 401) {

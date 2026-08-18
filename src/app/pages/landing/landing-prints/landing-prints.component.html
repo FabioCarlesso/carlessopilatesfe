@@ -1,0 +1,26 @@
+<section class="prints" id="telas" aria-labelledby="prints-titulo">
+  <div class="prints__inner">
+    <span class="prints__sobrancelha">Por dentro</span>
+    <h2 id="prints-titulo" class="prints__titulo">As telas do sistema</h2>
+    <p class="prints__intro">
+      Capturas feitas em ambiente de demonstração, com dados fictícios.
+    </p>
+
+    <div class="prints__galeria">
+      @for (print of prints; track print.arquivo) {
+        <figure class="print" [class.print--destaque]="print.destaque">
+          <img
+            class="print__imagem"
+            [src]="caminho(print)"
+            [alt]="print.alt"
+            [width]="print.largura"
+            [height]="print.altura"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption class="print__legenda">{{ print.legenda }}</figcaption>
+        </figure>
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,38 @@
+@use '../secao';
+
+.topo {
+  display: block;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+}
+
+.topo__inner {
+  @include secao.faixa-interna;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  min-height: 64px;
+}
+
+.topo__marca {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.topo__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 480px) {
+  .topo__inner {
+    flex-wrap: wrap;
+    padding-block: var(--sp-3);
+  }
+}
