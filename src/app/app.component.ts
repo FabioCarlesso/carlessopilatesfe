@@ -1,6 +1,13 @@
 import { Component, HostListener, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet
+} from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
@@ -23,6 +30,12 @@ export class AppComponent {
 
   menuAberto = false;
 
+  // Telas que montam o próprio layout de ponta a ponta (a landing de produto)
+  // pedem `data: { layoutFluido: true }` na rota e o `<main>` deixa de aplicar
+  // o `.container`, que limita a 1120px e ainda soma o gutter vertical. Sem
+  // isso, uma faixa de fundo pararia no meio do viewport (issue #244).
+  layoutFluido = false;
+
   constructor() {
     this.router.events
       .pipe(
@@ -30,6 +43,7 @@ export class AppComponent {
         takeUntilDestroyed()
       )
       .subscribe(() => {
+        this.layoutFluido = this.rotaPedeLayoutFluido();
         // A mensagem global vale para a tela em que foi disparada; ao navegar, some.
         this.notificacoes.limpar();
         // O painel colapsado não sobrevive a uma troca de tela. Além dos links,
@@ -39,6 +53,17 @@ export class AppComponent {
         // expandida no próximo login.
         this.fecharMenu();
       });
+  }
+
+  // A flag vale para a rota efetivamente ativada, então a busca desce até a
+  // folha da árvore: rotas filhas (como as de `/admin`) não herdam o `data` do
+  // pai automaticamente na leitura por snapshot.
+  private rotaPedeLayoutFluido(): boolean {
+    let rota: ActivatedRouteSnapshot | undefined = this.router.routerState.snapshot.root;
+    while (rota?.firstChild) {
+      rota = rota.firstChild;
+    }
+    return rota?.data?.['layoutFluido'] === true;
   }
 
   toggleMenu(): void {

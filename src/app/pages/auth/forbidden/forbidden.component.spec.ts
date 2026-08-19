@@ -61,7 +61,7 @@ describe('ForbiddenComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     const link = el.querySelector('a.btn-primary') as HTMLAnchorElement;
     expect(link).toBeTruthy();
-    expect(link.getAttribute('href')).toBe('/');
+    expect(link.getAttribute('href')).toBe('/inicio');
     expect(link.textContent).toContain('Ir para o início');
   });
 
@@ -96,6 +96,6 @@ describe('ForbiddenComponent', () => {
     button.click();
 
     expect(locationSpy.back).not.toHaveBeenCalled();
-    expect(navigateSpy).toHaveBeenCalledWith('/');
+    expect(navigateSpy).toHaveBeenCalledWith('/inicio');
   });
 });

@@ -1,0 +1,65 @@
+<div class="landing">
+  <app-landing-topo />
+
+  <section class="hero" aria-labelledby="hero-titulo">
+    <div class="hero__inner">
+      <span class="hero__sobrancelha">Sistema de gestão para estúdios de pilates e fisioterapia</span>
+      <h1 id="hero-titulo" class="hero__titulo">O estúdio inteiro em uma tela</h1>
+      <p class="hero__subtitulo">
+        Agenda, prontuário clínico, planos, pagamentos e relatórios no mesmo lugar — do primeiro
+        agendamento à evolução da sessão de hoje.
+      </p>
+      <div class="hero__acoes">
+        <a routerLink="/login" class="btn btn-primary hero__cta">Acessar o sistema</a>
+        <a href="#como-funciona" class="btn btn-secondary hero__cta">Ver como funciona</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sobre" aria-labelledby="sobre-titulo">
+    <div class="sobre__inner">
+      <div class="sobre__texto">
+        <span class="sobre__sobrancelha">O que é</span>
+        <h2 id="sobre-titulo" class="sobre__titulo">Um sistema, da recepção ao atendimento</h2>
+        <p class="sobre__paragrafo">
+          O Carlesso Pilates é o sistema de gestão do estúdio: cadastro de pacientes com prontuário
+          completo, agenda de aulas e sessões, controle de planos e pagamentos, avaliação postural e
+          relatórios administrativos. Uma única aplicação, usada por quem atende e por quem
+          administra.
+        </p>
+      </div>
+
+      <dl class="sobre__numeros">
+        @for (numero of numeros; track numero.rotulo) {
+          <div class="numero">
+            <dt class="numero__rotulo">{{ numero.rotulo }}</dt>
+            <dd class="numero__valor">{{ numero.valor }}</dd>
+          </div>
+        }
+      </dl>
+    </div>
+  </section>
+
+  <app-landing-como-funciona />
+
+  <app-landing-funcionalidades />
+
+  <app-landing-prints />
+
+  <section class="fechamento" aria-labelledby="fechamento-titulo">
+    <div class="fechamento__inner">
+      <h2 id="fechamento-titulo" class="fechamento__titulo">Acesso restrito à equipe do estúdio</h2>
+      <p class="fechamento__texto">
+        As contas são criadas por um administrador. Se você já tem a sua, é por aqui.
+      </p>
+      <a routerLink="/login" class="btn btn-primary fechamento__cta">Entrar</a>
+    </div>
+  </section>
+
+  <footer class="rodape" role="contentinfo">
+    <div class="rodape__inner">
+      <span>Carlesso Pilates · {{ anoAtual }}</span>
+      <a href="https://carlessopilates.com.br" rel="noopener">Site do estúdio</a>
+    </div>
+  </footer>
+</div>

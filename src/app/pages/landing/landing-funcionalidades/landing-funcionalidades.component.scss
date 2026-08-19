@@ -1,0 +1,81 @@
+@use '../secao';
+
+.funcionalidades {
+  @include secao.faixa;
+  background: var(--bg-paper);
+}
+
+.funcionalidades__inner {
+  @include secao.faixa-interna;
+}
+
+.funcionalidades__sobrancelha {
+  @include secao.sobrancelha;
+}
+
+.funcionalidades__titulo {
+  @include secao.titulo-secao;
+}
+
+.funcionalidades__lista {
+  list-style: none;
+  margin-top: var(--sp-8);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-5);
+}
+
+.funcionalidade {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  padding: var(--sp-6);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+
+  &:hover {
+    // `--text-brand`, e não `--border-brand`: este não tem variante escura e
+    // renderia 1,91:1 sobre `--bg-elev` no tema escuro — a única pista de hover
+    // desapareceria para quem desliga animação.
+    border-color: var(--text-brand);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+  }
+}
+
+.funcionalidade__titulo {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-brand);
+  line-height: var(--lh-snug);
+}
+
+.funcionalidade__descricao {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-loose);
+}
+
+// Quem não quer movimento não recebe o deslocamento do hover (WCAG 2.3.3).
+@media (prefers-reduced-motion: reduce) {
+  .funcionalidade {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .funcionalidades__lista {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .funcionalidades__lista {
+    grid-template-columns: 1fr;
+  }
+}

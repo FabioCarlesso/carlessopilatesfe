@@ -1,0 +1,17 @@
+<header class="topo" role="banner">
+  <div class="topo__inner">
+    <span class="topo__marca">Carlesso Pilates</span>
+    <div class="topo__acoes">
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="toggleTheme()"
+        [attr.aria-pressed]="isDarkTheme"
+        [attr.aria-label]="isDarkTheme ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      >
+        {{ isDarkTheme ? 'Tema claro' : 'Tema escuro' }}
+      </button>
+      <a routerLink="/login" class="btn btn-primary">Entrar</a>
+    </div>
+  </div>
+</header>

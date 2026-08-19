@@ -9,7 +9,8 @@ validações, tratamento de erro e decisões de UX. As rotas estão em
 
 | Módulo | Descrição |
 |--------|-----------|
-| **Dashboard** | Tela inicial com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
+| **Landing de produto** | Página pública em `/`, única rota do sistema sem autenticação além do fluxo de senha: apresenta o produto, o fluxo de uso, as funcionalidades e prints das telas, com CTA para `/login` |
+| **Dashboard** | Tela inicial em `/inicio` com resumo consolidado de pacientes, profissionais, pagamentos e aulas do mês atual |
 | **Pacientes** | CRUD completo com ativação/inativação, filtros por nome, e-mail, CPF, telefone e status, paginação com tamanho configurável, anamnese clínica, avaliação fisioterapêutica (com aba Postural do Simetrógrafo Virtual: nova análise por vista com upload de foto comprimida e editor de marcação com grade, linha de prumo, marcação guiada, zoom e desfazer), planos de tratamento, sessões de pilates/fisioterapia, evolução clínica da sessão, histórico de evoluções em linha do tempo, calendário mensal/semanal de sessões e aulas e reavaliações periódicas |
 | **Agenda** | Agenda geral do estúdio em `/agenda`, com visões semanal e diária de todas as aulas e sessões do período, filtros por profissional, tipo e situação, painel de detalhe do evento, ações rápidas de realizar/cancelar e marcação dos dias bloqueados |
 | **Bloqueios de agenda** | Cadastro administrativo de feriados, manutenções e eventos em `/admin/bloqueios` (`ADMIN`), com marcação dos dias na agenda do estúdio e aviso no formulário de sessão; o bloqueio é informativo e não impede agendamento nem geração de aulas |
@@ -189,6 +190,32 @@ A recuperação de senha para usuários não autenticados é composta por duas t
 ## Busca global
 
 A busca global fica na navbar (`BuscaGlobalComponent`, em `shared/components/busca-global`) e está disponível para todo usuário autenticado. O campo aceita foco por atalho — `/` (quando o foco não está em outro campo de texto) e `Ctrl`/`Cmd`+`K` — e, a partir de 2 caracteres, consulta com debounce de 300 ms os endpoints já existentes com `size=5`: `GET /api/pacientes?nome=` quando o termo tem letras e `GET /api/pacientes?cpf=` quando o termo tem apenas dígitos e pontuação de máscara. O termo é enviado **como digitado**: o filtro `cpf` da API é um `LIKE` sobre o valor gravado, e o cadastro guarda o CPF exatamente como foi preenchido (com ou sem máscara), então normalizar para só dígitos faria `12345678901` deixar de casar com um `123.456.789-01` salvo. Busca parcial de CPF funciona. Para usuários `ADMIN`, a busca também consulta `GET /api/profissionais?nome=`; para os demais perfis essa requisição não é disparada, evitando o `403` do backend. Como nenhum dos filtros envia `ativo`, a API devolve apenas registros ativos — mesmo padrão das listagens. O dropdown de resultados identifica cada item como **Paciente** ou **Profissional**, é navegável por teclado (setas ↑/↓ com `aria-activedescendant`, Enter para abrir o detalhe em `/pacientes/:id` ou `/profissionais/:id`, Esc para fechar) e distingue os estados "Buscando...", "Nenhum resultado encontrado." e falha de rede ("Não foi possível buscar agora."), anunciados por uma live region `aria-live="polite"` fixa no DOM.
+
+## Landing de produto
+
+A rota `/` serve a landing pública (issue #244). É a única tela do sistema, fora
+do fluxo de recuperação de senha, que renderiza sem sessão: quem chega sem token
+vê a página; quem já está autenticado é redirecionado pelo `visitanteGuard` para
+`/inicio`, preservando o atalho de quem tinha a raiz nos favoritos.
+
+A página não consome nenhum endpoint — todo o conteúdo é estático — e se divide
+em seis faixas: topo com marca, alternância de tema e botão **Entrar**; hero com
+o CTA **Acessar o sistema**; "o que é", com três números de amplitude (módulos,
+telas e perfis); "como funciona", em quatro passos que descrevem o fluxo real do
+produto (cadastro → plano e pagamento → geração automática das aulas → evolução
+clínica); "funcionalidades", com um card por módulo desta documentação; "por
+dentro", com quatro capturas de tela; e o fechamento, que leva ao login.
+
+Todos os CTAs apontam para `/login`. A página **não** oferece autocadastro, teste
+grátis ou criação de conta, porque não existe esse fluxo: usuários são criados
+por um `ADMIN` em `/admin/usuarios`. O `landing.component.spec.ts` falha se
+qualquer um desses termos aparecer no texto renderizado.
+
+Os prints ficam em `public/landing/*.webp` e foram capturados de um ambiente de
+demonstração com dados fictícios — a página é pública e o sistema guarda
+prontuário de saúde, então nenhuma captura pode sair de base real. As imagens
+usam `loading="lazy"`, `decoding="async"` e `width`/`height` explícitos, para
+ficarem fora do carregamento inicial sem causar deslocamento de layout.
 
 ## Dashboard
 

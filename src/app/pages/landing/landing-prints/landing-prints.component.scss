@@ -1,0 +1,72 @@
+@use '../secao';
+
+.prints {
+  @include secao.faixa;
+  background: var(--bg-app);
+}
+
+.prints__inner {
+  @include secao.faixa-interna;
+}
+
+.prints__sobrancelha {
+  @include secao.sobrancelha;
+}
+
+.prints__titulo {
+  @include secao.titulo-secao;
+}
+
+.prints__intro {
+  margin-top: var(--sp-3);
+  max-width: 60ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
+}
+
+// `align-items: start` porque as capturas não têm a mesma altura: sem isso a
+// moldura da mais baixa estica até a altura da vizinha e sobra um vão entre a
+// imagem e a legenda.
+.prints__galeria {
+  margin-top: var(--sp-8);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: start;
+  gap: var(--sp-6);
+}
+
+.print {
+  margin: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.print--destaque {
+  grid-column: 1 / -1;
+}
+
+// A imagem preenche a moldura mantendo a proporção do arquivo; `display: block`
+// remove o espaço da linha de base que sobraria abaixo dela.
+.print__imagem {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.print__legenda {
+  padding: var(--sp-4) var(--sp-5);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}
+
+@media (max-width: 768px) {
+  .prints__galeria {
+    grid-template-columns: 1fr;
+  }
+}

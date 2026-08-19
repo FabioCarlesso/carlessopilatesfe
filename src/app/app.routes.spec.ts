@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { routes } from './app.routes';
+import { authGuard } from './core/guards/auth.guard';
+import { visitanteGuard } from './core/guards/visitante.guard';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
   const result: string[] = [];
@@ -22,6 +24,7 @@ describe('app routes', () => {
   it('should contain all expected routes', () => {
     const expected = [
       '',
+      'inicio',
       'perfil/alterar-senha',
       'login',
       'esqueci-senha',
@@ -167,6 +170,28 @@ describe('app routes', () => {
     expect(homeIndex).toBeLessThan(listIndex);
     expect(listIndex).toBeLessThan(novoIndex);
     expect(novoIndex).toBeLessThan(editarIndex);
+  });
+
+  // A landing é o único conteúdo público indexável do sistema: se ela ganhar um
+  // `authGuard` por engano, a raiz volta a redirecionar para o login e a página
+  // deixa de existir para quem ainda não entrou (issue #244).
+  it('should serve the landing on the root path behind the visitor guard', () => {
+    const raiz = routes.find(r => r.path === '');
+
+    expect(raiz).toBeTruthy();
+    expect(raiz!.canActivate).toEqual([visitanteGuard]);
+  });
+
+  it('should mark the landing route as fluid layout', () => {
+    const raiz = routes.find(r => r.path === '');
+    expect(raiz!.data?.['layoutFluido']).toBeTrue();
+  });
+
+  it('should keep the dashboard on /inicio behind the auth guard', () => {
+    const inicio = routes.find(r => r.path === 'inicio');
+
+    expect(inicio).toBeTruthy();
+    expect(inicio!.canActivate).toEqual([authGuard]);
   });
 
   it('should expose the password recovery routes without an auth guard', () => {

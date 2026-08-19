@@ -1,0 +1,20 @@
+<section class="como-funciona" id="como-funciona" aria-labelledby="como-funciona-titulo">
+  <div class="como-funciona__inner">
+    <span class="como-funciona__sobrancelha">Como funciona</span>
+    <h2 id="como-funciona-titulo" class="como-funciona__titulo">Do primeiro cadastro à evolução da sessão</h2>
+    <p class="como-funciona__intro">
+      Quatro passos que acompanham o paciente do dia em que ele chega ao estúdio até o registro do
+      atendimento de hoje.
+    </p>
+
+    <ol class="como-funciona__passos">
+      @for (passo of passos; track passo.titulo; let indice = $index) {
+        <li class="passo">
+          <span class="passo__numero" aria-hidden="true">{{ indice + 1 }}</span>
+          <h3 class="passo__titulo">{{ passo.titulo }}</h3>
+          <p class="passo__descricao">{{ passo.descricao }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>

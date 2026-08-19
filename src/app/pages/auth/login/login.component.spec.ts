@@ -100,7 +100,7 @@ describe('LoginComponent', () => {
     comp.entrar();
 
     expect(authServiceSpy.login).toHaveBeenCalledWith({ email: 'admin@carlessopilates.com', password: 'senha1234' });
-    expect(spy).toHaveBeenCalledWith(['/']);
+    expect(spy).toHaveBeenCalledWith(['/inicio']);
   });
 
   it('should show 401 error message on invalid credentials', () => {

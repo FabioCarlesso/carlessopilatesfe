@@ -2,7 +2,7 @@
   <nav class="navbar" [class.is-open]="menuAberto">
     <div class="navbar-inner">
       <div class="navbar-brand">
-        <a routerLink="/" (click)="fecharMenu()">Carlesso Pilates</a>
+        <a routerLink="/inicio" (click)="fecharMenu()">Carlesso Pilates</a>
       </div>
       <button
         type="button"
@@ -18,7 +18,7 @@
         <ul class="navbar-menu">
           <li>
             <a
-              routerLink="/"
+              routerLink="/inicio"
               routerLinkActive="is-active"
               [routerLinkActiveOptions]="{ exact: true }"
               ariaCurrentWhenActive="page"
@@ -77,7 +77,7 @@
   </nav>
 }
 
-<main class="container">
+<main [class.container]="!layoutFluido">
   @if (notificacoes.notificacao(); as notificacao) {
     <div class="alert alert-danger notificacao-global" role="alert">
       <span>{{ notificacao.mensagem }}</span>

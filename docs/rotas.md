@@ -7,7 +7,8 @@ Mapa de todas as rotas da aplicação. O comportamento de cada tela está em
 
 | Caminho                 | Função                                      |
 |-------------------------|---------------------------------------------|
-| `/`                     | Dashboard inicial com indicadores do sistema |
+| `/`                     | Landing pública de produto (**sem autenticação**); com sessão ativa, redireciona para `/inicio` |
+| `/inicio`               | Dashboard inicial com indicadores do sistema |
 | `/agenda`               | Agenda geral do estúdio: aulas e sessões de todos os pacientes no período, com visões semanal e diária |
 | `/lista-espera`         | Fila de interessados por dia da semana e faixa de horário, em ordem de chegada, com conversão em sessão e remoção |
 | `/lista-espera/nova`    | Inscrição de um paciente na lista de espera |

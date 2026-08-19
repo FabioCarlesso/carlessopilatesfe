@@ -1,6 +1,6 @@
 <div class="page-header">
   <h1>Alterar senha</h1>
-  <a routerLink="/" class="btn btn-outline">Voltar</a>
+  <a routerLink="/inicio" class="btn btn-outline">Voltar</a>
 </div>
 
 @if (erro) {
@@ -123,6 +123,6 @@
     <button type="submit" class="btn btn-primary" [disabled]="salvando">
       {{ salvando ? 'Salvando...' : 'Alterar senha' }}
     </button>
-    <a routerLink="/" class="btn btn-outline">Cancelar</a>
+    <a routerLink="/inicio" class="btn btn-outline">Cancelar</a>
   </div>
 </form>
