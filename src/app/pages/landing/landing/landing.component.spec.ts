@@ -123,6 +123,13 @@ describe('LandingComponent', () => {
     expect(renderizar().querySelector('app-landing-topo')).toBeTruthy();
   });
 
+  // O `<main>` já vem do `AppComponent`, que envolve o `<router-outlet>`. Um
+  // segundo aqui dentro aninharia landmarks — inválido em HTML e ambíguo para
+  // o leitor de tela, que passa a anunciar dois conteúdos principais.
+  it('should not declare its own main landmark', () => {
+    expect(renderizar().querySelector('main')).toBeNull();
+  });
+
   it('should render the current year in the footer', () => {
     const el = renderizar();
     expect(el.querySelector('.rodape__inner')?.textContent).toContain(String(new Date().getFullYear()));
