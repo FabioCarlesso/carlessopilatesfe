@@ -375,8 +375,8 @@ ambos corrigidos aqui. O `.btn-primary` pintava o rótulo com `--c-cloud-dancer`
 token que o tema escuro redefine para `#0e1620`: sobre o fundo `--c-horizonte` do
 botão, que **não** muda com o tema, o texto rendia 2,16:1 — abaixo dos 4,5:1 da
 WCAG 1.4.3 — em todo botão primário do sistema, não só na landing. Passou a usar
-o literal `#f0ede8`, mesma solução já adotada pela navbar pelo mesmo
-motivo. O `.btn-secondary` usava `--c-horizonte` como cor de texto e rendia
+`--text-on-dark`, claro nos dois temas e conferido pelo `lint:tokens` — o
+numeral dos passos da landing repetia o mesmo erro e recebeu a mesma correção. O `.btn-secondary` usava `--c-horizonte` como cor de texto e rendia
 ~2,2:1 sobre o `--bg-app` escuro; passou a `--text-brand`, o único token de marca
 com variante própria no tema escuro. Medições feitas no navegador, não estimadas.
 

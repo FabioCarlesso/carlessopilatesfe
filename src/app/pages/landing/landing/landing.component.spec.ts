@@ -103,7 +103,7 @@ describe('LandingComponent', () => {
   it('should render the reach numbers', () => {
     const el = renderizar();
     const valores = Array.from(el.querySelectorAll('.numero__valor')).map(n => n.textContent?.trim());
-    expect(valores).toEqual(['15', '56', '2']);
+    expect(valores).toEqual(['16', '56', '2']);
   });
 
   it('should not promise self-signup or free trial anywhere on the page', () => {

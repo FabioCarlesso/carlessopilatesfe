@@ -20,8 +20,16 @@ server {
         proxy_send_timeout 30s;
     }
 
-    # `webp` entrou com os prints da landing: sem ele as capturas iriam a
-    # produção fora do cache imutável, rebaixadas ao no-cache padrão (issue #244).
+    # Os prints da landing vêm de `public/`, que o build copia sem hash no nome
+    # (o `outputHashing` do Angular só alcança os bundles). Como a URL é fixa,
+    # `immutable` por 1 ano deixaria uma captura substituída presa no navegador
+    # — nem recarga forçada buscaria de novo. Cache curto com revalidação
+    # (issue #244).
+    location ^~ /landing/ {
+        expires 7d;
+        add_header Cache-Control "public, must-revalidate";
+    }
+
     location ~* \.(js|css|png|jpg|webp|ico|woff2|woff|ttf|svg)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";

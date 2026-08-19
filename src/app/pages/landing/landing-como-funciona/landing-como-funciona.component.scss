@@ -52,7 +52,9 @@
   height: 32px;
   border-radius: var(--r-pill);
   background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
+  // `--c-horizonte` não muda com o tema, então o rótulo também não pode mudar:
+  // `--c-cloud-dancer` vira #0e1620 no escuro e o numeral cairia para 2,16:1.
+  color: var(--text-on-dark);
   font-family: var(--font-aux);
   font-size: var(--fs-h3);
   line-height: 1;

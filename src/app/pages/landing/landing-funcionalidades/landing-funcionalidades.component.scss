@@ -34,7 +34,10 @@
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 
   &:hover {
-    border-color: var(--border-brand);
+    // `--text-brand`, e não `--border-brand`: este não tem variante escura e
+    // renderia 1,91:1 sobre `--bg-elev` no tema escuro — a única pista de hover
+    // desapareceria para quem desliga animação.
+    border-color: var(--text-brand);
     box-shadow: var(--shadow-2);
     transform: translateY(-2px);
   }

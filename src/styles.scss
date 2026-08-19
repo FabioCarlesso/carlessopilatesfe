@@ -200,11 +200,12 @@ a {
 
 .btn-primary {
   background: var(--c-horizonte);
-  // Literal, e não `--c-cloud-dancer`: o tema escuro redefine esse token para
-  // #0e1620, e o rótulo caía para 2,16:1 sobre o fundo fixo `--c-horizonte` do
-  // botão — abaixo dos 4,5:1 da WCAG 1.4.3. Mesmo motivo das cores literais da
-  // navbar, que também vive sobre um fundo que não muda com o tema (issue #244).
-  color: #f0ede8;
+  // `--text-on-dark`, e não `--c-cloud-dancer`: o tema escuro redefine esse
+  // último para #0e1620, e o rótulo caía para 2,16:1 sobre o fundo fixo
+  // `--c-horizonte` do botão — abaixo dos 4,5:1 da WCAG 1.4.3. O token de texto
+  // sobre superfície escura é claro nos dois temas (6,9:1 no escuro, 7,2:1 no
+  // claro) e, ao contrário de um literal, é conferido por `lint:tokens` (#244).
+  color: var(--text-on-dark);
 
   &:hover:not(:disabled) {
     background: var(--c-tempestade);

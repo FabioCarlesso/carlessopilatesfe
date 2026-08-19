@@ -43,12 +43,24 @@ lazy-loaded em vez de pesar no `styles.css` de todas as telas.
 que a navbar já seguia com cores literais e que o `.btn-primary` violava: o fundo é
 `--c-horizonte` (idêntico nos dois temas), mas o texto era `--c-cloud-dancer`, que o tema
 escuro redefine para `#0e1620` — o rótulo caía para **2,16:1**, abaixo do piso de 4,5:1 da
-WCAG 1.4.3, em todo botão primário do sistema. Hoje é o literal `#f0ede8` (7,2:1 nos dois
-temas). Pelo mesmo motivo, o CTA sobre a faixa `--bg-headline` da landing usa `--c-branco` e
-`--c-azul-soft`, fixos, em vez das variantes de `--c-cloud-dancer`. Quando o fundo **é** do
-tema, vale o oposto: o `.btn-secondary` passou de `--c-horizonte` para `--text-brand`, o único
-token de marca com variante escura própria, saindo de ~2,2:1 para ~9,6:1 sobre o `--bg-app`
-escuro.
+WCAG 1.4.3, em todo botão primário do sistema. Hoje usa `--text-on-dark`, que é claro nos dois
+temas (7,2:1 no claro, 6,9:1 no escuro) e, ao contrário de um literal, é conferido por
+`lint:tokens`. O numeral dos passos da landing repetiu o mesmo erro sobre o mesmo fundo e
+recebeu a mesma correção. Pelo mesmo motivo, o CTA sobre a faixa `--bg-headline` usa
+`--c-branco` e `--c-azul-soft`, fixos, em vez das variantes de `--c-cloud-dancer`.
+
+Quando o fundo **é** do tema, vale o oposto — o token precisa ter variante escura. O
+`.btn-secondary` passou de `--c-horizonte` para `--text-brand`, saindo de ~2,2:1 para ~9,6:1
+sobre o `--bg-app` escuro, e os accents de marca da landing (borda de hover dos cards, barra
+dos números) trocaram `--border-brand` por `--text-brand`: aquele não tem variante escura e
+rendia 1,9:1 sobre `--bg-elev`. A mesma armadilha vale para `--text-muted`, que rende 2,6:1
+sobre `--bg-app` no tema **claro** — serve para texto acessório, não para conteúdo.
+
+A landing abre uma **exceção consciente** à regra de não mexer no interior de componente
+global: seus dois CTAs crescem em altura e respiro lateral, porque um botão de formulário é
+pequeno demais para o papel. O que a regra protege continua intocado — o contexto flex que
+centraliza o rótulo (issue #199) —, e a altura sai de `calc(var(--btn-h) + var(--sp-2))`, e não
+de um valor cravado, para o botão continuar acompanhando `[data-density]`.
 
 ### Responsividade
 

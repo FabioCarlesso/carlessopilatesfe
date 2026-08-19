@@ -43,7 +43,8 @@ describe('AppComponent', () => {
         RouterTestingModule.withRoutes([
           { path: '', data: { layoutFluido: true }, children: [] },
           { path: 'inicio', children: [] },
-          { path: 'outra-tela', children: [] }
+          { path: 'outra-tela', children: [] },
+          { path: 'pai', children: [{ path: 'filho', children: [] }] }
         ]),
         HttpClientTestingModule
       ],
@@ -560,6 +561,22 @@ describe('AppComponent', () => {
     fixture.detectChanges();
 
     await router.navigateByUrl('/outra-tela');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.layoutFluido).toBeFalse();
+    expect(fixture.nativeElement.querySelector('main.container')).toBeTruthy();
+  });
+
+  // A leitura desce até a folha da árvore de rotas. Sem uma rota aninhada aqui,
+  // o laço de descida nunca executa e o teste passaria mesmo se o código lesse
+  // apenas o primeiro nível — que é errado para as rotas filhas de `/admin`.
+  it('should read the fluid flag from the deepest activated route', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/pai/filho');
     fixture.detectChanges();
 
     expect(fixture.componentInstance.layoutFluido).toBeFalse();

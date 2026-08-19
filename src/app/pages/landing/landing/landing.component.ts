@@ -26,12 +26,15 @@ export interface NumeroLanding {
 export class LandingComponent {
   readonly anoAtual = new Date().getFullYear();
 
-  // Conferidos no código, não estimados: 15 módulos em `docs/funcionalidades.md`,
-  // 56 rotas em `app.routes.ts` e os dois papéis de `UserRole`. Ao mexer nesses
-  // três lugares, reveja os números — a página é pública e não pode mentir.
+  // Conferidos no código, não estimados: 16 linhas na tabela de módulos de
+  // `docs/funcionalidades.md`, 56 entradas de rota em `app.routes.ts` e os dois
+  // papéis de `UserRole`. O rótulo do meio diz **rotas**, e não "telas", porque
+  // é isso que o número mede: há rotas que compartilham o mesmo componente (os
+  // pares novo/editar) e rotas que não são tela de produto (`/403`, login).
+  // Ao mexer nesses três lugares, reveja os números — a página é pública.
   readonly numeros: NumeroLanding[] = [
-    { valor: '15', rotulo: 'módulos em produção' },
-    { valor: '56', rotulo: 'telas do sistema' },
+    { valor: '16', rotulo: 'módulos em produção' },
+    { valor: '56', rotulo: 'rotas mapeadas' },
     { valor: '2', rotulo: 'perfis de acesso' }
   ];
 
