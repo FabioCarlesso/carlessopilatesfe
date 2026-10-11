@@ -110,6 +110,37 @@ describe('AuthService', () => {
     expect(localStorage.getItem('refreshToken')).toBe('r2');
   });
 
+  it('refresh() should not restore the session when logout happens while it is in flight', () => {
+    localStorage.setItem('accessToken', 'old-access');
+    localStorage.setItem('refreshToken', 'old-refresh');
+    spyOn(router, 'navigate');
+
+    service.refresh().subscribe();
+    const refresh = httpMock.expectOne('/api/auth/refresh');
+
+    service.logout();
+    httpMock.expectOne('/api/auth/logout').flush(null, { status: 204, statusText: 'No Content' });
+    refresh.flush({ ...loginResponse, accessToken: 'new-access', refreshToken: 'new-refresh' });
+
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('refreshToken')).toBeNull();
+  });
+
+  it('refresh() should not overwrite a new login made while it is in flight', () => {
+    localStorage.setItem('refreshToken', 'old-refresh');
+
+    service.refresh().subscribe();
+    const refresh = httpMock.expectOne('/api/auth/refresh');
+
+    service.login({ email: 'admin@carlessopilates.com', password: 'senha1234' }).subscribe();
+    httpMock.expectOne('/api/auth/login')
+      .flush({ ...loginResponse, accessToken: 'login-access', refreshToken: 'login-refresh' });
+    refresh.flush({ ...loginResponse, accessToken: 'new-access', refreshToken: 'new-refresh' });
+
+    expect(localStorage.getItem('accessToken')).toBe('login-access');
+    expect(localStorage.getItem('refreshToken')).toBe('login-refresh');
+  });
+
   it('refresh() should fail without calling the API when no refresh token is stored', () => {
     let failed = false;
 

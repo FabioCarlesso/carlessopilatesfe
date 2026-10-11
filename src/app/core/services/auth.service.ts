@@ -61,7 +61,13 @@ export class AuthService {
 
     const dto: RefreshTokenRequestDTO = { refreshToken };
     this.refreshEmAndamento$ = this.http.post<LoginResponseDTO>(this.refreshUrl, dto).pipe(
-      tap(res => this.storeTokens(res)),
+      // Se a sessão foi encerrada (ou trocada por um novo login) enquanto o
+      // refresh estava em voo, o par recebido não pode ressuscitá-la.
+      tap(res => {
+        if (this.getRefreshToken() === refreshToken) {
+          this.storeTokens(res);
+        }
+      }),
       finalize(() => (this.refreshEmAndamento$ = null)),
       shareReplay({ bufferSize: 1, refCount: false })
     );
