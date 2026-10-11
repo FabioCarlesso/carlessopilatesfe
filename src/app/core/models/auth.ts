@@ -15,8 +15,14 @@ export interface AuthenticatedUser {
 
 export interface LoginResponseDTO {
   accessToken: string;
+  refreshToken: string;
   tokenType: string;
   user: AuthenticatedUser;
+}
+
+/** Corpo de `POST /auth/refresh` e de `POST /auth/logout`. */
+export interface RefreshTokenRequestDTO {
+  refreshToken: string;
 }
 
 export interface AlterarSenhaRequestDTO {

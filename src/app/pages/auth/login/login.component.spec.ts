@@ -84,6 +84,7 @@ describe('LoginComponent', () => {
   it('should navigate to / on successful login', () => {
     authServiceSpy.login.and.returnValue(of({
       accessToken: 'token',
+      refreshToken: 'refresh',
       tokenType: 'Bearer',
       user: {
         id: 1,
