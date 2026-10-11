@@ -11,6 +11,7 @@ describe('AuthService', () => {
 
   const loginResponse = {
     accessToken: 'token123',
+    refreshToken: 'refresh123',
     tokenType: 'Bearer',
     user: {
       id: 1,
@@ -50,6 +51,72 @@ describe('AuthService', () => {
     req.flush(loginResponse);
 
     expect(localStorage.getItem('accessToken')).toBe('token123');
+    expect(localStorage.getItem('refreshToken')).toBe('refresh123');
+  });
+
+  it('refresh() should POST the stored refresh token and store the new pair', () => {
+    localStorage.setItem('accessToken', 'old-access');
+    localStorage.setItem('refreshToken', 'old-refresh');
+    let accessToken: string | undefined;
+
+    service.refresh().subscribe(res => accessToken = res.accessToken);
+
+    const req = httpMock.expectOne('/api/auth/refresh');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'old-refresh' });
+    req.flush({ ...loginResponse, accessToken: 'new-access', refreshToken: 'new-refresh' });
+
+    expect(accessToken).toBe('new-access');
+    expect(localStorage.getItem('accessToken')).toBe('new-access');
+    expect(localStorage.getItem('refreshToken')).toBe('new-refresh');
+  });
+
+  it('refresh() should share a single request among concurrent callers', () => {
+    localStorage.setItem('refreshToken', 'old-refresh');
+    const tokens: string[] = [];
+
+    service.refresh().subscribe(res => tokens.push(res.accessToken));
+    service.refresh().subscribe(res => tokens.push(res.accessToken));
+    service.refresh().subscribe(res => tokens.push(res.accessToken));
+
+    httpMock.expectOne('/api/auth/refresh')
+      .flush({ ...loginResponse, accessToken: 'new-access', refreshToken: 'new-refresh' });
+
+    expect(tokens).toEqual(['new-access', 'new-access', 'new-access']);
+  });
+
+  it('refresh() should start a new request once the previous one finished', () => {
+    localStorage.setItem('refreshToken', 'r1');
+
+    service.refresh().subscribe();
+    httpMock.expectOne('/api/auth/refresh')
+      .flush({ ...loginResponse, accessToken: 'a2', refreshToken: 'r2' });
+
+    service.refresh().subscribe();
+    const req = httpMock.expectOne('/api/auth/refresh');
+    expect(req.request.body).toEqual({ refreshToken: 'r2' });
+    req.flush({ ...loginResponse, accessToken: 'a3', refreshToken: 'r3' });
+  });
+
+  it('refresh() should allow a new attempt after a failed refresh', () => {
+    localStorage.setItem('refreshToken', 'r1');
+
+    service.refresh().subscribe({ error: () => undefined });
+    httpMock.expectOne('/api/auth/refresh').flush(null, { status: 503, statusText: 'Unavailable' });
+
+    service.refresh().subscribe();
+    httpMock.expectOne('/api/auth/refresh')
+      .flush({ ...loginResponse, accessToken: 'a2', refreshToken: 'r2' });
+    expect(localStorage.getItem('refreshToken')).toBe('r2');
+  });
+
+  it('refresh() should fail without calling the API when no refresh token is stored', () => {
+    let failed = false;
+
+    service.refresh().subscribe({ error: () => failed = true });
+
+    httpMock.expectNone('/api/auth/refresh');
+    expect(failed).toBeTrue();
   });
 
   it('forgotPassword() should POST the email to the forgot-password endpoint', () => {
@@ -109,12 +176,50 @@ describe('AuthService', () => {
 
   it('logout() should remove token and user data and navigate to /login', () => {
     localStorage.setItem('accessToken', 'abc');
+    localStorage.setItem('refreshToken', 'refresh-abc');
     localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
     const spy = spyOn(router, 'navigate');
     service.logout();
     expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('refreshToken')).toBeNull();
     expect(localStorage.getItem('currentUser')).toBeNull();
     expect(spy).toHaveBeenCalledWith(['/login']);
+    httpMock.expectOne('/api/auth/logout').flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('logout() should POST the refresh token to /auth/logout', () => {
+    localStorage.setItem('accessToken', 'abc');
+    localStorage.setItem('refreshToken', 'refresh-abc');
+    spyOn(router, 'navigate');
+
+    service.logout();
+
+    const req = httpMock.expectOne('/api/auth/logout');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'refresh-abc' });
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('logout() should leave even when /auth/logout fails', () => {
+    localStorage.setItem('accessToken', 'abc');
+    localStorage.setItem('refreshToken', 'refresh-abc');
+    const spy = spyOn(router, 'navigate');
+
+    service.logout();
+    httpMock.expectOne('/api/auth/logout').flush(null, { status: 500, statusText: 'Server Error' });
+
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('refreshToken')).toBeNull();
+    expect(spy).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('logout() should not call /auth/logout when there is no refresh token', () => {
+    localStorage.setItem('accessToken', 'abc');
+    spyOn(router, 'navigate');
+
+    service.logout();
+
+    httpMock.expectNone('/api/auth/logout');
   });
 
   it('clearSession() should remove token and user data without navigation', () => {
@@ -122,9 +227,12 @@ describe('AuthService', () => {
     localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
     const spy = spyOn(router, 'navigate');
 
+    localStorage.setItem('refreshToken', 'refresh-abc');
+
     service.clearSession();
 
     expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('refreshToken')).toBeNull();
     expect(localStorage.getItem('currentUser')).toBeNull();
     expect(spy).not.toHaveBeenCalled();
   });

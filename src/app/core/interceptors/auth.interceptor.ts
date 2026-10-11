@@ -1,66 +1,79 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
-const TOKEN_INVALID_BODY_CODES = ['TOKEN_EXPIRED', 'INVALID_TOKEN', 'TOKEN_INVALID'];
-const TOKEN_INVALID_HEADER_HINTS = ['invalid_token', 'expired_token'];
+/**
+ * Endpoints de autenticação: não recebem `Authorization` e um `401` neles é
+ * resposta do próprio fluxo (credencial ou refresh token inválido), nunca
+ * motivo para tentar renovar a sessão.
+ */
+const ROTAS_DE_AUTENTICACAO = [
+  '/auth/login',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/forgot-password',
+  '/auth/reset-password'
+];
+
+/** Respostas do refresh que significam "a sessão acabou" (e não falha transitória). */
+const STATUS_REFRESH_REJEITADO = [400, 401];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
-  const isLoginRequest = req.url.includes('/auth/login');
-
-  if (token && !isLoginRequest) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    });
+  if (isRotaDeAutenticacao(req.url)) {
+    return next(req);
   }
 
-  return next(req).pipe(
+  const authService = inject(AuthService);
+  const tokenEnviado = authService.getToken();
+
+  return next(comToken(req, tokenEnviado)).pipe(
     catchError((error: unknown) => {
-      if (
-        !isLoginRequest &&
-        error instanceof HttpErrorResponse &&
-        error.status === 401 &&
-        authService.isAuthenticated() &&
-        isTokenInvalidResponse(error)
-      ) {
-        authService.logout();
+      if (!tokenEnviado || !(error instanceof HttpErrorResponse) || error.status !== 401) {
+        return throwError(() => error);
       }
 
-      return throwError(() => error);
+      return obterNovoToken(authService, tokenEnviado).pipe(
+        catchError((refreshError: unknown) => {
+          if (isRefreshRejeitado(refreshError)) {
+            authService.logout();
+            return throwError(() => error);
+          }
+          return throwError(() => refreshError);
+        }),
+        // A retentativa vai direto para `next`, sem passar de novo por este
+        // interceptor: se ela também receber `401`, o erro sobe sem outro refresh.
+        switchMap(novoToken => next(comToken(req, novoToken)))
+      );
     })
   );
 };
 
-function isTokenInvalidResponse(error: HttpErrorResponse): boolean {
-  const wwwAuthenticate = error.headers?.get('WWW-Authenticate') ?? '';
-  const bearerError = getBearerError(wwwAuthenticate);
-  if (bearerError) {
-    if (TOKEN_INVALID_HEADER_HINTS.includes(bearerError.toLowerCase())) {
-      return true;
-    }
+/**
+ * Se outra requisição já renovou a sessão depois que esta saiu, reaproveita o
+ * token novo em vez de rotacionar o refresh token mais uma vez.
+ */
+function obterNovoToken(authService: AuthService, tokenEnviado: string): Observable<string> {
+  const tokenAtual = authService.getToken();
+  if (tokenAtual && tokenAtual !== tokenEnviado) {
+    return of(tokenAtual);
   }
-
-  const body = error.error;
-  if (body && typeof body === 'object' && !Array.isArray(body)) {
-    const code = (body as { code?: unknown }).code;
-    if (typeof code === 'string' && TOKEN_INVALID_BODY_CODES.includes(code.toUpperCase())) {
-      return true;
-    }
-  }
-
-  return false;
+  return authService.refresh().pipe(map(res => res.accessToken));
 }
 
-function getBearerError(wwwAuthenticate: string): string | null {
-  const bearerMatch = wwwAuthenticate.match(/\bBearer\b(?<params>.*)/i);
-  const params = bearerMatch?.groups?.['params'];
-  if (!params) {
-    return null;
-  }
+function comToken<T>(req: HttpRequest<T>, token: string | null): HttpRequest<T> {
+  return token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+}
 
-  const errorMatch = params.match(/(?:^|,)\s*error\s*=\s*"?([^",\s]+)"?/i);
-  return errorMatch?.[1] ?? null;
+function isRotaDeAutenticacao(url: string): boolean {
+  const caminho = url.split('?')[0];
+  return ROTAS_DE_AUTENTICACAO.some(rota => caminho.endsWith(rota));
+}
+
+/** Refresh recusado pela API ou impossível (sem refresh token guardado). */
+function isRefreshRejeitado(error: unknown): boolean {
+  if (error instanceof HttpErrorResponse) {
+    return STATUS_REFRESH_REJEITADO.includes(error.status);
+  }
+  return true;
 }
