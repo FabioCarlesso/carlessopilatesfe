@@ -153,7 +153,7 @@ describe('InadimplenciaComponent', () => {
         { status: ['PENDENTE', 'VENCIDO'] },
         0,
         10,
-        'dataVencimento,asc'
+        ['dataVencimento,asc']
       );
       expect(component.filtro.status).toEqual({ PENDENTE: true, VENCIDO: true, PAGO: false });
     });
@@ -230,19 +230,20 @@ describe('InadimplenciaComponent', () => {
   });
 
   describe('ordenação', () => {
-    // Dias em atraso não existem na API: ordenar por eles é ordenar pelo
-    // vencimento na direção oposta, no servidor, valendo para todas as páginas.
-    it('should sort by days overdue through the inverse due date sort', () => {
+    // Dias em atraso não existem na API: ordenar por eles é ordenar por status e,
+    // dentro dele, pelo vencimento na direção oposta — no servidor, valendo para
+    // todas as páginas, sem misturar pagos e pendentes no prazo aos vencidos.
+    it('should sort by days overdue through status and the inverse due date sort', () => {
       criar();
       const cabecalho = todos('th button').find(b => b.textContent?.includes('Dias em atraso'))!;
 
       cabecalho.click();
       fixture.detectChanges();
-      expect(ultimaChamada()[3]).toBe('dataVencimento,desc');
+      expect(ultimaChamada()[3]).toEqual(['status,asc', 'dataVencimento,desc']);
 
       cabecalho.click();
       fixture.detectChanges();
-      expect(ultimaChamada()[3]).toBe('dataVencimento,asc');
+      expect(ultimaChamada()[3]).toEqual(['status,desc', 'dataVencimento,asc']);
       expect(component.ordenacao).toEqual({ campo: 'diasAtraso', direcao: 'desc' });
     });
 
@@ -253,7 +254,7 @@ describe('InadimplenciaComponent', () => {
       component.ordenar('paciente.nome');
 
       expect(ultimaChamada()[1]).toBe(0);
-      expect(ultimaChamada()[3]).toBe('paciente.nome,asc');
+      expect(ultimaChamada()[3]).toEqual(['paciente.nome,asc']);
     });
   });
 
@@ -272,7 +273,7 @@ describe('InadimplenciaComponent', () => {
         { status: ['VENCIDO', 'PAGO'], vencimentoDe: '2026-01-01', vencimentoAte: '2026-09-30', pacienteId: 10 },
         0,
         10,
-        'dataVencimento,asc'
+        ['dataVencimento,asc']
       ]);
     });
 
@@ -346,7 +347,7 @@ describe('InadimplenciaComponent', () => {
         { status: ['PENDENTE', 'VENCIDO'], vencimentoDe: undefined, vencimentoAte: undefined, pacienteId: undefined },
         0,
         10,
-        'dataVencimento,asc'
+        ['dataVencimento,asc']
       ]);
     });
 

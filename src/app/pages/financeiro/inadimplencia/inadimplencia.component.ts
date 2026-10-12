@@ -62,11 +62,9 @@ interface FiltroUI {
 
 function filtroPadrao(): FiltroUI {
   return {
-    status: {
-      PENDENTE: STATUS_INADIMPLENCIA_PADRAO.includes('PENDENTE'),
-      VENCIDO: STATUS_INADIMPLENCIA_PADRAO.includes('VENCIDO'),
-      PAGO: STATUS_INADIMPLENCIA_PADRAO.includes('PAGO')
-    },
+    status: Object.fromEntries(
+      STATUS_PAGAMENTO_OPCOES.map(status => [status, STATUS_INADIMPLENCIA_PADRAO.includes(status)])
+    ) as Record<StatusPagamento, boolean>,
     vencimentoDe: '',
     vencimentoAte: ''
   };
@@ -93,8 +91,9 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
  * (pendentes e vencidos, do vencimento mais antigo para o mais recente — ou
  * seja, do maior atraso para o menor). Filtros, paginação e ordenação são todos
  * do **servidor**: os dias em atraso são calculados aqui a partir de
- * `dataVencimento`, mas ordenar por eles vira `sort=dataVencimento` na direção
- * oposta, para valer na base inteira e não só na página exibida.
+ * `dataVencimento`, mas ordenar por eles vira `sort` por status e vencimento
+ * (ver `sortDaInadimplencia`), para valer na base inteira e não só na página
+ * exibida.
  *
  * Cada pagamento abre um diálogo de cobrança com o histórico de contatos e,
  * enquanto não estiver `PAGO`, o registro de um novo contato.

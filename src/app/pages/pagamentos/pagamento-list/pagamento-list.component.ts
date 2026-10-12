@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { PagamentoResponseDTO, StatusPagamento } from '../../../core/models/plano';
+import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -29,11 +29,7 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly statusLabel: Record<StatusPagamento, string> = {
-    PENDENTE: 'Pendente',
-    PAGO: 'Pago',
-    VENCIDO: 'Vencido'
-  };
+  readonly statusLabel = STATUS_PAGAMENTO_LABEL;
 
   constructor(
     private service: PagamentoService,

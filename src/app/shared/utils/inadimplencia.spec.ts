@@ -66,13 +66,21 @@ describe('inadimplencia utils', () => {
 
   describe('sortDaInadimplencia', () => {
     it('should pass real API fields through', () => {
-      expect(sortDaInadimplencia({ campo: 'dataVencimento', direcao: 'asc' })).toBe('dataVencimento,asc');
-      expect(sortDaInadimplencia({ campo: 'paciente.nome', direcao: 'desc' })).toBe('paciente.nome,desc');
+      expect(sortDaInadimplencia({ campo: 'dataVencimento', direcao: 'asc' })).toEqual(['dataVencimento,asc']);
+      expect(sortDaInadimplencia({ campo: 'paciente.nome', direcao: 'desc' })).toEqual(['paciente.nome,desc']);
     });
 
     it('should map days overdue to the due date in the opposite direction', () => {
-      expect(sortDaInadimplencia({ campo: CAMPO_DIAS_ATRASO, direcao: 'desc' })).toBe('dataVencimento,asc');
-      expect(sortDaInadimplencia({ campo: CAMPO_DIAS_ATRASO, direcao: 'asc' })).toBe('dataVencimento,desc');
+      // Status primeiro: pago e pendente no prazo têm atraso zero e não podem se
+      // misturar aos vencidos só por terem vencimento antigo.
+      expect(sortDaInadimplencia({ campo: CAMPO_DIAS_ATRASO, direcao: 'desc' })).toEqual([
+        'status,desc',
+        'dataVencimento,asc'
+      ]);
+      expect(sortDaInadimplencia({ campo: CAMPO_DIAS_ATRASO, direcao: 'asc' })).toEqual([
+        'status,asc',
+        'dataVencimento,desc'
+      ]);
     });
   });
 

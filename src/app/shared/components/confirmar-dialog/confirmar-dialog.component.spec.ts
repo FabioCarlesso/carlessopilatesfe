@@ -120,6 +120,33 @@ describe('ConfirmarDialogComponent', () => {
 
   // Diálogo só de leitura (ex.: histórico de cobrança de pagamento quitado):
   // sem ação a confirmar, sobra o botão de fechar, que recebe o foco.
+  // Ação recusada com o diálogo aberto (ex.: 422 ao registrar cobrança de um
+  // pagamento quitado em outra aba): o botão que tinha o foco some, e o foco não
+  // pode cair no <body>, atrás do modal.
+  it('should move focus to cancel when the focused confirm button is removed', () => {
+    abrir();
+    expect(document.activeElement).toBe(confirmarBtn());
+
+    host.processando = true;
+    fixture.detectChanges();
+    host.processando = false;
+    host.exibirConfirmar = false;
+    fixture.detectChanges();
+
+    expect(confirmarBtn()).toBeNull();
+    expect(document.activeElement).toBe(cancelarBtn());
+  });
+
+  it('should keep focus where it is when it is already inside the dialog', () => {
+    abrir();
+    cancelarBtn().focus();
+
+    host.exibirConfirmar = false;
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(cancelarBtn());
+  });
+
   it('should hide the confirm button and focus cancel when exibirConfirmar is false', () => {
     host.exibirConfirmar = false;
     abrir();

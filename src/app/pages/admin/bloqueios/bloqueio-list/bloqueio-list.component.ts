@@ -11,9 +11,7 @@ import { ConfirmarDialogComponent } from '../../../../shared/components/confirma
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { extrairMensagemErro } from '../../../../shared/utils/api-error';
 import { formatarFaixaHoraria, formatarPeriodo } from '../../../../shared/utils/bloqueio-agenda';
-import { hojeIso, paraData } from '../../../../shared/utils/calendario';
-
-const MS_POR_DIA = 24 * 60 * 60 * 1000;
+import { diasEntre, hojeIso } from '../../../../shared/utils/calendario';
 
 /**
  * Cadastro de bloqueios de agenda (issue #135): feriados, manutenções e eventos
@@ -108,7 +106,7 @@ export class BloqueioListComponent implements OnInit, OnDestroy {
     if (!inicio || !fim) return 'Informe o período inicial e o final.';
     if (fim < inicio) return 'O período inicial não pode ser posterior ao final.';
 
-    const dias = Math.round((paraData(fim).getTime() - paraData(inicio).getTime()) / MS_POR_DIA) + 1;
+    const dias = diasEntre(inicio, fim) + 1;
     if (dias > BLOQUEIO_PERIODO_MAX_DIAS) {
       return `A consulta por período é limitada a ${BLOQUEIO_PERIODO_MAX_DIAS} dias.`;
     }

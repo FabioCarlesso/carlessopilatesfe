@@ -12,6 +12,7 @@ import {
   navegarPeriodo,
   ordenarEventos,
   somarDias,
+  diasEntre,
   somarMeses
 } from './calendario';
 
@@ -45,6 +46,20 @@ function aula(dados: Partial<AulaResponseDTO> & { id: number; data: string }): A
 
 describe('calendario', () => {
   describe('aritmética de datas', () => {
+    it('should count calendar days between two dates, negative when reversed', () => {
+      expect(diasEntre('2026-05-31', '2026-06-01')).toBe(1);
+      expect(diasEntre('2026-02-01', '2026-03-01')).toBe(28);
+      expect(diasEntre('2026-03-10', '2026-03-10')).toBe(0);
+      expect(diasEntre('2026-06-01', '2026-05-31')).toBe(-1);
+    });
+
+    // Vale em qualquer fuso do navegador: o intervalo atravessa as viradas de
+    // horário de verão do hemisfério norte e do sul.
+    it('should not lose a day across daylight saving transitions', () => {
+      expect(diasEntre('2026-03-01', '2026-04-01')).toBe(31);
+      expect(diasEntre('2026-10-01', '2026-11-15')).toBe(45);
+    });
+
     it('should read the ISO day from local components', () => {
       expect(hojeIso(new Date(2026, 4, 20, 23, 30))).toBe('2026-05-20');
     });

@@ -112,6 +112,13 @@ describe('PagamentoService', () => {
       req.flush(pagina);
     });
 
+    it('should send one sort param per criterion, in order', () => {
+      service.listarTodos({}, 0, 10, ['status,desc', 'dataVencimento,asc']).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/pagamentos');
+      expect(req.request.params.getAll('sort')).toEqual(['status,desc', 'dataVencimento,asc']);
+      req.flush(pagina);
+    });
+
     it('should leave empty filters out of the query', () => {
       service.listarTodos({ status: [], vencimentoDe: '', vencimentoAte: '' }).subscribe();
       const req = httpMock.expectOne(r => r.url === '/api/pagamentos');

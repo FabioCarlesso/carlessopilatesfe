@@ -41,16 +41,19 @@ export class PagamentoService {
    * faixa invertida é evitado pela tela antes de chegar aqui. `status` vai
    * repetido, um parâmetro por valor, como o `@RequestParam List` espera.
    *
-   * `sort` segue o `Pageable` do Spring (`campo,direcao`); a API aceita
-   * `dataVencimento`, `valor`, `status` e `paciente.nome`.
+   * `sort` segue o `Pageable` do Spring (`campo,direcao`), um parâmetro por
+   * critério; a API aceita `dataVencimento`, `valor`, `status` e `paciente.nome`.
    */
   listarTodos(
     filtro: PagamentoFiltro = {},
     page = 0,
     size = 10,
-    sort = 'dataVencimento,asc'
+    sort: string | readonly string[] = 'dataVencimento,asc'
   ): Observable<Page<PagamentoResponseDTO>> {
-    let params = new HttpParams().set('page', page).set('size', size).set('sort', sort);
+    let params = new HttpParams().set('page', page).set('size', size);
+    for (const criterio of typeof sort === 'string' ? [sort] : sort) {
+      params = params.append('sort', criterio);
+    }
     for (const status of filtro.status ?? []) {
       params = params.append('status', status);
     }

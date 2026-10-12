@@ -1,19 +1,17 @@
 import { Ordenacao, toSortParam } from '../../core/models/ordenacao';
 import { PagamentoResponseDTO } from '../../core/models/plano';
-import { hojeIso, paraData } from './calendario';
+import { diasEntre, hojeIso } from './calendario';
 
 /**
  * Regras puras da tela de inadimplência (issue #127): dias em atraso,
  * ordenação, validação da faixa de vencimento e formatação.
  */
 
-const MS_POR_DIA = 24 * 60 * 60 * 1000;
-
 /**
  * Campo **virtual** da ordenação: dias em atraso não existem na API, que só
- * devolve `dataVencimento`. Como o atraso é `hoje - vencimento`, ordenar por ele
- * é ordenar pelo vencimento na direção oposta — e a ordenação continua sendo do
- * servidor, valendo para todas as páginas e não só para a que está na tela.
+ * devolve `status` e `dataVencimento`. A ordenação continua sendo do servidor,
+ * valendo para todas as páginas e não só para a que está na tela — ver
+ * {@link sortDaInadimplencia}.
  */
 export const CAMPO_DIAS_ATRASO = 'diasAtraso';
 
@@ -21,17 +19,13 @@ export const CAMPO_DIAS_ATRASO = 'diasAtraso';
  * Dias corridos entre o vencimento e hoje, para o que ainda está em aberto.
  * Pagamento `PAGO` e pagamento que ainda não venceu (inclusive o que vence
  * hoje) têm atraso `0`.
- *
- * A conta usa o calendário local e arredonda a diferença, para uma virada de
- * horário de verão no intervalo não transformar 3 dias em 2,96.
  */
 export function diasEmAtraso(
   pagamento: Pick<PagamentoResponseDTO, 'status' | 'dataVencimento'>,
   hoje: string = hojeIso()
 ): number {
   if (pagamento.status === 'PAGO' || !pagamento.dataVencimento) return 0;
-  const dias = Math.round((paraData(hoje).getTime() - paraData(pagamento.dataVencimento).getTime()) / MS_POR_DIA);
-  return Math.max(0, dias);
+  return Math.max(0, diasEntre(pagamento.dataVencimento, hoje));
 }
 
 /** "—" quando não há atraso; senão "1 dia" ou "N dias". */
@@ -41,14 +35,26 @@ export function descreverAtraso(dias: number): string {
 }
 
 /**
- * Converte a ordenação da tela para o `sort` do `Pageable`, traduzindo o campo
- * virtual {@link CAMPO_DIAS_ATRASO} para `dataVencimento` na direção oposta:
- * mais dias em atraso primeiro (`desc`) é o vencimento mais antigo primeiro
- * (`asc`).
+ * Converte a ordenação da tela para os parâmetros `sort` do `Pageable`.
+ *
+ * O campo virtual {@link CAMPO_DIAS_ATRASO} não pode virar só `dataVencimento`:
+ * pagamento `PAGO` e pendente ainda no prazo têm atraso zero qualquer que seja o
+ * vencimento, e um pago antigo apareceria antes de um vencido real. Por isso o
+ * status vem primeiro e o vencimento desempata dentro dele:
+ *
+ * - mais atraso primeiro (`desc`): `status,desc` (VENCIDO → PENDENTE → PAGO) e
+ *   `dataVencimento,asc` (o vencimento mais antigo é o maior atraso);
+ * - menos atraso primeiro (`asc`): o inverso das duas chaves.
+ *
+ * Depende da ordem alfabética dos nomes do enum, que a API grava como texto.
  */
-export function sortDaInadimplencia(ordenacao: Ordenacao): string {
-  if (ordenacao.campo !== CAMPO_DIAS_ATRASO) return toSortParam(ordenacao);
-  return toSortParam({ campo: 'dataVencimento', direcao: ordenacao.direcao === 'asc' ? 'desc' : 'asc' });
+export function sortDaInadimplencia(ordenacao: Ordenacao): string[] {
+  if (ordenacao.campo !== CAMPO_DIAS_ATRASO) return [toSortParam(ordenacao)];
+  const maisAtrasoPrimeiro = ordenacao.direcao === 'desc';
+  return [
+    toSortParam({ campo: 'status', direcao: maisAtrasoPrimeiro ? 'desc' : 'asc' }),
+    toSortParam({ campo: 'dataVencimento', direcao: maisAtrasoPrimeiro ? 'asc' : 'desc' })
+  ];
 }
 
 /**
