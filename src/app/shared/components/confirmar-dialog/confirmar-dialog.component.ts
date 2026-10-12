@@ -1,13 +1,16 @@
 import { NgClass } from '@angular/common';
 import {
+  AfterViewChecked,
   AfterViewInit,
   Component,
   ElementRef,
   EventEmitter,
   HostListener,
   Input,
+  OnChanges,
   OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
   ChangeDetectionStrategy
 } from '@angular/core';
@@ -55,7 +58,7 @@ let proximoId = 0;
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './confirmar-dialog.component.scss'
 })
-export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
+export class ConfirmarDialogComponent implements AfterViewInit, AfterViewChecked, OnChanges, OnDestroy {
   @Input() titulo = 'Confirmar ação';
   @Input() mensagem: string | null = null;
   @Input() textoConfirmar = 'Confirmar';
@@ -64,12 +67,21 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   @Input() processando = false;
   @Input() confirmarDesabilitado = false;
   @Input() fecharAoClicarFora = true;
+  // Diálogo apenas informativo (ex.: histórico sem ação disponível): sem o botão de
+  // confirmação, sobra só o de cancelar, que passa a ser o "Fechar" da janela.
+  @Input() exibirConfirmar = true;
 
   @Output() confirmar = new EventEmitter<void>();
   @Output() cancelar = new EventEmitter<void>();
 
   @ViewChild('dialog') private dialog?: ElementRef<HTMLElement>;
   @ViewChild('confirmarButton') private confirmarButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('cancelarButton') private cancelarButton?: ElementRef<HTMLButtonElement>;
+
+  // Marcado quando o botão de confirmar sai da tela com o diálogo aberto (ex.: a ação
+  // foi recusada e o diálogo passou a só leitura). O foco podia estar nele — ou num
+  // campo do conteúdo que saiu junto — e cairia no `<body>`, atrás do modal.
+  private recuperarFoco = false;
 
   private readonly id = proximoId++;
   readonly tituloId = `confirmar-dialog-titulo-${this.id}`;
@@ -101,6 +113,26 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
     (primeiroFocavel ?? this.dialog?.nativeElement)?.focus();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    const exibir = changes['exibirConfirmar'];
+    if (exibir && !exibir.firstChange && exibir.previousValue && !exibir.currentValue) {
+      this.recuperarFoco = true;
+    }
+  }
+
+  // Roda depois que o botão já saiu do DOM e o de cancelar foi reabilitado (o
+  // `processando` costuma cair no mesmo ciclo). Só move o foco se ele estiver fora
+  // do diálogo, para não roubá-lo de quem já está num elemento válido.
+  ngAfterViewChecked(): void {
+    if (!this.recuperarFoco) return;
+    this.recuperarFoco = false;
+
+    const dialog = this.dialog?.nativeElement;
+    if (dialog?.contains(document.activeElement)) return;
+    const cancelarButton = this.cancelarButton?.nativeElement;
+    (cancelarButton && !cancelarButton.disabled ? cancelarButton : dialog)?.focus();
+  }
+
   ngOnDestroy(): void {
     if (this.scrollTravado) {
       liberarScrollDoFundo();
@@ -110,7 +142,7 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   emitirConfirmar(): void {
-    if (this.processando || this.confirmarDesabilitado) return;
+    if (!this.exibirConfirmar || this.processando || this.confirmarDesabilitado) return;
     this.confirmar.emit();
   }
 

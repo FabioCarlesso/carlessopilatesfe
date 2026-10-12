@@ -82,3 +82,9 @@ export const FREQUENCIA_DIAS: Record<FrequenciaSemanal, number> = {
   DUAS_VEZES: 2,
   TRES_VEZES: 3
 };
+
+export const STATUS_PAGAMENTO_LABEL: Record<StatusPagamento, string> = {
+  PENDENTE: 'Pendente',
+  PAGO: 'Pago',
+  VENCIDO: 'Vencido'
+};

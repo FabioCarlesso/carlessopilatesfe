@@ -184,6 +184,17 @@ export function hojeIso(agora: Date = new Date()): string {
   return diaIso(agora);
 }
 
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * Dias corridos de `de` até `ate` (negativo se `ate` vier antes). Arredonda a
+ * diferença para uma virada de horário de verão no intervalo não transformar 3
+ * dias em 2,96.
+ */
+export function diasEntre(de: string, ate: string): number {
+  return Math.round((paraData(ate).getTime() - paraData(de).getTime()) / MS_POR_DIA);
+}
+
 export function somarDias(dia: string, quantidade: number): string {
   const data = paraData(dia);
   data.setDate(data.getDate() + quantidade);

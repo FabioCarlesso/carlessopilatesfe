@@ -1,0 +1,276 @@
+<div class="page-header">
+  <div>
+    <h1>Inadimplência</h1>
+    <p class="page-subtitle">Pagamentos em aberto, dias em atraso e contatos de cobrança</p>
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="filtros" (ngSubmit)="buscar()" aria-label="Filtros de pagamentos">
+  <fieldset class="filtro-status">
+    <legend>Status</legend>
+    <div class="filtro-status-opcoes">
+      @for (status of statusOpcoes; track status) {
+        <label class="filtro-checkbox">
+          <input type="checkbox" [name]="'status-' + status" [(ngModel)]="filtro.status[status]" />
+          {{ statusLabel[status] }}
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <div class="filtro-campo">
+    <label for="vencimentoDe">Vencimento de</label>
+    <input id="vencimentoDe" type="date" class="form-control" name="vencimentoDe" [(ngModel)]="filtro.vencimentoDe" />
+  </div>
+  <div class="filtro-campo">
+    <label for="vencimentoAte">Vencimento até</label>
+    <input id="vencimentoAte" type="date" class="form-control" name="vencimentoAte" [(ngModel)]="filtro.vencimentoAte" />
+  </div>
+
+  <div class="filtro-campo filtro-paciente">
+    @if (pacienteSelecionado) {
+      <span class="filtro-rotulo" id="pacienteFiltroRotulo">Paciente</span>
+      <div class="paciente-selecionado" role="group" aria-labelledby="pacienteFiltroRotulo">
+        <span>{{ pacienteSelecionado.nome }}</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          [attr.aria-label]="'Remover o filtro do paciente ' + pacienteSelecionado.nome"
+          (click)="limparPaciente()">
+          Remover
+        </button>
+      </div>
+    } @else {
+      <label for="buscaPaciente">Paciente</label>
+      <input
+        id="buscaPaciente"
+        type="text"
+        class="form-control"
+        [formControl]="busca"
+        autocomplete="off"
+        placeholder="Digite ao menos 2 letras"
+        [attr.aria-controls]="listaSugestoesId" />
+      <div [id]="listaSugestoesId" class="sugestoes" aria-live="polite">
+        @if (buscando) {
+          <p class="sugestao-status">Buscando...</p>
+        } @else if (buscaFalhou) {
+          <p class="sugestao-status">Não foi possível buscar agora.</p>
+        } @else {
+          @for (paciente of sugestoes; track paciente.id) {
+            <button type="button" class="sugestao" (click)="selecionarPaciente(paciente)">
+              <span class="sugestao-nome">{{ paciente.nome }}</span>
+              <span class="sugestao-detalhe">{{ paciente.email }}</span>
+            </button>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  @if (erroFiltro) {
+    <div class="invalid-feedback filtro-erro" role="alert">{{ erroFiltro }}</div>
+  }
+
+  <div class="filtro-acoes">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">Buscar</button>
+    <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar</button>
+  </div>
+</form>
+
+@if (loading) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (!loading && !erro && linhas.length === 0) {
+  <div class="empty-state">Nenhum pagamento encontrado para os filtros aplicados.</div>
+}
+
+@if (!loading && linhas.length > 0) {
+  <app-pagination-summary
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [totalElements]="totalElements"
+    itemLabel="pagamentos"
+    [pageSizeOptions]="pageSizeOptions"
+    (pageSizeChange)="alterarTamanhoPagina($event)" />
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de pagamentos em aberto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th app-sortable campo="paciente.nome" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Paciente</th>
+          <th app-sortable campo="valor" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Valor</th>
+          <th app-sortable campo="dataVencimento" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Vencimento</th>
+          <th app-sortable [campo]="campoDiasAtraso" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Dias em atraso</th>
+          <th app-sortable campo="status" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (linha of linhas; track linha.pagamento.id) {
+          <tr>
+            <td>
+              <a [routerLink]="['/pacientes', linha.pagamento.pacienteId]">{{ linha.pagamento.pacienteNome }}</a>
+            </td>
+            <td>{{ linha.pagamento.valor | currency:'BRL' }}</td>
+            <td>{{ linha.pagamento.dataVencimento | localDate }}</td>
+            <td class="dias-atraso" [class.dias-atraso--em-atraso]="linha.diasAtraso > 0">
+              {{ descreverAtraso(linha.diasAtraso) }}
+            </td>
+            <td>
+              <span [class]="'badge badge-' + linha.pagamento.status.toLowerCase()">
+                {{ statusLabel[linha.pagamento.status] }}
+              </span>
+            </td>
+            <td class="acoes">
+              <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                [attr.aria-label]="'Cobrança de ' + linha.pagamento.pacienteNome + ', vencimento ' + (linha.pagamento.dataVencimento | localDate)"
+                (click)="abrirCobranca(linha)">
+                Cobrança
+              </button>
+              <a
+                [routerLink]="['/pagamentos/paciente', linha.pagamento.pacienteId]"
+                class="btn btn-sm btn-outline"
+                [attr.aria-label]="'Financeiro de ' + linha.pagamento.pacienteNome">
+                Financeiro
+              </a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalPages > 1) {
+    <div class="pagination" role="navigation" aria-label="Paginação de pagamentos">
+      <button
+        type="button"
+        class="page-nav-mobile"
+        aria-label="Página anterior"
+        [disabled]="currentPage === 0"
+        (click)="pagina(currentPage - 1)">
+        Anterior
+      </button>
+      <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+      @for (p of pages(); track p) {
+        <button
+          type="button"
+          class="page-number"
+          [class.active]="p === currentPage"
+          [attr.aria-label]="'Página ' + (p + 1)"
+          [attr.aria-current]="p === currentPage ? 'page' : null"
+          (click)="pagina(p)">
+          {{ p + 1 }}
+        </button>
+      }
+      <button
+        type="button"
+        class="page-nav-mobile"
+        aria-label="Próxima página"
+        [disabled]="currentPage === totalPages - 1"
+        (click)="pagina(currentPage + 1)">
+        Próxima
+      </button>
+    </div>
+  }
+}
+
+<a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
+
+@if (cobranca; as pagamento) {
+  <app-confirmar-dialog
+    [titulo]="'Cobrança — ' + pagamento.pacienteNome"
+    textoConfirmar="Registrar contato"
+    textoCancelar="Fechar"
+    variante="primaria"
+    [exibirConfirmar]="podeRegistrarContato"
+    [processando]="registrando"
+    [fecharAoClicarFora]="false"
+    (confirmar)="registrarContato()"
+    (cancelar)="fecharCobranca()">
+    <p class="cobranca-resumo">
+      {{ pagamento.valor | currency:'BRL' }} · vencimento {{ pagamento.dataVencimento | localDate }}
+      · {{ statusLabel[pagamento.status] }}
+      @if (cobrancaDiasAtraso > 0) {
+        · {{ descreverAtraso(cobrancaDiasAtraso) }} em atraso
+      }
+    </p>
+
+    @if (erroCobranca) {
+      <div class="alert alert-danger" role="alert">{{ erroCobranca }}</div>
+    }
+    @if (sucessoCobranca) {
+      <div class="alert alert-success" role="status">{{ sucessoCobranca }}</div>
+    }
+
+    @if (podeRegistrarContato) {
+      <form [formGroup]="cobrancaForm" (ngSubmit)="registrarContato()" class="cobranca-form">
+        <div class="form-group">
+          <label for="dataContato">Data do contato *</label>
+          <input
+            id="dataContato"
+            type="date"
+            class="form-control"
+            formControlName="dataContato"
+            [max]="hoje"
+            [class.is-invalid]="campoCobranca('dataContato').touched && campoCobranca('dataContato').invalid" />
+          @if (campoCobranca('dataContato').touched && campoCobranca('dataContato').hasError('required')) {
+            <div class="invalid-feedback">Informe a data do contato.</div>
+          }
+          @if (campoCobranca('dataContato').touched && campoCobranca('dataContato').hasError('dataFutura')) {
+            <div class="invalid-feedback">A data do contato não pode ser futura.</div>
+          }
+        </div>
+        <div class="form-group">
+          <label for="observacaoCobranca">Observação *</label>
+          <textarea
+            id="observacaoCobranca"
+            class="form-control"
+            formControlName="observacao"
+            rows="3"
+            [maxlength]="observacaoMax"
+            aria-describedby="observacaoCobrancaHint"
+            placeholder="Ex.: ligação, prometeu pagar na sexta"
+            [class.is-invalid]="campoCobranca('observacao').touched && campoCobranca('observacao').invalid"></textarea>
+          <div id="observacaoCobrancaHint" class="field-hint">{{ tamanhoObservacao }}/{{ observacaoMax }} caracteres.</div>
+          @if (campoCobranca('observacao').touched && (campoCobranca('observacao').hasError('required') || campoCobranca('observacao').hasError('emBranco'))) {
+            <div class="invalid-feedback">Descreva o contato.</div>
+          }
+          @if (campoCobranca('observacao').touched && campoCobranca('observacao').hasError('maxlength')) {
+            <div class="invalid-feedback">A observação deve ter no máximo {{ observacaoMax }} caracteres.</div>
+          }
+        </div>
+      </form>
+    } @else {
+      <p class="cobranca-aviso">
+        Pagamento quitado: o histórico continua disponível, mas não aceita novos contatos.
+      </p>
+    }
+
+    <h3 class="cobranca-historico-titulo">Contatos registrados</h3>
+    @if (carregandoContatos) {
+      <p class="cobranca-historico-status">Carregando contatos...</p>
+    } @else if (erroContatos) {
+      <p class="cobranca-historico-status" role="alert">{{ erroContatos }}</p>
+    } @else if (contatos.length === 0) {
+      <p class="cobranca-historico-status">Nenhum contato registrado para este pagamento.</p>
+    } @else {
+      <ol class="cobranca-historico">
+        @for (contato of contatos; track contato.id) {
+          <li class="cobranca-contato">
+            <strong class="cobranca-contato-data">{{ contato.dataContato | localDate }}</strong>
+            <span class="cobranca-contato-observacao">{{ contato.observacao }}</span>
+            <small class="cobranca-contato-registro">
+              Registrado por {{ contato.registradoPor }} em {{ formatarDataHora(contato.registradoEm) }}
+            </small>
+          </li>
+        }
+      </ol>
+    }
+  </app-confirmar-dialog>
+}

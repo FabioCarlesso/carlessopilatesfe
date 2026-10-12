@@ -39,4 +39,12 @@ describe('AdminHomeComponent', () => {
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Bloqueios de agenda');
   });
+
+  it('should render link to delinquency management', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/financeiro/inadimplencia"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Inadimplência');
+  });
 });

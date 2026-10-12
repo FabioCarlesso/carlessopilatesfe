@@ -285,6 +285,15 @@ export const routes: Routes = [
         .then(m => m.NfseRelatorioComponent)
   },
   {
+    // Gestão de inadimplência (issue #127): lista global de pagamentos e
+    // contatos de cobrança. A API só a expõe para `ADMIN`.
+    path: 'financeiro/inadimplencia',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/financeiro/inadimplencia/inadimplencia.component')
+        .then(m => m.InadimplenciaComponent)
+  },
+  {
     path: 'admin',
     canActivate: [roleGuard(['ADMIN'])],
     children: [
