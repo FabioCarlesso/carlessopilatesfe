@@ -64,6 +64,9 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   @Input() processando = false;
   @Input() confirmarDesabilitado = false;
   @Input() fecharAoClicarFora = true;
+  // Diálogo apenas informativo (ex.: histórico sem ação disponível): sem o botão de
+  // confirmação, sobra só o de cancelar, que passa a ser o "Fechar" da janela.
+  @Input() exibirConfirmar = true;
 
   @Output() confirmar = new EventEmitter<void>();
   @Output() cancelar = new EventEmitter<void>();
@@ -110,7 +113,7 @@ export class ConfirmarDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   emitirConfirmar(): void {
-    if (this.processando || this.confirmarDesabilitado) return;
+    if (!this.exibirConfirmar || this.processando || this.confirmarDesabilitado) return;
     this.confirmar.emit();
   }
 

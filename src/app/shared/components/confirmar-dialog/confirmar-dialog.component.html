@@ -22,15 +22,17 @@ o fechamento acontece via Esc ou botão Cancelar, por isso as regras abaixo são
       <ng-content />
     </div>
     <div class="dialog-actions">
-      <button
-        #confirmarButton
-        type="button"
-        class="btn"
-        [ngClass]="classeConfirmar"
-        [disabled]="processando || confirmarDesabilitado"
-        (click)="emitirConfirmar()">
-        {{ textoConfirmar }}
-      </button>
+      @if (exibirConfirmar) {
+        <button
+          #confirmarButton
+          type="button"
+          class="btn"
+          [ngClass]="classeConfirmar"
+          [disabled]="processando || confirmarDesabilitado"
+          (click)="emitirConfirmar()">
+          {{ textoConfirmar }}
+        </button>
+      }
       <button
         type="button"
         class="btn btn-outline"

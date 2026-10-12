@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { routes } from './app.routes';
 import { authGuard } from './core/guards/auth.guard';
 import { visitanteGuard } from './core/guards/visitante.guard';
+import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
   const result: string[] = [];
@@ -66,6 +67,7 @@ describe('app routes', () => {
       'relatorios',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
+      'financeiro/inadimplencia',
       'admin',
       'admin/usuarios',
       'admin/usuarios/novo',
@@ -200,6 +202,13 @@ describe('app routes', () => {
       expect(route).withContext(`route ${path} should exist`).toBeTruthy();
       expect(route!.canActivate).withContext(`route ${path} should be public`).toBeUndefined();
     }
+  });
+
+  it('should guard the delinquency screen and lazy load its component', async () => {
+    const route = routes.find(r => r.path === 'financeiro/inadimplencia');
+    expect(route).toBeTruthy();
+    expect(route!.canActivate?.length).toBe(1);
+    expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(InadimplenciaComponent);
   });
 
   it('should protect every admin route with a canActivate guard on the parent', () => {

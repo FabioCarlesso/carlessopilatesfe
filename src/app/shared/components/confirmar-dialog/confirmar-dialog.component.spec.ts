@@ -15,6 +15,7 @@ import { ConfirmarDialogComponent } from './confirmar-dialog.component';
         [processando]="processando"
         [confirmarDesabilitado]="confirmarDesabilitado"
         [fecharAoClicarFora]="fecharAoClicarFora"
+        [exibirConfirmar]="exibirConfirmar"
         (confirmar)="confirmado = confirmado + 1"
         (cancelar)="aberto = false" />
     }
@@ -26,6 +27,7 @@ class HostComponent {
   processando = false;
   confirmarDesabilitado = false;
   fecharAoClicarFora = false;
+  exibirConfirmar = true;
   confirmado = 0;
 }
 
@@ -113,6 +115,17 @@ describe('ConfirmarDialogComponent', () => {
     host.confirmarDesabilitado = true;
     abrir();
 
+    expect(document.activeElement).toBe(cancelarBtn());
+  });
+
+  // Diálogo só de leitura (ex.: histórico de cobrança de pagamento quitado):
+  // sem ação a confirmar, sobra o botão de fechar, que recebe o foco.
+  it('should hide the confirm button and focus cancel when exibirConfirmar is false', () => {
+    host.exibirConfirmar = false;
+    abrir();
+
+    expect(confirmarBtn()).toBeNull();
+    expect(el().querySelectorAll('.dialog-actions button').length).toBe(1);
     expect(document.activeElement).toBe(cancelarBtn());
   });
 
