@@ -364,6 +364,14 @@ LinkedIn não veria nada. O `lang` do documento também foi corrigido de `en` pa
 `pt-BR`, que estava errado desde o início e só passou a ter consequência agora
 que a página é pública.
 
+A primeira versão dessas tags apontava `og:image` para `/landing/dashboard.webp`:
+caminho relativo, em WebP e sem `og:url` — título e descrição apareciam, a imagem
+não. A issue #246 corrigiu os três pontos com uma arte JPG dedicada em 1200×630 e
+URLs absolutas no host definitivo `software.carlessopilates.com.br`, aceitando o
+card sem imagem até a issue #115 publicar o subdomínio em vez de apontar para o
+provisório da Vercel e criar uma troca futura. As regras e a validação estão em
+"Card de compartilhamento", em [`deploy.md`](deploy.md).
+
 Os prints vivem em `public/landing/*.webp` e saíram de um ambiente de
 demonstração com dados fictícios — a página é pública e o sistema guarda
 prontuário de saúde. O `webp` precisou entrar no regex de cache do

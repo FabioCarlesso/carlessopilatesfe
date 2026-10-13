@@ -11,14 +11,22 @@
     então tags escritas em runtime pelo serviço `Meta` do Angular não chegam ao
     crawler do WhatsApp nem ao do LinkedIn. Como só a landing é pública, um
     conjunto fixo apontando para ela resolve a pré-visualização de link.
+    `og:url` e `og:image` precisam de URL absoluta no host canônico, e a imagem
+    precisa ser JPG ou PNG (LinkedIn e Facebook não renderizam WebP) — ver
+    "Robôs e indexação" em docs/deploy.md.
   -->
   <meta name="description" content="Sistema de gestão para estúdios de pilates e fisioterapia: agenda, prontuário clínico, planos, pagamentos e relatórios em uma única aplicação.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Carlesso Pilates">
   <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="https://software.carlessopilates.com.br/">
   <meta property="og:title" content="Carlesso Pilates — o estúdio inteiro em uma tela">
   <meta property="og:description" content="Agenda, prontuário clínico, planos, pagamentos e relatórios no mesmo lugar — do primeiro agendamento à evolução da sessão de hoje.">
-  <meta property="og:image" content="/landing/dashboard.webp">
+  <meta property="og:image" content="https://software.carlessopilates.com.br/landing/compartilhamento.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Painel inicial do sistema Carlesso Pilates com indicadores de pacientes, receita e aulas do mês">
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
