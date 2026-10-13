@@ -55,6 +55,40 @@ acrescente-o lá. As tags `description` e Open Graph ficam estáticas em
 `src/index.html`, porque a aplicação não tem SSR e o serviço `Meta` do Angular
 escreve depois do parse, tarde demais para o crawler.
 
+### Card de compartilhamento
+
+Para o link renderizar card com imagem no WhatsApp, no LinkedIn e no Facebook,
+três regras valem para as tags Open Graph (issue #246):
+
+- **URL absoluta.** `og:url` e `og:image` levam esquema e host; os crawlers não
+  resolvem caminho relativo.
+- **JPG ou PNG.** LinkedIn e Facebook não renderizam WebP em pré-visualização. Por
+  isso o card usa `public/landing/compartilhamento.jpg`, uma arte dedicada em
+  1200×630 (proporção 1,91:1 do `summary_large_image`) montada sobre o print do
+  painel, enquanto a galeria da landing segue nos `*.webp`. Ao trocar a arte,
+  mantenha as dimensões declaradas em `og:image:width` / `og:image:height` iguais
+  às do arquivo.
+- **Caminho liberado.** `public/robots.txt` traz `Allow: /landing/` explícito: um
+  `Disallow` futuro que alcance a pasta deixa o crawler sem a imagem.
+
+**Host canônico: `software.carlessopilates.com.br`.** É o destino definitivo
+decidido na issue #115, e foi preferido ao provisório `carlessopilatesfe.vercel.app`
+porque URL de compartilhamento não se troca de graça: links já colados em
+conversas e o cache dos crawlers continuariam apontando para o domínio antigo.
+O custo é que, **até a #115 entrar**, o card sai com título e descrição, mas sem
+imagem — a URL de `og:image` ainda não resolve. Nenhuma mudança de código é
+necessária quando o subdomínio subir; basta revalidar:
+
+```bash
+curl -s https://software.carlessopilates.com.br/ | grep -oE '<meta property="og:[^"]*" content="[^"]*"'
+curl -sI https://software.carlessopilates.com.br/landing/compartilhamento.jpg | grep -iE 'HTTP|content-type'
+```
+
+e forçar nova leitura no Facebook Sharing Debugger (*Scrape Again*) e no
+LinkedIn Post Inspector. O WhatsApp guarda cache agressivo: use uma query string
+diferente para forçar nova busca. Se o host mudar, `og:url` e `og:image` em
+`src/index.html` mudam juntos.
+
 
 ## Vercel
 

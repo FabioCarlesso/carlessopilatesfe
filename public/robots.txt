@@ -3,6 +3,9 @@
 # bloqueio explícito das áreas autenticadas (issue #244).
 User-agent: *
 Allow: /$
+# A imagem do card de compartilhamento (og:image) precisa ficar acessível ao
+# crawler do WhatsApp, do LinkedIn e do Facebook (issue #246).
+Allow: /landing/
 Disallow: /login
 Disallow: /esqueci-senha
 Disallow: /resetar-senha
