@@ -39,7 +39,9 @@ algo que entra na imagem (`Dockerfile`, `nginx/`, `package.json`,
 depois do merge, sem cobrar o build de PRs que mexem apenas no frontend.
 
 As dependências npm e as GitHub Actions são atualizadas automaticamente via
-[Dependabot](../.github/dependabot.yml).
+[Dependabot](../.github/dependabot.yml). Majors do Angular e do Jasmine, e
+major/minor do TypeScript, ficam de fora e são feitos à mão; o motivo de cada um
+está comentado no próprio arquivo.
 
 ## CodeGraph (contexto para agentes de IA)
 

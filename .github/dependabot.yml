@@ -43,6 +43,16 @@ updates:
       - dependency-name: "typescript"
         update-types:
           ["version-update:semver-major", "version-update:semver-minor"]
+      # Fora do conjunto do Angular acima (nao entra no grupo `angular` nem no
+      # exclude de `dev-dependencies`): so o major fica de fora. O Jasmine 7
+      # torna `describe`/`it` somente leitura e o `zone.js/testing` (0.16.x),
+      # do qual o `TestBed` depende, quebra ao tentar sobrescreve-los — foi o
+      # que derrubou o job de testes da PR #250. Subir a mao, junto com
+      # `karma-jasmine`, quando o `zone.js` suportar.
+      - dependency-name: "jasmine-core"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jasmine"
+        update-types: ["version-update:semver-major"]
     groups:
       angular:
         patterns:
