@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { SessaoService } from './sessao.service';
 import { SessaoRequestDTO, SessaoResponseDTO, SessaoUpdateDTO } from '../models/sessao';
+import { pagina } from '../../../testing/pagina';
 
 const mockSessao: SessaoResponseDTO = {
   id: 1,
@@ -58,9 +59,9 @@ describe('SessaoService', () => {
   it('should GET /api/sessoes/paciente/:pacienteId', () => {
     service.listarPorPaciente(10).subscribe(s => expect(s).toEqual([mockSessao]));
 
-    const req = httpMock.expectOne('/api/sessoes/paciente/10');
+    const req = httpMock.expectOne('/api/sessoes/paciente/10?page=0&size=2000');
     expect(req.request.method).toBe('GET');
-    req.flush([mockSessaoApi]);
+    req.flush(pagina([mockSessaoApi]));
   });
 
   // Agenda do estúdio (issue #125): mesma tradução do payload da API, agora

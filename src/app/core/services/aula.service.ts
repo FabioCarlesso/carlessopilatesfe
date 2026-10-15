@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AulaResponseDTO } from '../models/plano';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({ providedIn: 'root' })
 export class AulaService {
@@ -9,8 +11,14 @@ export class AulaService {
 
   constructor(private http: HttpClient) {}
 
+  // A tela de aulas sempre listou da mais antiga para a mais nova; o padrão da API
+  // paginada é o inverso, por isso o `sort` explícito.
   listarPorPaciente(pacienteId: number): Observable<AulaResponseDTO[]> {
-    return this.http.get<AulaResponseDTO[]>(`${this.apiUrl}/aulas/paciente/${pacienteId}`);
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<AulaResponseDTO>>(`${this.apiUrl}/aulas/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina, 'data,asc')
+      })
+    );
   }
 
   /**

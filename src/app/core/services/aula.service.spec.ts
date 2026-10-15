@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AulaService } from './aula.service';
 import { AulaResponseDTO } from '../models/plano';
+import { pagina } from '../../../testing/pagina';
 
 const mockAula: AulaResponseDTO = {
   id: 1,
@@ -34,9 +35,20 @@ describe('AulaService', () => {
   describe('listarPorPaciente', () => {
     it('should GET /api/aulas/paciente/:id', () => {
       service.listarPorPaciente(10).subscribe(aulas => expect(aulas).toEqual([mockAula]));
-      const req = httpMock.expectOne('/api/aulas/paciente/10');
+      const req = httpMock.expectOne('/api/aulas/paciente/10?page=0&size=2000&sort=data,asc');
       expect(req.request.method).toBe('GET');
-      req.flush([mockAula]);
+      req.flush(pagina([mockAula]));
+    });
+
+    it('should request the next pages until totalPages and concatenate them', () => {
+      const segunda = { ...mockAula, id: 2 };
+      let resultado: AulaResponseDTO[] | undefined;
+      service.listarPorPaciente(10).subscribe(aulas => (resultado = aulas));
+
+      httpMock.expectOne('/api/aulas/paciente/10?page=0&size=2000&sort=data,asc').flush(pagina([mockAula], 0, 2));
+      httpMock.expectOne('/api/aulas/paciente/10?page=1&size=2000&sort=data,asc').flush(pagina([segunda], 1, 2));
+
+      expect(resultado).toEqual([mockAula, segunda]);
     });
   });
 

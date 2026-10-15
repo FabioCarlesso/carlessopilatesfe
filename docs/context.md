@@ -162,6 +162,8 @@ A funcionalidade central de **gestão de pacientes** está operacional, incluind
 
 ---
 
+88. Listagens por paciente paginadas na API (FabioCarlesso/carlessopilatesapi#100). `GET .../paciente/{id}` de pagamentos, aulas, sessões, avaliações fisioterapêuticas, reavaliações, planos de tratamento e NFS-e trocaram o array por `Page` (`{content, page:{...}}`), sem período de convivência; as evoluções continuam em array. As telas não mudaram: os serviços seguem devolvendo `Observable<T[]>` e juntam as páginas com `buscarTodasAsPaginas` (`core/models/paginacao.ts`), pedindo `size=2000` — o teto da API —, de modo que o histórico de um paciente vem numa só requisição e as seguintes só são pedidas se `totalPages` disser que existem. Paginar de fato cada tela ficou para depois, e não por pressa: o calendário cruza aulas e sessões do prontuário inteiro, a linha do tempo casa cada sessão com sua evolução (que segue sem paginação) e os formulários usam as avaliações como opções de seleção — todos precisam da coleção completa. O padrão da API passou a ser do mais recente para o mais antigo; aulas e pagamentos pedem `sort` crescente explicitamente para manter a ordem que as telas já exibiam (aulas por data; pagamentos, que antes saíam na ordem de cadastro, por vencimento).
+
 ## Decisões Técnicas
 
 ### Angular 22 com Standalone Components
@@ -503,30 +505,30 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /anamneses/paciente/{pacienteId}` → `AnamneseResponseDTO`
 - `PUT /anamneses/{id}` (body: `AnamneseUpdateDTO`) → `AnamneseResponseDTO`
 - `POST /avaliacoes-fisioterapeuticas` (body: `AvaliacaoFisioterapeuticaRequestDTO`) → `AvaliacaoFisioterapeuticaResponseDTO`
-- `GET /avaliacoes-fisioterapeuticas/paciente/{pacienteId}` → `AvaliacaoFisioterapeuticaResponseDTO[]`
+- `GET /avaliacoes-fisioterapeuticas/paciente/{pacienteId}?page=&size=` → `Page<AvaliacaoFisioterapeuticaResponseDTO>`
 - `PUT /avaliacoes-fisioterapeuticas/{id}` (body: `AvaliacaoFisioterapeuticaUpdateDTO`) → `AvaliacaoFisioterapeuticaResponseDTO`
-- `GET /planos-tratamento/paciente/{pacienteId}` → `PlanoTratamentoResponseDTO[]`
+- `GET /planos-tratamento/paciente/{pacienteId}?page=&size=` → `Page<PlanoTratamentoResponseDTO>`
 - `GET /planos-tratamento/{id}` → `PlanoTratamentoResponseDTO`
 - `POST /planos-tratamento` (body: `PlanoTratamentoRequestDTO`) → `PlanoTratamentoResponseDTO`
 - `PUT /planos-tratamento/{id}` (body: `PlanoTratamentoUpdateDTO`) → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/encerrar` → `PlanoTratamentoResponseDTO`
 - `PATCH /planos-tratamento/{id}/suspender` → `PlanoTratamentoResponseDTO`
 - `GET /sessoes?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `SessaoResponseDTO[]` (agenda do estúdio; período obrigatório, limitado a 92 dias e 5000 registros; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId`, `tipo` e `status`, que o frontend ainda não usa)
-- `GET /sessoes/paciente/{pacienteId}` → `SessaoResponseDTO[]`
+- `GET /sessoes/paciente/{pacienteId}?page=&size=` → `Page<SessaoResponseDTO>`
 - `GET /sessoes/{id}` → `SessaoResponseDTO`
 - `POST /sessoes` (body: `SessaoRequestDTO`) → `SessaoResponseDTO`
 - `PUT /sessoes/{id}` (body: `SessaoUpdateDTO`) → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/realizar` → `SessaoResponseDTO`
 - `PATCH /sessoes/{id}/cancelar` → `SessaoResponseDTO`
 - `GET /aulas?inicio=YYYY-MM-DD&fim=YYYY-MM-DD[&profissionalId=]` → `AulaResponseDTO[]` (agenda do estúdio; mesmos limites de período do endpoint de sessões; `profissionalId` opcional recorta a agenda de um profissional — a API também aceita `pacienteId` e `realizada`, que o frontend ainda não usa)
-- `GET /aulas/paciente/{pacienteId}` → `AulaResponseDTO[]`
+- `GET /aulas/paciente/{pacienteId}?page=&size=&sort=data,asc` → `Page<AulaResponseDTO>`
 - `GET /aulas/pagamento/{pagamentoId}` → `AulaResponseDTO[]`
 - `PATCH /aulas/{id}/realizar?profissionalId={id}` → `AulaResponseDTO`
 - `PATCH /aulas/{id}/remarcar` (body: `{ data: 'YYYY-MM-DD' }`) → `AulaResponseDTO` (só aula não realizada; a data pode estar no passado; o `horario` do contrato está reservado para a issue #106 da API e volta `400` com qualquer valor)
 - `GET /evolucoes-sessao/sessao/{sessaoId}` → `EvolucaoSessaoResponseDTO`
 - `POST /evolucoes-sessao` (body: `EvolucaoSessaoRequestDTO`) → `EvolucaoSessaoResponseDTO`
 - `PUT /evolucoes-sessao/{id}` (body: `EvolucaoSessaoUpdateDTO`) → `EvolucaoSessaoResponseDTO`
-- `GET /reavaliacoes/paciente/{pacienteId}` → `ReavaliacaoResponseDTO[]`
+- `GET /reavaliacoes/paciente/{pacienteId}?page=&size=` → `Page<ReavaliacaoResponseDTO>`
 - `GET /reavaliacoes/{id}` → `ReavaliacaoResponseDTO`
 - `POST /reavaliacoes` (body: `ReavaliacaoRequestDTO`) → `ReavaliacaoResponseDTO`
 - `PUT /reavaliacoes/{id}` (body: `ReavaliacaoUpdateDTO`) → `ReavaliacaoResponseDTO`
@@ -540,7 +542,7 @@ A API segue o padrão REST. O frontend espera os seguintes contratos:
 - `GET /profissionais/{id}/relatorio-pagamento?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `ProfissionalPagamentoRelatorioDTO`
 - `GET /profissionais/{id}/relatorio-pagamento/pdf?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/pdf` com `Content-Disposition: attachment`
 - `GET /profissionais/{id}/relatorio-pagamento/xlsx?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` → `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` com `Content-Disposition: attachment`
-- `GET /api/nfse-emitidas/paciente/{pacienteId}` → `NotaFiscalEmitidaResponseDTO[]` (frontend chama `/api/api/nfse-emitidas/paciente/{pacienteId}`)
+- `GET /api/nfse-emitidas/paciente/{pacienteId}?page=&size=` → `Page<NotaFiscalEmitidaResponseDTO>` (frontend chama `/api/api/nfse-emitidas/paciente/{pacienteId}`)
 - `POST /api/nfse-emitidas` (body: `NotaFiscalEmitidaRequestDTO`) → `NotaFiscalEmitidaResponseDTO` (frontend chama `/api/api/nfse-emitidas`)
 - `GET /api/relatorios/nfse?competencia=MM/AAAA` → `RelatorioNfseResponseDTO[]`
 - `GET /api/relatorios/nfse?competencia=MM/AAAA&notaAnteriorEmitida=false` → `RelatorioNfseResponseDTO[]`

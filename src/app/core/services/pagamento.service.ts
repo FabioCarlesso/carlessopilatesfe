@@ -8,6 +8,7 @@ import {
   PagamentoFiltro
 } from '../models/inadimplencia';
 import { PagamentoRequestDTO, PagamentoResponseDTO } from '../models/plano';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({ providedIn: 'root' })
 export class PagamentoService {
@@ -15,8 +16,14 @@ export class PagamentoService {
 
   constructor(private http: HttpClient) {}
 
+  // Sem paginação a API devolvia na ordem de cadastro; o vencimento crescente mantém
+  // essa leitura, já que o padrão da API paginada é do mais recente para o mais antigo.
   listar(pacienteId: number): Observable<PagamentoResponseDTO[]> {
-    return this.http.get<PagamentoResponseDTO[]>(`${this.apiUrl}/pagamentos/paciente/${pacienteId}`);
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<PagamentoResponseDTO>>(`${this.apiUrl}/pagamentos/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina, 'dataVencimento,asc')
+      })
+    );
   }
 
   buscar(pagamentoId: number): Observable<PagamentoResponseDTO> {

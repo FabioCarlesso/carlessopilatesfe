@@ -6,6 +6,7 @@ import {
   AvaliacaoFisioterapeuticaResponseDTO,
   AvaliacaoFisioterapeuticaUpdateDTO
 } from '../models/avaliacao-fisioterapeutica';
+import { pagina } from '../../../testing/pagina';
 
 const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {
   id: 5,
@@ -50,9 +51,9 @@ describe('AvaliacaoFisioterapeuticaService', () => {
   it('should GET /api/avaliacoes-fisioterapeuticas/paciente/:pacienteId', () => {
     service.listarPorPaciente(1).subscribe(a => expect(a).toEqual([mockAvaliacao]));
 
-    const req = httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1');
+    const req = httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000');
     expect(req.request.method).toBe('GET');
-    req.flush([mockAvaliacao]);
+    req.flush(pagina([mockAvaliacao]));
   });
 
   it('should POST to /api/avaliacoes-fisioterapeuticas with request body', () => {

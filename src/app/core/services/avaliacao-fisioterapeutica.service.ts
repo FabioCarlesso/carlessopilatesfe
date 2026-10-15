@@ -6,6 +6,8 @@ import {
   AvaliacaoFisioterapeuticaResponseDTO,
   AvaliacaoFisioterapeuticaUpdateDTO
 } from '../models/avaliacao-fisioterapeutica';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +18,11 @@ export class AvaliacaoFisioterapeuticaService {
   constructor(private http: HttpClient) {}
 
   listarPorPaciente(pacienteId: number): Observable<AvaliacaoFisioterapeuticaResponseDTO[]> {
-    return this.http.get<AvaliacaoFisioterapeuticaResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<AvaliacaoFisioterapeuticaResponseDTO>>(`${this.apiUrl}/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina)
+      })
+    );
   }
 
   criar(dto: AvaliacaoFisioterapeuticaRequestDTO): Observable<AvaliacaoFisioterapeuticaResponseDTO> {

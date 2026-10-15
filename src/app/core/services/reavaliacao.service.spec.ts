@@ -6,6 +6,7 @@ import {
   ReavaliacaoResponseDTO,
   ReavaliacaoUpdateDTO
 } from '../models/reavaliacao';
+import { pagina } from '../../../testing/pagina';
 
 const mockReavaliacao: ReavaliacaoResponseDTO = {
   id: 1,
@@ -47,9 +48,9 @@ describe('ReavaliacaoService', () => {
   it('should GET /api/reavaliacoes/paciente/:pacienteId', () => {
     service.listarPorPaciente(10).subscribe(r => expect(r).toEqual([mockReavaliacao]));
 
-    const req = httpMock.expectOne('/api/reavaliacoes/paciente/10');
+    const req = httpMock.expectOne('/api/reavaliacoes/paciente/10?page=0&size=2000');
     expect(req.request.method).toBe('GET');
-    req.flush([mockReavaliacao]);
+    req.flush(pagina([mockReavaliacao]));
   });
 
   it('should GET /api/reavaliacoes/:id', () => {
