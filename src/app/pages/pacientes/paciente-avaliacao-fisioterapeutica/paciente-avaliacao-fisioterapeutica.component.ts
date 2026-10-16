@@ -10,6 +10,7 @@ import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliac
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-avaliacao-fisioterapeutica',
@@ -139,7 +140,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
     const criando = avaliacaoAtual === null;
     const obs = criando
       ? this.avaliacaoService.criar({ pacienteId: this.pacienteId, ...dto })
-      : this.avaliacaoService.atualizar(avaliacaoAtual.id, dto);
+      : this.avaliacaoService.atualizar(avaliacaoAtual.id, { ...dto, version: avaliacaoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -155,8 +156,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.salvando = false;
       },
-      error: () => {
-        this.erro = 'Erro ao salvar avaliação fisioterapêutica.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar avaliação fisioterapêutica.';
         this.salvando = false;
       }
     });

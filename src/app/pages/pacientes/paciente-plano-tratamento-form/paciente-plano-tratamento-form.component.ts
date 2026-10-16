@@ -16,6 +16,7 @@ import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-plano-tratamento-form',
@@ -171,7 +172,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
     const criando = planoAtual === null;
     const obs = criando
       ? this.planoTratamentoService.criar(createDto)
-      : this.planoTratamentoService.atualizar(planoAtual.id, updateDto);
+      : this.planoTratamentoService.atualizar(planoAtual.id, { ...updateDto, version: planoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -192,8 +193,8 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
           this.salvando = false;
         }
       },
-      error: () => {
-        this.erro = 'Erro ao salvar plano de tratamento.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar plano de tratamento.';
         this.salvando = false;
       }
     });

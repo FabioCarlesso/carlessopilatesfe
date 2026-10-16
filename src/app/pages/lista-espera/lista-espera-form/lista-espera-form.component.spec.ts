@@ -11,6 +11,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { ListaEsperaFormComponent } from './lista-espera-form.component';
 
 const ana: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Souza',
   email: 'ana@email.com',

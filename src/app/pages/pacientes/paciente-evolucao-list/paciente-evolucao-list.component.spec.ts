@@ -13,6 +13,7 @@ import { isOnPush } from '../../../../testing/onpush';
 import { FiltroEvolucao, PacienteEvolucaoListComponent } from './paciente-evolucao-list.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -25,6 +26,7 @@ const mockPaciente: PacienteResponseDTO = {
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {
   return {
+    version: 0,
     pacienteId: 10,
     nomePaciente: 'Ana Silva',
     tipo: 'PILATES',
@@ -41,6 +43,7 @@ function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: stri
 
 function evolucao(dados: Partial<EvolucaoSessaoResponseDTO> & { id: number; sessaoId: number }): EvolucaoSessaoResponseDTO {
   return {
+    version: 0,
     profissionalId: 3,
     profissionalNome: 'Carla Fisio',
     profissionalNumeroRegistro: '350544-F',

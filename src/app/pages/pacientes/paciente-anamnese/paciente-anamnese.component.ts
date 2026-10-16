@@ -11,6 +11,7 @@ import { AnamneseService } from '../../../core/services/anamnese.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-anamnese',
@@ -142,7 +143,7 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
     const criando = anamneseAtual === null;
     const obs = criando
       ? this.anamneseService.criar({ pacienteId: this.pacienteId, ...dto })
-      : this.anamneseService.atualizar(anamneseAtual.id, dto);
+      : this.anamneseService.atualizar(anamneseAtual.id, { ...dto, version: anamneseAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -156,8 +157,8 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.salvando = false;
       },
-      error: () => {
-        this.erro = 'Erro ao salvar anamnese.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar anamnese.';
         this.salvando = false;
       }
     });

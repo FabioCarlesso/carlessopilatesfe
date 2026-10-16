@@ -7,8 +7,11 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteReavaliacaoFormComponent } from './paciente-reavaliacao-form.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -20,6 +23,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockReavaliacao: ReavaliacaoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -171,6 +175,16 @@ describe('PacienteReavaliacaoFormComponent', () => {
       tick(4000);
       expect(component.sucesso).toBeNull();
     }));
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      reavaliacaoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(reavaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+      expect(component.salvando).toBeFalse();
+    });
 
     it('should set erro when update fails', () => {
       reavaliacaoServiceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));

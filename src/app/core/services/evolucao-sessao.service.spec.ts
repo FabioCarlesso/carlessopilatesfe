@@ -8,6 +8,7 @@ import {
 } from '../models/evolucao-sessao';
 
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
+  version: 0,
   id: 1,
   sessaoId: 5,
   profissionalId: null,

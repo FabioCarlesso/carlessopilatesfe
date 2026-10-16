@@ -10,8 +10,11 @@ import { ListaEsperaService } from '../../../core/services/lista-espera.service'
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteSessaoListComponent } from './paciente-sessao-list.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -23,6 +26,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockSessaoAgendada: SessaoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -461,12 +465,25 @@ describe('PacienteSessaoListComponent', () => {
       component.reagendarForm.get('dataHora')!.setValue(novaDataHora);
       component.confirmarReagendar();
 
-      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, { dataHora: novaDataHora });
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, { dataHora: novaDataHora, version: 0 });
       expect(sessaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
       expect(component.sessoes).toEqual([reagendada, mockSessaoRealizada]);
       expect(component.reagendarId).toBeNull();
       expect(component.acaoEmAndamentoId).toBeNull();
       expect(component.sucesso).toBe('Sessão reagendada com sucesso.');
+    });
+
+    it('should send the listed version and explain the concurrent-modification conflict', async () => {
+      await setup([mockSessaoAgendada]);
+      sessaoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.abrirReagendar(mockSessaoAgendada);
+      component.reagendarForm.get('dataHora')!.setValue(dataHoraRelativa(60));
+      component.confirmarReagendar();
+
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+      expect(component.sessoes).toEqual([mockSessaoAgendada]);
     });
 
     it('should show a friendly message and keep the original session on error', async () => {

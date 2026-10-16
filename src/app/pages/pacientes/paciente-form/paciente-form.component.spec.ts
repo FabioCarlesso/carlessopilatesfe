@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { PacienteFormComponent } from './paciente-form.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -199,6 +202,23 @@ describe('PacienteFormComponent', () => {
         jasmine.objectContaining({ nome: 'Ana Silva', email: 'ana@email.com' })
       );
       expect(router.navigate).toHaveBeenCalledWith(['/pacientes']);
+    });
+
+    it('should send the version loaded in the GET so the API can detect concurrent edits', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ version: 0 }));
+    });
+
+    it('should explain the concurrent-modification conflict and keep the form open', () => {
+      serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { type: 'https://carlessopilates.com.br/problemas/concurrent-modification' }
+      })));
+      component.salvar();
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+      expect(component.salvando).toBeFalse();
+      expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should set erro and clear salvando flag on atualizar failure', () => {

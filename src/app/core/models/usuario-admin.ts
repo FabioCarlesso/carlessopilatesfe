@@ -7,6 +7,8 @@ export interface UsuarioAdminResponseDTO {
   email: string;
   role: UserRole;
   active?: boolean;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }
 
 export interface UsuarioAdminCreateRequestDTO {
@@ -21,6 +23,8 @@ export interface UsuarioAdminUpdateRequestDTO {
   email?: string;
   password?: string;
   role?: UserRole;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface RoleOption {

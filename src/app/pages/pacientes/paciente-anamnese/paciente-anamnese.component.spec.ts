@@ -10,6 +10,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteAnamneseComponent } from './paciente-anamnese.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -21,6 +22,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockAnamnese: AnamneseResponseDTO = {
+  version: 0,
   id: 10,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',
@@ -99,6 +101,28 @@ describe('PacienteAnamneseComponent', () => {
       );
       expect(component.anamnese).toEqual(updated);
       expect(component.sucesso).toBe('Anamnese atualizada com sucesso.');
+      expect(component.salvando).toBeFalse();
+    });
+
+    it('should send the version of the loaded anamnese and keep the one returned by the API', () => {
+      const updated = { ...mockAnamnese, objetivos: 'Mobilidade', version: 1 };
+      anamneseServiceSpy.atualizar.and.returnValue(of(updated));
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.atualizar).toHaveBeenCalledWith(10, jasmine.objectContaining({ version: 0 }));
+      expect(component.anamnese?.version).toBe(1);
+    });
+
+    it('should explain the concurrent-modification conflict', () => {
+      anamneseServiceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { type: 'https://carlessopilates.com.br/problemas/concurrent-modification' }
+      })));
+
+      component.salvar();
+
+      expect(component.erro).toContain('alterado por outra pessoa');
       expect(component.salvando).toBeFalse();
     });
 

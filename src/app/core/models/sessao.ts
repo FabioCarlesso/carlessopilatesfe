@@ -18,6 +18,8 @@ export interface SessaoUpdateDTO {
   dataHora?: string | null;
   duracao?: number | null;
   observacoes?: string | null;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface SessaoResponseDTO {
@@ -33,6 +35,8 @@ export interface SessaoResponseDTO {
   observacoes: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }
 
 export const SESSAO_STATUS_LABEL: Record<SessaoStatus, string> = {

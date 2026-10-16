@@ -18,6 +18,7 @@ import {
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {
   return {
+    version: 0,
     pacienteId: 10,
     nomePaciente: 'Ana Silva',
     tipo: 'PILATES',

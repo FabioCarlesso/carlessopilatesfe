@@ -4,6 +4,7 @@ import { AnamneseService } from './anamnese.service';
 import { AnamneseRequestDTO, AnamneseResponseDTO, AnamneseUpdateDTO } from '../models/anamnese';
 
 const mockAnamnese: AnamneseResponseDTO = {
+  version: 0,
   id: 10,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',

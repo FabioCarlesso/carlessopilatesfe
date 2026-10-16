@@ -67,6 +67,7 @@ const contatos: ContatoCobrancaDTO[] = [
 ];
 
 const ana: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@exemplo.com',

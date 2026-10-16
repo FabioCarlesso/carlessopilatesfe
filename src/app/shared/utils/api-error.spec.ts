@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { extrairMensagemErro } from './api-error';
+import { ehConflitoConcorrencia, extrairMensagemErro, MENSAGEM_CONFLITO_CONCORRENCIA } from './api-error';
 
 describe('extrairMensagemErro', () => {
   const fallback = 'Erro genérico.';
@@ -57,5 +57,29 @@ describe('extrairMensagemErro', () => {
   it('should fall back when the body has no usable text', () => {
     const err = new HttpErrorResponse({ status: 500, error: {} });
     expect(extrairMensagemErro(err, fallback)).toBe(fallback);
+  });
+});
+
+describe('ehConflitoConcorrencia', () => {
+  const problema = (status: number, type: string) =>
+    new HttpErrorResponse({ status, error: { type, detail: 'Registro alterado por outra operação simultânea' } });
+
+  it('should detect the concurrent-modification problem type', () => {
+    expect(ehConflitoConcorrencia(problema(409, 'https://carlessopilates.com.br/problemas/concurrent-modification'))).toBeTrue();
+  });
+
+  it('should not treat other 409s (e.g. duplicated e-mail) as concurrency conflicts', () => {
+    expect(ehConflitoConcorrencia(problema(409, 'https://carlessopilates.com.br/problemas/conflict'))).toBeFalse();
+    expect(ehConflitoConcorrencia(new HttpErrorResponse({ status: 409, error: { erro: 'E-mail já cadastrado' } }))).toBeFalse();
+  });
+
+  it('should ignore non-409 statuses and non-HTTP errors', () => {
+    expect(ehConflitoConcorrencia(problema(400, 'https://carlessopilates.com.br/problemas/concurrent-modification'))).toBeFalse();
+    expect(ehConflitoConcorrencia(new Error('x'))).toBeFalse();
+  });
+
+  it('should make extrairMensagemErro return the reload guidance', () => {
+    const err = problema(409, 'https://carlessopilates.com.br/problemas/concurrent-modification');
+    expect(extrairMensagemErro(err, 'Erro genérico.')).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
   });
 });

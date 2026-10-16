@@ -10,8 +10,11 @@ import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.se
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteEvolucaoSessaoComponent } from './paciente-evolucao-sessao.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -23,6 +26,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockSessao: SessaoResponseDTO = {
+  version: 0,
   id: 5,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -38,6 +42,7 @@ const mockSessao: SessaoResponseDTO = {
 };
 
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
+  version: 0,
   id: 1,
   sessaoId: 5,
   profissionalId: null,
@@ -170,6 +175,16 @@ describe('PacienteEvolucaoSessaoComponent', () => {
       );
       expect(component.evolucao).toEqual(updated);
       expect(component.sucesso).toBe('Evolução atualizada com sucesso.');
+      expect(component.salvando).toBeFalse();
+    });
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      evolucaoSessaoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(evolucaoSessaoServiceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
       expect(component.salvando).toBeFalse();
     });
 

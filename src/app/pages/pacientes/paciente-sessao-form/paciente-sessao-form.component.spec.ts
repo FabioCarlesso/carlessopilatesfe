@@ -9,8 +9,11 @@ import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.se
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteSessaoFormComponent } from './paciente-sessao-form.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -22,6 +25,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockSessao: SessaoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -293,7 +297,8 @@ describe('PacienteSessaoFormComponent', () => {
       expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(1, {
         dataHora: '2026-05-10T10:00',
         duracao: 45,
-        observacoes: null
+        observacoes: null,
+        version: 0
       });
       expect(component.sucesso).toBe('Sessão atualizada com sucesso.');
       expect(component.salvando).toBeFalse();
@@ -306,7 +311,17 @@ describe('PacienteSessaoFormComponent', () => {
       component.salvar();
 
       const dto = sessaoServiceSpy.atualizar.calls.mostRecent().args[1] as unknown as Record<string, unknown>;
-      expect(Object.keys(dto).sort()).toEqual(['dataHora', 'duracao', 'observacoes']);
+      expect(Object.keys(dto).sort()).toEqual(['dataHora', 'duracao', 'observacoes', 'version']);
+    });
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      sessaoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(sessaoServiceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+      expect(component.salvando).toBeFalse();
     });
 
     it('should set erro when update fails', () => {

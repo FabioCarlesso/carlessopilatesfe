@@ -21,6 +21,7 @@ const HOJE = new Date(2026, 4, 20, 9, 0);
 const SEMANA_DE_HOJE = '2026-05-17';
 
 const profissional: ProfissionalResponseDTO = {
+  version: 0,
   id: 3,
   nome: 'Carla Fisio',
   email: 'carla@email.com',
@@ -35,6 +36,7 @@ const profissional: ProfissionalResponseDTO = {
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {
   return {
+    version: 0,
     pacienteId: 10,
     nomePaciente: 'Ana Silva',
     tipo: 'PILATES',

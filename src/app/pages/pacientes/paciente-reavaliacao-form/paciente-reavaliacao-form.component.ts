@@ -14,6 +14,7 @@ import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
@@ -177,7 +178,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
     const criando = reavaliacaoAtual === null;
     const obs = criando
       ? this.reavaliacaoService.criar(createDto)
-      : this.reavaliacaoService.atualizar(reavaliacaoAtual.id, updateDto);
+      : this.reavaliacaoService.atualizar(reavaliacaoAtual.id, { ...updateDto, version: reavaliacaoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -206,8 +207,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
           this.salvando = false;
         }
       },
-      error: () => {
-        this.erro = 'Erro ao salvar reavaliação.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar reavaliação.';
         this.salvando = false;
       }
     });

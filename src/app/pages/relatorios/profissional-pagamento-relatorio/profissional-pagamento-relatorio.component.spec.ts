@@ -12,6 +12,7 @@ import {
 import { renderizarEmViewport } from '../../../../testing/viewport';
 
 const mockProfissional: ProfissionalResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Paula Mendes',
   email: 'paula@carlessopilates.com',

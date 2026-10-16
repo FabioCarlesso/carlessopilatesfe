@@ -7,6 +7,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { UsuarioAdminPage, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 
 const mockUsuario: UsuarioAdminResponseDTO = {
+  version: 0,
   id: 1,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
@@ -15,6 +16,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
 };
 
 const mockUsuarioInativo: UsuarioAdminResponseDTO = {
+  version: 0,
   id: 2,
   name: 'João Inativo',
   email: 'joao@carlessopilates.com',
@@ -603,6 +605,7 @@ describe('UsuarioListComponent', () => {
 
   it('should not render Inativar/Reativar/Excluir buttons when active is undefined', () => {
     const usuarioDesconhecido: UsuarioAdminResponseDTO = {
+      version: 0,
       id: 3,
       name: 'Estado Desconhecido',
       email: 'desconhecido@carlessopilates.com',

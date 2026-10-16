@@ -20,6 +20,7 @@ interface SessaoApiUpdateDTO {
   horario?: string;
   duracaoMinutos?: number | null;
   observacoes?: string | null;
+  version?: number | null;
 }
 
 interface SessaoApiResponseDTO {
@@ -38,6 +39,7 @@ interface SessaoApiResponseDTO {
   observacoes: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;
+  version: number;
 }
 
 @Injectable({
@@ -117,6 +119,9 @@ export class SessaoService {
       duracaoMinutos: dto.duracao,
       observacoes: dto.observacoes
     };
+    if (dto.version != null) {
+      result.version = dto.version;
+    }
     if (dto.dataHora) {
       const { data, horario } = this.splitDataHora(dto.dataHora);
       result.data = data;
@@ -138,7 +143,8 @@ export class SessaoService {
       status: dto.status,
       observacoes: dto.observacoes,
       dataCriacao: dto.dataCriacao,
-      dataAtualizacao: dto.dataAtualizacao
+      dataAtualizacao: dto.dataAtualizacao,
+      version: dto.version
     };
   }
 

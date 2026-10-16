@@ -10,6 +10,7 @@ import {
 } from '../models/usuario-admin';
 
 const mockUsuario: UsuarioAdminResponseDTO = {
+  version: 0,
   id: 1,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',

@@ -9,6 +9,7 @@ import {
 import { pagina } from '../../../testing/pagina';
 
 const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {
+  version: 0,
   id: 5,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',

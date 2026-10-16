@@ -20,6 +20,10 @@ export function extrairMensagemErro(err: unknown, fallback: string): string {
     return fallback;
   }
 
+  if (ehConflitoConcorrencia(err)) {
+    return MENSAGEM_CONFLITO_CONCORRENCIA;
+  }
+
   if (err.status === 401 || err.status === 403) {
     return 'Sua sessão expirou ou você não tem permissão para esta ação. Faça login novamente e tente de novo.';
   }
@@ -50,4 +54,22 @@ export function extrairMensagemErro(err: unknown, fallback: string): string {
   }
 
   return fallback;
+}
+
+/** Mensagem do `409 concurrent-modification`: a edição partiu de uma versão que outra pessoa já alterou. */
+export const MENSAGEM_CONFLITO_CONCORRENCIA =
+  'Este registro foi alterado por outra pessoa enquanto você editava. Recarregue a página para ver a versão atual e refaça sua alteração.';
+
+/**
+ * Identifica o locking otimista da API (`409` com `type` terminado em `/concurrent-modification`).
+ *
+ * O `409` sozinho não basta: a API também o devolve para e-mail/CPF duplicado e outras regras (`type` `conflict`),
+ * e só o `type` é contrato estável — o texto de `detail` pode mudar.
+ */
+export function ehConflitoConcorrencia(err: unknown): boolean {
+  if (!(err instanceof HttpErrorResponse) || err.status !== 409) {
+    return false;
+  }
+  const tipo = (err.error as { type?: unknown } | null)?.type;
+  return typeof tipo === 'string' && tipo.endsWith('/concurrent-modification');
 }

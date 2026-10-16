@@ -10,6 +10,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteNfseEmitidaFormComponent } from './paciente-nfse-emitida-form.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
