@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, throwError } from 'rxjs';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { PlanoTratamentoResponseDTO, PLANO_TRATAMENTO_STATUS_LABEL } from '../../../core/models/plano-tratamento';
+import { PlanoTratamentoResponseDTO } from '../../../core/models/plano-tratamento';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
 import { PacienteService } from '../../../core/services/paciente.service';
@@ -26,12 +26,9 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
   loading = false;
   erro: string | null = null;
   sucesso: string | null = null;
-  confirmarAcaoId: number | null = null;
-  acaoPendente: 'encerrar' | 'suspender' | null = null;
-  acaoEmAndamentoId: number | null = null;
+  confirmarInativarId: number | null = null;
+  acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
-
-  readonly statusLabel = PLANO_TRATAMENTO_STATUS_LABEL;
 
   constructor(
     private planoTratamentoService: PlanoTratamentoService,
@@ -105,50 +102,38 @@ export class PacientePlanoTratamentoListComponent implements OnInit, OnDestroy {
       });
   }
 
-  confirmarAcao(id: number, acao: 'encerrar' | 'suspender'): void {
-    if (this.acaoEmAndamentoId !== null) return;
-
-    this.confirmarAcaoId = id;
-    this.acaoPendente = acao;
+  confirmarInativar(id: number): void {
+    if (this.acaoEmAndamento) return;
+    this.confirmarInativarId = id;
   }
 
-  cancelarAcao(): void {
-    this.confirmarAcaoId = null;
-    this.acaoPendente = null;
+  cancelarInativar(): void {
+    if (this.acaoEmAndamento) return;
+    this.confirmarInativarId = null;
   }
 
-  executarAcao(): void {
-    if (this.confirmarAcaoId === null || this.acaoPendente === null || this.acaoEmAndamentoId !== null) return;
+  inativar(): void {
+    if (this.confirmarInativarId === null || this.acaoEmAndamento) return;
 
-    const id = this.confirmarAcaoId;
-    const acao = this.acaoPendente;
-    this.cancelarAcao();
-    this.acaoEmAndamentoId = id;
-
-    const obs = acao === 'encerrar'
-      ? this.planoTratamentoService.encerrar(id)
-      : this.planoTratamentoService.suspender(id);
-
-    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.sucesso = acao === 'encerrar'
-          ? 'Plano de tratamento encerrado com sucesso.'
-          : 'Plano de tratamento suspenso com sucesso.';
-        this.carregarPlanos();
-        if (this.successTimer !== null) {
-          clearTimeout(this.successTimer);
+    this.acaoEmAndamento = true;
+    this.planoTratamentoService.inativar(this.confirmarInativarId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.acaoEmAndamento = false;
+          this.confirmarInativarId = null;
+          this.sucesso = 'Plano de tratamento inativado com sucesso.';
+          this.carregarPlanos();
+          if (this.successTimer !== null) {
+            clearTimeout(this.successTimer);
+          }
+          this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
+        },
+        error: () => {
+          this.erro = 'Erro ao inativar plano de tratamento.';
+          this.acaoEmAndamento = false;
+          this.confirmarInativarId = null;
         }
-        this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
-        this.acaoEmAndamentoId = null;
-      },
-      error: () => {
-        this.erro = `Erro ao ${acao} plano de tratamento.`;
-        this.acaoEmAndamentoId = null;
-      }
-    });
-  }
-
-  acaoLabel(): string {
-    return this.acaoPendente === 'encerrar' ? 'encerrar' : 'suspender';
+      });
   }
 }

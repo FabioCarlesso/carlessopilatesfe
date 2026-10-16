@@ -35,7 +35,7 @@ const mockReavaliacao: ReavaliacaoResponseDTO = {
   evolucaoFuncional: null,
   objetivosAlcancados: 'Redução de dor.',
   pontosAtencao: null,
-  ajustesPlanoTratamento: null,
+  ajustesRecomendados: null,
   observacoesGerais: null,
   dataCriacao: '2026-05-10T09:00:00',
   dataAtualizacao: null
@@ -206,6 +206,21 @@ describe('PacienteReavaliacaoFormComponent', () => {
     expect(component.erro).toBe('Identificador inválido.');
     expect(reavaliacaoServiceSpy.criar).not.toHaveBeenCalled();
     expect(reavaliacaoServiceSpy.atualizar).not.toHaveBeenCalled();
+  });
+
+  // O FE usava `ajustesPlanoTratamento`, que a API não conhece: o valor era descartado
+  // ao salvar e nunca voltava na edição (issue #261).
+  it('should load and send ajustesRecomendados, the API field name', async () => {
+    await setup({ pacienteId: '10', id: '1' }, { ...mockReavaliacao, ajustesRecomendados: 'Incluir fortalecimento.' });
+    expect(component.form.get('ajustesRecomendados')?.value).toBe('Incluir fortalecimento.');
+    reavaliacaoServiceSpy.atualizar.and.returnValue(of(mockReavaliacao));
+    component.form.patchValue({ ajustesRecomendados: 'Reduzir carga.' });
+
+    component.salvar();
+
+    const dto = reavaliacaoServiceSpy.atualizar.calls.mostRecent().args[1] as unknown as Record<string, unknown>;
+    expect(dto['ajustesRecomendados']).toBe('Reduzir carga.');
+    expect(dto['ajustesPlanoTratamento']).toBeUndefined();
   });
 
   it('should reject a reavaliacao that belongs to another patient', async () => {

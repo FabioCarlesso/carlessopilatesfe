@@ -6,10 +6,7 @@ import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/bread
 import { forkJoin, of } from 'rxjs';
 import {
   PlanoTratamentoRequestDTO,
-  PlanoTratamentoResponseDTO,
-  PLANO_TRATAMENTO_STATUS_LABEL,
-  PlanoTratamentoStatus,
-  PlanoTratamentoUpdateDTO
+  PlanoTratamentoResponseDTO
 } from '../../../core/models/plano-tratamento';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
@@ -38,9 +35,6 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
   parametroInvalido = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly statuses: PlanoTratamentoStatus[] = ['ATIVO', 'ENCERRADO', 'SUSPENSO'];
-  readonly statusLabel = PLANO_TRATAMENTO_STATUS_LABEL;
-
   constructor(
     private fb: FormBuilder,
     private pacienteService: PacienteService,
@@ -54,15 +48,13 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.form = this.fb.group({
       dataInicio: ['', Validators.required],
-      dataPrevisaoTermino: [''],
-      objetivosTerapeuticos: ['', [Validators.required, Validators.pattern(/\S/)]],
-      frequenciaSemanal: [null, [Validators.required, Validators.min(1), Validators.max(7)]],
-      condutasPropostas: ['', [Validators.required, Validators.pattern(/\S/)]],
-      exerciciosIndicados: ['', [Validators.required, Validators.pattern(/\S/)]],
-      exerciciosContraindicados: [''],
-      equipamentosPrevistos: [''],
-      observacoesClinicas: [''],
-      status: ['ATIVO', Validators.required]
+      dataFimPrevista: [''],
+      objetivosTratamento: ['', [Validators.required, Validators.pattern(/\S/)]],
+      intervencoesPlanejadas: [''],
+      numeroSessoesPrevistas: [null, [Validators.min(1), Validators.pattern(/^\d+$/)]],
+      frequenciaSessoes: [''],
+      responsavelTratamento: [''],
+      observacoes: ['']
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -111,11 +103,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
               return;
             }
             this.plano = plano;
-            const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = plano;
-            this.form.patchValue({
-              ...formFields,
-              dataPrevisaoTermino: formFields.dataPrevisaoTermino ?? ''
-            });
+            this.preencherFormulario(plano);
           } else {
             this.plano = null;
             // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
@@ -148,20 +136,16 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
-    const baseDto = {
+    const sessoes = valor.numeroSessoesPrevistas;
+    const baseDto: Omit<PlanoTratamentoRequestDTO, 'pacienteId'> = {
       dataInicio: valor.dataInicio,
-      dataPrevisaoTermino: opt(valor.dataPrevisaoTermino),
-      objetivosTerapeuticos: valor.objetivosTerapeuticos,
-      frequenciaSemanal: Number(valor.frequenciaSemanal),
-      condutasPropostas: valor.condutasPropostas,
-      exerciciosIndicados: valor.exerciciosIndicados,
-      exerciciosContraindicados: opt(valor.exerciciosContraindicados),
-      equipamentosPrevistos: opt(valor.equipamentosPrevistos),
-      observacoesClinicas: opt(valor.observacoesClinicas)
-    };
-    const updateDto: PlanoTratamentoUpdateDTO = {
-      ...baseDto,
-      status: valor.status as PlanoTratamentoStatus
+      dataFimPrevista: opt(valor.dataFimPrevista),
+      objetivosTratamento: valor.objetivosTratamento,
+      intervencoesPlanejadas: opt(valor.intervencoesPlanejadas),
+      numeroSessoesPrevistas: sessoes === null || sessoes === '' ? null : Number(sessoes),
+      frequenciaSessoes: opt(valor.frequenciaSessoes),
+      responsavelTratamento: opt(valor.responsavelTratamento),
+      observacoes: opt(valor.observacoes)
     };
     const createDto: PlanoTratamentoRequestDTO = {
       pacienteId: this.pacienteId,
@@ -172,7 +156,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
     const criando = planoAtual === null;
     const obs = criando
       ? this.planoTratamentoService.criar(createDto)
-      : this.planoTratamentoService.atualizar(planoAtual.id, { ...updateDto, version: planoAtual.version });
+      : this.planoTratamentoService.atualizar(planoAtual.id, { ...baseDto, version: planoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -180,11 +164,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
           this.router.navigate(['/pacientes', this.pacienteId, 'plano-tratamento']);
         } else {
           this.plano = response;
-          const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
-          this.form.patchValue({
-            ...formFields,
-            dataPrevisaoTermino: formFields.dataPrevisaoTermino ?? ''
-          });
+          this.preencherFormulario(response);
           if (this.successTimer !== null) {
             clearTimeout(this.successTimer);
           }
@@ -197,6 +177,19 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
         this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar plano de tratamento.';
         this.salvando = false;
       }
+    });
+  }
+
+  private preencherFormulario(plano: PlanoTratamentoResponseDTO): void {
+    this.form.patchValue({
+      dataInicio: plano.dataInicio,
+      dataFimPrevista: plano.dataFimPrevista ?? '',
+      objetivosTratamento: plano.objetivosTratamento,
+      intervencoesPlanejadas: plano.intervencoesPlanejadas ?? '',
+      numeroSessoesPrevistas: plano.numeroSessoesPrevistas,
+      frequenciaSessoes: plano.frequenciaSessoes ?? '',
+      responsavelTratamento: plano.responsavelTratamento ?? '',
+      observacoes: plano.observacoes ?? ''
     });
   }
 

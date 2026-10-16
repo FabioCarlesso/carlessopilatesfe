@@ -28,15 +28,13 @@ const mockPlano: PlanoTratamentoResponseDTO = {
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
   dataInicio: '2026-05-01',
-  dataPrevisaoTermino: null,
-  objetivosTerapeuticos: 'Redução de dor lombar',
-  frequenciaSemanal: 2,
-  condutasPropostas: 'Pilates solo',
-  exerciciosIndicados: 'Flexão de quadril',
-  exerciciosContraindicados: null,
-  equipamentosPrevistos: null,
-  observacoesClinicas: null,
-  status: 'ATIVO',
+  dataFimPrevista: null,
+  objetivosTratamento: 'Redução de dor lombar',
+  intervencoesPlanejadas: 'Pilates solo',
+  numeroSessoesPrevistas: 24,
+  frequenciaSessoes: '2x por semana',
+  responsavelTratamento: null,
+  observacoes: null,
   dataCriacao: '2026-05-01T10:00:00',
   dataAtualizacao: null
 };
@@ -57,9 +55,7 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       'listarPorPaciente',
       'buscar',
       'criar',
-      'atualizar',
-      'encerrar',
-      'suspender'
+      'atualizar'
     ]);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
@@ -96,79 +92,71 @@ describe('PacientePlanoTratamentoFormComponent', () => {
     });
 
     it('should have empty form initially', () => {
-      expect(component.form.get('objetivosTerapeuticos')?.value).toBe('');
-      expect(component.form.get('condutasPropostas')?.value).toBe('');
-      expect(component.form.get('exerciciosIndicados')?.value).toBe('');
-      expect(component.form.get('status')?.value).toBe('ATIVO');
+      expect(component.form.get('objetivosTratamento')?.value).toBe('');
+      expect(component.form.get('intervencoesPlanejadas')?.value).toBe('');
+      expect(component.form.get('numeroSessoesPrevistas')?.value).toBeNull();
+      expect(component.form.get('frequenciaSessoes')?.value).toBe('');
     });
 
-    it('should not submit when required fields are missing', () => {
+    it('should require only dataInicio and objetivosTratamento', () => {
       component.salvar();
 
       expect(planoTratamentoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('dataInicio')?.touched).toBeTrue();
-      expect(component.form.get('objetivosTerapeuticos')?.touched).toBeTrue();
-      expect(component.form.get('condutasPropostas')?.touched).toBeTrue();
-      expect(component.form.get('exerciciosIndicados')?.touched).toBeTrue();
-      expect(component.form.get('frequenciaSemanal')?.touched).toBeTrue();
+      expect(component.form.get('dataInicio')?.hasError('required')).toBeTrue();
+      expect(component.form.get('objetivosTratamento')?.hasError('required')).toBeTrue();
+      expect(component.form.get('objetivosTratamento')?.touched).toBeTrue();
+      for (const opcional of ['dataFimPrevista', 'intervencoesPlanejadas', 'numeroSessoesPrevistas',
+        'frequenciaSessoes', 'responsavelTratamento', 'observacoes']) {
+        expect(component.form.get(opcional)?.valid).withContext(opcional).toBeTrue();
+      }
     });
 
-    it('should keep required text fields invalid when they contain only whitespace', () => {
-      component.form.patchValue({
-        dataInicio: '2026-05-01',
-        objetivosTerapeuticos: '   ',
-        frequenciaSemanal: 2,
-        condutasPropostas: '   ',
-        exerciciosIndicados: '   '
-      });
+    it('should keep objetivosTratamento invalid when it contains only whitespace', () => {
+      component.form.patchValue({ dataInicio: '2026-05-01', objetivosTratamento: '   ' });
 
       component.salvar();
 
       expect(planoTratamentoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('objetivosTerapeuticos')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('condutasPropostas')?.hasError('pattern')).toBeTrue();
-      expect(component.form.get('exerciciosIndicados')?.hasError('pattern')).toBeTrue();
+      expect(component.form.get('objetivosTratamento')?.hasError('pattern')).toBeTrue();
     });
 
-    it('should keep frequenciaSemanal invalid when out of range', () => {
-      component.form.patchValue({
-        dataInicio: '2026-05-01',
-        objetivosTerapeuticos: 'Objetivo',
-        frequenciaSemanal: 8,
-        condutasPropostas: 'Conduta',
-        exerciciosIndicados: 'Exercício'
-      });
+    it('should reject numeroSessoesPrevistas that is not a positive integer', () => {
+      const campo = component.form.get('numeroSessoesPrevistas');
 
-      component.salvar();
-
-      expect(planoTratamentoServiceSpy.criar).not.toHaveBeenCalled();
-      expect(component.form.get('frequenciaSemanal')?.hasError('max')).toBeTrue();
+      campo?.setValue(0);
+      expect(campo?.hasError('min')).toBeTrue();
+      campo?.setValue(2.5);
+      expect(campo?.hasError('pattern')).toBeTrue();
+      campo?.setValue(12);
+      expect(campo?.valid).toBeTrue();
     });
 
-    it('should create without sending status in request body', () => {
+    it('should POST the API field names, with blank optionals as null', () => {
       planoTratamentoServiceSpy.criar.and.returnValue(of(mockPlano));
       spyOn(router, 'navigate');
       component.form.patchValue({
         dataInicio: '2026-05-01',
-        objetivosTerapeuticos: 'Objetivo',
-        frequenciaSemanal: 2,
-        condutasPropostas: 'Conduta',
-        exerciciosIndicados: 'Exercício',
-        status: 'SUSPENSO'
+        objetivosTratamento: 'Objetivo',
+        intervencoesPlanejadas: '  Pilates solo  ',
+        numeroSessoesPrevistas: '24',
+        frequenciaSessoes: '2x por semana',
+        responsavelTratamento: '   '
       });
 
       component.salvar();
 
-      expect(planoTratamentoServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+      expect(planoTratamentoServiceSpy.criar).toHaveBeenCalledWith({
         pacienteId: 10,
         dataInicio: '2026-05-01',
-        objetivosTerapeuticos: 'Objetivo',
-        frequenciaSemanal: 2,
-        condutasPropostas: 'Conduta',
-        exerciciosIndicados: 'Exercício'
-      }));
-      const dto = planoTratamentoServiceSpy.criar.calls.mostRecent().args[0] as unknown as Record<string, unknown>;
-      expect(dto['status']).toBeUndefined();
+        dataFimPrevista: null,
+        objetivosTratamento: 'Objetivo',
+        intervencoesPlanejadas: 'Pilates solo',
+        numeroSessoesPrevistas: 24,
+        frequenciaSessoes: '2x por semana',
+        responsavelTratamento: null,
+        observacoes: null
+      });
+      expect(router.navigate).toHaveBeenCalledWith(['/pacientes', 10, 'plano-tratamento']);
     });
 
     it('should set erro when loading fails', async () => {
@@ -191,32 +179,36 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       expect(planoTratamentoServiceSpy.buscar).toHaveBeenCalledWith(1);
     });
 
-    it('should pre-fill form with existing plan data', () => {
+    it('should pre-fill form with existing plan data and start valid', () => {
       expect(component.form.get('dataInicio')?.value).toBe('2026-05-01');
-      expect(component.form.get('objetivosTerapeuticos')?.value).toBe('Redução de dor lombar');
-      expect(component.form.get('frequenciaSemanal')?.value).toBe(2);
-      expect(component.form.get('condutasPropostas')?.value).toBe('Pilates solo');
-      expect(component.form.get('status')?.value).toBe('ATIVO');
+      expect(component.form.get('dataFimPrevista')?.value).toBe('');
+      expect(component.form.get('objetivosTratamento')?.value).toBe('Redução de dor lombar');
+      expect(component.form.get('intervencoesPlanejadas')?.value).toBe('Pilates solo');
+      expect(component.form.get('numeroSessoesPrevistas')?.value).toBe(24);
+      expect(component.form.get('frequenciaSessoes')?.value).toBe('2x por semana');
+      expect(component.form.get('responsavelTratamento')?.value).toBe('');
+      expect(component.form.valid).toBeTrue();
     });
 
     it('should call atualizar with updated data on save', () => {
-      const updated = { ...mockPlano, objetivosTerapeuticos: 'Fortalecimento muscular' };
+      const updated = { ...mockPlano, objetivosTratamento: 'Fortalecimento muscular', version: 1 };
       planoTratamentoServiceSpy.atualizar.and.returnValue(of(updated));
-      component.form.patchValue({ objetivosTerapeuticos: 'Fortalecimento muscular' });
+      component.form.patchValue({ objetivosTratamento: 'Fortalecimento muscular' });
 
       component.salvar();
 
-      expect(planoTratamentoServiceSpy.atualizar).toHaveBeenCalledWith(
-        1,
-        jasmine.objectContaining({
-          dataInicio: '2026-05-01',
-          objetivosTerapeuticos: 'Fortalecimento muscular',
-          frequenciaSemanal: 2,
-          condutasPropostas: 'Pilates solo',
-          exerciciosIndicados: 'Flexão de quadril',
-          status: 'ATIVO'
-        })
-      );
+      expect(planoTratamentoServiceSpy.atualizar).toHaveBeenCalledWith(1, {
+        dataInicio: '2026-05-01',
+        dataFimPrevista: null,
+        objetivosTratamento: 'Fortalecimento muscular',
+        intervencoesPlanejadas: 'Pilates solo',
+        numeroSessoesPrevistas: 24,
+        frequenciaSessoes: '2x por semana',
+        responsavelTratamento: null,
+        observacoes: null,
+        version: 0
+      });
+      expect(component.plano).toEqual(updated);
       expect(component.sucesso).toBe('Plano de tratamento atualizado com sucesso.');
       expect(component.salvando).toBeFalse();
     });

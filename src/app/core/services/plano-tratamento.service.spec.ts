@@ -14,15 +14,13 @@ const mockPlano: PlanoTratamentoResponseDTO = {
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
   dataInicio: '2026-05-01',
-  dataPrevisaoTermino: '2026-08-01',
-  objetivosTerapeuticos: 'Redução de dor lombar',
-  frequenciaSemanal: 2,
-  condutasPropostas: 'Pilates solo e alongamento',
-  exerciciosIndicados: 'Flexão de quadril, alongamento de isquiotibiais',
-  exerciciosContraindicados: null,
-  equipamentosPrevistos: 'Mat, bola',
-  observacoesClinicas: null,
-  status: 'ATIVO',
+  dataFimPrevista: '2026-08-01',
+  objetivosTratamento: 'Redução de dor lombar',
+  intervencoesPlanejadas: 'Pilates solo e alongamento',
+  numeroSessoesPrevistas: 24,
+  frequenciaSessoes: '2x por semana',
+  responsavelTratamento: 'Dra. Carla',
+  observacoes: null,
   dataCriacao: '2026-05-01T10:00:00',
   dataAtualizacao: null
 };
@@ -66,10 +64,9 @@ describe('PlanoTratamentoService', () => {
     const dto: PlanoTratamentoRequestDTO = {
       pacienteId: 10,
       dataInicio: '2026-05-01',
-      objetivosTerapeuticos: 'Redução de dor lombar',
-      frequenciaSemanal: 2,
-      condutasPropostas: 'Pilates solo e alongamento',
-      exerciciosIndicados: 'Flexão de quadril'
+      objetivosTratamento: 'Redução de dor lombar',
+      numeroSessoesPrevistas: 24,
+      frequenciaSessoes: '2x por semana'
     };
 
     service.criar(dto).subscribe(p => expect(p).toEqual(mockPlano));
@@ -82,8 +79,9 @@ describe('PlanoTratamentoService', () => {
 
   it('should PUT to /api/planos-tratamento/:id with update body', () => {
     const dto: PlanoTratamentoUpdateDTO = {
-      objetivosTerapeuticos: 'Fortalecimento muscular',
-      frequenciaSemanal: 3
+      objetivosTratamento: 'Fortalecimento muscular',
+      frequenciaSessoes: '3x por semana',
+      version: 0
     };
 
     service.atualizar(1, dto).subscribe(p => expect(p).toEqual(mockPlano));
@@ -94,21 +92,11 @@ describe('PlanoTratamentoService', () => {
     req.flush(mockPlano);
   });
 
-  it('should PATCH /api/planos-tratamento/:id/encerrar', () => {
-    const encerrado = { ...mockPlano, status: 'ENCERRADO' as const };
-    service.encerrar(1).subscribe(p => expect(p).toEqual(encerrado));
+  it('should DELETE /api/planos-tratamento/:id to inactivate', () => {
+    service.inativar(1).subscribe();
 
-    const req = httpMock.expectOne('/api/planos-tratamento/1/encerrar');
-    expect(req.request.method).toBe('PATCH');
-    req.flush(encerrado);
-  });
-
-  it('should PATCH /api/planos-tratamento/:id/suspender', () => {
-    const suspenso = { ...mockPlano, status: 'SUSPENSO' as const };
-    service.suspender(1).subscribe(p => expect(p).toEqual(suspenso));
-
-    const req = httpMock.expectOne('/api/planos-tratamento/1/suspender');
-    expect(req.request.method).toBe('PATCH');
-    req.flush(suspenso);
+    const req = httpMock.expectOne('/api/planos-tratamento/1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
   });
 });

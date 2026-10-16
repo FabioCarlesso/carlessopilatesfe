@@ -56,7 +56,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
       evolucaoFuncional: [''],
       objetivosAlcancados: [''],
       pontosAtencao: [''],
-      ajustesPlanoTratamento: [''],
+      ajustesRecomendados: [''],
       observacoesGerais: ['']
     });
 
@@ -116,7 +116,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
               evolucaoFuncional: formFields.evolucaoFuncional ?? '',
               objetivosAlcancados: formFields.objetivosAlcancados ?? '',
               pontosAtencao: formFields.pontosAtencao ?? '',
-              ajustesPlanoTratamento: formFields.ajustesPlanoTratamento ?? '',
+              ajustesRecomendados: formFields.ajustesRecomendados ?? '',
               observacoesGerais: formFields.observacoesGerais ?? ''
             });
           } else {
@@ -167,7 +167,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
       evolucaoFuncional: opt(valor.evolucaoFuncional),
       objetivosAlcancados: opt(valor.objetivosAlcancados),
       pontosAtencao: opt(valor.pontosAtencao),
-      ajustesPlanoTratamento: opt(valor.ajustesPlanoTratamento),
+      ajustesRecomendados: opt(valor.ajustesRecomendados),
       observacoesGerais: opt(valor.observacoesGerais)
     };
 
@@ -196,7 +196,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
             evolucaoFuncional: formFields.evolucaoFuncional ?? '',
             objetivosAlcancados: formFields.objetivosAlcancados ?? '',
             pontosAtencao: formFields.pontosAtencao ?? '',
-            ajustesPlanoTratamento: formFields.ajustesPlanoTratamento ?? '',
+            ajustesRecomendados: formFields.ajustesRecomendados ?? '',
             observacoesGerais: formFields.observacoesGerais ?? ''
           });
           if (this.successTimer !== null) {
