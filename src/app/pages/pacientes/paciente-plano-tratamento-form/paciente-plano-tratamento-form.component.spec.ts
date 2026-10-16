@@ -7,6 +7,8 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacientePlanoTratamentoFormComponent } from './paciente-plano-tratamento-form.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
   version: 0,
@@ -216,6 +218,16 @@ describe('PacientePlanoTratamentoFormComponent', () => {
         })
       );
       expect(component.sucesso).toBe('Plano de tratamento atualizado com sucesso.');
+      expect(component.salvando).toBeFalse();
+    });
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      planoTratamentoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(planoTratamentoServiceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
       expect(component.salvando).toBeFalse();
     });
 

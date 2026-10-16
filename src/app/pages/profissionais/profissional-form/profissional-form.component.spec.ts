@@ -5,6 +5,8 @@ import { of, throwError } from 'rxjs';
 import { ProfissionalFormComponent } from './profissional-form.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockProfissional: ProfissionalResponseDTO = {
   version: 0,
@@ -254,6 +256,16 @@ describe('ProfissionalFormComponent', () => {
         1,
         jasmine.objectContaining({ numeroRegistro: '123456-TO' })
       );
+    });
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      serviceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+      expect(component.salvando).toBeFalse();
     });
 
     it('should set erro on atualizar failure', () => {

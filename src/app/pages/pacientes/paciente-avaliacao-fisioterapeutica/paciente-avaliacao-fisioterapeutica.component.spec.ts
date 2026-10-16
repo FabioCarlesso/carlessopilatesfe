@@ -8,6 +8,8 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteAvaliacaoFisioterapeuticaComponent } from './paciente-avaliacao-fisioterapeutica.component';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { conflitoConcorrencia } from '../../../../testing/conflito';
 
 const mockPaciente: PacienteResponseDTO = {
   version: 0,
@@ -113,6 +115,16 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
       );
       expect(component.avaliacao).toEqual(updated);
       expect(component.sucesso).toBe('Avaliação fisioterapêutica atualizada com sucesso.');
+      expect(component.salvando).toBeFalse();
+    });
+
+    it('should send the loaded version and explain the concurrent-modification conflict', () => {
+      avaliacaoServiceSpy.atualizar.and.returnValue(throwError(() => conflitoConcorrencia()));
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(jasmine.any(Number), jasmine.objectContaining({ version: 0 }));
+      expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
       expect(component.salvando).toBeFalse();
     });
 
