@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -131,6 +132,18 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       expect(campo?.valid).toBeTrue();
     });
 
+    it('should reject dataFimPrevista before dataInicio and revalidate when dataInicio changes', () => {
+      component.form.patchValue({ dataInicio: '2026-05-01', dataFimPrevista: '2026-04-30', objetivosTratamento: 'Objetivo' });
+
+      component.salvar();
+
+      expect(planoTratamentoServiceSpy.criar).not.toHaveBeenCalled();
+      expect(component.form.get('dataFimPrevista')?.hasError('periodoInvertido')).toBeTrue();
+
+      component.form.get('dataInicio')?.setValue('2026-04-01');
+      expect(component.form.get('dataFimPrevista')?.valid).toBeTrue();
+    });
+
     it('should POST the API field names, with blank optionals as null', () => {
       planoTratamentoServiceSpy.criar.and.returnValue(of(mockPlano));
       spyOn(router, 'navigate');
@@ -223,6 +236,39 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       expect(component.salvando).toBeFalse();
     });
 
+    // O `PUT` da API ignora `null`: sem o `""`, o texto apagado voltava junto com o sucesso.
+    it('should send "" to clear a saved text field and keep null for fields that were already empty', () => {
+      planoTratamentoServiceSpy.atualizar.and.returnValue(of({ ...mockPlano, intervencoesPlanejadas: '' }));
+      component.form.patchValue({ intervencoesPlanejadas: '   ' });
+
+      component.salvar();
+
+      const dto = planoTratamentoServiceSpy.atualizar.calls.mostRecent().args[1];
+      expect(dto.intervencoesPlanejadas).toBe('');
+      expect(dto.responsavelTratamento).toBeNull();
+      expect(dto.observacoes).toBeNull();
+    });
+
+    it('should not let a saved numeroSessoesPrevistas be removed, since the API ignores null', () => {
+      component.form.patchValue({ numeroSessoesPrevistas: null });
+
+      component.salvar();
+
+      expect(planoTratamentoServiceSpy.atualizar).not.toHaveBeenCalled();
+      expect(component.form.get('numeroSessoesPrevistas')?.hasError('naoRemovivel')).toBeTrue();
+    });
+
+    it('should show the API detail when the update is rejected with 400', () => {
+      planoTratamentoServiceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400,
+        error: { type: 'https://carlessopilates.com.br/problemas/bad-request', detail: 'Mensagem da API.' }
+      })));
+
+      component.salvar();
+
+      expect(component.erro).toBe('Mensagem da API.');
+    });
+
     it('should set erro when update fails', () => {
       planoTratamentoServiceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));
 
@@ -231,6 +277,17 @@ describe('PacientePlanoTratamentoFormComponent', () => {
       expect(component.erro).toBe('Erro ao salvar plano de tratamento.');
       expect(component.salvando).toBeFalse();
     });
+  });
+
+  it('should not let a saved dataFimPrevista be removed, but allow it while it was never saved', async () => {
+    await setup({ pacienteId: '10', id: '1' }, { ...mockPlano, dataFimPrevista: '2026-08-01' });
+    const campo = component.form.get('dataFimPrevista');
+    expect(campo?.value).toBe('2026-08-01');
+
+    campo?.setValue('');
+    expect(campo?.hasError('naoRemovivel')).toBeTrue();
+    campo?.setValue('2026-09-01');
+    expect(campo?.valid).toBeTrue();
   });
 
   it('should reject a plan that belongs to another patient', async () => {

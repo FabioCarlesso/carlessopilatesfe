@@ -49,7 +49,18 @@
       </div>
       <div class="form-group">
         <label for="dataFimPrevista">Data prevista de término</label>
-        <input id="dataFimPrevista" type="date" formControlName="dataFimPrevista" class="form-control" />
+        <input id="dataFimPrevista" type="date" formControlName="dataFimPrevista" class="form-control"
+          aria-describedby="dataFimPrevistaError"
+          [class.is-invalid]="campo('dataFimPrevista')?.invalid && campo('dataFimPrevista')?.touched" />
+        @if (campo('dataFimPrevista')?.touched && campo('dataFimPrevista')?.hasError('periodoInvertido')) {
+          <div id="dataFimPrevistaError" class="invalid-feedback">
+            A data prevista de término não pode ser anterior à data de início.
+          </div>
+        } @else if (campo('dataFimPrevista')?.touched && campo('dataFimPrevista')?.hasError('naoRemovivel')) {
+          <div id="dataFimPrevistaError" class="invalid-feedback">
+            A data prevista de término não pode ser removida depois de salva; informe uma nova data.
+          </div>
+        }
       </div>
     </div>
     <div class="form-row">
@@ -59,7 +70,11 @@
           min="1" step="1"
           aria-describedby="numeroSessoesPrevistasError"
           [class.is-invalid]="campo('numeroSessoesPrevistas')?.invalid && campo('numeroSessoesPrevistas')?.touched" />
-        @if (campo('numeroSessoesPrevistas')?.touched && campo('numeroSessoesPrevistas')?.invalid) {
+        @if (campo('numeroSessoesPrevistas')?.touched && campo('numeroSessoesPrevistas')?.hasError('naoRemovivel')) {
+          <div id="numeroSessoesPrevistasError" class="invalid-feedback">
+            O número de sessões não pode ser removido depois de salvo; informe um novo valor.
+          </div>
+        } @else if (campo('numeroSessoesPrevistas')?.touched && campo('numeroSessoesPrevistas')?.invalid) {
           <div id="numeroSessoesPrevistasError" class="invalid-feedback">
             Informe um número inteiro maior que zero.
           </div>

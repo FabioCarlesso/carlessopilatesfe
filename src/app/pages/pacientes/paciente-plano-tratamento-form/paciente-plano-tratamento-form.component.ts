@@ -1,6 +1,14 @@
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { forkJoin, of } from 'rxjs';
@@ -13,7 +21,18 @@ import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
-import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
+
+/** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
+type CampoTexto = 'intervencoesPlanejadas' | 'frequenciaSessoes' | 'responsavelTratamento' | 'observacoes';
+
+function periodoCoerente(control: AbstractControl): ValidationErrors | null {
+  const dataInicio = control.parent?.get('dataInicio')?.value;
+  const dataFim = control.value;
+  // Comparação lexicográfica de `yyyy-MM-dd`, que para esse formato é a mesma
+  // coisa que a cronológica. A API recusa o período invertido com `400`.
+  return dataInicio && dataFim && dataFim < dataInicio ? { periodoInvertido: true } : null;
+}
 
 @Component({
   selector: 'app-paciente-plano-tratamento-form',
@@ -48,14 +67,17 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.form = this.fb.group({
       dataInicio: ['', Validators.required],
-      dataFimPrevista: [''],
+      dataFimPrevista: ['', [periodoCoerente, this.naoRemovivel('dataFimPrevista')]],
       objetivosTratamento: ['', [Validators.required, Validators.pattern(/\S/)]],
       intervencoesPlanejadas: [''],
-      numeroSessoesPrevistas: [null, [Validators.min(1), Validators.pattern(/^\d+$/)]],
+      numeroSessoesPrevistas: [null, [Validators.min(1), Validators.pattern(/^\d+$/), this.naoRemovivel('numeroSessoesPrevistas')]],
       frequenciaSessoes: [''],
       responsavelTratamento: [''],
       observacoes: ['']
     });
+    this.form.get('dataInicio')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.form.get('dataFimPrevista')?.updateValueAndValidity({ emitEvent: false }));
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.planoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
@@ -136,16 +158,19 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
+    // O `PUT` da API ignora `null` ("só os campos enviados são alterados"): apagar um texto já
+    // salvo exige mandar `""`, senão a API devolve o valor antigo junto com o sucesso.
+    const texto = (campo: CampoTexto): string | null => opt(valor[campo]) ?? (this.plano?.[campo] ? '' : null);
     const sessoes = valor.numeroSessoesPrevistas;
     const baseDto: Omit<PlanoTratamentoRequestDTO, 'pacienteId'> = {
       dataInicio: valor.dataInicio,
       dataFimPrevista: opt(valor.dataFimPrevista),
       objetivosTratamento: valor.objetivosTratamento,
-      intervencoesPlanejadas: opt(valor.intervencoesPlanejadas),
+      intervencoesPlanejadas: texto('intervencoesPlanejadas'),
       numeroSessoesPrevistas: sessoes === null || sessoes === '' ? null : Number(sessoes),
-      frequenciaSessoes: opt(valor.frequenciaSessoes),
-      responsavelTratamento: opt(valor.responsavelTratamento),
-      observacoes: opt(valor.observacoes)
+      frequenciaSessoes: texto('frequenciaSessoes'),
+      responsavelTratamento: texto('responsavelTratamento'),
+      observacoes: texto('observacoes')
     };
     const createDto: PlanoTratamentoRequestDTO = {
       pacienteId: this.pacienteId,
@@ -174,7 +199,7 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
         }
       },
       error: (err: unknown) => {
-        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar plano de tratamento.';
+        this.erro = extrairMensagemErro(err, 'Erro ao salvar plano de tratamento.');
         this.salvando = false;
       }
     });
@@ -191,6 +216,17 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
       responsavelTratamento: plano.responsavelTratamento ?? '',
       observacoes: plano.observacoes ?? ''
     });
+  }
+
+  /**
+   * Data e número não têm como chegar vazios ao `PUT`: `""` vira `null` na desserialização e a API
+   * ignora `null`. Remover um valor já salvo seria um sucesso falso, então o formulário recusa.
+   */
+  private naoRemovivel(campo: 'dataFimPrevista' | 'numeroSessoesPrevistas'): ValidatorFn {
+    return control => {
+      const vazio = control.value === null || control.value === '';
+      return vazio && this.plano?.[campo] != null ? { naoRemovivel: true } : null;
+    };
   }
 
   campo(nome: string) {
