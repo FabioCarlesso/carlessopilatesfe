@@ -6,6 +6,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
 import { AvaliacaoPosturalResponseDTO } from '../../../core/models/avaliacao-postural';
 import { ImageCompressorService } from '../../../shared/services/image-compressor.service';
+import { pagina } from '../../../../testing/pagina';
 
 function criarArquivoOriginal(nome = 'foto.png'): File {
   return new File(['conteudo-original'], nome, { type: 'image/png' });
@@ -79,7 +80,7 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
   function carregarComAnalisesExistentes(analises: AvaliacaoPosturalResponseDTO[] = []) {
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush(analises);
   }
 
@@ -102,7 +103,7 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
     criarComponente();
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([]));
 
     expect(component.avaliacaoFisioterapeuticaId).toBeNull();
     httpMock.expectNone('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5');

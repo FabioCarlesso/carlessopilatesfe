@@ -6,6 +6,7 @@ import {
   PlanoTratamentoResponseDTO,
   PlanoTratamentoUpdateDTO
 } from '../models/plano-tratamento';
+import { pagina } from '../../../testing/pagina';
 
 const mockPlano: PlanoTratamentoResponseDTO = {
   id: 1,
@@ -47,9 +48,9 @@ describe('PlanoTratamentoService', () => {
   it('should GET /api/planos-tratamento/paciente/:pacienteId', () => {
     service.listarPorPaciente(10).subscribe(p => expect(p).toEqual([mockPlano]));
 
-    const req = httpMock.expectOne('/api/planos-tratamento/paciente/10');
+    const req = httpMock.expectOne('/api/planos-tratamento/paciente/10?page=0&size=2000');
     expect(req.request.method).toBe('GET');
-    req.flush([mockPlano]);
+    req.flush(pagina([mockPlano]));
   });
 
   it('should GET /api/planos-tratamento/:id', () => {

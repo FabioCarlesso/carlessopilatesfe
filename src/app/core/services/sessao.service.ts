@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { SessaoRequestDTO, SessaoResponseDTO, SessaoUpdateDTO } from '../models/sessao';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 interface SessaoApiRequestDTO {
   pacienteId: number;
@@ -47,8 +49,11 @@ export class SessaoService {
   constructor(private http: HttpClient) {}
 
   listarPorPaciente(pacienteId: number): Observable<SessaoResponseDTO[]> {
-    return this.http.get<SessaoApiResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`)
-      .pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<SessaoApiResponseDTO>>(`${this.apiUrl}/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina)
+      })
+    ).pipe(map(sessoes => sessoes.map(sessao => this.fromApi(sessao))));
   }
 
   /**

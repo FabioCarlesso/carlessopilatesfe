@@ -6,6 +6,8 @@ import {
   ReavaliacaoResponseDTO,
   ReavaliacaoUpdateDTO
 } from '../models/reavaliacao';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +18,11 @@ export class ReavaliacaoService {
   constructor(private http: HttpClient) {}
 
   listarPorPaciente(pacienteId: number): Observable<ReavaliacaoResponseDTO[]> {
-    return this.http.get<ReavaliacaoResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<ReavaliacaoResponseDTO>>(`${this.apiUrl}/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina)
+      })
+    );
   }
 
   buscar(id: number): Observable<ReavaliacaoResponseDTO> {

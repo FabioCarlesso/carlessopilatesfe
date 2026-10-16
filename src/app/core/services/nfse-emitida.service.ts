@@ -6,6 +6,8 @@ import {
   NotaFiscalEmitidaRequestDTO,
   NotaFiscalEmitidaResponseDTO
 } from '../models/nfse-emitida';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({
   providedIn: 'root'
@@ -25,9 +27,12 @@ export class NfseEmitidaService {
   }
 
   listarPorPaciente(pacienteId: number): Observable<NotaFiscalEmitidaResponseDTO[]> {
-    return this.http.get<NotaFiscalEmitidaResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`, {
-      context: this.contextoTrata403Localmente()
-    });
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<NotaFiscalEmitidaResponseDTO>>(`${this.apiUrl}/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina),
+        context: this.contextoTrata403Localmente()
+      })
+    );
   }
 
   salvar(dto: NotaFiscalEmitidaRequestDTO): Observable<NotaFiscalEmitidaResponseDTO> {

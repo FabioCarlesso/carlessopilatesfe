@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { PagamentoService } from './pagamento.service';
 import { PagamentoRequestDTO, PagamentoResponseDTO } from '../models/plano';
+import { pagina } from '../../../testing/pagina';
 
 const mockPagamento: PagamentoResponseDTO = {
   id: 1,
@@ -38,9 +39,9 @@ describe('PagamentoService', () => {
   describe('listar', () => {
     it('should GET /api/pagamentos/paciente/:id', () => {
       service.listar(10).subscribe(p => expect(p).toEqual([mockPagamento]));
-      const req = httpMock.expectOne('/api/pagamentos/paciente/10');
+      const req = httpMock.expectOne('/api/pagamentos/paciente/10?page=0&size=2000&sort=dataVencimento,asc');
       expect(req.request.method).toBe('GET');
-      req.flush([mockPagamento]);
+      req.flush(pagina([mockPagamento]));
     });
   });
 

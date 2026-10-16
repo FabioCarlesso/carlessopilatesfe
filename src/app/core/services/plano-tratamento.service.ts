@@ -6,6 +6,8 @@ import {
   PlanoTratamentoResponseDTO,
   PlanoTratamentoUpdateDTO
 } from '../models/plano-tratamento';
+import { Page } from '../models/common';
+import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +18,11 @@ export class PlanoTratamentoService {
   constructor(private http: HttpClient) {}
 
   listarPorPaciente(pacienteId: number): Observable<PlanoTratamentoResponseDTO[]> {
-    return this.http.get<PlanoTratamentoResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
+    return buscarTodasAsPaginas(pagina =>
+      this.http.get<Page<PlanoTratamentoResponseDTO>>(`${this.apiUrl}/paciente/${pacienteId}`, {
+        params: paramsPaginaHistorico(pagina)
+      })
+    );
   }
 
   buscar(id: number): Observable<PlanoTratamentoResponseDTO> {

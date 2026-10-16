@@ -5,6 +5,7 @@ import {
   NotaFiscalEmitidaRequestDTO,
   NotaFiscalEmitidaResponseDTO
 } from '../models/nfse-emitida';
+import { pagina } from '../../../testing/pagina';
 
 const mockNota: NotaFiscalEmitidaResponseDTO = {
   id: 1,
@@ -41,9 +42,9 @@ describe('NfseEmitidaService', () => {
   it('should GET /api/api/nfse-emitidas/paciente/:pacienteId', () => {
     service.listarPorPaciente(10).subscribe(r => expect(r).toEqual([mockNota]));
 
-    const req = httpMock.expectOne('/api/api/nfse-emitidas/paciente/10');
+    const req = httpMock.expectOne('/api/api/nfse-emitidas/paciente/10?page=0&size=2000');
     expect(req.request.method).toBe('GET');
-    req.flush([mockNota]);
+    req.flush(pagina([mockNota]));
   });
 
   it('should POST to /api/api/nfse-emitidas with request body', () => {

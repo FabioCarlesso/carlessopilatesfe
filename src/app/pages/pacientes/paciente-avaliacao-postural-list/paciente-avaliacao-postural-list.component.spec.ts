@@ -5,6 +5,7 @@ import { PacienteAvaliacaoPosturalListComponent } from './paciente-avaliacao-pos
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
 import { AvaliacaoPosturalResponseDTO } from '../../../core/models/avaliacao-postural';
+import { pagina } from '../../../../testing/pagina';
 
 const mockPaciente = { id: 1, nome: 'Maria Souza' } as PacienteResponseDTO;
 
@@ -73,7 +74,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([mockAnaliseFrente]);
 
     expect(component.paciente).toEqual(mockPaciente);
@@ -87,7 +88,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([]));
 
     expect(component.avaliacaoFisioterapeuticaId).toBeNull();
     expect(component.loading).toBe(false);
@@ -109,7 +110,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush('erro', { status: 500, statusText: 'Erro' });
 
     expect(component.erro).toBe('Erro ao carregar análises posturais.');
@@ -120,7 +121,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     criarComponente();
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([mockAnaliseFrente]);
 
     const createObjectURLSpy = spyOn(URL, 'createObjectURL').and.returnValue('blob:foto-10');
@@ -140,7 +141,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
     criarComponente();
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([mockAnaliseFrente]);
 
     component.alternarFoto(mockAnaliseFrente);
@@ -153,7 +154,7 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
   function carregarComAnalises(): void {
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1').flush([mockAvaliacaoFisio]);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
     httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([mockAnaliseFrente]);
   }
 
