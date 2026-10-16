@@ -256,7 +256,8 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
     this.acaoEmAndamentoId = id;
     this.erro = null;
 
-    this.sessaoService.atualizar(id, { dataHora })
+    const version = this.sessoes.find(sessao => sessao.id === id)?.version;
+    this.sessaoService.atualizar(id, { dataHora, version })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: sessao => {

@@ -23,6 +23,8 @@ export interface AnamneseUpdateDTO {
   nivelAtividadeFisica?: string | null;
   restricoesMedicas?: string | null;
   observacoes?: string | null;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface AnamneseResponseDTO {
@@ -41,4 +43,6 @@ export interface AnamneseResponseDTO {
   observacoes: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }

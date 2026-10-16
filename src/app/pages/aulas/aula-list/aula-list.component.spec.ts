@@ -26,6 +26,7 @@ const mockPagamento: PagamentoResponseDTO = {
 };
 
 const mockProfissional: ProfissionalResponseDTO = {
+  version: 0,
   id: 5,
   nome: 'Paula Mendes',
   email: 'paula@carlessopilates.com',

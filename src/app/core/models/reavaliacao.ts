@@ -23,6 +23,8 @@ export interface ReavaliacaoUpdateDTO {
   pontosAtencao?: string | null;
   ajustesPlanoTratamento?: string | null;
   observacoesGerais?: string | null;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface ReavaliacaoResponseDTO {
@@ -41,4 +43,6 @@ export interface ReavaliacaoResponseDTO {
   observacoesGerais: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }

@@ -5,6 +5,7 @@ import { SessaoRequestDTO, SessaoResponseDTO, SessaoUpdateDTO } from '../models/
 import { pagina } from '../../../testing/pagina';
 
 const mockSessao: SessaoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -34,7 +35,8 @@ const mockSessaoApi = {
   duracaoMinutos: 60,
   observacoes: null,
   dataCriacao: '2026-05-01T09:00:00',
-  dataAtualizacao: null
+  dataAtualizacao: null,
+  version: 0
 };
 
 describe('SessaoService', () => {
@@ -154,6 +156,14 @@ describe('SessaoService', () => {
     const req = httpMock.expectOne('/api/sessoes/1');
     expect(Object.keys(req.request.body).sort())
       .toEqual(['data', 'duracaoMinutos', 'horario', 'observacoes']);
+    req.flush(mockSessaoApi);
+  });
+
+  it('should send the version received in the GET for optimistic locking', () => {
+    service.atualizar(1, { duracao: 45, version: 3 }).subscribe();
+
+    const req = httpMock.expectOne('/api/sessoes/1');
+    expect(req.request.body.version).toBe(3);
     req.flush(mockSessaoApi);
   });
 

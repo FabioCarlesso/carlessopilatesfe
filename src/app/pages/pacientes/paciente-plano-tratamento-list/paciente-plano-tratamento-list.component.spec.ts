@@ -10,6 +10,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacientePlanoTratamentoListComponent } from './paciente-plano-tratamento-list.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -21,6 +22,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockPlanoAtivo: PlanoTratamentoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',

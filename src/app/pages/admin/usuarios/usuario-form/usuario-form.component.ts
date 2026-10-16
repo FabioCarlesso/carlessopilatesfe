@@ -8,6 +8,7 @@ import { ROLE_OPTIONS, RoleOption, UsuarioAdminResponseDTO } from '../../../../c
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-usuario-form',
@@ -31,6 +32,8 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
   loading = false;
   salvando = false;
   erro: string | null = null;
+  /** Versão carregada no GET: vai no PUT para a API recusar a edição se outra pessoa salvou antes. */
+  private version: number | null = null;
   roles: RoleOption[] = ROLE_OPTIONS;
 
   ngOnInit(): void {
@@ -87,7 +90,8 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
           name: valor.name,
           email: valor.email,
           ...(senha ? { password: senha } : {}),
-          role: valor.role
+          role: valor.role,
+          version: this.version
         })
       : this.service.cadastrar({
           name: valor.name,
@@ -141,6 +145,7 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
   }
 
   private preencherFormulario(usuario: UsuarioAdminResponseDTO): void {
+    this.version = usuario.version;
     this.form.patchValue({
       name: usuario.name,
       email: usuario.email,
@@ -150,6 +155,8 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
   }
 
   private mensagemErroSalvar(err: HttpErrorResponse): string {
+    // Dois 409 distintos: o locking otimista tem `type` próprio; os demais são e-mail duplicado.
+    if (ehConflitoConcorrencia(err)) return MENSAGEM_CONFLITO_CONCORRENCIA;
     if (err?.status === 409) return 'Já existe um usuário com este e-mail.';
     if (err?.status === 400) return err.error?.message ?? 'Dados inválidos.';
     return 'Erro ao salvar usuário.';

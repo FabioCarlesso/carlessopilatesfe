@@ -16,6 +16,8 @@ export interface PacienteResponseDTO {
   dataNascimento: string;
   endereco: EnderecoDTO | null;
   ativo: boolean;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }
 
 export interface PacienteRequestDTO {
@@ -33,6 +35,8 @@ export interface PacienteUpdateDTO {
   telefone?: string;
   dataNascimento?: string;
   endereco?: EnderecoDTO;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export type { PageMetadata, Page } from './common';

@@ -20,6 +20,7 @@ function pagina<T>(content: T[]): Page<T> {
 
 function paciente(id: number, nome: string): PacienteResponseDTO {
   return {
+    version: 0,
     id,
     nome,
     email: `${nome}@teste.com`,
@@ -33,6 +34,7 @@ function paciente(id: number, nome: string): PacienteResponseDTO {
 
 function profissional(id: number, nome: string): ProfissionalResponseDTO {
   return {
+    version: 0,
     id,
     nome,
     email: `${nome}@teste.com`,

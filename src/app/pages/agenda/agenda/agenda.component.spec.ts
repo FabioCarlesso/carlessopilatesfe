@@ -20,6 +20,7 @@ const HOJE = new Date(2026, 4, 20, 9, 0);
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {
   return {
+    version: 0,
     pacienteId: 10,
     nomePaciente: 'Ana Silva',
     tipo: 'PILATES',
@@ -48,6 +49,7 @@ function aula(dados: Partial<AulaResponseDTO> & { id: number; data: string }): A
 
 const profissionais: ProfissionalResponseDTO[] = [
   {
+    version: 0,
     id: 3,
     nome: 'Carla Fisio',
     email: 'carla@email.com',
@@ -60,6 +62,7 @@ const profissionais: ProfissionalResponseDTO[] = [
     ativo: true
   },
   {
+    version: 0,
     id: 5,
     nome: 'Diego Pilates',
     email: 'diego@email.com',

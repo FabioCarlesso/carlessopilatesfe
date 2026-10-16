@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-form',
@@ -21,6 +22,8 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
   salvando = false;
   erro: string | null = null;
   parametroInvalido = false;
+  /** Versão carregada no GET: vai no PUT para a API recusar a edição se outra pessoa salvou antes. */
+  private version: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -66,6 +69,7 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     this.service.buscar(this.pacienteId).subscribe({
       next: p => {
         this.form.patchValue(p);
+        this.version = p.version;
         this.form.get('cpf')?.disable();
         this.loading = false;
       },
@@ -96,14 +100,15 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           email: valor.email,
           telefone: valor.telefone,
           dataNascimento: valor.dataNascimento,
-          endereco: valor.endereco
+          endereco: valor.endereco,
+          version: this.version
         })
       : this.service.cadastrar(valor);
 
     obs.subscribe({
       next: () => this.router.navigate(['/pacientes']),
-      error: () => {
-        this.erro = 'Erro ao salvar paciente.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar paciente.';
         this.salvando = false;
       }
     });

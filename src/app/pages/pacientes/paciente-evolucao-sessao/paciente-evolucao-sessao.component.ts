@@ -18,6 +18,7 @@ import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
@@ -192,7 +193,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
     };
     const obs = criando
       ? this.evolucaoSessaoService.criar(createDto)
-      : this.evolucaoSessaoService.atualizar(evolucaoAtual.id, dto);
+      : this.evolucaoSessaoService.atualizar(evolucaoAtual.id, { ...dto, version: evolucaoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -205,8 +206,8 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.salvando = false;
       },
-      error: () => {
-        this.erro = 'Erro ao salvar evolução.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar evolução.';
         this.salvando = false;
       }
     });

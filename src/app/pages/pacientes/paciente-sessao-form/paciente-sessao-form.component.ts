@@ -22,6 +22,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { bloqueiosDoHorario, descreverBloqueio } from '../../../shared/utils/bloqueio-agenda';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 /** Formato que o `input[type=datetime-local]` aceita — sem segundos. */
@@ -288,7 +289,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     const criando = sessaoAtual === null;
     const obs = criando
       ? this.sessaoService.criar(createDto)
-      : this.sessaoService.atualizar(sessaoAtual.id, updateDto);
+      : this.sessaoService.atualizar(sessaoAtual.id, { ...updateDto, version: sessaoAtual.version });
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -310,8 +311,8 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
           this.salvando = false;
         }
       },
-      error: () => {
-        this.erro = 'Erro ao salvar sessão.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar sessão.';
         this.salvando = false;
       }
     });

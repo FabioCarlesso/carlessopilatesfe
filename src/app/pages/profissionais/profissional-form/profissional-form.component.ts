@@ -6,6 +6,7 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-profissional-form',
@@ -22,6 +23,8 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
   salvando = false;
   erro: string | null = null;
   parametroInvalido = false;
+  /** Versão carregada no GET: vai no PUT para a API recusar a edição se outra pessoa salvou antes. */
+  private version: number | null = null;
 
   readonly tiposContrato: TipoContrato[] = ['CLT', 'PJ', 'AUTONOMO'];
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
@@ -67,6 +70,7 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
     this.service.buscar(this.profissionalId).subscribe({
       next: profissional => {
         this.form.patchValue(profissional);
+        this.version = profissional.version;
         this.form.get('cpf')?.disable();
         this.loading = false;
       },
@@ -106,14 +110,15 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           numeroRegistro: valor.numeroRegistro,
           tipoContrato: valor.tipoContrato,
           percentualPagamentoAula: valor.percentualPagamentoAula,
-          dataInicio: valor.dataInicio
+          dataInicio: valor.dataInicio,
+          version: this.version
         })
       : this.service.cadastrar(valor);
 
     request$.subscribe({
       next: () => this.router.navigate(['/profissionais']),
-      error: () => {
-        this.erro = 'Erro ao salvar profissional.';
+      error: (err: unknown) => {
+        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar profissional.';
         this.salvando = false;
       }
     });

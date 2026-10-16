@@ -4,9 +4,11 @@ import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angul
 import { Subject, of, throwError } from 'rxjs';
 import { UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
+import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../../shared/utils/api-error';
 import { UsuarioFormComponent } from './usuario-form.component';
 
 const mockUsuario: UsuarioAdminResponseDTO = {
+  version: 0,
   id: 42,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
@@ -303,7 +305,8 @@ describe('UsuarioFormComponent', () => {
     expect(serviceSpy.atualizar).toHaveBeenCalledWith(42, {
       name: 'Maria Admin',
       email: 'maria@carlessopilates.com',
-      role: 'ADMIN'
+      role: 'ADMIN',
+      version: 0
     });
     expect(router.navigate).toHaveBeenCalledWith(['/admin/usuarios']);
   });
@@ -317,6 +320,18 @@ describe('UsuarioFormComponent', () => {
     expect(serviceSpy.atualizar).toHaveBeenCalledWith(42, jasmine.objectContaining({
       password: 'novaSenha123'
     }));
+  });
+
+  it('should not confuse the concurrent-modification 409 with a duplicated e-mail', async () => {
+    const { component, serviceSpy } = await setup('42');
+    serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 409,
+      error: { type: 'https://carlessopilates.com.br/problemas/concurrent-modification' }
+    })));
+
+    component.salvar();
+
+    expect(component.erro).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
   });
 
   it('should set erro on atualizar failure', async () => {

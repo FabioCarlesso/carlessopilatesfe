@@ -12,6 +12,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteEvolucaoSessaoComponent } from './paciente-evolucao-sessao.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -23,6 +24,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockSessao: SessaoResponseDTO = {
+  version: 0,
   id: 5,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
@@ -38,6 +40,7 @@ const mockSessao: SessaoResponseDTO = {
 };
 
 const mockEvolucao: EvolucaoSessaoResponseDTO = {
+  version: 0,
   id: 1,
   sessaoId: 5,
   profissionalId: null,

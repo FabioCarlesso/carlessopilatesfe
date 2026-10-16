@@ -9,6 +9,7 @@ import {
 import { pagina } from '../../../testing/pagina';
 
 const mockPlano: PlanoTratamentoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',

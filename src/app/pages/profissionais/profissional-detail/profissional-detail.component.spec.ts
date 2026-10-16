@@ -7,6 +7,7 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 
 const mockProfissional: ProfissionalResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Paula Mendes',
   email: 'paula@carlessopilates.com',

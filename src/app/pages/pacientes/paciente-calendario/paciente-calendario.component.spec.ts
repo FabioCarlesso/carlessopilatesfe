@@ -17,6 +17,7 @@ import { PacienteCalendarioComponent } from './paciente-calendario.component';
 const HOJE = new Date(2026, 4, 20, 9, 0);
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -29,6 +30,7 @@ const mockPaciente: PacienteResponseDTO = {
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {
   return {
+    version: 0,
     pacienteId: 10,
     nomePaciente: 'Ana Silva',
     tipo: 'PILATES',

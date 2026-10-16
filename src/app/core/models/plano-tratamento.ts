@@ -24,6 +24,8 @@ export interface PlanoTratamentoUpdateDTO {
   equipamentosPrevistos?: string | null;
   observacoesClinicas?: string | null;
   status?: PlanoTratamentoStatus | null;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface PlanoTratamentoResponseDTO {
@@ -42,6 +44,8 @@ export interface PlanoTratamentoResponseDTO {
   status: PlanoTratamentoStatus;
   dataCriacao: string;
   dataAtualizacao: string | null;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }
 
 export const PLANO_TRATAMENTO_STATUS_LABEL: Record<PlanoTratamentoStatus, string> = {

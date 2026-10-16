@@ -10,6 +10,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteAvaliacaoFisioterapeuticaComponent } from './paciente-avaliacao-fisioterapeutica.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -21,6 +22,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {
+  version: 0,
   id: 5,
   pacienteId: 1,
   nomePaciente: 'Ana Silva',

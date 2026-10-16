@@ -14,6 +14,8 @@ export interface ProfissionalResponseDTO {
   percentualPagamentoAula: number;
   dataInicio: string;
   ativo: boolean;
+  /** Versão do registro para o locking otimista: devolva-a no próximo update. */
+  version: number;
 }
 
 export interface ProfissionalRequestDTO {
@@ -35,6 +37,8 @@ export interface ProfissionalUpdateDTO {
   tipoContrato?: TipoContrato;
   percentualPagamentoAula?: number;
   dataInicio?: string;
+  /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
+  version?: number | null;
 }
 
 export interface ProfissionalPagamentoAulaDTO {

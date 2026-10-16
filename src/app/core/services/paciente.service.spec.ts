@@ -4,6 +4,7 @@ import { PacienteService } from './paciente.service';
 import { Page, PacienteRequestDTO, PacienteResponseDTO, PacienteUpdateDTO } from '../models/paciente';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 1,
   nome: 'Ana Silva',
   email: 'ana@email.com',

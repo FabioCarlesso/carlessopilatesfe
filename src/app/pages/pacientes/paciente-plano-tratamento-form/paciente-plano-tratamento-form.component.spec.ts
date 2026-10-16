@@ -9,6 +9,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacientePlanoTratamentoFormComponent } from './paciente-plano-tratamento-form.component';
 
 const mockPaciente: PacienteResponseDTO = {
+  version: 0,
   id: 10,
   nome: 'Ana Silva',
   email: 'ana@email.com',
@@ -20,6 +21,7 @@ const mockPaciente: PacienteResponseDTO = {
 };
 
 const mockPlano: PlanoTratamentoResponseDTO = {
+  version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
