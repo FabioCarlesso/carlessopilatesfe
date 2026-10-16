@@ -223,6 +223,22 @@ describe('PacienteReavaliacaoFormComponent', () => {
     expect(dto['ajustesPlanoTratamento']).toBeUndefined();
   });
 
+  // O `PUT` da API ignora `null`: sem o `""`, o texto apagado voltava junto com o sucesso.
+  it('should send "" to clear a saved text field and keep null for fields that were already empty', async () => {
+    await setup({ pacienteId: '10', id: '1' }, { ...mockReavaliacao, ajustesRecomendados: 'Incluir fortalecimento.' });
+    reavaliacaoServiceSpy.atualizar.and.returnValue(of({ ...mockReavaliacao, ajustesRecomendados: '' }));
+    component.form.patchValue({ ajustesRecomendados: '   ', evolucaoDor: '' });
+
+    component.salvar();
+
+    const dto = reavaliacaoServiceSpy.atualizar.calls.mostRecent().args[1];
+    expect(dto.ajustesRecomendados).toBe('');
+    expect(dto.evolucaoDor).toBe('');
+    expect(dto.comparativoAvaliacaoAnterior).toBe('Melhora significativa.');
+    expect(dto.evolucaoForca).toBeNull();
+    expect(dto.observacoesGerais).toBeNull();
+  });
+
   it('should reject a reavaliacao that belongs to another patient', async () => {
     await setup({ pacienteId: '10', id: '1' }, { ...mockReavaliacao, pacienteId: 99 });
 

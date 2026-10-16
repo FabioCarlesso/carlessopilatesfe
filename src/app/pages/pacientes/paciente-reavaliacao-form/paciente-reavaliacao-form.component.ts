@@ -16,6 +16,18 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
+/** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
+type CampoTexto =
+  | 'comparativoAvaliacaoAnterior'
+  | 'evolucaoDor'
+  | 'evolucaoForca'
+  | 'evolucaoMobilidade'
+  | 'evolucaoFuncional'
+  | 'objetivosAlcancados'
+  | 'pontosAtencao'
+  | 'ajustesRecomendados'
+  | 'observacoesGerais';
+
 @Component({
   selector: 'app-paciente-reavaliacao-form',
   imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
@@ -157,18 +169,21 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
 
     const valor = this.form.value;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
+    // O `PUT` da API ignora `null` ("só os campos enviados são alterados"): apagar um texto já
+    // salvo exige mandar `""`, senão a API devolve o valor antigo junto com o sucesso.
+    const texto = (campo: CampoTexto): string | null => opt(valor[campo]) ?? (this.reavaliacao?.[campo] ? '' : null);
 
     const baseDto = {
       dataReavaliacao: valor.dataReavaliacao,
-      comparativoAvaliacaoAnterior: opt(valor.comparativoAvaliacaoAnterior),
-      evolucaoDor: opt(valor.evolucaoDor),
-      evolucaoForca: opt(valor.evolucaoForca),
-      evolucaoMobilidade: opt(valor.evolucaoMobilidade),
-      evolucaoFuncional: opt(valor.evolucaoFuncional),
-      objetivosAlcancados: opt(valor.objetivosAlcancados),
-      pontosAtencao: opt(valor.pontosAtencao),
-      ajustesRecomendados: opt(valor.ajustesRecomendados),
-      observacoesGerais: opt(valor.observacoesGerais)
+      comparativoAvaliacaoAnterior: texto('comparativoAvaliacaoAnterior'),
+      evolucaoDor: texto('evolucaoDor'),
+      evolucaoForca: texto('evolucaoForca'),
+      evolucaoMobilidade: texto('evolucaoMobilidade'),
+      evolucaoFuncional: texto('evolucaoFuncional'),
+      objetivosAlcancados: texto('objetivosAlcancados'),
+      pontosAtencao: texto('pontosAtencao'),
+      ajustesRecomendados: texto('ajustesRecomendados'),
+      observacoesGerais: texto('observacoesGerais')
     };
 
     const updateDto: ReavaliacaoUpdateDTO = { ...baseDto };
