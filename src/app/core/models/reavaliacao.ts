@@ -8,7 +8,7 @@ export interface ReavaliacaoRequestDTO {
   evolucaoFuncional?: string | null;
   objetivosAlcancados?: string | null;
   pontosAtencao?: string | null;
-  ajustesPlanoTratamento?: string | null;
+  ajustesRecomendados?: string | null;
   observacoesGerais?: string | null;
 }
 
@@ -21,7 +21,7 @@ export interface ReavaliacaoUpdateDTO {
   evolucaoFuncional?: string | null;
   objetivosAlcancados?: string | null;
   pontosAtencao?: string | null;
-  ajustesPlanoTratamento?: string | null;
+  ajustesRecomendados?: string | null;
   observacoesGerais?: string | null;
   /** Versão recebida no GET (locking otimista da API); divergente da atual responde `409 concurrent-modification`. */
   version?: number | null;
@@ -39,7 +39,7 @@ export interface ReavaliacaoResponseDTO {
   evolucaoFuncional: string | null;
   objetivosAlcancados: string | null;
   pontosAtencao: string | null;
-  ajustesPlanoTratamento: string | null;
+  ajustesRecomendados: string | null;
   observacoesGerais: string | null;
   dataCriacao: string;
   dataAtualizacao: string | null;

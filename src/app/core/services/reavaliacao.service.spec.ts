@@ -21,7 +21,7 @@ const mockReavaliacao: ReavaliacaoResponseDTO = {
   evolucaoFuncional: null,
   objetivosAlcancados: 'Redução de dor.',
   pontosAtencao: null,
-  ajustesPlanoTratamento: null,
+  ajustesRecomendados: null,
   observacoesGerais: null,
   dataCriacao: '2026-05-10T09:00:00',
   dataAtualizacao: null

@@ -41,66 +41,51 @@
 
 @if (planos.length > 0) {
   <div class="planos-list">
-    @for (plano of planos; track plano) {
-      <div class="plano-card" [class.plano-ativo]="plano.status === 'ATIVO'">
+    @for (plano of planos; track plano.id) {
+      <div class="plano-card">
         <div class="plano-header">
           <div class="plano-info">
-            <span class="badge badge-status" [class.badge-ativo]="plano.status === 'ATIVO'"
-              [class.badge-encerrado]="plano.status === 'ENCERRADO'"
-              [class.badge-suspenso]="plano.status === 'SUSPENSO'">
-              {{ statusLabel[plano.status] }}
-            </span>
             <span class="plano-data">Início: {{ plano.dataInicio | date:'dd/MM/yyyy' }}</span>
-            @if (plano.dataPrevisaoTermino) {
+            @if (plano.dataFimPrevista) {
               <span class="plano-data">
-                Previsão de término: {{ plano.dataPrevisaoTermino | date:'dd/MM/yyyy' }}
+                Previsão de término: {{ plano.dataFimPrevista | date:'dd/MM/yyyy' }}
               </span>
             }
-            <span class="plano-frequencia">{{ plano.frequenciaSemanal }}x por semana</span>
+            @if (plano.numeroSessoesPrevistas) {
+              <span class="plano-data">{{ plano.numeroSessoesPrevistas }} sessões previstas</span>
+            }
+            @if (plano.frequenciaSessoes) {
+              <span class="plano-data">{{ plano.frequenciaSessoes }}</span>
+            }
           </div>
           <div class="plano-acoes">
             <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento', plano.id, 'editar']"
             class="btn btn-secondary btn-sm">Editar</a>
-            @if (plano.status === 'ATIVO') {
-              <button class="btn btn-warning btn-sm"
-              (click)="confirmarAcao(plano.id, 'suspender')">Suspender</button>
-            }
-            @if (plano.status === 'ATIVO' || plano.status === 'SUSPENSO') {
-              <button class="btn btn-danger btn-sm"
-              (click)="confirmarAcao(plano.id, 'encerrar')">Encerrar</button>
-            }
+            <button class="btn btn-danger btn-sm" (click)="confirmarInativar(plano.id)">Inativar</button>
           </div>
         </div>
         <div class="plano-body">
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="label">Objetivos terapêuticos</span>
-              <span>{{ plano.objetivosTerapeuticos }}</span>
+              <span class="label">Objetivos do tratamento</span>
+              <span>{{ plano.objetivosTratamento }}</span>
             </div>
-            <div class="detail-item">
-              <span class="label">Condutas propostas</span>
-              <span>{{ plano.condutasPropostas }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Exercícios indicados</span>
-              <span>{{ plano.exerciciosIndicados }}</span>
-            </div>
-            @if (plano.exerciciosContraindicados) {
+            @if (plano.intervencoesPlanejadas) {
               <div class="detail-item">
-                <span class="label">Exercícios contraindicados</span>
-                <span>{{ plano.exerciciosContraindicados }}</span>
+                <span class="label">Intervenções planejadas</span>
+                <span>{{ plano.intervencoesPlanejadas }}</span>
               </div>
             }
-            @if (plano.equipamentosPrevistos) {
+            @if (plano.responsavelTratamento) {
               <div class="detail-item">
-                <span class="label">Equipamentos previstos</span>
-                <span>{{ plano.equipamentosPrevistos }}</span>
+                <span class="label">Responsável pelo tratamento</span>
+                <span>{{ plano.responsavelTratamento }}</span>
               </div>
             }
-            @if (plano.observacoesClinicas) {
+            @if (plano.observacoes) {
               <div class="detail-item">
-                <span class="label">Observações clínicas</span>
-                <span>{{ plano.observacoesClinicas }}</span>
+                <span class="label">Observações</span>
+                <span>{{ plano.observacoes }}</span>
               </div>
             }
           </div>
@@ -110,12 +95,12 @@
   </div>
 }
 
-@if (confirmarAcaoId !== null) {
+@if (confirmarInativarId !== null) {
   <app-confirmar-dialog
-    titulo="Confirmar alteração de status"
-    [mensagem]="'Confirma ' + acaoLabel() + ' este plano de tratamento?'"
+    titulo="Confirmar inativação"
+    mensagem="Confirma a inativação deste plano de tratamento?"
     variante="perigo"
-    [processando]="acaoEmAndamentoId !== null"
-    (confirmar)="executarAcao()"
-    (cancelar)="cancelarAcao()" />
+    [processando]="acaoEmAndamento"
+    (confirmar)="inativar()"
+    (cancelar)="cancelarInativar()" />
 }

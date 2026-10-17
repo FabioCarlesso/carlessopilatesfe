@@ -37,11 +37,8 @@ export class PlanoTratamentoService {
     return this.http.put<PlanoTratamentoResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
-  encerrar(id: number): Observable<PlanoTratamentoResponseDTO> {
-    return this.http.patch<PlanoTratamentoResponseDTO>(`${this.apiUrl}/${id}/encerrar`, {});
-  }
-
-  suspender(id: number): Observable<PlanoTratamentoResponseDTO> {
-    return this.http.patch<PlanoTratamentoResponseDTO>(`${this.apiUrl}/${id}/suspender`, {});
+  /** `DELETE` inativa o plano sem apagar o histórico; a listagem por paciente só devolve os ativos. */
+  inativar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

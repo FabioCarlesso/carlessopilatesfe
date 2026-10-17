@@ -21,30 +21,30 @@ const mockPaciente: PacienteResponseDTO = {
   ativo: true
 };
 
-const mockPlanoAtivo: PlanoTratamentoResponseDTO = {
+const mockPlano: PlanoTratamentoResponseDTO = {
   version: 0,
   id: 1,
   pacienteId: 10,
   nomePaciente: 'Ana Silva',
   dataInicio: '2026-05-01',
-  dataPrevisaoTermino: null,
-  objetivosTerapeuticos: 'Redução de dor lombar',
-  frequenciaSemanal: 2,
-  condutasPropostas: 'Pilates solo',
-  exerciciosIndicados: 'Flexão de quadril',
-  exerciciosContraindicados: null,
-  equipamentosPrevistos: null,
-  observacoesClinicas: null,
-  status: 'ATIVO',
+  dataFimPrevista: null,
+  objetivosTratamento: 'Redução de dor lombar',
+  intervencoesPlanejadas: 'Pilates solo',
+  numeroSessoesPrevistas: 24,
+  frequenciaSessoes: '2x por semana',
+  responsavelTratamento: null,
+  observacoes: null,
   dataCriacao: '2026-05-01T10:00:00',
   dataAtualizacao: null
 };
 
-const mockPlanoEncerrado: PlanoTratamentoResponseDTO = {
-  ...mockPlanoAtivo,
+const mockPlanoAnterior: PlanoTratamentoResponseDTO = {
+  ...mockPlano,
   id: 2,
-  status: 'ENCERRADO',
-  dataPrevisaoTermino: '2026-04-30'
+  dataInicio: '2026-01-10',
+  dataFimPrevista: '2026-04-30',
+  numeroSessoesPrevistas: null,
+  frequenciaSessoes: null
 };
 
 describe('PacientePlanoTratamentoListComponent', () => {
@@ -54,14 +54,13 @@ describe('PacientePlanoTratamentoListComponent', () => {
   let planoTratamentoServiceSpy: jasmine.SpyObj<PlanoTratamentoService>;
 
   async function setup(
-    planos: PlanoTratamentoResponseDTO[] = [mockPlanoAtivo],
+    planos: PlanoTratamentoResponseDTO[] = [mockPlano],
     pacienteId = '10'
   ) {
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     planoTratamentoServiceSpy = jasmine.createSpyObj('PlanoTratamentoService', [
       'listarPorPaciente',
-      'encerrar',
-      'suspender'
+      'inativar'
     ]);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
@@ -84,13 +83,13 @@ describe('PacientePlanoTratamentoListComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('should create and load patient and plans', async () => {
-    await setup([mockPlanoAtivo]);
+    await setup([mockPlano]);
 
     expect(component).toBeTruthy();
     expect(pacienteServiceSpy.buscar).toHaveBeenCalledWith(10);
     expect(planoTratamentoServiceSpy.listarPorPaciente).toHaveBeenCalledWith(10);
     expect(component.paciente).toEqual(mockPaciente);
-    expect(component.planos).toEqual([mockPlanoAtivo]);
+    expect(component.planos).toEqual([mockPlano]);
     expect(component.loading).toBeFalse();
     expect(component.erro).toBeNull();
   });
@@ -102,12 +101,18 @@ describe('PacientePlanoTratamentoListComponent', () => {
     expect(component.erro).toBeNull();
   });
 
-  it('should display multiple plans including inactive ones', async () => {
-    await setup([mockPlanoAtivo, mockPlanoEncerrado]);
+  it('should render the API fields of each plan', async () => {
+    await setup([mockPlano, mockPlanoAnterior]);
 
-    expect(component.planos.length).toBe(2);
-    expect(component.planos[0].status).toBe('ATIVO');
-    expect(component.planos[1].status).toBe('ENCERRADO');
+    const cards: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.plano-card'));
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Redução de dor lombar');
+    expect(cards[0].textContent).toContain('Pilates solo');
+    expect(cards[0].textContent).toContain('24 sessões previstas');
+    expect(cards[0].textContent).toContain('2x por semana');
+    expect(cards[0].textContent).not.toContain('Previsão de término');
+    expect(cards[1].textContent).toContain('Previsão de término: 30/04/2026');
+    expect(cards[1].textContent).not.toContain('sessões previstas');
   });
 
   it('should set erro when patient loading fails', async () => {
@@ -135,7 +140,7 @@ describe('PacientePlanoTratamentoListComponent', () => {
   // antes da listagem, 404 aqui significa "sem planos" e deve cair no estado vazio, não na
   // faixa de erro.
   it('should show the empty state when the list responds 404 (inactive patient)', async () => {
-    await setup([mockPlanoAtivo]);
+    await setup([mockPlano]);
     planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(
       throwError(() => new HttpErrorResponse({ status: 404, error: { erro: 'Paciente não encontrado: 1' } }))
     );
@@ -172,120 +177,82 @@ describe('PacientePlanoTratamentoListComponent', () => {
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
   });
 
-  describe('confirmarAcao and executarAcao', () => {
-    beforeEach(async () => setup([mockPlanoAtivo]));
+  describe('inativar', () => {
+    beforeEach(async () => setup([mockPlano]));
 
-    it('should set confirmarAcaoId and acaoPendente when confirmarAcao is called', () => {
-      component.confirmarAcao(1, 'encerrar');
+    it('should open and cancel the confirmation', () => {
+      component.confirmarInativar(1);
+      expect(component.confirmarInativarId).toBe(1);
 
-      expect(component.confirmarAcaoId).toBe(1);
-      expect(component.acaoPendente).toBe('encerrar');
+      component.cancelarInativar();
+      expect(component.confirmarInativarId).toBeNull();
     });
 
-    it('should clear state when cancelarAcao is called', () => {
-      component.confirmarAcao(1, 'encerrar');
-      component.cancelarAcao();
+    it('should DELETE the plan and reload the list on success', fakeAsync(() => {
+      planoTratamentoServiceSpy.inativar.and.returnValue(of(undefined));
+      planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(of([]));
 
-      expect(component.confirmarAcaoId).toBeNull();
-      expect(component.acaoPendente).toBeNull();
-    });
+      component.confirmarInativar(1);
+      component.inativar();
 
-    it('should call encerrar and reload plans on success', fakeAsync(() => {
-      const encerrado = { ...mockPlanoAtivo, status: 'ENCERRADO' as const };
-      planoTratamentoServiceSpy.encerrar.and.returnValue(of(encerrado));
-      planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(of([encerrado]));
-
-      component.confirmarAcao(1, 'encerrar');
-      component.executarAcao();
-
-      expect(planoTratamentoServiceSpy.encerrar).toHaveBeenCalledWith(1);
-      expect(component.sucesso).toBe('Plano de tratamento encerrado com sucesso.');
+      expect(planoTratamentoServiceSpy.inativar).toHaveBeenCalledWith(1);
+      expect(planoTratamentoServiceSpy.listarPorPaciente).toHaveBeenCalledTimes(2);
+      expect(component.planos).toEqual([]);
+      expect(component.confirmarInativarId).toBeNull();
+      expect(component.sucesso).toBe('Plano de tratamento inativado com sucesso.');
       tick(4000);
       expect(component.sucesso).toBeNull();
     }));
 
-    it('should call suspender and reload plans on success', fakeAsync(() => {
-      const suspenso = { ...mockPlanoAtivo, status: 'SUSPENSO' as const };
-      planoTratamentoServiceSpy.suspender.and.returnValue(of(suspenso));
-      planoTratamentoServiceSpy.listarPorPaciente.and.returnValue(of([suspenso]));
+    it('should set erro when inativar fails', () => {
+      planoTratamentoServiceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));
 
-      component.confirmarAcao(1, 'suspender');
-      component.executarAcao();
+      component.confirmarInativar(1);
+      component.inativar();
 
-      expect(planoTratamentoServiceSpy.suspender).toHaveBeenCalledWith(1);
-      expect(component.sucesso).toBe('Plano de tratamento suspenso com sucesso.');
-      tick(4000);
-    }));
-
-    it('should set erro when encerrar fails', () => {
-      planoTratamentoServiceSpy.encerrar.and.returnValue(throwError(() => new Error('fail')));
-
-      component.confirmarAcao(1, 'encerrar');
-      component.executarAcao();
-
-      expect(component.erro).toBe('Erro ao encerrar plano de tratamento.');
+      expect(component.erro).toBe('Erro ao inativar plano de tratamento.');
+      expect(component.acaoEmAndamento).toBeFalse();
+      expect(component.confirmarInativarId).toBeNull();
     });
 
-    it('should set erro when suspender fails', () => {
-      planoTratamentoServiceSpy.suspender.and.returnValue(throwError(() => new Error('fail')));
+    it('should not call service without a pending confirmation', () => {
+      component.inativar();
 
-      component.confirmarAcao(1, 'suspender');
-      component.executarAcao();
-
-      expect(component.erro).toBe('Erro ao suspender plano de tratamento.');
+      expect(planoTratamentoServiceSpy.inativar).not.toHaveBeenCalled();
     });
 
-    it('should not call service when executarAcao is called with no pending action', () => {
-      component.executarAcao();
+    it('should block duplicate requests while one is pending', () => {
+      const pending = new Subject<void>();
+      planoTratamentoServiceSpy.inativar.and.returnValue(pending.asObservable());
 
-      expect(planoTratamentoServiceSpy.encerrar).not.toHaveBeenCalled();
-      expect(planoTratamentoServiceSpy.suspender).not.toHaveBeenCalled();
+      component.confirmarInativar(1);
+      component.inativar();
+      component.inativar();
+      component.cancelarInativar();
+
+      expect(planoTratamentoServiceSpy.inativar).toHaveBeenCalledTimes(1);
+      expect(component.acaoEmAndamento).toBeTrue();
+      expect(component.confirmarInativarId).toBe(1);
+
+      pending.next();
+      pending.complete();
+
+      expect(component.acaoEmAndamento).toBeFalse();
     });
-  });
-
-  it('acaoLabel should return correct label for encerrar', async () => {
-    await setup([mockPlanoAtivo]);
-    component.acaoPendente = 'encerrar';
-    expect(component.acaoLabel()).toBe('encerrar');
-  });
-
-  it('acaoLabel should return correct label for suspender', async () => {
-    await setup([mockPlanoAtivo]);
-    component.acaoPendente = 'suspender';
-    expect(component.acaoLabel()).toBe('suspender');
-  });
-
-  it('should block duplicate actions while the request is pending', async () => {
-    await setup([mockPlanoAtivo]);
-    const pending = new Subject<PlanoTratamentoResponseDTO>();
-    planoTratamentoServiceSpy.encerrar.and.returnValue(pending.asObservable());
-
-    component.confirmarAcao(1, 'encerrar');
-    component.executarAcao();
-    component.confirmarAcao(1, 'encerrar');
-    component.executarAcao();
-
-    expect(planoTratamentoServiceSpy.encerrar).toHaveBeenCalledTimes(1);
-    expect(component.acaoEmAndamentoId).toBe(1);
-
-    pending.next(mockPlanoEncerrado);
-    pending.complete();
-
-    expect(component.acaoEmAndamentoId).toBeNull();
   });
 
   // O card usava `--surface`, `--c-primary` e `--radius-lg`, que nunca foram
-  // definidos em `_tokens.scss`: o fundo não era pintado, a borda de destaque do
-  // plano ativo caía para `currentColor` (faixa creme de 4px no tema escuro) e o
+  // definidos em `_tokens.scss`: o fundo não era pintado, a borda de destaque
+  // caía para `currentColor` (faixa creme de 4px no tema escuro) e o
   // raio para `0` (issue #213). O guard trava os nomes que existem de fato.
   it('should paint the card with real tokens in both themes', async () => {
-    await setup([mockPlanoAtivo]);
+    await setup([mockPlano]);
     document.body.appendChild(fixture.nativeElement);
     const temaAnterior = document.documentElement.getAttribute('data-theme');
 
     try {
       const card = (fixture.nativeElement as HTMLElement)
-        .querySelector('.plano-card.plano-ativo') as HTMLElement;
+        .querySelector('.plano-card') as HTMLElement;
 
       expect(getComputedStyle(card).borderRadius).toBe('8px');
 
