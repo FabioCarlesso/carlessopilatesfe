@@ -527,11 +527,29 @@ select.form-control-sm {
     vertical-align: middle;
   }
 
-  tr:last-child td {
+  // Cabeçalho de linha (`<th scope="row">`), que identifica a linha para o
+  // leitor de tela: visualmente é uma célula comum, e não herda a caixa alta e
+  // o fundo do cabeçalho de coluna acima.
+  tbody th[scope="row"] {
+    height: var(--row-h);
+    padding: 0 20px;
+    background-color: transparent;
+    font-size: inherit;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-primary);
+    white-space: normal;
+    vertical-align: middle;
+  }
+
+  tr:last-child td,
+  tr:last-child th[scope="row"] {
     border-bottom: none;
   }
 
-  tbody tr:hover td {
+  tbody tr:hover td,
+  tbody tr:hover th[scope="row"] {
     background: var(--bg-sunken);
   }
 
