@@ -26,6 +26,14 @@ describe('RelatorioListComponent', () => {
     expect(link?.textContent).toContain('Pagamento de Profissional');
   });
 
+  it('should render indicators link', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/relatorios/indicadores"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Indicadores');
+  });
+
   it('should render NFSE report link', () => {
     const el = fixture.nativeElement as HTMLElement;
     const link = el.querySelector('a[href="/relatorios/nfse"]');

@@ -44,6 +44,7 @@ Mapa de todas as rotas da aplicação. O comportamento de cada tela está em
 | `/relatorios`           | Seção de relatórios (`ADMIN`)              |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (`ADMIN`) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (`ADMIN`) |
+| `/relatorios/indicadores` | Indicadores históricos: receita, ocupação e evasão mês a mês, e ranking de aulas por profissional (`ADMIN`) |
 | `/financeiro/inadimplencia` | Gestão de inadimplência: lista global paginada de pagamentos com dias em atraso, filtros e contatos de cobrança (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |
 | `/admin/usuarios` | Listagem administrativa de usuários (`ADMIN`) |

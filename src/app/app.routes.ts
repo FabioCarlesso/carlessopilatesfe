@@ -285,6 +285,15 @@ export const routes: Routes = [
         .then(m => m.NfseRelatorioComponent)
   },
   {
+    // Indicadores históricos (issue #130). A API só expõe as séries e o
+    // ranking para `ADMIN` (carlessopilatesapi#202).
+    path: 'relatorios/indicadores',
+    canActivate: [roleGuard(['ADMIN'])],
+    loadComponent: () =>
+      import('./pages/relatorios/indicadores/indicadores.component')
+        .then(m => m.IndicadoresComponent)
+  },
+  {
     // Gestão de inadimplência (issue #127): lista global de pagamentos e
     // contatos de cobrança. A API só a expõe para `ADMIN`.
     path: 'financeiro/inadimplencia',

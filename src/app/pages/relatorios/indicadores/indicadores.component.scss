@@ -1,0 +1,250 @@
+/* Indicadores históricos (issue #130). Cabeçalho e filtros repetem o desenho
+   das telas administrativas; os gráficos seguem o de evolução da dor
+   (`paciente-evolucao-list`): SVG com `viewBox`, rótulos em unidades do
+   desenho e cor de série num custom property. */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--text-primary);
+  }
+}
+
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+/* `auto-fit` com piso de 180px empilha sozinho em 375px, sem media query. */
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+  align-items: end;
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  box-shadow: var(--shadow-1);
+}
+
+.filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+
+  label {
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 600;
+  }
+}
+
+.filtro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.alerta-acao {
+  margin-left: var(--sp-3);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+
+  .label {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: var(--fs-h3);
+    color: var(--text-primary);
+  }
+}
+
+.indicadores-gerado {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.grafico {
+  /* `figure` vem com margem lateral do UA. */
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+}
+
+.grafico-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+}
+
+.grafico-aviso {
+  font-size: var(--fs-body-sm);
+}
+
+/* `width: 100%` + `viewBox`: o desenho encolhe junto com o card e nunca empurra
+   scroll horizontal. O teto é a largura de projeto (640) — o texto dentro do
+   SVG está em unidades do `viewBox` e cresceria junto com o desenho. */
+.grafico-svg {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+}
+
+.grafico-grade line {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.grafico-eixo {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+/* Em unidades do `viewBox`: em 375px o desenho encolhe para ~0,5 e estes 14
+   rendem ~7px; os valores exatos estão na tabela de cada gráfico. */
+.grafico-rotulo-y,
+.grafico-rotulo-x {
+  fill: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+/* Cores neutras de propósito, e não `--c-success`/`--c-danger`: "inativados"
+   é evasão, mas "não realizadas" inclui as aulas futuras do mês, que não são
+   má notícia. `--text-brand` e `--c-warning-text` têm variante escura própria. */
+.grafico-serie-receita,
+.grafico-serie-realizadas,
+.grafico-serie-novos {
+  --serie-cor: var(--text-brand);
+}
+
+.grafico-serie-agendadas,
+.grafico-serie-inativados {
+  --serie-cor: var(--c-warning-text);
+}
+
+.grafico-barra {
+  fill: var(--serie-cor);
+}
+
+/* A segunda série é vazada além de ter outra cor: as duas continuam
+   distinguíveis em impressão preto e branco e para quem não separa âmbar de
+   azul. */
+.grafico-barra.grafico-serie-agendadas,
+.grafico-barra.grafico-serie-inativados {
+  fill-opacity: .35;
+  stroke: var(--serie-cor);
+  stroke-width: 1.5;
+}
+
+.grafico-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.grafico-legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.grafico-legenda-marca {
+  width: 14px;
+  height: 14px;
+  background-color: var(--serie-cor);
+  border: 1.5px solid var(--serie-cor);
+  border-radius: var(--r-sm);
+}
+
+.grafico-serie-agendadas .grafico-legenda-marca,
+.grafico-serie-inativados .grafico-legenda-marca {
+  background-color: transparent;
+}
+
+.grafico-nota {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-secondary);
+}
+
+.grafico-valores {
+  margin-top: var(--sp-4);
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-brand);
+  }
+
+  .table-wrap {
+    margin-top: var(--sp-3);
+  }
+}
+
+.ranking {
+  margin-top: var(--sp-6);
+}
+
+.ranking-titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h2);
+}
+
+.ranking-periodo {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+}
+
+.ranking-valor {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Decorativa: o número ao lado é o valor. O teto de 160px impede que a barra
+   do primeiro colocado empurre a coluna para fora da tela no celular. */
+.ranking-barra {
+  display: inline-block;
+  max-width: 160px;
+  height: 8px;
+  flex: 0 1 160px;
+  background-color: var(--text-brand);
+  border-radius: var(--r-pill);
+}

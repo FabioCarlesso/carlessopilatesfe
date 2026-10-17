@@ -67,6 +67,7 @@ describe('app routes', () => {
       'relatorios',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
+      'relatorios/indicadores',
       'financeiro/inadimplencia',
       'admin',
       'admin/usuarios',
