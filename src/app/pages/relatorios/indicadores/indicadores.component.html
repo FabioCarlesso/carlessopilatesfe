@@ -1,0 +1,258 @@
+<div class="page-header">
+  <div>
+    <h1>Indicadores</h1>
+    <p class="page-subtitle">Receita, ocupação e evasão mês a mês, e aulas por profissional</p>
+  </div>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<div class="filtros">
+  <div class="filtro-campo">
+    <label for="meses">Período</label>
+    <select id="meses" class="form-control" name="meses" [ngModel]="meses" (ngModelChange)="alterarMeses($event)"
+      [disabled]="loadingIndicadores">
+      @for (opcao of mesesOpcoes; track opcao) {
+        <option [ngValue]="opcao">Últimos {{ opcao }} meses</option>
+      }
+    </select>
+  </div>
+</div>
+
+@if (erroIndicadores) {
+  <div class="alert alert-danger" role="alert">
+    {{ erroIndicadores }}
+    <button type="button" class="btn btn-outline btn-sm alerta-acao" (click)="carregarIndicadores()">
+      Tentar novamente
+    </button>
+  </div>
+}
+
+@if (loadingIndicadores) {
+  <div class="loading" role="status">Carregando indicadores...</div>
+}
+
+@if (!loadingIndicadores && indicadores && resumo) {
+  <section class="indicadores" aria-label="Indicadores mensais">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span class="label">Receita confirmada</span>
+        <strong>{{ resumo.receitaTotal }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Aulas realizadas</span>
+        <strong>{{ resumo.realizadas }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Ocupação</span>
+        <strong>{{ resumo.ocupacao }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="label">Saldo de pacientes</span>
+        <strong>{{ resumo.saldoPacientes > 0 ? '+' : '' }}{{ resumo.saldoPacientes }}</strong>
+      </div>
+    </div>
+    <p class="indicadores-gerado">
+      Últimos {{ indicadores.meses }} meses, incluindo o atual. Atualizado em
+      {{ indicadores.geradoEm | date:'dd/MM/yyyy HH:mm' }}.
+    </p>
+
+    <!-- Cada gráfico é um `figure` com o SVG como `role="img"` e a tabela dos
+    valores logo abaixo: o desenho mostra a tendência, a tabela é o que um
+    leitor de tela percorre (critério de aceite da #130). -->
+    @if (graficoReceita; as grafico) {
+      <figure class="grafico">
+        <h2 class="grafico-titulo">Receita confirmada</h2>
+        <ng-container *ngTemplateOutlet="desenho; context: { $implicit: grafico }" />
+        <details class="grafico-valores">
+          <summary>Valores mês a mês</summary>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Receita confirmada por mês">
+            <table class="table">
+              <thead>
+                <tr><th scope="col">Mês</th><th scope="col">Receita</th></tr>
+              </thead>
+              <tbody>
+                @for (linha of linhas; track linha.mes) {
+                  <tr><th scope="row">{{ linha.rotulo }}</th><td>{{ linha.receita }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </figure>
+    }
+
+    @if (graficoAulas; as grafico) {
+      <figure class="grafico">
+        <h2 class="grafico-titulo">Aulas e ocupação</h2>
+        <ng-container *ngTemplateOutlet="desenho; context: { $implicit: grafico }" />
+        <p class="grafico-nota">Ocupação é a parcela das aulas do mês que foram realizadas.</p>
+        <details class="grafico-valores">
+          <summary>Valores mês a mês</summary>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Aulas por mês">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Mês</th>
+                  <th scope="col">Realizadas</th>
+                  <th scope="col">Não realizadas</th>
+                  <th scope="col">Ocupação</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (linha of linhas; track linha.mes) {
+                  <tr>
+                    <th scope="row">{{ linha.rotulo }}</th>
+                    <td>{{ linha.realizadas }}</td>
+                    <td>{{ linha.agendadas }}</td>
+                    <td>{{ linha.ocupacao }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </figure>
+    }
+
+    @if (graficoPacientes; as grafico) {
+      <figure class="grafico">
+        <h2 class="grafico-titulo">Novos pacientes e evasão</h2>
+        <!-- A API só passou a guardar as datas de cadastro e de inativação na
+        V41 (carlessopilatesapi#202): sem o aviso, os meses anteriores
+        pareceriam meses sem nenhum movimento. -->
+        <p class="alert alert-warning grafico-aviso">
+          Só entram pacientes cadastrados ou inativados depois que o sistema passou a registrar essas datas.
+          Meses anteriores aparecem zerados.
+        </p>
+        <ng-container *ngTemplateOutlet="desenho; context: { $implicit: grafico }" />
+        <details class="grafico-valores">
+          <summary>Valores mês a mês</summary>
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Pacientes novos e inativados por mês">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Mês</th>
+                  <th scope="col">Novos</th>
+                  <th scope="col">Inativados</th>
+                  <th scope="col">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (linha of linhas; track linha.mes) {
+                  <tr>
+                    <th scope="row">{{ linha.rotulo }}</th>
+                    <td>{{ linha.novos }}</td>
+                    <td>{{ linha.inativados }}</td>
+                    <td>{{ linha.saldo > 0 ? '+' : '' }}{{ linha.saldo }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </figure>
+    }
+  </section>
+}
+
+<section class="ranking" aria-labelledby="titulo-ranking">
+  <h2 id="titulo-ranking" class="ranking-titulo">Aulas realizadas por profissional</h2>
+
+  <form class="filtros" (ngSubmit)="consultarRanking()">
+    <div class="filtro-campo">
+      <label for="rankingInicio">De</label>
+      <input id="rankingInicio" type="date" class="form-control" name="inicio" [(ngModel)]="inicio" />
+    </div>
+    <div class="filtro-campo">
+      <label for="rankingFim">Até</label>
+      <input id="rankingFim" type="date" class="form-control" name="fim" [(ngModel)]="fim" />
+    </div>
+    <div class="filtro-acoes">
+      <button type="submit" class="btn btn-secondary" [disabled]="loadingRanking">Aplicar período</button>
+    </div>
+  </form>
+
+  @if (erroRanking) {
+    <div class="alert alert-danger" role="alert">{{ erroRanking }}</div>
+  }
+
+  @if (loadingRanking) {
+    <div class="loading" role="status">Carregando ranking...</div>
+  }
+
+  @if (!loadingRanking && !erroRanking && periodoRanking) {
+    <p class="ranking-periodo">
+      De {{ periodoRanking.inicio | date:'dd/MM/yyyy' }} a {{ periodoRanking.fim | date:'dd/MM/yyyy' }}.
+    </p>
+    @if (ranking.length === 0) {
+      <div class="empty-state">Nenhuma aula realizada com profissional no período.</div>
+    } @else {
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Ranking de aulas realizadas por profissional">
+        <table class="table ranking-tabela">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Profissional</th>
+              <th scope="col">Aulas realizadas</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of ranking; track item.profissionalId) {
+              <tr>
+                <td>{{ item.posicao }}</td>
+                <th scope="row">{{ item.nome }}</th>
+                <td>
+                  <span class="ranking-valor">
+                    <span class="ranking-barra" aria-hidden="true" [style.width.%]="item.proporcao * 100"></span>
+                    {{ item.totalRealizadas }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>
+
+<ng-template #desenho let-grafico>
+  <svg class="grafico-svg" [attr.viewBox]="grafico.viewBox" preserveAspectRatio="xMidYMid meet"
+    role="img" [attr.aria-label]="grafico.ariaLabel" focusable="false">
+    <g class="grafico-grade" aria-hidden="true">
+      @for (marca of grafico.marcasY; track marca.y) {
+        <line [attr.x1]="grafico.area.esquerda" [attr.y1]="marca.y"
+          [attr.x2]="grafico.area.direita" [attr.y2]="marca.y" />
+      }
+    </g>
+    <g class="grafico-rotulos" aria-hidden="true">
+      @for (marca of grafico.marcasY; track marca.y) {
+        <text class="grafico-rotulo-y" [attr.x]="grafico.area.esquerda - 6" [attr.y]="marca.y"
+          text-anchor="end" dominant-baseline="middle">{{ marca.rotulo }}</text>
+      }
+      @for (marca of grafico.marcasX; track marca.x) {
+        <text class="grafico-rotulo-x" [attr.x]="marca.x" [attr.y]="grafico.area.base + 18"
+          text-anchor="middle">{{ marca.rotulo }}</text>
+      }
+    </g>
+    <g aria-hidden="true">
+      @for (grupo of grafico.grupos; track grupo.mes) {
+        @for (barra of grupo.barras; track barra.chave) {
+          <rect [class]="'grafico-barra grafico-serie-' + barra.chave"
+            [attr.x]="barra.x" [attr.y]="barra.y" [attr.width]="barra.largura" [attr.height]="barra.altura" />
+        }
+      }
+    </g>
+    <line class="grafico-eixo" aria-hidden="true" [attr.x1]="grafico.area.esquerda" [attr.y1]="grafico.area.base"
+      [attr.x2]="grafico.area.direita" [attr.y2]="grafico.area.base" />
+  </svg>
+  @if (grafico.series.length > 1) {
+    <div class="grafico-legenda">
+      @for (serie of grafico.series; track serie.chave) {
+        <span [class]="'grafico-legenda-item grafico-serie-' + serie.chave">
+          <span class="grafico-legenda-marca" aria-hidden="true"></span>{{ serie.rotulo }}
+        </span>
+      }
+    </div>
+  }
+</ng-template>
