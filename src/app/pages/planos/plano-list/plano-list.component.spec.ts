@@ -142,6 +142,23 @@ describe('PlanoListComponent', () => {
     expect(component.erro).toBe('Erro ao inativar plano.');
   });
 
+  it('should show the class time of each plan, or say it has none (issue #266)', () => {
+    serviceSpy.listar.and.returnValue(of([
+      { ...mockPlano, id: 1, horario: '08:00:00' },
+      { ...mockPlano, id: 2, horario: null }
+    ]));
+    component.carregar();
+    fixture.detectChanges();
+
+    const cabecalhos = Array.from(fixture.nativeElement.querySelectorAll('thead th') as NodeListOf<HTMLElement>)
+      .map(th => th.textContent!.trim());
+    const indice = cabecalhos.indexOf('Horário');
+    const celulas = Array.from(fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLTableRowElement>)
+      .map(tr => tr.cells[indice].textContent!.trim());
+    expect(indice).toBeGreaterThan(-1);
+    expect(celulas).toEqual(['08:00', 'Sem horário']);
+  });
+
   it('diasFormatados should join day labels', () => {
     const result = component.diasFormatados(mockPlano);
     expect(result).toBe('Segunda, Quarta');

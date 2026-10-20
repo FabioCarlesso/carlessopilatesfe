@@ -689,8 +689,11 @@ describe('AulaListComponent', () => {
         expect(serviceSpy.realizar).not.toHaveBeenCalled();
         expect(component.aulas[0].profissionalId).toBe(5);
         expect(component.profissionalAlterado(component.aulas[0])).toBeFalse();
-        expect(component.sucesso).toBe('Profissional atribuído.');
+        expect(component.atribuicaoFeedback).toEqual({ aulaId: 1, texto: 'Profissional atribuído.', erro: false });
+        // Nada na faixa do topo: ela fica fora da tela com a lista rolada.
+        expect(component.sucesso).toBeNull();
         tick(4000);
+        expect(component.atribuicaoFeedback).toBeNull();
       }));
 
       it('should unlink when the choice goes back to none', fakeAsync(() => {
@@ -701,7 +704,7 @@ describe('AulaListComponent', () => {
         component.atribuirProfissional(atribuida);
 
         expect(serviceSpy.atribuirProfissional).toHaveBeenCalledWith(1, null);
-        expect(component.sucesso).toBe('Profissional desvinculado.');
+        expect(component.atribuicaoFeedback?.texto).toBe('Profissional desvinculado.');
         tick(4000);
       }));
 
@@ -715,10 +718,55 @@ describe('AulaListComponent', () => {
         component.profissionalSelecionadoPorAula[1] = 5;
         component.atribuirProfissional(mockAula);
 
-        expect(component.erro).toContain('capacidade por horário é 3');
+        expect(component.atribuicaoFeedback?.erro).toBeTrue();
+        expect(component.atribuicaoFeedback?.texto).toContain('capacidade por horário é 3');
+        expect(component.erro).toBeNull();
         expect(component.profissionalSelecionadoPorAula[1]).toBe(5);
         expect(component.acaoEmAndamento).toBeFalse();
       });
+
+      // A recusa precisa estar ao lado do select, e não na faixa do topo, que
+      // sai do viewport quando a lista está rolada até a aula.
+      it('should render the refusal in the row, linked to the select', () => {
+        serviceSpy.atribuirProfissional.and.returnValue(throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { detail: 'Profissional Paula Mendes já atende 3 aula(s) em 2026-05-05 às 08:00; a capacidade por horário é 3' }
+        })));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+        fixture.detectChanges();
+
+        const linha = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+        const feedback = linha.querySelector('#atribuicao-1') as HTMLElement;
+        const select = linha.querySelector('select') as HTMLSelectElement;
+        expect(feedback.getAttribute('role')).toBe('alert');
+        expect(feedback.textContent).toContain('capacidade por horário é 3');
+        expect(select.getAttribute('aria-describedby')).toBe('atribuicao-1');
+        expect(select.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+      });
+
+      it('should clear the refusal when another profissional is chosen', () => {
+        serviceSpy.atribuirProfissional.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { detail: 'lotado' } })));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+
+        component.aoSelecionarProfissional(1);
+
+        expect(component.atribuicaoFeedback).toBeNull();
+      });
+
+      it('should announce the success in the row as a status', fakeAsync(() => {
+        serviceSpy.atribuirProfissional.and.returnValue(of({ ...mockAula, profissionalId: 5, profissionalNome: 'Paula Mendes' }));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+        fixture.detectChanges();
+
+        const feedback = fixture.nativeElement.querySelector('#atribuicao-1') as HTMLElement;
+        expect(feedback.getAttribute('role')).toBe('status');
+        expect(feedback.textContent?.trim()).toBe('Profissional atribuído.');
+        tick(4000);
+      }));
 
       it('should not call the API when the choice is unchanged', () => {
         component.atribuirProfissional(mockAula);

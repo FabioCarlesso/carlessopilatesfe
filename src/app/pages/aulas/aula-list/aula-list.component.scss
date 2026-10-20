@@ -60,6 +60,15 @@ select.form-control-sm {
   margin-top: var(--sp-2);
 }
 
+// Resposta do "Atribuir" na própria linha: a faixa do topo ficava fora do
+// viewport com a lista rolada até a aula. A largura acompanha a do select, para
+// a mensagem longa do 409 quebrar em vez de alargar a coluna.
+.atribuicao-feedback {
+  display: block;
+  margin-top: 4px;
+  max-width: 240px;
+}
+
 // A faixa de erro dentro do diálogo, e não no topo da página: o motivo da recusa
 // precisa estar ao lado do campo que vai ser corrigido.
 .remarcar-erro {
@@ -149,7 +158,8 @@ select.form-control-sm {
     }
   }
 
-  .form-control-sm {
+  .form-control-sm,
+  .atribuicao-feedback {
     max-width: none;
     width: 100%;
   }

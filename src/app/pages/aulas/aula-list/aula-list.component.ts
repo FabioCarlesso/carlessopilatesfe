@@ -51,6 +51,12 @@ export class AulaListComponent implements OnInit, OnDestroy {
   remarcarHorario = '';
   remarcarDataInvalida = false;
   remarcarErro: string | null = null;
+  /**
+   * Resposta do "Atribuir", exibida na própria linha da aula (issue #266). A
+   * faixa do topo ficava fora do viewport com a lista rolada até a aula, e
+   * quem clicava não via nem o sucesso nem o `409` de capacidade.
+   */
+  atribuicaoFeedback: { aulaId: number; texto: string; erro: boolean } | null = null;
   acaoEmAndamento = false;
   loading = false;
   erro: string | null = null;
@@ -59,6 +65,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
   subtitulo: string | null = null;
   modoCard = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
+  private atribuicaoTimer: ReturnType<typeof setTimeout> | null = null;
   private cardModeQuery: MediaQueryList | null = null;
   @ViewChild('remarcarDataInput') private remarcarDataInput?: ElementRef<HTMLInputElement>;
   private readonly onCardModeChange = (evento: MediaQueryListEvent): void => {
@@ -125,6 +132,9 @@ export class AulaListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.successTimer !== null) {
       clearTimeout(this.successTimer);
+    }
+    if (this.atribuicaoTimer !== null) {
+      clearTimeout(this.atribuicaoTimer);
     }
 
     this.cardModeQuery?.removeEventListener('change', this.onCardModeChange);
@@ -206,7 +216,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
 
     const profissionalId = this.profissionalSelecionadoPorAula[aula.id] ?? null;
     this.acaoEmAndamento = true;
-    this.erro = null;
+    this.atribuicaoFeedback = null;
     this.selectInvalidoPorAula[aula.id] = false;
     this.service.atribuirProfissional(aula.id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: atualizada => {
@@ -215,7 +225,11 @@ export class AulaListComponent implements OnInit, OnDestroy {
         // ainda não gravadas nas outras linhas.
         this.aulas = this.aulas.map(item => (item.id === atualizada.id ? atualizada : item));
         this.profissionalSelecionadoPorAula[atualizada.id] = atualizada.profissionalId ?? null;
-        this.exibirSucesso(profissionalId === null ? 'Profissional desvinculado.' : 'Profissional atribuído.');
+        this.exibirAtribuicao(
+          atualizada.id,
+          profissionalId === null ? 'Profissional desvinculado.' : 'Profissional atribuído.',
+          false
+        );
         this.cdr.markForCheck();
       },
       error: err => {
@@ -223,10 +237,32 @@ export class AulaListComponent implements OnInit, OnDestroy {
         // A escolha continua no select: o 409 de capacidade diz por que aquele
         // profissional não cabe no horário, e a recepção decide ali mesmo entre
         // outro profissional e remarcar a aula.
-        this.erro = extrairMensagemErro(err, 'Erro ao atribuir profissional.');
+        this.exibirAtribuicao(aula.id, extrairMensagemErro(err, 'Erro ao atribuir profissional.'), true);
         this.cdr.markForCheck();
       }
     });
+  }
+
+  feedbackDaAtribuicao(aula: AulaResponseDTO): { texto: string; erro: boolean } | null {
+    return this.atribuicaoFeedback?.aulaId === aula.id ? this.atribuicaoFeedback : null;
+  }
+
+  /**
+   * O sucesso some sozinho, como a faixa do topo; o erro fica até a próxima
+   * escolha, porque é sobre ele que a recepção precisa agir.
+   */
+  private exibirAtribuicao(aulaId: number, texto: string, erro: boolean): void {
+    if (this.atribuicaoTimer !== null) {
+      clearTimeout(this.atribuicaoTimer);
+      this.atribuicaoTimer = null;
+    }
+    this.atribuicaoFeedback = { aulaId, texto, erro };
+    if (erro) return;
+    this.atribuicaoTimer = setTimeout(() => {
+      this.atribuicaoFeedback = null;
+      this.atribuicaoTimer = null;
+      this.cdr.markForCheck();
+    }, 4000);
   }
 
   get aulaEmConfirmacao(): AulaResponseDTO | null {
@@ -247,6 +283,11 @@ export class AulaListComponent implements OnInit, OnDestroy {
   }
 
   aoSelecionarProfissional(id: number): void {
+    // A recusa era sobre a escolha anterior; mantê-la ao lado de outra escolha
+    // afirmaria de novo algo que deixou de valer.
+    if (this.atribuicaoFeedback?.aulaId === id) {
+      this.atribuicaoFeedback = null;
+    }
     if (!this.selectInvalidoPorAula[id]) return;
     this.selectInvalidoPorAula[id] = false;
     this.erro = null;

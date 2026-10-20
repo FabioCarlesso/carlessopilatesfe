@@ -44,6 +44,7 @@
           <th>Valor</th>
           <th>Frequência</th>
           <th>Dias</th>
+          <th>Horário</th>
           <th>Início</th>
           <th>Status</th>
           <th>Ações</th>
@@ -56,6 +57,13 @@
             <td>{{ plano.valor | currency:'BRL' }}</td>
             <td>{{ frequenciaLabel[plano.frequenciaSemanal] }}</td>
             <td>{{ diasFormatados(plano) }}</td>
+            <td>
+              @if (horarioDoPlano(plano); as horario) {
+                {{ horario }}
+              } @else {
+                <span class="sem-horario">Sem horário</span>
+              }
+            </td>
             <td>{{ plano.dataInicio | date:'dd/MM/yyyy' }}</td>
             <td>
               <span class="badge" [class.badge-ativo]="plano.ativo" [class.badge-inativo]="!plano.ativo">

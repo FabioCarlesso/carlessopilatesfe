@@ -19,3 +19,5 @@
 // espaçamento mínimo recomendado entre alvos de toque vizinhos (issue #162).
 .acoes-col { display: flex; gap: var(--sp-2); white-space: nowrap; }
 .empty-state { color: var(--text-light); margin-top: 2rem; text-align: center; }
+// Plano sem horário gera aulas sem horário; fica discreto para não competir com os que têm.
+.sem-horario { color: var(--text-light); }
