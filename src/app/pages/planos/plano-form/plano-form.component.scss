@@ -1,4 +1,6 @@
 .hint { font-size: 0.85rem; color: var(--text-light); margin-left: 6px; }
+// Dica abaixo do campo, e não ao lado do rótulo como `.hint`.
+.campo-dica { margin-top: 4px; font-size: 0.85rem; color: var(--text-light); }
 
 .dias-grid {
   display: flex;

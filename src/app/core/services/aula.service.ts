@@ -53,15 +53,29 @@ export class AulaService {
   }
 
   /**
-   * Troca a data de uma aula ainda não realizada (issue #131). A data vai em
-   * `yyyy-MM-dd` e **pode estar no passado**: a API aceita de propósito, para que
-   * a recepção registre reposições já ocorridas.
+   * Vincula (ou, com `null`, desvincula) o profissional de uma aula ainda não
+   * realizada, sem marcá-la como realizada (issue #266). O campo vai sempre no
+   * corpo, mesmo nulo: a API recusa `{}` com `400` para que um corpo incompleto
+   * nunca apague o vínculo em silêncio.
    *
-   * O corpo leva só `data`. O contrato tem um `horario` reservado para a #106 da
-   * API, mas enquanto a entidade não tiver o campo qualquer valor enviado ali
-   * volta como `400` — por isso ele não é sequer serializado aqui.
+   * Com a aula num horário lotado, a API responde `409` com a ocupação no
+   * `detail` — diferente de `realizar`, que não confere capacidade.
    */
-  remarcar(aulaId: number, data: string): Observable<AulaResponseDTO> {
-    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/remarcar`, { data });
+  atribuirProfissional(aulaId: number, profissionalId: number | null): Observable<AulaResponseDTO> {
+    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/profissional`, { profissionalId });
+  }
+
+  /**
+   * Troca a data e, opcionalmente, o horário de uma aula ainda não realizada
+   * (issues #131 e #266). A data vai em `yyyy-MM-dd` e **pode estar no
+   * passado**: a API aceita de propósito, para que a recepção registre
+   * reposições já ocorridas.
+   *
+   * `horario` (`HH:mm`) só é serializado quando informado: ausente, a API
+   * mantém o horário atual da aula.
+   */
+  remarcar(aulaId: number, data: string, horario?: string | null): Observable<AulaResponseDTO> {
+    const corpo = horario ? { data, horario } : { data };
+    return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/remarcar`, corpo);
   }
 }

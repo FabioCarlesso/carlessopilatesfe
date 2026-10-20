@@ -13,7 +13,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 const mockPlano: PlanoResponseDTO = {
   id: 1, pacienteId: 10, tipo: 'MENSAL', valor: 250,
   frequenciaSemanal: 'DUAS_VEZES', dataInicio: '2026-05-01',
-  diasSemana: ['MONDAY', 'WEDNESDAY'], ativo: true
+  diasSemana: ['MONDAY', 'WEDNESDAY'], ativo: true, horario: null
 };
 
 const mockPaciente: PacienteResponseDTO = {

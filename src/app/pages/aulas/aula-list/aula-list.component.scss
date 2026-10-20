@@ -47,6 +47,19 @@ select.form-control-sm {
   color: var(--text-light);
 }
 
+// Aula sem horário (legado ou plano sem horário) fica discreta na coluna, para
+// não competir com as que têm.
+.sem-horario {
+  color: var(--text-light);
+}
+
+// Abaixo do select: o botão só aparece quando a escolha difere do profissional
+// gravado, e ao lado dele empurraria o select para fora da coluna.
+.atribuir-btn {
+  display: block;
+  margin-top: var(--sp-2);
+}
+
 // A faixa de erro dentro do diálogo, e não no topo da página: o motivo da recusa
 // precisa estar ao lado do campo que vai ser corrigido.
 .remarcar-erro {

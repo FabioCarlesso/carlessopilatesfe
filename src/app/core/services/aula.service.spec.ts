@@ -10,6 +10,7 @@ const mockAula: AulaResponseDTO = {
   pacienteNome: 'Ana Silva',
   pagamentoId: 1,
   data: '2026-05-05',
+  horario: null,
   realizada: false
 };
 
@@ -118,13 +119,37 @@ describe('AulaService', () => {
       req.flush(remarcada);
     });
 
-    // O `horario` do contrato está reservado para a #106 da API e por ora volta
-    // `400` com qualquer valor — nem mesmo `null` deve sair daqui.
-    it('should not send horario in the body', () => {
+    // Sem horário, a API mantém o atual: nem mesmo `null` deve sair daqui.
+    it('should not send horario when it is not informed', () => {
       service.remarcar(1, '2026-05-12').subscribe();
       const req = httpMock.expectOne('/api/aulas/1/remarcar');
       expect(Object.keys(req.request.body as object)).toEqual(['data']);
       req.flush(mockAula);
+    });
+
+    it('should send horario in the body when informed', () => {
+      service.remarcar(1, '2026-05-12', '18:00').subscribe();
+      const req = httpMock.expectOne('/api/aulas/1/remarcar');
+      expect(req.request.body).toEqual({ data: '2026-05-12', horario: '18:00' });
+      req.flush({ ...mockAula, data: '2026-05-12', horario: '18:00:00' });
+    });
+  });
+
+  describe('atribuirProfissional', () => {
+    it('should PATCH /api/aulas/:id/profissional with profissionalId in the body', () => {
+      service.atribuirProfissional(1, 7).subscribe();
+      const req = httpMock.expectOne('/api/aulas/1/profissional');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ profissionalId: 7 });
+      req.flush({ ...mockAula, profissionalId: 7 });
+    });
+
+    // A API recusa `{}` com 400: desvincular exige o campo presente e nulo.
+    it('should send profissionalId null explicitly to unlink', () => {
+      service.atribuirProfissional(1, null).subscribe();
+      const req = httpMock.expectOne('/api/aulas/1/profissional');
+      expect(req.request.body).toEqual({ profissionalId: null });
+      req.flush({ ...mockAula, profissionalId: null });
     });
   });
 });
