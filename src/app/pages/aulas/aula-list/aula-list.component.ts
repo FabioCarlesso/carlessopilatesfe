@@ -11,6 +11,7 @@ import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 /**
@@ -46,8 +47,16 @@ export class AulaListComponent implements OnInit, OnDestroy {
   confirmarAulaId: number | null = null;
   remarcarAulaId: number | null = null;
   remarcarData = '';
+  /** `HH:mm` do `<input type="time">`; vazio mantém o horário atual da aula. */
+  remarcarHorario = '';
   remarcarDataInvalida = false;
   remarcarErro: string | null = null;
+  /**
+   * Resposta do "Atribuir", exibida na própria linha da aula (issue #266). A
+   * faixa do topo ficava fora do viewport com a lista rolada até a aula, e
+   * quem clicava não via nem o sucesso nem o `409` de capacidade.
+   */
+  atribuicaoFeedback: { aulaId: number; texto: string; erro: boolean } | null = null;
   acaoEmAndamento = false;
   loading = false;
   erro: string | null = null;
@@ -56,6 +65,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
   subtitulo: string | null = null;
   modoCard = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
+  private atribuicaoTimer: ReturnType<typeof setTimeout> | null = null;
   private cardModeQuery: MediaQueryList | null = null;
   @ViewChild('remarcarDataInput') private remarcarDataInput?: ElementRef<HTMLInputElement>;
   private readonly onCardModeChange = (evento: MediaQueryListEvent): void => {
@@ -123,6 +133,9 @@ export class AulaListComponent implements OnInit, OnDestroy {
     if (this.successTimer !== null) {
       clearTimeout(this.successTimer);
     }
+    if (this.atribuicaoTimer !== null) {
+      clearTimeout(this.atribuicaoTimer);
+    }
 
     this.cardModeQuery?.removeEventListener('change', this.onCardModeChange);
   }
@@ -178,6 +191,80 @@ export class AulaListComponent implements OnInit, OnDestroy {
     return aula.id;
   }
 
+  horarioDaAula(aula: AulaResponseDTO): string | null {
+    return normalizarHora(aula.horario);
+  }
+
+  /**
+   * O select da linha guarda a escolha local para o "Marcar como Realizada";
+   * quando ela diverge do profissional gravado na aula, a linha oferece
+   * gravá-la sem realizar (issue #266).
+   */
+  profissionalAlterado(aula: AulaResponseDTO): boolean {
+    return (this.profissionalSelecionadoPorAula[aula.id] ?? null) !== (aula.profissionalId ?? null);
+  }
+
+  /**
+   * Grava o profissional escolhido numa aula pendente, ou o desvincula quando a
+   * escolha é "Selecione". Fica separado do "Marcar como Realizada" porque as
+   * duas rotas têm regras diferentes: a atribuição confere a capacidade do
+   * horário e responde `409` com a ocupação; o `realizar` registra uma aula que
+   * já aconteceu e não confere.
+   */
+  atribuirProfissional(aula: AulaResponseDTO): void {
+    if (this.acaoEmAndamento || !this.profissionalAlterado(aula)) return;
+
+    const profissionalId = this.profissionalSelecionadoPorAula[aula.id] ?? null;
+    this.acaoEmAndamento = true;
+    this.atribuicaoFeedback = null;
+    this.selectInvalidoPorAula[aula.id] = false;
+    this.service.atribuirProfissional(aula.id, profissionalId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: atualizada => {
+        this.acaoEmAndamento = false;
+        // Troca só a linha: recarregar a lista inteira descartaria escolhas
+        // ainda não gravadas nas outras linhas.
+        this.aulas = this.aulas.map(item => (item.id === atualizada.id ? atualizada : item));
+        this.profissionalSelecionadoPorAula[atualizada.id] = atualizada.profissionalId ?? null;
+        this.exibirAtribuicao(
+          atualizada.id,
+          profissionalId === null ? 'Profissional desvinculado.' : 'Profissional atribuído.',
+          false
+        );
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        this.acaoEmAndamento = false;
+        // A escolha continua no select: o 409 de capacidade diz por que aquele
+        // profissional não cabe no horário, e a recepção decide ali mesmo entre
+        // outro profissional e remarcar a aula.
+        this.exibirAtribuicao(aula.id, extrairMensagemErro(err, 'Erro ao atribuir profissional.'), true);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  feedbackDaAtribuicao(aula: AulaResponseDTO): { texto: string; erro: boolean } | null {
+    return this.atribuicaoFeedback?.aulaId === aula.id ? this.atribuicaoFeedback : null;
+  }
+
+  /**
+   * O sucesso some sozinho, como a faixa do topo; o erro fica até a próxima
+   * escolha, porque é sobre ele que a recepção precisa agir.
+   */
+  private exibirAtribuicao(aulaId: number, texto: string, erro: boolean): void {
+    if (this.atribuicaoTimer !== null) {
+      clearTimeout(this.atribuicaoTimer);
+      this.atribuicaoTimer = null;
+    }
+    this.atribuicaoFeedback = { aulaId, texto, erro };
+    if (erro) return;
+    this.atribuicaoTimer = setTimeout(() => {
+      this.atribuicaoFeedback = null;
+      this.atribuicaoTimer = null;
+      this.cdr.markForCheck();
+    }, 4000);
+  }
+
   get aulaEmConfirmacao(): AulaResponseDTO | null {
     if (this.confirmarAulaId === null) return null;
     return this.aulas.find(aula => aula.id === this.confirmarAulaId) ?? null;
@@ -196,6 +283,11 @@ export class AulaListComponent implements OnInit, OnDestroy {
   }
 
   aoSelecionarProfissional(id: number): void {
+    // A recusa era sobre a escolha anterior; mantê-la ao lado de outra escolha
+    // afirmaria de novo algo que deixou de valer.
+    if (this.atribuicaoFeedback?.aulaId === id) {
+      this.atribuicaoFeedback = null;
+    }
     if (!this.selectInvalidoPorAula[id]) return;
     this.selectInvalidoPorAula[id] = false;
     this.erro = null;
@@ -257,6 +349,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
     // O campo abre na data atual da aula: remarcar costuma ser mover um ou dois
     // dias, e partir do valor vigente poupa a digitação inteira.
     this.remarcarData = aula.data;
+    this.remarcarHorario = normalizarHora(aula.horario) ?? '';
     this.remarcarDataInvalida = false;
     this.remarcarErro = null;
     this.erro = null;
@@ -290,10 +383,13 @@ export class AulaListComponent implements OnInit, OnDestroy {
     }
 
     const aula = this.aulaEmRemarcacao;
-    // Confirmar sem trocar a data é o caminho de um Enter distraído: o diálogo
-    // abre com a data atual e o foco já no botão. A API trata como no-op e
-    // responde 200, mas o PATCH e o recarregamento da lista seriam desperdício.
-    if (aula !== null && this.remarcarData === aula.data) {
+    // Horário em branco mantém o atual: a API só troca o que recebe.
+    const horario = this.remarcarHorario || null;
+    // Confirmar sem trocar nada é o caminho de um Enter distraído: o diálogo
+    // abre com a data e o horário atuais e o foco já no botão. A API trata como
+    // no-op e responde 200, mas o PATCH e o recarregamento seriam desperdício.
+    if (aula !== null && this.remarcarData === aula.data
+        && (horario === null || horario === normalizarHora(aula.horario))) {
       this.remarcarAulaId = null;
       return;
     }
@@ -302,7 +398,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
     this.acaoEmAndamento = true;
     this.remarcarErro = null;
     this.erro = null;
-    this.service.remarcar(id, this.remarcarData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.remarcar(id, this.remarcarData, horario).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.acaoEmAndamento = false;
         this.remarcarAulaId = null;
@@ -318,7 +414,8 @@ export class AulaListComponent implements OnInit, OnDestroy {
       error: err => {
         this.acaoEmAndamento = false;
         // O diálogo fica aberto com o motivo dentro: o 409 diz por que a data não
-        // serve (aula já realizada, paciente já tem aula no dia) e existe para que
+        // serve (aula já realizada, paciente já tem aula no dia, profissional sem
+        // vaga no novo horário) e existe para que
         // se escolha outra ali mesmo. Fechar e jogar o texto na faixa do topo
         // desfaria isso — reabrir o diálogo limparia a mensagem e devolveria o
         // campo à data original, apagando o aviso na hora exata de agir sobre ele.

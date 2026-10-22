@@ -1,4 +1,5 @@
 import { AulaResponseDTO } from '../../core/models/plano';
+import { normalizarHora } from './hora';
 import {
   SessaoResponseDTO,
   SessaoStatus,
@@ -92,7 +93,7 @@ export interface CalendarioEvento {
   id: number;
   /** `yyyy-MM-dd`. */
   dia: string;
-  /** `HH:mm`, ou `null` na aula — a API de aulas só guarda a data. */
+  /** `HH:mm`, ou `null` quando a sessão ou a aula não tem horário. */
   horario: string | null;
   /**
    * Duração em minutos da sessão; `null` na aula, que não tem duração na API.
@@ -303,9 +304,9 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
     origem: 'AULA' as const,
     id: aula.id,
     dia: aula.data.slice(0, 10),
-    // A API de aulas guarda apenas a data: o horário da aula é o do plano,
-    // que não vem no DTO. Fica nulo em vez de virar "00:00", que mentiria.
-    horario: null,
+    // Aula anterior à #106 da API, ou de plano sem horário, chega sem horário:
+    // fica nula em vez de virar "00:00", que mentiria.
+    horario: normalizarHora(aula.horario),
     duracao: null,
     titulo: comPaciente ? aula.pacienteNome : CALENDARIO_ORIGEM_LABEL.AULA,
     rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
@@ -324,8 +325,9 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
 /**
  * Traduz sessões e aulas para a moeda única da grade. As duas listas chegam de
  * endpoints diferentes (`/sessoes/paciente/{id}` e `/aulas/paciente/{id}`) e
- * com contratos diferentes — a sessão tem data e hora, tipo e status; a aula
- * tem só a data e o booleano `realizada` —, e é aqui que essa diferença acaba.
+ * com contratos diferentes — a sessão tem `dataHora`, tipo e status; a aula
+ * tem `data`, `horario` à parte e o booleano `realizada` —, e é aqui que essa
+ * diferença acaba.
  *
  * O destino do clique sai do próprio DTO: a sessão abre a própria edição e a
  * aula, que não tem tela individual, cai na listagem de aulas do paciente,

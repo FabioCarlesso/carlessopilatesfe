@@ -1,7 +1,7 @@
 /**
  * Leitura das horas do contrato da API (`LocalTime`), compartilhada por quem
- * precisa comparar ou exibir horário: bloqueios de agenda (issue #135) e lista
- * de espera (issue #137).
+ * precisa comparar ou exibir horário: bloqueios de agenda (issue #135), lista
+ * de espera (issue #137) e o horário das aulas e do plano (issue #266).
  *
  * Fica aqui, e não dentro do utilitário de um dos dois, porque o problema é do
  * contrato e não do recurso: os dois endpoints devolvem `HH:mm:ss` e os dois

@@ -54,6 +54,7 @@
       <thead>
         <tr>
           <th>Data</th>
+          <th>Horário</th>
           <th>Status</th>
           <th>Profissional</th>
           <th>Ações</th>
@@ -63,6 +64,13 @@
         @for (aula of aulas; track trackByAula($index, aula)) {
           <tr>
             <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
+            <td data-label="Horário">
+              @if (horarioDaAula(aula); as horario) {
+                {{ horario }}
+              } @else {
+                <span class="sem-horario">Sem horário</span>
+              }
+            </td>
             <td data-label="Status">
               <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
                 {{ aula.realizada ? 'Realizada' : 'Pendente' }}
@@ -74,10 +82,11 @@
               }
               @if (!aula.realizada) {
                 <select class="form-control form-control-sm"
-                  [class.is-invalid]="selectInvalidoPorAula[aula.id]"
+                  [class.is-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro"
                   [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
-                  [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || null"
-                  [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id : null"
+                  [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro || null"
+                  [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id
+                    : (feedbackDaAtribuicao(aula) ? 'atribuicao-' + aula.id : null)"
                   [(ngModel)]="profissionalSelecionadoPorAula[aula.id]"
                   (ngModelChange)="aoSelecionarProfissional(aula.id)">
                   <option [ngValue]="null">Selecione</option>
@@ -87,6 +96,19 @@
                     </option>
                   }
                 </select>
+                @if (profissionalAlterado(aula)) {
+                  <button type="button" class="btn btn-outline btn-sm atribuir-btn"
+                    (click)="atribuirProfissional(aula)" [disabled]="acaoEmAndamento">
+                    {{ profissionalSelecionadoPorAula[aula.id] === null ? 'Desvincular' : 'Atribuir' }}
+                  </button>
+                }
+                @if (feedbackDaAtribuicao(aula); as feedback) {
+                  <div [id]="'atribuicao-' + aula.id"
+                    [class]="feedback.erro ? 'invalid-feedback atribuicao-feedback' : 'field-hint atribuicao-feedback'"
+                    [attr.role]="feedback.erro ? 'alert' : 'status'">
+                    {{ feedback.texto }}
+                  </div>
+                }
               }
               @if (selectInvalidoPorAula[aula.id]) {
                 <div [id]="'profissional-erro-' + aula.id" class="invalid-feedback">
@@ -131,6 +153,8 @@
     <dl class="confirmacao-detalhes">
       <dt>Data</dt>
       <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</dd>
+      <dt>Horário</dt>
+      <dd>{{ horarioDaAula(aula) ?? 'Sem horário' }}</dd>
       <dt>Profissional</dt>
       <dd>{{ profissionalEmConfirmacaoNome }}</dd>
     </dl>
@@ -145,7 +169,7 @@
     [fecharAoClicarFora]="false"
     (confirmar)="confirmarRemarcar()"
     (cancelar)="cancelarRemarcar()">
-    <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}.</p>
+    <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}{{ horarioDaAula(aula) ? ' às ' + horarioDaAula(aula) : ', sem horário' }}.</p>
     <div class="form-group">
       <label for="remarcarData">Nova data *</label>
       <input #remarcarDataInput id="remarcarData" type="date" class="form-control"
@@ -159,6 +183,14 @@
           Informe a nova data da aula.
         </div>
       }
+    </div>
+    <div class="form-group">
+      <label for="remarcarHorario">Novo horário</label>
+      <input id="remarcarHorario" type="time" class="form-control"
+        aria-describedby="remarcarHorarioDica"
+        [(ngModel)]="remarcarHorario"
+        (ngModelChange)="aoAlterarDataRemarcacao()" />
+      <div id="remarcarHorarioDica" class="field-hint">Em branco mantém o horário atual.</div>
     </div>
     @if (remarcarErro) {
       <div class="alert alert-danger remarcar-erro" role="alert">{{ remarcarErro }}</div>

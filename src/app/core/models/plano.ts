@@ -12,6 +12,8 @@ export interface PlanoResponseDTO {
   dataInicio: string;
   diasSemana: DiaSemana[];
   ativo: boolean;
+  /** `HH:mm:ss` das aulas em todos os `diasSemana`, ou `null` em plano sem horário. */
+  horario: string | null;
 }
 
 export interface PlanoRequestDTO {
@@ -21,6 +23,8 @@ export interface PlanoRequestDTO {
   frequenciaSemanal: FrequenciaSemanal;
   dataInicio: string;
   diasSemana: DiaSemana[];
+  /** Opcional: copiado para cada aula gerada pelo pagamento. */
+  horario?: string | null;
 }
 
 export interface PagamentoResponseDTO {
@@ -50,6 +54,8 @@ export interface AulaResponseDTO {
   pacienteNome: string;
   pagamentoId: number;
   data: string;
+  /** `HH:mm:ss`, ou `null` em aula sem horário (anterior à #106 da API ou de plano sem horário). */
+  horario: string | null;
   realizada: boolean;
   profissionalId?: number | null;
   profissionalNome?: string | null;

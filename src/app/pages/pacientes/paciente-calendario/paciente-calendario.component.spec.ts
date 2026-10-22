@@ -50,6 +50,7 @@ function aula(dados: Partial<AulaResponseDTO> & { id: number; data: string }): A
     pacienteId: 10,
     pacienteNome: 'Ana Silva',
     pagamentoId: 1,
+    horario: null,
     realizada: false,
     profissionalId: null,
     profissionalNome: null,

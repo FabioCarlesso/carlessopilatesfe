@@ -100,6 +100,17 @@
     }
   </div>
 
+  <div class="form-row">
+    <div class="form-group">
+      <label for="horario">Horário das aulas</label>
+      <input id="horario" formControlName="horario" type="time" class="form-control"
+        aria-describedby="horarioDica" />
+      <div id="horarioDica" class="campo-dica">
+        Vale para todos os dias do plano. Em branco, as aulas são geradas sem horário.
+      </div>
+    </div>
+  </div>
+
   <div class="form-actions">
     <button type="submit" class="btn btn-primary" [disabled]="salvando">
       {{ salvando ? 'Salvando...' : 'Salvar' }}

@@ -16,7 +16,7 @@ import { AulaResponseDTO, PagamentoResponseDTO } from '../../../core/models/plan
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 
 const mockAula: AulaResponseDTO = {
-  id: 1, pacienteId: 10, pacienteNome: 'Ana Silva', pagamentoId: 1, data: '2026-05-05', realizada: false
+  id: 1, pacienteId: 10, pacienteNome: 'Ana Silva', pagamentoId: 1, data: '2026-05-05', horario: null, realizada: false
 };
 
 const mockPagamento: PagamentoResponseDTO = {
@@ -55,7 +55,7 @@ describe('AulaListComponent', () => {
     let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
+      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar', 'atribuirProfissional']);
       pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
       profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
       serviceSpy.listarPorPaciente.and.returnValue(of([mockAula]));
@@ -103,6 +103,7 @@ describe('AulaListComponent', () => {
       const cells = fixture.nativeElement.querySelectorAll('tbody td[data-label]');
       const labels = Array.from(cells).map((cell) => (cell as HTMLElement).getAttribute('data-label'));
       expect(labels).toContain('Data');
+      expect(labels).toContain('Horário');
       expect(labels).toContain('Status');
       expect(labels).toContain('Profissional');
     });
@@ -314,7 +315,7 @@ describe('AulaListComponent', () => {
       component.remarcarData = '2026-05-12';
       component.confirmarRemarcar();
 
-      expect(serviceSpy.remarcar).toHaveBeenCalledWith(1, '2026-05-12');
+      expect(serviceSpy.remarcar).toHaveBeenCalledWith(1, '2026-05-12', null);
       expect(serviceSpy.listarPorPaciente).toHaveBeenCalledTimes(2);
       expect(component.remarcarAulaId).toBeNull();
       expect(component.acaoEmAndamento).toBeFalse();
@@ -594,6 +595,185 @@ describe('AulaListComponent', () => {
       expect(ouvintes.length).toBe(0);
     });
 
+    describe('horário (issue #266)', () => {
+      const aulaComHorario: AulaResponseDTO = { ...mockAula, horario: '08:00:00' };
+
+      function celulaHorario(): string {
+        return (fixture.nativeElement.querySelector('td[data-label="Horário"]') as HTMLElement).textContent!.trim();
+      }
+
+      it('should show the class time as HH:mm', () => {
+        serviceSpy.listarPorPaciente.and.returnValue(of([aulaComHorario]));
+        component.carregar();
+        fixture.detectChanges();
+
+        expect(celulaHorario()).toBe('08:00');
+      });
+
+      it('should say so when the class has no time', () => {
+        expect(celulaHorario()).toBe('Sem horário');
+      });
+
+      it('should open the remarcar dialog with the current time filled in', () => {
+        component.solicitarRemarcar(aulaComHorario);
+        expect(component.remarcarHorario).toBe('08:00');
+      });
+
+      it('should send the new time when only the time changes', () => {
+        serviceSpy.remarcar.and.returnValue(of({ ...aulaComHorario, horario: '18:00:00' }));
+        component.aulas = [aulaComHorario];
+        component.solicitarRemarcar(aulaComHorario);
+        component.remarcarHorario = '18:00';
+        component.confirmarRemarcar();
+
+        expect(serviceSpy.remarcar).toHaveBeenCalledWith(1, '2026-05-05', '18:00');
+      });
+
+      // Vazio mantém o horário atual na API; trocar só a data não o apaga.
+      it('should not send a time when the field is cleared', () => {
+        serviceSpy.remarcar.and.returnValue(of({ ...aulaComHorario, data: '2026-05-12' }));
+        component.aulas = [aulaComHorario];
+        component.solicitarRemarcar(aulaComHorario);
+        component.remarcarData = '2026-05-12';
+        component.remarcarHorario = '';
+        component.confirmarRemarcar();
+
+        expect(serviceSpy.remarcar).toHaveBeenCalledWith(1, '2026-05-12', null);
+      });
+
+      it('should close without calling the API when date and time are unchanged', () => {
+        component.aulas = [aulaComHorario];
+        component.solicitarRemarcar(aulaComHorario);
+        component.confirmarRemarcar();
+
+        expect(serviceSpy.remarcar).not.toHaveBeenCalled();
+        expect(component.remarcarAulaId).toBeNull();
+      });
+
+      it('should keep the dialog open with the capacity refusal', () => {
+        serviceSpy.remarcar.and.returnValue(throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { detail: 'Profissional Paula Mendes já atende 3 aula(s) em 2026-05-05 às 18:00; a capacidade por horário é 3' }
+        })));
+        component.aulas = [aulaComHorario];
+        component.solicitarRemarcar(aulaComHorario);
+        component.remarcarHorario = '18:00';
+        component.confirmarRemarcar();
+
+        expect(component.remarcarErro).toContain('capacidade por horário é 3');
+        expect(component.remarcarAulaId).toBe(1);
+      });
+    });
+
+    describe('atribuir profissional (issue #266)', () => {
+      function botaoAtribuir(): HTMLButtonElement | null {
+        return fixture.nativeElement.querySelector('.atribuir-btn');
+      }
+
+      it('should offer to save only when the choice differs from the saved profissional', () => {
+        expect(botaoAtribuir()).toBeNull();
+
+        component.profissionalSelecionadoPorAula[1] = 5;
+        fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+        fixture.detectChanges();
+
+        expect(botaoAtribuir()?.textContent?.trim()).toBe('Atribuir');
+      });
+
+      it('should save the profissional without marking the class as done', fakeAsync(() => {
+        serviceSpy.atribuirProfissional.and.returnValue(of({ ...mockAula, profissionalId: 5, profissionalNome: 'Paula Mendes' }));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+
+        expect(serviceSpy.atribuirProfissional).toHaveBeenCalledWith(1, 5);
+        expect(serviceSpy.realizar).not.toHaveBeenCalled();
+        expect(component.aulas[0].profissionalId).toBe(5);
+        expect(component.profissionalAlterado(component.aulas[0])).toBeFalse();
+        expect(component.atribuicaoFeedback).toEqual({ aulaId: 1, texto: 'Profissional atribuído.', erro: false });
+        // Nada na faixa do topo: ela fica fora da tela com a lista rolada.
+        expect(component.sucesso).toBeNull();
+        tick(4000);
+        expect(component.atribuicaoFeedback).toBeNull();
+      }));
+
+      it('should unlink when the choice goes back to none', fakeAsync(() => {
+        const atribuida: AulaResponseDTO = { ...mockAula, profissionalId: 5, profissionalNome: 'Paula Mendes' };
+        serviceSpy.atribuirProfissional.and.returnValue(of({ ...mockAula, profissionalId: null, profissionalNome: null }));
+        component.aulas = [atribuida];
+        component.profissionalSelecionadoPorAula[1] = null;
+        component.atribuirProfissional(atribuida);
+
+        expect(serviceSpy.atribuirProfissional).toHaveBeenCalledWith(1, null);
+        expect(component.atribuicaoFeedback?.texto).toBe('Profissional desvinculado.');
+        tick(4000);
+      }));
+
+      // O 409 diz que o horário do profissional está lotado; a escolha fica no
+      // select para a recepção decidir ali mesmo.
+      it('should show the capacity refusal and keep the choice', () => {
+        serviceSpy.atribuirProfissional.and.returnValue(throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { detail: 'Profissional Paula Mendes já atende 3 aula(s) em 2026-05-05 às 08:00; a capacidade por horário é 3' }
+        })));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+
+        expect(component.atribuicaoFeedback?.erro).toBeTrue();
+        expect(component.atribuicaoFeedback?.texto).toContain('capacidade por horário é 3');
+        expect(component.erro).toBeNull();
+        expect(component.profissionalSelecionadoPorAula[1]).toBe(5);
+        expect(component.acaoEmAndamento).toBeFalse();
+      });
+
+      // A recusa precisa estar ao lado do select, e não na faixa do topo, que
+      // sai do viewport quando a lista está rolada até a aula.
+      it('should render the refusal in the row, linked to the select', () => {
+        serviceSpy.atribuirProfissional.and.returnValue(throwError(() => new HttpErrorResponse({
+          status: 409,
+          error: { detail: 'Profissional Paula Mendes já atende 3 aula(s) em 2026-05-05 às 08:00; a capacidade por horário é 3' }
+        })));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+        fixture.detectChanges();
+
+        const linha = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
+        const feedback = linha.querySelector('#atribuicao-1') as HTMLElement;
+        const select = linha.querySelector('select') as HTMLSelectElement;
+        expect(feedback.getAttribute('role')).toBe('alert');
+        expect(feedback.textContent).toContain('capacidade por horário é 3');
+        expect(select.getAttribute('aria-describedby')).toBe('atribuicao-1');
+        expect(select.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
+      });
+
+      it('should clear the refusal when another profissional is chosen', () => {
+        serviceSpy.atribuirProfissional.and.returnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { detail: 'lotado' } })));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+
+        component.aoSelecionarProfissional(1);
+
+        expect(component.atribuicaoFeedback).toBeNull();
+      });
+
+      it('should announce the success in the row as a status', fakeAsync(() => {
+        serviceSpy.atribuirProfissional.and.returnValue(of({ ...mockAula, profissionalId: 5, profissionalNome: 'Paula Mendes' }));
+        component.profissionalSelecionadoPorAula[1] = 5;
+        component.atribuirProfissional(mockAula);
+        fixture.detectChanges();
+
+        const feedback = fixture.nativeElement.querySelector('#atribuicao-1') as HTMLElement;
+        expect(feedback.getAttribute('role')).toBe('status');
+        expect(feedback.textContent?.trim()).toBe('Profissional atribuído.');
+        tick(4000);
+      }));
+
+      it('should not call the API when the choice is unchanged', () => {
+        component.atribuirProfissional(mockAula);
+        expect(serviceSpy.atribuirProfissional).not.toHaveBeenCalled();
+      });
+    });
+
     it('should set an aria-label on the profissional select', () => {
       const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
       expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');
@@ -618,7 +798,7 @@ describe('AulaListComponent', () => {
     let profissionalServiceSpy: jasmine.SpyObj<ProfissionalService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
+      serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar', 'atribuirProfissional']);
       pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
       profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
       serviceSpy.listarPorPagamento.and.returnValue(of([mockAula]));
@@ -681,7 +861,7 @@ describe('AulaListComponent', () => {
   });
 
   it('should not load aulas when route param is invalid', () => {
-    const serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar']);
+    const serviceSpy = jasmine.createSpyObj('AulaService', ['listarPorPaciente', 'listarPorPagamento', 'realizar', 'remarcar', 'atribuirProfissional']);
     const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
     const profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;

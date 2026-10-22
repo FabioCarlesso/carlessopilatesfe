@@ -61,7 +61,9 @@ export class PlanoFormComponent implements OnInit, OnDestroy, AfterViewInit {
       valor: [null, [Validators.required, Validators.min(0.01)]],
       frequenciaSemanal: ['', Validators.required],
       dataInicio: ['', Validators.required],
-      diasSemana: [[], [Validators.required, diasSemanaValidator]]
+      diasSemana: [[], [Validators.required, diasSemanaValidator]],
+      // Opcional (issue #266): sem horário, as aulas geradas nascem sem horário.
+      horario: ['']
     });
     this.subscriptions.add(
       this.form.get('frequenciaSemanal')?.valueChanges.subscribe(() => {
@@ -108,7 +110,10 @@ export class PlanoFormComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     this.salvando = true;
     this.erro = null;
-    this.service.criar({ ...this.form.value, pacienteId: this.pacienteId }).subscribe({
+    // Campo vazio vai como `null`, e não como `""`: a string vazia não é um
+    // `LocalTime` válido para a API.
+    const horario = this.form.value.horario || null;
+    this.service.criar({ ...this.form.value, horario, pacienteId: this.pacienteId }).subscribe({
       next: () => this.router.navigate(['/planos/paciente', this.pacienteId]),
       error: () => {
         this.erro = 'Erro ao salvar plano.';

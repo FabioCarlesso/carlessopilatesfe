@@ -11,7 +11,7 @@ import { DIAS_SEMANA_LABEL, FREQUENCIA_LABEL, PlanoResponseDTO, TIPO_LABEL } fro
 const mockPlano: PlanoResponseDTO = {
   id: 1, pacienteId: 10, tipo: 'MENSAL', valor: 250,
   frequenciaSemanal: 'DUAS_VEZES', dataInicio: '2026-05-01',
-  diasSemana: ['MONDAY', 'WEDNESDAY'], ativo: true
+  diasSemana: ['MONDAY', 'WEDNESDAY'], ativo: true, horario: null
 };
 
 describe('PlanoFormComponent', () => {
@@ -46,7 +46,7 @@ describe('PlanoFormComponent', () => {
   });
 
   it('should have all form controls', () => {
-    ['tipo', 'valor', 'frequenciaSemanal', 'dataInicio', 'diasSemana'].forEach(c =>
+    ['tipo', 'valor', 'frequenciaSemanal', 'dataInicio', 'diasSemana', 'horario'].forEach(c =>
       expect(component.form.contains(c)).toBeTrue()
     );
   });
@@ -91,18 +91,34 @@ describe('PlanoFormComponent', () => {
       valor: 250,
       frequenciaSemanal: 'DUAS_VEZES',
       dataInicio: '2026-05-01',
-      diasSemana: ['MONDAY', 'WEDNESDAY']
+      diasSemana: ['MONDAY', 'WEDNESDAY'],
+      horario: ''
     });
     component.salvar();
-    expect(serviceSpy.criar).toHaveBeenCalledWith({ ...component.form.value, pacienteId: 10 });
+    // Horário em branco vai `null`: `""` não é um `LocalTime` válido na API.
+    expect(serviceSpy.criar).toHaveBeenCalledWith({ ...component.form.value, horario: null, pacienteId: 10 });
     expect(router.navigate).toHaveBeenCalledWith(['/planos/paciente', 10]);
+  });
+
+  it('should send the class time when informed (issue #266)', () => {
+    serviceSpy.criar.and.returnValue(of({ ...mockPlano, horario: '08:00:00' }));
+    component.form.setValue({
+      tipo: 'MENSAL',
+      valor: 250,
+      frequenciaSemanal: 'DUAS_VEZES',
+      dataInicio: '2026-05-01',
+      diasSemana: ['MONDAY', 'WEDNESDAY'],
+      horario: '08:00'
+    });
+    component.salvar();
+    expect(serviceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({ horario: '08:00', pacienteId: 10 }));
   });
 
   it('should set erro on criar failure', () => {
     serviceSpy.criar.and.returnValue(throwError(() => new Error('fail')));
     component.form.setValue({
       tipo: 'MENSAL', valor: 250, frequenciaSemanal: 'UMA_VEZ',
-      dataInicio: '2026-05-01', diasSemana: ['MONDAY']
+      dataInicio: '2026-05-01', diasSemana: ['MONDAY'], horario: ''
     });
     component.salvar();
     expect(component.erro).toBe('Erro ao salvar plano.');
@@ -132,7 +148,8 @@ describe('PlanoFormComponent', () => {
       valor: 250,
       frequenciaSemanal: 'UMA_VEZ',
       dataInicio: '2026-05-01',
-      diasSemana: ['MONDAY']
+      diasSemana: ['MONDAY'],
+      horario: ''
     });
     invalidComponent.salvar();
 

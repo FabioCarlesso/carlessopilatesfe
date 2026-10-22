@@ -7,6 +7,7 @@ import { PlanoService } from '../../../core/services/plano.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 
 @Component({
@@ -127,5 +128,10 @@ export class PlanoListComponent implements OnInit, OnDestroy {
 
   diasFormatados(plano: PlanoResponseDTO): string {
     return plano.diasSemana.map(d => this.diasLabel[d]).join(', ');
+  }
+
+  /** `HH:mm` em que o plano gera as aulas, ou `null` em plano sem horário (issue #266). */
+  horarioDoPlano(plano: PlanoResponseDTO): string | null {
+    return normalizarHora(plano.horario);
   }
 }

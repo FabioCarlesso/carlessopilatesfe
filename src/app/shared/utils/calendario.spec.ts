@@ -38,6 +38,7 @@ function aula(dados: Partial<AulaResponseDTO> & { id: number; data: string }): A
     pacienteId: 10,
     pacienteNome: 'Ana Silva',
     pagamentoId: 1,
+    horario: null,
     realizada: false,
     profissionalId: null,
     profissionalNome: null,
@@ -118,9 +119,27 @@ describe('calendario', () => {
         .toBe('20 de maio de 2026, Sessão: Pilates, às 14:00, agendada, com Carla Fisio');
     });
 
-    // A API de aulas guarda só a data, então o horário fica nulo em vez de
-    // virar "00:00", e o clique cai na listagem de aulas — a aula não tem tela
+    // Aula sem horário (legado ou plano sem horário) fica nula em vez de virar
+    // "00:00", e o clique cai na listagem de aulas — a aula não tem tela
     // individual.
+    // A API devolve `HH:mm:ss`; a grade trabalha com `HH:mm`, como nas sessões.
+    it('should map the class time to HH:mm and describe it', () => {
+      const [evento] = mapearEventos([], [aula({ id: 4, data: '2026-05-21', horario: '08:00:00' })]);
+
+      expect(evento.horario).toBe('08:00');
+      expect(evento.descricao).toContain('às 08:00');
+    });
+
+    it('should order classes of the same day by time, with the untimed ones last', () => {
+      const eventos = mapearEventos([], [
+        aula({ id: 1, data: '2026-05-21', horario: null }),
+        aula({ id: 2, data: '2026-05-21', horario: '18:00:00' }),
+        aula({ id: 3, data: '2026-05-21', horario: '08:00:00' })
+      ]);
+
+      expect(eventos.map(evento => evento.id)).toEqual([3, 2, 1]);
+    });
+
     it('should map a class without a time and link to the class list', () => {
       const [evento] = mapearEventos([], [aula({ id: 3, data: '2026-05-21', realizada: true })]);
 

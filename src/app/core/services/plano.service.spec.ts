@@ -11,6 +11,7 @@ const mockPlano: PlanoResponseDTO = {
   frequenciaSemanal: 'DUAS_VEZES',
   dataInicio: '2026-05-01',
   diasSemana: ['MONDAY', 'WEDNESDAY'],
+  horario: null,
   ativo: true
 };
 
