@@ -291,6 +291,41 @@ describe('UsuarioFormComponent', () => {
       .toContain('Selecione ao menos um papel.');
   });
 
+  it('should focus the first role checkbox when roles are the only invalid field', async () => {
+    const { fixture, component } = await setup(null);
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      component.form.patchValue({ name: 'Sem Papel', email: 'sem@carlessopilates.com', password: 'senha1234' });
+      fixture.detectChanges();
+      component.salvar();
+      fixture.detectChanges();
+
+      expect((document.activeElement as HTMLInputElement | null)?.name).toBe('role-ADMIN');
+      expect(document.activeElement?.getAttribute('aria-invalid')).toBe('true');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  it('should style the roles legend like the other field labels and keep the options in normal case', async () => {
+    const { fixture } = await setup(null);
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const host = fixture.nativeElement as HTMLElement;
+      const legenda = getComputedStyle(host.querySelector('.papeis legend') as HTMLElement);
+      const rotuloCampo = getComputedStyle(host.querySelector('label[for="name"]') as HTMLElement);
+      const opcao = getComputedStyle(host.querySelector('.papel-checkbox') as HTMLElement);
+
+      expect(legenda.textTransform).toBe(rotuloCampo.textTransform);
+      expect(legenda.fontSize).toBe(rotuloCampo.fontSize);
+      expect(opcao.textTransform).toBe('none');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should check every role of the user in edit mode and send the whole set on update', async () => {
     const serviceSpy = jasmine.createSpyObj<UsuarioAdminService>(
       'UsuarioAdminService',

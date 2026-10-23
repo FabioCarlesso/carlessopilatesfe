@@ -63,10 +63,14 @@
         <div class="papeis-opcoes">
           @for (role of roles; track role.value) {
             <label class="papel-checkbox">
+              <!-- Sem formControlName o Angular não marca `ng-invalid` no input; a
+              classe manual é o que deixa o focarPrimeiroInvalido chegar ao grupo. -->
               <input
                 type="checkbox"
                 [name]="'role-' + role.value"
                 [checked]="papelSelecionado(role.value)"
+                [class.ng-invalid]="campo('roles')?.invalid"
+                [attr.aria-invalid]="campo('roles')?.invalid && campo('roles')?.touched ? 'true' : null"
                 (change)="togglePapel(role.value)"
               />
               {{ role.label }}
