@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -23,6 +24,7 @@ export class DashboardComponent implements OnInit {
   totalPagamentos = 0;
   totalAulasMesAtual = 0;
   percentualAulasRealizadas = 0;
+  readonly papeis = PAPEIS;
 
   constructor(
     private service: DashboardService,

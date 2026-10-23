@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PAPEIS } from '../../../core/models/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
@@ -30,9 +32,11 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = STATUS_PAGAMENTO_LABEL;
+  readonly papeis = PAPEIS;
 
   constructor(
     private service: PagamentoService,
+    public authService: AuthService,
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,

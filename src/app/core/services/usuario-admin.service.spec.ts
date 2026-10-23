@@ -14,7 +14,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   id: 1,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
-  role: 'ADMIN',
+  roles: ['ADMIN'],
   active: true
 };
 
@@ -92,7 +92,7 @@ describe('UsuarioAdminService', () => {
       name: 'Maria Admin',
       email: 'maria@carlessopilates.com',
       password: 'senhaSegura123',
-      role: 'ADMIN'
+      roles: ['ADMIN']
     };
 
     service.cadastrar(dto).subscribe(usuario => expect(usuario).toEqual(mockUsuario));
@@ -104,7 +104,7 @@ describe('UsuarioAdminService', () => {
   });
 
   it('should PUT /api/users/:id', () => {
-    const dto: UsuarioAdminUpdateRequestDTO = { name: 'Maria Atualizada', role: 'USER' };
+    const dto: UsuarioAdminUpdateRequestDTO = { name: 'Maria Atualizada', roles: ['RECEPCAO'] };
 
     service.atualizar(1, dto).subscribe(usuario => expect(usuario).toEqual(mockUsuario));
 
@@ -160,7 +160,7 @@ describe('UsuarioAdminService', () => {
   it('should GET /api/users/roles', () => {
     const mockRoles: RoleOption[] = [
       { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
+      { value: 'RECEPCAO', label: 'Recepção' }
     ];
 
     service.listarRoles().subscribe(roles => expect(roles).toEqual(mockRoles));

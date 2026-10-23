@@ -74,57 +74,83 @@
         </div>
       </section>
     }
+    <!-- Cada atalho só aparece para quem acessa a área: sem isso a recepção
+    abriria o prontuário e cairia no /403. -->
     <section class="detail-section links-section">
       <h2>Gestão</h2>
       <div class="links-grid">
-        <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
-          <span class="link-icon">📋</span>
-          <span>Planos</span>
-        </a>
-        <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
-          <span class="link-icon">💳</span>
-          <span>Pagamentos</span>
-        </a>
-        <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
-          <span class="link-icon">🗓</span>
-          <span>Aulas</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
-          <span class="link-icon">📝</span>
-          <span>Anamnese</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
-          <span class="link-icon">🦴</span>
-          <span>Avaliação Fisioterapêutica</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
-          <span class="link-icon">📐</span>
-          <span>Análise Postural</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
-          <span class="link-icon">📄</span>
-          <span>Plano de Tratamento</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
-          <span class="link-icon">🏃</span>
-          <span>Sessões</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
-          <span class="link-icon">📈</span>
-          <span>Histórico de Evoluções</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'calendario']" class="link-card">
-          <span class="link-icon">📅</span>
-          <span>Calendário</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
-          <span class="link-icon">📊</span>
-          <span>Reavaliações</span>
-        </a>
-        <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
-          <span class="link-icon">🧾</span>
-          <span>NFSEs Emitidas</span>
-        </a>
+        @if (authService.hasAnyRole(papeis.cobranca)) {
+          <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
+            <span class="link-icon">📋</span>
+            <span>Planos</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.cobranca)) {
+          <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
+            <span class="link-icon">💳</span>
+            <span>Pagamentos</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.agenda)) {
+          <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
+            <span class="link-icon">🗓</span>
+            <span>Aulas</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
+            <span class="link-icon">📝</span>
+            <span>Anamnese</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
+            <span class="link-icon">🦴</span>
+            <span>Avaliação Fisioterapêutica</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
+            <span class="link-icon">📐</span>
+            <span>Análise Postural</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
+            <span class="link-icon">📄</span>
+            <span>Plano de Tratamento</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.agenda)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
+            <span class="link-icon">🏃</span>
+            <span>Sessões</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
+            <span class="link-icon">📈</span>
+            <span>Histórico de Evoluções</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.agenda)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'calendario']" class="link-card">
+            <span class="link-icon">📅</span>
+            <span>Calendário</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.clinica)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
+            <span class="link-icon">📊</span>
+            <span>Reavaliações</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.fiscal)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
+            <span class="link-icon">🧾</span>
+            <span>NFSEs Emitidas</span>
+          </a>
+        }
       </div>
     </section>
   </div>

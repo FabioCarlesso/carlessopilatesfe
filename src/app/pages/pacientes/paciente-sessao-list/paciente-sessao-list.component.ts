@@ -12,6 +12,8 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { PAPEIS } from '../../../core/models/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { avisoDeInteressados, faixaDoAgendamento } from '../../../shared/utils/lista-espera';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
@@ -67,11 +69,13 @@ export class PacienteSessaoListComponent implements OnInit, OnDestroy {
 
   readonly statusLabel = SESSAO_STATUS_LABEL;
   readonly tipoLabel = SESSAO_TIPO_LABEL;
+  readonly papeis = PAPEIS;
 
   constructor(
     private sessaoService: SessaoService,
     private pacienteService: PacienteService,
     private listaEsperaService: ListaEsperaService,
+    public authService: AuthService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef,

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
-import { UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
+import { ROLE_OPTIONS, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../../shared/utils/api-error';
 import { UsuarioFormComponent } from './usuario-form.component';
@@ -12,7 +12,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   id: 42,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
-  role: 'ADMIN',
+  roles: ['ADMIN'],
   active: true
 };
 
@@ -23,10 +23,7 @@ async function setup(idParam: string | null, service?: jasmine.SpyObj<UsuarioAdm
   );
 
   if (!service) {
-    serviceSpy.listarRoles.and.returnValue(of([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]));
+    serviceSpy.listarRoles.and.returnValue(of(ROLE_OPTIONS));
     serviceSpy.buscar.and.returnValue(of(mockUsuario));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
@@ -73,14 +70,11 @@ describe('UsuarioFormComponent', () => {
   it('should initialize form controls and load role options', async () => {
     const { component, serviceSpy } = await setup(null);
 
-    ['name', 'email', 'password', 'role'].forEach(ctrl => {
+    ['name', 'email', 'password', 'roles'].forEach(ctrl => {
       expect(component.form.contains(ctrl)).toBeTrue();
     });
     expect(serviceSpy.listarRoles).toHaveBeenCalled();
-    expect(component.roles).toEqual([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]);
+    expect(component.roles).toEqual(ROLE_OPTIONS);
   });
 
   it('should keep local role options when role loading fails', async () => {
@@ -95,10 +89,7 @@ describe('UsuarioFormComponent', () => {
 
     const { component } = await setup(null, serviceSpy);
 
-    expect(component.roles).toEqual([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]);
+    expect(component.roles).toEqual(ROLE_OPTIONS);
   });
 
   it('should fall back to ROLE_OPTIONS when listarRoles returns an empty array', async () => {
@@ -113,10 +104,7 @@ describe('UsuarioFormComponent', () => {
 
     const { component } = await setup(null, serviceSpy);
 
-    expect(component.roles).toEqual([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]);
+    expect(component.roles).toEqual(ROLE_OPTIONS);
   });
 
   it('should not call listarRoles when route id is invalid', async () => {
@@ -131,7 +119,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -140,7 +128,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
     expect(router.navigate).toHaveBeenCalledWith(['/admin/usuarios']);
   });
@@ -151,7 +139,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha 12 ',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -176,7 +164,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'nao-eh-email',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -191,7 +179,7 @@ describe('UsuarioFormComponent', () => {
       name: 'Jo',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -208,7 +196,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -225,7 +213,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -241,7 +229,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -259,12 +247,88 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
 
     expect(component.erro).toBe('Senha fraca.');
+  });
+
+  it('should accumulate roles toggled by checkbox and send them in API order', async () => {
+    const { fixture, component, serviceSpy } = await setup(null);
+    component.form.patchValue({ name: 'Fisio Financeiro', email: 'fisio@carlessopilates.com', password: 'senha1234' });
+
+    const checkbox = (valor: string) =>
+      (fixture.nativeElement as HTMLElement).querySelector(`input[name="role-${valor}"]`) as HTMLInputElement;
+    // Clicados fora de ordem: o payload segue a ordem das opções, não a do clique.
+    checkbox('FINANCEIRO').click();
+    checkbox('PROFISSIONAL').click();
+    fixture.detectChanges();
+
+    expect(checkbox('FINANCEIRO').checked).toBeTrue();
+    expect(checkbox('PROFISSIONAL').checked).toBeTrue();
+
+    component.salvar();
+
+    expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+      roles: ['PROFISSIONAL', 'FINANCEIRO']
+    }));
+  });
+
+  it('should require at least one role and show the error after unchecking the last one', async () => {
+    const { fixture, component, serviceSpy } = await setup(null);
+    component.form.patchValue({ name: 'Sem Papel', email: 'sem@carlessopilates.com', password: 'senha1234' });
+
+    component.togglePapel('RECEPCAO');
+    component.togglePapel('RECEPCAO');
+    fixture.detectChanges();
+    component.salvar();
+    fixture.detectChanges();
+
+    expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).querySelector('#roles-errors')?.textContent)
+      .toContain('Selecione ao menos um papel.');
+  });
+
+  it('should check every role of the user in edit mode and send the whole set on update', async () => {
+    const serviceSpy = jasmine.createSpyObj<UsuarioAdminService>(
+      'UsuarioAdminService',
+      ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
+    );
+    serviceSpy.listarRoles.and.returnValue(of(ROLE_OPTIONS));
+    serviceSpy.buscar.and.returnValue(of({ ...mockUsuario, roles: ['RECEPCAO', 'FINANCEIRO'] }));
+    serviceSpy.atualizar.and.returnValue(of(mockUsuario));
+
+    const { fixture, component } = await setup('42', serviceSpy);
+    const marcados = Array.from((fixture.nativeElement as HTMLElement)
+      .querySelectorAll<HTMLInputElement>('.papel-checkbox input:checked')).map(input => input.name);
+    expect(marcados).toEqual(['role-RECEPCAO', 'role-FINANCEIRO']);
+
+    component.togglePapel('FINANCEIRO');
+    component.salvar();
+
+    expect(serviceSpy.atualizar).toHaveBeenCalledWith(42, jasmine.objectContaining({ roles: ['RECEPCAO'] }));
+  });
+
+  it('should show the API detail on 422 (role rules)', async () => {
+    const serviceSpy = jasmine.createSpyObj<UsuarioAdminService>(
+      'UsuarioAdminService',
+      ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
+    );
+    serviceSpy.listarRoles.and.returnValue(of(ROLE_OPTIONS));
+    serviceSpy.buscar.and.returnValue(of(mockUsuario));
+    serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 422,
+      error: { detail: 'Não é possível rebaixar o último administrador ativo' }
+    })));
+
+    const { component } = await setup('42', serviceSpy);
+    component.togglePapel('ADMIN');
+    component.togglePapel('RECEPCAO');
+    component.salvar();
+
+    expect(component.erro).toBe('Não é possível rebaixar o último administrador ativo');
   });
 
   it('should switch to edit mode and load user data when a valid id param is present', async () => {
@@ -276,7 +340,7 @@ describe('UsuarioFormComponent', () => {
     expect(serviceSpy.buscar).toHaveBeenCalledWith(42);
     expect(component.form.get('name')?.value).toBe('Maria Admin');
     expect(component.form.get('email')?.value).toBe('maria@carlessopilates.com');
-    expect(component.form.get('role')?.value).toBe('ADMIN');
+    expect(component.form.get('roles')?.value).toEqual(['ADMIN']);
     expect((fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent)
       .toContain('Editar Usuário');
   });
@@ -305,7 +369,7 @@ describe('UsuarioFormComponent', () => {
     expect(serviceSpy.atualizar).toHaveBeenCalledWith(42, {
       name: 'Maria Admin',
       email: 'maria@carlessopilates.com',
-      role: 'ADMIN',
+      roles: ['ADMIN'],
       version: 0
     });
     expect(router.navigate).toHaveBeenCalledWith(['/admin/usuarios']);
@@ -349,10 +413,7 @@ describe('UsuarioFormComponent', () => {
       'UsuarioAdminService',
       ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
     );
-    serviceSpy.listarRoles.and.returnValue(of([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]));
+    serviceSpy.listarRoles.and.returnValue(of(ROLE_OPTIONS));
     serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
@@ -368,10 +429,7 @@ describe('UsuarioFormComponent', () => {
       'UsuarioAdminService',
       ['buscar', 'cadastrar', 'atualizar', 'listarRoles']
     );
-    serviceSpy.listarRoles.and.returnValue(of([
-      { value: 'ADMIN', label: 'Administrador' },
-      { value: 'USER', label: 'Usuário' }
-    ]));
+    serviceSpy.listarRoles.and.returnValue(of(ROLE_OPTIONS));
     serviceSpy.buscar.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
     serviceSpy.cadastrar.and.returnValue(of(mockUsuario));
     serviceSpy.atualizar.and.returnValue(of(mockUsuario));
@@ -398,7 +456,7 @@ describe('UsuarioFormComponent', () => {
       name: 'João Usuário',
       email: 'joao@carlessopilates.com',
       password: 'senha1234',
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     component.salvar();
@@ -406,73 +464,6 @@ describe('UsuarioFormComponent', () => {
     expect(component.erro).toBe('Identificador inválido.');
     expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
     expect(serviceSpy.atualizar).not.toHaveBeenCalled();
-  });
-
-  // O SVG do data URI não tem tamanho intrínseco: sem `background-size` o CSS
-  // ajusta a seta por *contain* à altura do campo e ela vira 60×40px (issue
-  // #200). O guard falha com `Expected 'auto' to be '12px 8px'` no CSS antigo.
-  it('should size the select chevron at 12x8px regardless of the field height (issue #200)', async () => {
-    const { fixture } = await setup('42');
-    document.body.appendChild(fixture.nativeElement);
-
-    try {
-      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLElement;
-      const estilo = getComputedStyle(select);
-
-      expect(estilo.backgroundSize).toBe('12px 8px');
-      expect(estilo.backgroundImage).not.toBe('none');
-      expect(estilo.paddingRight).toBe('36px');
-    } finally {
-      document.body.removeChild(fixture.nativeElement);
-    }
-  });
-
-  // A regra `:disabled` do campo global usava a shorthand `background`, que
-  // redefine todas as propriedades de fundo e zerava o `background-image` —
-  // com `appearance: none` já aplicado, o select desabilitado ficava sem seta
-  // nenhuma (issue #200).
-  it('should keep the chevron on a disabled select (issue #200)', async () => {
-    const { fixture, component } = await setup('42');
-    component.form.get('role')?.disable();
-    fixture.detectChanges();
-    document.body.appendChild(fixture.nativeElement);
-
-    try {
-      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLSelectElement;
-      const estilo = getComputedStyle(select);
-
-      expect(select.disabled).toBeTrue();
-      expect(estilo.backgroundImage).not.toBe('none');
-      expect(estilo.backgroundSize).toBe('12px 8px');
-    } finally {
-      document.body.removeChild(fixture.nativeElement);
-    }
-  });
-
-  // O stroke vive dentro do data URI e não aceita `var()`, então o tema escuro
-  // troca o token inteiro: o grafite do tema claro rende ~2:1 sobre `--bg-elev`
-  // escuro, abaixo dos 3:1 da WCAG 1.4.11 para componentes (issue #200).
-  it('should swap the chevron token for the light stroke in dark theme (issue #200)', async () => {
-    const { fixture } = await setup('42');
-    document.body.appendChild(fixture.nativeElement);
-    const temaAnterior = document.documentElement.getAttribute('data-theme');
-
-    try {
-      const select = (fixture.nativeElement as HTMLElement).querySelector('select#role') as HTMLElement;
-
-      document.documentElement.setAttribute('data-theme', 'light');
-      expect(getComputedStyle(select).backgroundImage).toContain('455157');
-
-      document.documentElement.setAttribute('data-theme', 'dark');
-      expect(getComputedStyle(select).backgroundImage).toContain('b9bcc1');
-    } finally {
-      if (temaAnterior === null) {
-        document.documentElement.removeAttribute('data-theme');
-      } else {
-        document.documentElement.setAttribute('data-theme', temaAnterior);
-      }
-      document.body.removeChild(fixture.nativeElement);
-    }
   });
 
   it('should render link back to user list', async () => {

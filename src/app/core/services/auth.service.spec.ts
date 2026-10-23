@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
+import { PAPEIS } from '../models/auth';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -17,7 +18,7 @@ describe('AuthService', () => {
       id: 1,
       name: 'Admin',
       email: 'admin@carlessopilates.com',
-      role: 'ADMIN' as const,
+      roles: ['ADMIN'] as const,
       active: true
     }
   };
@@ -69,6 +70,21 @@ describe('AuthService', () => {
     expect(accessToken).toBe('new-access');
     expect(localStorage.getItem('accessToken')).toBe('new-access');
     expect(localStorage.getItem('refreshToken')).toBe('new-refresh');
+  });
+
+  it('refresh() should store the user returned by the API so new roles show without a new login', () => {
+    localStorage.setItem('refreshToken', 'old-refresh');
+    localStorage.setItem('currentUser', JSON.stringify({ ...loginResponse.user, roles: ['RECEPCAO'] }));
+
+    service.refresh().subscribe();
+    httpMock.expectOne('/api/auth/refresh').flush({
+      ...loginResponse,
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+      user: { ...loginResponse.user, roles: ['RECEPCAO', 'FINANCEIRO'] }
+    });
+
+    expect(service.getCurrentUserRoles()).toEqual(['RECEPCAO', 'FINANCEIRO']);
   });
 
   it('refresh() should share a single request among concurrent callers', () => {
@@ -183,7 +199,7 @@ describe('AuthService', () => {
     expect(stored.id).toBe(1);
     expect(stored.name).toBe('Admin');
     expect(stored.email).toBe('admin@carlessopilates.com');
-    expect(stored.role).toBe('ADMIN');
+    expect(stored.roles).toEqual(['ADMIN']);
     expect(stored.active).toBeTrue();
   });
 
@@ -208,7 +224,7 @@ describe('AuthService', () => {
   it('logout() should remove token and user data and navigate to /login', () => {
     localStorage.setItem('accessToken', 'abc');
     localStorage.setItem('refreshToken', 'refresh-abc');
-    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', roles: ['ADMIN'] }));
     const spy = spyOn(router, 'navigate');
     service.logout();
     expect(localStorage.getItem('accessToken')).toBeNull();
@@ -255,7 +271,7 @@ describe('AuthService', () => {
 
   it('clearSession() should remove token and user data without navigation', () => {
     localStorage.setItem('accessToken', 'abc');
-    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', roles: ['ADMIN'] }));
     const spy = spyOn(router, 'navigate');
 
     localStorage.setItem('refreshToken', 'refresh-abc');
@@ -269,13 +285,13 @@ describe('AuthService', () => {
   });
 
   it('getCurrentUser() should return parsed user from localStorage', () => {
-    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', roles: ['ADMIN'] }));
     const user = service.getCurrentUser();
     expect(user).not.toBeNull();
     expect(user!.id).toBe(1);
     expect(user!.name).toBe('Admin');
     expect(user!.email).toBe('admin@carlessopilates.com');
-    expect(user!.role).toBe('ADMIN');
+    expect(user!.roles).toEqual(['ADMIN']);
   });
 
   it('getCurrentUser() should return null when no user stored', () => {
@@ -288,33 +304,60 @@ describe('AuthService', () => {
   });
 
   it('getCurrentUser() should return null when stored value has invalid shape', () => {
-    localStorage.setItem('currentUser', JSON.stringify({ role: 'ADMIN' }));
+    localStorage.setItem('currentUser', JSON.stringify({ roles: ['ADMIN'] }));
     expect(service.getCurrentUser()).toBeNull();
 
     localStorage.setItem('currentUser', JSON.stringify([]));
     expect(service.getCurrentUser()).toBeNull();
   });
 
-  it('getCurrentUserRole() should return the current user role', () => {
-    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
-    expect(service.getCurrentUserRole()).toBe('ADMIN');
+  it('getCurrentUserRoles() should return every role of the current user', () => {
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: 1, name: 'Fisio', email: 'fisio@carlessopilates.com', roles: ['PROFISSIONAL', 'FINANCEIRO']
+    }));
+    expect(service.getCurrentUserRoles()).toEqual(['PROFISSIONAL', 'FINANCEIRO']);
   });
 
-  it('getCurrentUserRole() should return null when no valid user is stored', () => {
-    expect(service.getCurrentUserRole()).toBeNull();
+  it('getCurrentUserRoles() should return an empty list when no valid user is stored', () => {
+    expect(service.getCurrentUserRoles()).toEqual([]);
+  });
+
+  it('getCurrentUser() should discard a session stored before the roles list (single role field)', () => {
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    expect(service.getCurrentUser()).toBeNull();
+  });
+
+  it('getCurrentUser() should reject an empty or unknown roles list', () => {
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'A', email: 'a@carlessopilates.com', roles: [] }));
+    expect(service.getCurrentUser()).toBeNull();
+
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'A', email: 'a@carlessopilates.com', roles: ['USER'] }));
+    expect(service.getCurrentUser()).toBeNull();
   });
 
   it('isAdmin() should return true only for ADMIN users', () => {
-    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }));
+    localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@carlessopilates.com', roles: ['ADMIN'] }));
     expect(service.isAdmin()).toBeTrue();
 
-    localStorage.setItem('currentUser', JSON.stringify({ id: 2, name: 'User', email: 'user@carlessopilates.com', role: 'USER' }));
+    localStorage.setItem('currentUser', JSON.stringify({ id: 2, name: 'User', email: 'user@carlessopilates.com', roles: ['RECEPCAO'] }));
     expect(service.isAdmin()).toBeFalse();
   });
 
-  it('hasRole() should validate the current user role', () => {
-    localStorage.setItem('currentUser', JSON.stringify({ id: 2, name: 'User', email: 'user@carlessopilates.com', role: 'USER' }));
-    expect(service.hasRole('USER')).toBeTrue();
+  it('hasRole() should check membership in the roles list', () => {
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: 2, name: 'User', email: 'user@carlessopilates.com', roles: ['RECEPCAO', 'FINANCEIRO']
+    }));
+    expect(service.hasRole('RECEPCAO')).toBeTrue();
+    expect(service.hasRole('FINANCEIRO')).toBeTrue();
     expect(service.hasRole('ADMIN')).toBeFalse();
+  });
+
+  it('hasAnyRole() should be true when any accumulated role belongs to the area', () => {
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: 2, name: 'User', email: 'user@carlessopilates.com', roles: ['RECEPCAO', 'FINANCEIRO']
+    }));
+    expect(service.hasAnyRole(PAPEIS.agenda)).toBeTrue();
+    expect(service.hasAnyRole(PAPEIS.fiscal)).toBeTrue();
+    expect(service.hasAnyRole(PAPEIS.clinica)).toBeFalse();
   });
 });

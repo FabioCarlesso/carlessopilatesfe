@@ -95,6 +95,53 @@ describe('PaginationSummaryComponent', () => {
     }
   });
 
+  // Movidos do formulário de usuário, que trocou o select de perfil por
+  // checkboxes. A regra `:disabled` do campo global usava a shorthand
+  // `background`, que redefine todas as propriedades de fundo e zerava o
+  // `background-image` — com `appearance: none` já aplicado, o select
+  // desabilitado ficava sem seta nenhuma (issue #200).
+  it('should keep the chevron on a disabled select (issue #200)', () => {
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+
+    try {
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('.pagination-summary select');
+      select.disabled = true;
+      const estilo = getComputedStyle(select);
+
+      expect(estilo.backgroundImage).not.toBe('none');
+      expect(estilo.backgroundSize).toBe('12px 8px');
+    } finally {
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
+  // O stroke vive dentro do data URI e não aceita `var()`, então o tema escuro
+  // troca o token inteiro: o grafite do tema claro rende ~2:1 sobre `--bg-elev`
+  // escuro, abaixo dos 3:1 da WCAG 1.4.11 para componentes (issue #200).
+  it('should swap the chevron token for the light stroke in dark theme (issue #200)', () => {
+    fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
+    const temaAnterior = document.documentElement.getAttribute('data-theme');
+
+    try {
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('.pagination-summary select');
+
+      document.documentElement.setAttribute('data-theme', 'light');
+      expect(getComputedStyle(select).backgroundImage).toContain('455157');
+
+      document.documentElement.setAttribute('data-theme', 'dark');
+      expect(getComputedStyle(select).backgroundImage).toContain('b9bcc1');
+    } finally {
+      if (temaAnterior === null) {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', temaAnterior);
+      }
+      document.body.removeChild(fixture.nativeElement);
+    }
+  });
+
   it('should emit the numeric page size when the selector changes', () => {
     component.pageSize = 10;
     component.pageSizeOptions = [5, 10, 20, 50];

@@ -3,13 +3,36 @@ export interface LoginRequestDTO {
   password: string;
 }
 
-export type UserRole = 'USER' | 'ADMIN';
+/**
+ * Papéis de negócio da API (carlessopilatesapi#131). Um usuário acumula um ou
+ * mais e acessa a soma das áreas deles. `PACIENTE` é reservado ao portal do
+ * paciente: a API não o oferece em `GET /users/roles` nem aceita no cadastro.
+ */
+export type UserRole = 'ADMIN' | 'PROFISSIONAL' | 'RECEPCAO' | 'FINANCEIRO' | 'PACIENTE';
+
+export const USER_ROLES: readonly UserRole[] = ['ADMIN', 'PROFISSIONAL', 'RECEPCAO', 'FINANCEIRO', 'PACIENTE'];
+
+/**
+ * Papéis que liberam cada área, espelhando o `SecurityConfig` da API. `ADMIN`
+ * entra em todas. A proteção real é da API; aqui decide-se só o que a tela
+ * mostra e quais rotas o `roleGuard` deixa abrir, para o usuário não cair num
+ * `403` ao clicar.
+ */
+export const PAPEIS = {
+  equipe: ['ADMIN', 'PROFISSIONAL', 'RECEPCAO', 'FINANCEIRO'],
+  clinica: ['ADMIN', 'PROFISSIONAL'],
+  agenda: ['ADMIN', 'PROFISSIONAL', 'RECEPCAO'],
+  cobranca: ['ADMIN', 'RECEPCAO', 'FINANCEIRO'],
+  fiscal: ['ADMIN', 'FINANCEIRO'],
+  admin: ['ADMIN']
+} as const satisfies Record<string, readonly UserRole[]>;
 
 export interface AuthenticatedUser {
   id: number;
   name: string;
   email: string;
-  role: UserRole;
+  /** Um ou mais papéis, na ordem do enum da API. */
+  roles: UserRole[];
   active?: boolean;
 }
 

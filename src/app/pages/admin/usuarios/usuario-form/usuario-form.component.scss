@@ -2,3 +2,41 @@
   color: var(--text-muted);
   font-size: var(--fs-micro);
 }
+
+/* Mesmo padrão do filtro de status da inadimplência: o rótulo é a linha
+   clicável, com 18px de caixa e `--text-brand`, que tem variante escura. */
+.papeis {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  legend {
+    padding: 0;
+    margin-bottom: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 600;
+  }
+}
+
+.papeis-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.papel-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  color: var(--text-primary);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--text-brand);
+  }
+}

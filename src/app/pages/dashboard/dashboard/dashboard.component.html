@@ -5,7 +5,7 @@
   </div>
   <div class="acoes">
     <a routerLink="/pacientes/novo" class="btn btn-secondary">Novo paciente</a>
-    @if (authService.isAdmin()) {
+    @if (authService.hasAnyRole(papeis.fiscal)) {
       <a routerLink="/relatorios" class="btn btn-primary">Relatórios</a>
     }
   </div>
