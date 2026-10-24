@@ -66,7 +66,9 @@
                   Confirmar Pagamento
                 </button>
               }
-              <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
+              @if (authService.hasAnyRole(papeis.agenda)) {
+                <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
+              }
             </td>
           </tr>
         }

@@ -235,8 +235,8 @@ export class BuscaGlobalComponent implements OnInit {
       catchError(() => of({ resultados: [], falhou: true } as BuscaParcial))
     );
 
-    // Profissionais são restritos a ADMIN no backend; para os demais perfis a
-    // requisição sequer é disparada, evitando um 403 e o redirecionamento global.
+    // O resultado leva à tela de profissional, que é só de ADMIN; para os demais
+    // perfis a requisição sequer é disparada, evitando um clique que daria 403.
     // O endpoint também não filtra por CPF, então termos numéricos ficam de fora.
     const profissionais$: Observable<BuscaParcial> =
       this.authService.isAdmin() && !this.pareceCpf(termo)

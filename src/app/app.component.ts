@@ -9,6 +9,7 @@ import {
   RouterOutlet
 } from '@angular/router';
 import { filter } from 'rxjs';
+import { PAPEIS } from './core/models/auth';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { BuscaGlobalComponent } from './shared/components/busca-global/busca-global.component';
@@ -25,6 +26,7 @@ import { DESKTOP_MIN_WIDTH } from './shared/utils/breakpoints';
 })
 export class AppComponent {
   readonly authService = inject(AuthService);
+  readonly papeis = PAPEIS;
   readonly notificacoes = inject(NotificacaoService);
   private readonly router = inject(Router);
 

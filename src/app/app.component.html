@@ -25,22 +25,26 @@
               (click)="fecharMenu()"
             >Início</a>
           </li>
-          <li>
-            <a
-              routerLink="/agenda"
-              routerLinkActive="is-active"
-              ariaCurrentWhenActive="page"
-              (click)="fecharMenu()"
-            >Agenda</a>
-          </li>
-          <li>
-            <a
-              routerLink="/pacientes"
-              routerLinkActive="is-active"
-              ariaCurrentWhenActive="page"
-              (click)="fecharMenu()"
-            >Pacientes</a>
-          </li>
+          @if (authService.hasAnyRole(papeis.agenda)) {
+            <li>
+              <a
+                routerLink="/agenda"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                (click)="fecharMenu()"
+              >Agenda</a>
+            </li>
+          }
+          @if (authService.hasAnyRole(papeis.equipe)) {
+            <li>
+              <a
+                routerLink="/pacientes"
+                routerLinkActive="is-active"
+                ariaCurrentWhenActive="page"
+                (click)="fecharMenu()"
+              >Pacientes</a>
+            </li>
+          }
           @if (authService.isAdmin()) {
             <li>
               <a
@@ -50,6 +54,8 @@
                 (click)="fecharMenu()"
               >Profissionais</a>
             </li>
+          }
+          @if (authService.hasAnyRole(papeis.fiscal)) {
             <li>
               <a
                 routerLink="/relatorios"
@@ -58,6 +64,8 @@
                 (click)="fecharMenu()"
               >Relatórios</a>
             </li>
+          }
+          @if (authService.isAdmin()) {
             <li>
               <a
                 routerLink="/admin"

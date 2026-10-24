@@ -15,6 +15,8 @@ docker compose up --build
 
 A aplicação fica disponível em `http://localhost:4200`.
 
+O `HEALTHCHECK` da imagem consulta `http://127.0.0.1/` dentro do container. Não troque por `localhost`: no Alpine ele resolve primeiro para `::1`, o Nginx só escuta em IPv4 e o container ficaria sempre `unhealthy`.
+
 Para apontar para outro backend:
 
 ```bash

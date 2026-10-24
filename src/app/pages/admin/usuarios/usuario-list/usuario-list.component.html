@@ -34,8 +34,9 @@
         <tr>
           <th app-sortable campo="name" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Nome</th>
           <th app-sortable campo="email" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">E-mail</th>
-          <th app-sortable campo="role" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Perfil</th>
-          <th app-sortable campo="active" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Status</th>
+          <!-- Sem ordenação: papéis são uma lista e a API não ordena por ela. -->
+          <th>Papéis</th>
+          <th app-sortable campo="ativo" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -44,21 +45,21 @@
           <tr>
             <td>{{ u.name }}</td>
             <td>{{ u.email }}</td>
-            <td>{{ roleLabel[u.role] }}</td>
+            <td>{{ rotuloPapeis(u.roles) }}</td>
             <td>
-              @if (u.active === true) {
+              @if (u.ativo === true) {
                 <span class="status status--ativo">Ativo</span>
               }
-              @if (u.active === false) {
+              @if (u.ativo === false) {
                 <span class="status status--inativo">Inativo</span>
               }
-              @if (u.active === undefined) {
+              @if (u.ativo === undefined) {
                 <span class="status status--desconhecido">—</span>
               }
             </td>
             <td class="acoes">
               <a [routerLink]="['/admin/usuarios', u.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
-              @if (u.active === true) {
+              @if (u.ativo === true) {
                 <button
                   class="btn btn-sm btn-warning"
                   [disabled]="isUsuarioAtual(u)"
@@ -67,14 +68,14 @@
                   Inativar
                 </button>
               }
-              @if (u.active === false) {
+              @if (u.ativo === false) {
                 <button
                   class="btn btn-sm btn-success"
                   (click)="confirmarAcao('ativar', u)">
                   Reativar
                 </button>
               }
-              @if (u.active !== undefined) {
+              @if (u.ativo !== undefined) {
                 <button
                   class="btn btn-sm btn-danger"
                   [disabled]="isUsuarioAtual(u)"

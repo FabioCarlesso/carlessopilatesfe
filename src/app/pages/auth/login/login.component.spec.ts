@@ -90,7 +90,7 @@ describe('LoginComponent', () => {
         id: 1,
         name: 'Admin',
         email: 'admin@carlessopilates.com',
-        role: 'ADMIN'
+        roles: ['ADMIN']
       }
     }));
     const spy = spyOn(router, 'navigate');

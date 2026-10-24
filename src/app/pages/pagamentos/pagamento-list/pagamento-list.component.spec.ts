@@ -6,6 +6,7 @@ import { FormBuilder } from '@angular/forms';
 import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
+import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO } from '../../../core/models/plano';
 
@@ -141,7 +142,7 @@ describe('PagamentoListComponent', () => {
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef, new ElementRef(document.createElement('div')));
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, TestBed.inject(AuthService), invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef, new ElementRef(document.createElement('div')));
 
     invalidComponent.ngOnInit();
 

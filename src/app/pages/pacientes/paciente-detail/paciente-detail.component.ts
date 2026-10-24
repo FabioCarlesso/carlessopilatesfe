@@ -1,6 +1,8 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PAPEIS } from '../../../core/models/auth';
+import { AuthService } from '../../../core/services/auth.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
@@ -20,9 +22,11 @@ export class PacienteDetailComponent implements OnInit {
   confirmarInativar = false;
   confirmarAtivar = false;
   acaoEmAndamento = false;
+  readonly papeis = PAPEIS;
 
   constructor(
     private service: PacienteService,
+    public authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {}

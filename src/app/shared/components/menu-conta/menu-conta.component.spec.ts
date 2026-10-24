@@ -16,7 +16,7 @@ describe('MenuContaComponent', () => {
     id: 1,
     name: 'Fabio Carlesso',
     email: 'fabio@carlessopilates.com.br',
-    role: 'ADMIN'
+    roles: ['ADMIN']
   };
 
   // O componente consulta `matchMedia` para decidir entre dropdown e lista plana.
@@ -135,13 +135,21 @@ describe('MenuContaComponent', () => {
       expect(cabecalho.textContent).toContain('Administrador');
     });
 
-    it('should show the "Usuário" role label for a non admin user', async () => {
-      await setup({ id: 2, name: 'Ana Souza', email: 'ana@exemplo.com', role: 'USER' });
+    it('should show the role label for a non admin user', async () => {
+      await setup({ id: 2, name: 'Ana Souza', email: 'ana@exemplo.com', roles: ['RECEPCAO'] });
       const fixture = criar();
       abrir(fixture);
       const cabecalho = fixture.nativeElement.querySelector('.menu-conta-cabecalho') as HTMLElement;
-      expect(cabecalho.textContent).toContain('Usuário');
+      expect(cabecalho.textContent).toContain('Recepção');
       expect(cabecalho.textContent).not.toContain('Administrador');
+    });
+
+    it('should list every accumulated role', async () => {
+      await setup({ id: 3, name: 'Bia Lima', email: 'bia@exemplo.com', roles: ['PROFISSIONAL', 'FINANCEIRO'] });
+      const fixture = criar();
+      abrir(fixture);
+      const cabecalho = fixture.nativeElement.querySelector('.menu-conta-cabecalho') as HTMLElement;
+      expect(cabecalho.textContent).toContain('Profissional, Financeiro');
     });
 
     // Sessão sem `currentUser` no localStorage (ausente ou corrompido): o menu

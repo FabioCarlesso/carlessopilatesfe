@@ -6,7 +6,7 @@ import { AuthService } from './core/services/auth.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NotificacaoService } from './core/services/notificacao.service';
 import { StylePreferencesService, StyleTheme } from './core/services/style-preferences.service';
-import { AuthenticatedUser } from './core/models/auth';
+import { AuthenticatedUser, UserRole } from './core/models/auth';
 import { renderizarEmViewport } from '../testing/viewport';
 
 describe('AppComponent', () => {
@@ -17,8 +17,13 @@ describe('AppComponent', () => {
     id: 1,
     name: 'Fabio Carlesso',
     email: 'fabio@carlessopilates.com.br',
-    role: 'ADMIN'
+    roles: ['ADMIN']
   };
+
+  /** Faz o `hasAnyRole` do spy responder como um usuário com estes papéis. */
+  function comPapeis(roles: UserRole[]): void {
+    authServiceSpy.hasAnyRole.and.callFake((area: readonly UserRole[]) => area.some(r => roles.includes(r)));
+  }
 
   function setup(
     authenticated: boolean,
@@ -26,9 +31,11 @@ describe('AppComponent', () => {
     theme: StyleTheme = 'light',
     currentUser: AuthenticatedUser | null = authenticated ? usuarioAdmin : null
   ) {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'hasAnyRole', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(authenticated);
     authServiceSpy.isAdmin.and.returnValue(admin);
+    // Não admin é a recepção, o perfil de equipe mais comum.
+    comPapeis(admin ? ['ADMIN'] : ['RECEPCAO']);
     authServiceSpy.getCurrentUser.and.returnValue(currentUser);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(
@@ -111,6 +118,32 @@ describe('AppComponent', () => {
     expect(el.querySelector('a[href="/profissionais"]')).toBeNull();
     expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
     expect(el.querySelector('a[href="/admin"]')).toBeNull();
+  });
+
+  it('should show only the links of the areas each role reaches', async () => {
+    await setup(true, false);
+    comPapeis(['FINANCEIRO']);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // FINANCEIRO: pacientes e relatórios, sem agenda nem administração.
+    expect(el.querySelector('a[href="/pacientes"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/relatorios"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/agenda"]')).toBeNull();
+    expect(el.querySelector('a[href="/admin"]')).toBeNull();
+  });
+
+  it('should add the links of every accumulated role', async () => {
+    await setup(true, false);
+    comPapeis(['PROFISSIONAL', 'FINANCEIRO']);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('a[href="/agenda"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/relatorios"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/profissionais"]')).toBeNull();
   });
 
   it('should render dashboard navigation link when authenticated', async () => {
@@ -443,9 +476,10 @@ describe('AppComponent', () => {
   });
 
   function setupComRotas() {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'logout', 'getCurrentUser']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated', 'isAdmin', 'hasAnyRole', 'logout', 'getCurrentUser']);
     authServiceSpy.isAuthenticated.and.returnValue(true);
     authServiceSpy.isAdmin.and.returnValue(false);
+    comPapeis(['RECEPCAO']);
     authServiceSpy.getCurrentUser.and.returnValue(usuarioAdmin);
 
     stylePreferencesSpy = jasmine.createSpyObj<StylePreferencesService>(

@@ -11,8 +11,8 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   id: 1,
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
-  role: 'ADMIN',
-  active: true
+  roles: ['ADMIN'],
+  ativo: true
 };
 
 const mockUsuarioInativo: UsuarioAdminResponseDTO = {
@@ -20,8 +20,8 @@ const mockUsuarioInativo: UsuarioAdminResponseDTO = {
   id: 2,
   name: 'João Inativo',
   email: 'joao@carlessopilates.com',
-  role: 'USER',
-  active: false
+  roles: ['RECEPCAO', 'FINANCEIRO'],
+  ativo: false
 };
 
 const mockPage: UsuarioAdminPage = {
@@ -49,7 +49,7 @@ describe('UsuarioListComponent', () => {
       id: 99,
       name: 'Logado',
       email: 'logado@carlessopilates.com',
-      role: 'ADMIN'
+      roles: ['ADMIN']
     });
 
     await TestBed.configureTestingModule({
@@ -147,7 +147,8 @@ describe('UsuarioListComponent', () => {
     expect(rows[0].textContent).toContain('Ativo');
 
     expect(rows[1].textContent).toContain('João Inativo');
-    expect(rows[1].textContent).toContain('Usuário');
+    // Papéis acumulados aparecem todos, na ordem em que a API os devolve.
+    expect(rows[1].textContent).toContain('Recepção, Financeiro');
     expect(rows[1].textContent).toContain('Inativo');
   });
 
@@ -393,7 +394,7 @@ describe('UsuarioListComponent', () => {
       id: mockUsuario.id,
       name: mockUsuario.name,
       email: mockUsuario.email,
-      role: 'ADMIN'
+      roles: ['ADMIN']
     });
 
     fixture = TestBed.createComponent(UsuarioListComponent);
@@ -603,13 +604,13 @@ describe('UsuarioListComponent', () => {
     expect(component.erro).toBeNull();
   });
 
-  it('should not render Inativar/Reativar/Excluir buttons when active is undefined', () => {
+  it('should not render Inativar/Reativar/Excluir buttons when ativo is undefined', () => {
     const usuarioDesconhecido: UsuarioAdminResponseDTO = {
       version: 0,
       id: 3,
       name: 'Estado Desconhecido',
       email: 'desconhecido@carlessopilates.com',
-      role: 'USER'
+      roles: ['RECEPCAO']
     };
     serviceSpy.listar.and.returnValue(of({
       content: [usuarioDesconhecido],
@@ -630,7 +631,7 @@ describe('UsuarioListComponent', () => {
       id: mockUsuarioInativo.id,
       name: mockUsuarioInativo.name,
       email: mockUsuarioInativo.email,
-      role: 'USER'
+      roles: ['RECEPCAO']
     });
 
     fixture = TestBed.createComponent(UsuarioListComponent);
@@ -673,26 +674,26 @@ describe('UsuarioListComponent', () => {
   });
 
   it('should toggle asc → desc → back to default (name asc) on repeated clicks', () => {
-    component.ordenar('role');
-    expect(component.ordenacao).toEqual({ campo: 'role', direcao: 'asc' });
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'asc' });
 
-    component.ordenar('role');
-    expect(component.ordenacao).toEqual({ campo: 'role', direcao: 'desc' });
+    component.ordenar('email');
+    expect(component.ordenacao).toEqual({ campo: 'email', direcao: 'desc' });
 
-    component.ordenar('role');
+    component.ordenar('email');
     expect(component.ordenacao).toEqual({ campo: 'name', direcao: 'asc' });
   });
 
   it('should render sortable headers with aria-sort reflecting the active column', () => {
     const headers = fixture.nativeElement.querySelectorAll('th[app-sortable]') as NodeListOf<HTMLTableCellElement>;
-    // Nome, E-mail, Perfil e Status são ordenáveis.
-    expect(headers.length).toBe(4);
+    // Nome, E-mail e Status são ordenáveis; Papéis é uma lista e a API não ordena por ela.
+    expect(headers.length).toBe(3);
     expect(headers[0].getAttribute('aria-sort')).toBe('ascending');
 
-    component.ordenar('active');
+    component.ordenar('ativo');
     fixture.detectChanges();
 
     expect(headers[0].getAttribute('aria-sort')).toBe('none');
-    expect(headers[3].getAttribute('aria-sort')).toBe('ascending');
+    expect(headers[2].getAttribute('aria-sort')).toBe('ascending');
   });
 });

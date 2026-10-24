@@ -13,6 +13,12 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-4);
   margin-bottom: var(--sp-6);
+
+  // Sem o card de receita (papéis fora do financeiro), os três restantes
+  // ocupam a linha em vez de deixar uma coluna vazia.
+  &--sem-receita {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .dashboard-card,

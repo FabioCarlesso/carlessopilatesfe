@@ -9,6 +9,7 @@ import {
   LoginResponseDTO,
   RefreshTokenRequestDTO,
   ResetPasswordRequestDTO,
+  USER_ROLES,
   UserRole
 } from '../models/auth';
 
@@ -66,6 +67,11 @@ export class AuthService {
       tap(res => {
         if (this.getRefreshToken() === refreshToken) {
           this.storeTokens(res);
+          // A API devolve o usuário atual no refresh: papéis acrescentados pelo
+          // admin passam a valer na tela sem exigir novo login.
+          if (res.user) {
+            localStorage.setItem(this.currentUserKey, JSON.stringify(res.user));
+          }
         }
       }),
       finalize(() => (this.refreshEmAndamento$ = null)),
@@ -128,8 +134,8 @@ export class AuthService {
     }
   }
 
-  getCurrentUserRole(): UserRole | null {
-    return this.getCurrentUser()?.role ?? null;
+  getCurrentUserRoles(): UserRole[] {
+    return this.getCurrentUser()?.roles ?? [];
   }
 
   isAdmin(): boolean {
@@ -137,7 +143,13 @@ export class AuthService {
   }
 
   hasRole(role: UserRole): boolean {
-    return this.getCurrentUserRole() === role;
+    return this.getCurrentUserRoles().includes(role);
+  }
+
+  /** Verdadeiro se o usuário tem ao menos um dos papéis — ex.: `hasAnyRole(PAPEIS.clinica)`. */
+  hasAnyRole(roles: readonly UserRole[]): boolean {
+    const atuais = this.getCurrentUserRoles();
+    return roles.some(role => atuais.includes(role));
   }
 
   private storeTokens(res: LoginResponseDTO): void {
@@ -155,7 +167,12 @@ export class AuthService {
     }
 
     const user = value as Partial<AuthenticatedUser>;
-    const validRole = user.role === 'USER' || user.role === 'ADMIN';
+    // Sessão gravada antes da #128 traz `role` (string) e cai aqui: é descartada
+    // e o usuário loga de novo, já recebendo `roles`.
+    const validRoles =
+      Array.isArray(user.roles) &&
+      user.roles.length > 0 &&
+      user.roles.every(role => USER_ROLES.includes(role));
 
     return (
       typeof user.id === 'number' &&
@@ -164,8 +181,8 @@ export class AuthService {
       user.name.trim().length > 0 &&
       typeof user.email === 'string' &&
       user.email.trim().length > 0 &&
-      validRole &&
-      (user.active === undefined || typeof user.active === 'boolean')
+      validRoles &&
+      (user.ativo === undefined || typeof user.ativo === 'boolean')
     );
   }
 }
