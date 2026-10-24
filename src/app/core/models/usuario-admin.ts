@@ -6,7 +6,7 @@ export interface UsuarioAdminResponseDTO {
   name: string;
   email: string;
   roles: UserRole[];
-  active?: boolean;
+  ativo?: boolean;
   /** Versão do registro para o locking otimista: devolva-a no próximo update. */
   version: number;
 }

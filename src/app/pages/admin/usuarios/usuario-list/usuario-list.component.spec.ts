@@ -12,7 +12,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
   roles: ['ADMIN'],
-  active: true
+  ativo: true
 };
 
 const mockUsuarioInativo: UsuarioAdminResponseDTO = {
@@ -21,7 +21,7 @@ const mockUsuarioInativo: UsuarioAdminResponseDTO = {
   name: 'João Inativo',
   email: 'joao@carlessopilates.com',
   roles: ['RECEPCAO', 'FINANCEIRO'],
-  active: false
+  ativo: false
 };
 
 const mockPage: UsuarioAdminPage = {
@@ -604,7 +604,7 @@ describe('UsuarioListComponent', () => {
     expect(component.erro).toBeNull();
   });
 
-  it('should not render Inativar/Reativar/Excluir buttons when active is undefined', () => {
+  it('should not render Inativar/Reativar/Excluir buttons when ativo is undefined', () => {
     const usuarioDesconhecido: UsuarioAdminResponseDTO = {
       version: 0,
       id: 3,
@@ -690,7 +690,7 @@ describe('UsuarioListComponent', () => {
     expect(headers.length).toBe(3);
     expect(headers[0].getAttribute('aria-sort')).toBe('ascending');
 
-    component.ordenar('active');
+    component.ordenar('ativo');
     fixture.detectChanges();
 
     expect(headers[0].getAttribute('aria-sort')).toBe('none');

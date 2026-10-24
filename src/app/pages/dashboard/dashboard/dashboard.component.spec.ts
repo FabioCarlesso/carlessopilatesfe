@@ -109,6 +109,21 @@ describe('DashboardComponent', () => {
     expect(el.textContent).toContain('Aulas do mês atual');
   });
 
+  it('should hide the revenue card when the API omits it for the user role', () => {
+    serviceSpy.resumo.and.returnValue(of({
+      ...mockResumo,
+      pagamentos: { ...mockResumo.pagamentos, receitaMesAtual: null }
+    }));
+
+    component.carregar();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).not.toContain('Receita do mês');
+    expect(el.textContent).toContain('Pacientes ativos');
+    expect(el.querySelector('.dashboard-grid')!.classList).toContain('dashboard-grid--sem-receita');
+  });
+
   it('should render reports action when user reaches the fiscal area', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(authServiceSpy.hasAnyRole).toHaveBeenCalledWith(PAPEIS.fiscal);

@@ -182,7 +182,7 @@ export class AuthService {
       typeof user.email === 'string' &&
       user.email.trim().length > 0 &&
       validRoles &&
-      (user.active === undefined || typeof user.active === 'boolean')
+      (user.ativo === undefined || typeof user.ativo === 'boolean')
     );
   }
 }

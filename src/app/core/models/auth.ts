@@ -33,7 +33,7 @@ export interface AuthenticatedUser {
   email: string;
   /** Um ou mais papéis, na ordem do enum da API. */
   roles: UserRole[];
-  active?: boolean;
+  ativo?: boolean;
 }
 
 export interface LoginResponseDTO {

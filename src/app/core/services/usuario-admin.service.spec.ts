@@ -15,7 +15,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
   roles: ['ADMIN'],
-  active: true
+  ativo: true
 };
 
 const mockPage: UsuarioAdminPage = {

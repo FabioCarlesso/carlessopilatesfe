@@ -20,7 +20,10 @@
 }
 
 @if (!loading && resumo) {
-  <section class="dashboard-grid" aria-label="Indicadores principais">
+  <section
+    class="dashboard-grid"
+    [class.dashboard-grid--sem-receita]="resumo.pagamentos.receitaMesAtual === null"
+    aria-label="Indicadores principais">
     <article class="dashboard-card dashboard-card--highlight">
       <div class="dashboard-card__label">Pacientes ativos</div>
       <div class="dashboard-card__value">{{ resumo.pacientes.totalAtivos }}</div>
@@ -37,15 +40,17 @@
       </div>
     </article>
 
-    <article class="dashboard-card">
-      <div class="dashboard-card__label">Receita do mês</div>
-      <div class="dashboard-card__value dashboard-card__value--currency">
-        {{ resumo.pagamentos.receitaMesAtual | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
-      </div>
-      <div class="dashboard-card__meta">
-        {{ resumo.pagamentos.totalPagos }} pagamentos confirmados
-      </div>
-    </article>
+    @if (resumo.pagamentos.receitaMesAtual !== null) {
+      <article class="dashboard-card">
+        <div class="dashboard-card__label">Receita do mês</div>
+        <div class="dashboard-card__value dashboard-card__value--currency">
+          {{ resumo.pagamentos.receitaMesAtual | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+        </div>
+        <div class="dashboard-card__meta">
+          {{ resumo.pagamentos.totalPagos }} pagamentos confirmados
+        </div>
+      </article>
+    }
 
     <article class="dashboard-card">
       <div class="dashboard-card__label">Aulas no mês</div>

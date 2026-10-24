@@ -13,7 +13,7 @@ const mockUsuario: UsuarioAdminResponseDTO = {
   name: 'Maria Admin',
   email: 'maria@carlessopilates.com',
   roles: ['ADMIN'],
-  active: true
+  ativo: true
 };
 
 async function setup(idParam: string | null, service?: jasmine.SpyObj<UsuarioAdminService>) {

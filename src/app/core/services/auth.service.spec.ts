@@ -19,7 +19,7 @@ describe('AuthService', () => {
       name: 'Admin',
       email: 'admin@carlessopilates.com',
       roles: ['ADMIN'] as const,
-      active: true
+      ativo: true
     }
   };
 
@@ -200,7 +200,7 @@ describe('AuthService', () => {
     expect(stored.name).toBe('Admin');
     expect(stored.email).toBe('admin@carlessopilates.com');
     expect(stored.roles).toEqual(['ADMIN']);
-    expect(stored.active).toBeTrue();
+    expect(stored.ativo).toBeTrue();
   });
 
   it('should return token from localStorage', () => {
