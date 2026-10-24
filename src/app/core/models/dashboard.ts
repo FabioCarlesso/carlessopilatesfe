@@ -12,7 +12,8 @@ export interface DashboardPagamentosResumoDTO {
   totalPendentes: number;
   totalPagos: number;
   totalVencidos: number;
-  receitaMesAtual: number;
+  /** `null` para quem não é `ADMIN` nem `FINANCEIRO`: a API não expõe o faturamento aos demais papéis. */
+  receitaMesAtual: number | null;
 }
 
 export interface DashboardAulasResumoDTO {

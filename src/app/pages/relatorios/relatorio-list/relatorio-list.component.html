@@ -3,12 +3,14 @@
 </div>
 
 <div class="relatorio-grid">
-  <a routerLink="/relatorios/indicadores" class="relatorio-card">
-    <span class="relatorio-card__title">Indicadores</span>
-    <span class="relatorio-card__description">
-      Acompanhe receita, ocupação, evasão de pacientes e aulas por profissional mês a mês.
-    </span>
-  </a>
+  @if (authService.isAdmin()) {
+    <a routerLink="/relatorios/indicadores" class="relatorio-card">
+      <span class="relatorio-card__title">Indicadores</span>
+      <span class="relatorio-card__description">
+        Acompanhe receita, ocupação, evasão de pacientes e aulas por profissional mês a mês.
+      </span>
+    </a>
+  }
 
   <a routerLink="/relatorios/pagamento-profissional" class="relatorio-card">
     <span class="relatorio-card__title">Pagamento de Profissional</span>

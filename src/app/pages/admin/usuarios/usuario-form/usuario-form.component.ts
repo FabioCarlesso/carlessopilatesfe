@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { UserRole } from '../../../../core/models/auth';
 import { ROLE_OPTIONS, RoleOption, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
@@ -41,7 +42,8 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      role: ['', Validators.required]
+      // Lista de papéis: um usuário acumula quantos precisar, mas ao menos um.
+      roles: [[] as UserRole[], Validators.required]
     });
 
     if (!this.route.snapshot.paramMap.has('id')) {
@@ -90,14 +92,14 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
           name: valor.name,
           email: valor.email,
           ...(senha ? { password: senha } : {}),
-          role: valor.role,
+          roles: this.papeisSelecionados(),
           version: this.version
         })
       : this.service.cadastrar({
           name: valor.name,
           email: valor.email,
           password: senha,
-          role: valor.role
+          roles: this.papeisSelecionados()
         });
 
     request$.subscribe({
@@ -111,6 +113,23 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
 
   campo(nome: string) {
     return this.form.get(nome);
+  }
+
+  togglePapel(papel: UserRole): void {
+    const controle = this.form.get('roles')!;
+    const atual: UserRole[] = controle.value;
+    controle.setValue(atual.includes(papel) ? atual.filter(r => r !== papel) : [...atual, papel]);
+    controle.markAsTouched();
+  }
+
+  papelSelecionado(papel: UserRole): boolean {
+    return (this.form.get('roles')!.value as UserRole[]).includes(papel);
+  }
+
+  /** Papéis marcados na ordem das opções (a da API), não na ordem em que foram clicados. */
+  private papeisSelecionados(): UserRole[] {
+    const marcados: UserRole[] = this.form.get('roles')!.value;
+    return this.roles.map(r => r.value).filter(valor => marcados.includes(valor));
   }
 
   private carregarEdicao(id: number): void {
@@ -149,7 +168,7 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
     this.form.patchValue({
       name: usuario.name,
       email: usuario.email,
-      role: usuario.role,
+      roles: [...usuario.roles],
       password: ''
     });
   }
@@ -159,6 +178,9 @@ export class UsuarioFormComponent implements OnInit, AfterViewInit {
     if (ehConflitoConcorrencia(err)) return MENSAGEM_CONFLITO_CONCORRENCIA;
     if (err?.status === 409) return 'Já existe um usuário com este e-mail.';
     if (err?.status === 400) return err.error?.message ?? 'Dados inválidos.';
+    // Regras de papéis da API: alterar os próprios papéis, tirar o ADMIN do último
+    // administrador ativo ou usar papel reservado. O `detail` já vem em português.
+    if (err?.status === 422) return err.error?.detail ?? 'Não foi possível salvar os papéis do usuário.';
     return 'Erro ao salvar usuário.';
   }
 

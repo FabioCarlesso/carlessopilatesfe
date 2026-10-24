@@ -7,7 +7,7 @@ import { SortableHeaderComponent } from '../../../../shared/components/sortable-
 import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../../core/models/ordenacao';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ROLE_LABEL, UsuarioAdminResponseDTO } from '../../../../core/models/usuario-admin';
+import { UsuarioAdminResponseDTO, rotuloPapeis } from '../../../../core/models/usuario-admin';
 import { PageMetadata } from '../../../../core/models/common';
 
 type ConfirmacaoAcao = 'inativar' | 'ativar' | 'excluir';
@@ -44,7 +44,7 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
   private currentUserId: number | null = null;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly roleLabel = ROLE_LABEL;
+  readonly rotuloPapeis = rotuloPapeis;
 
   constructor(
     private service: UsuarioAdminService,

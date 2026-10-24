@@ -2,3 +2,50 @@
   color: var(--text-muted);
   font-size: var(--fs-micro);
 }
+
+/* Mesmo padrão do filtro de status da inadimplência: o rótulo é a linha
+   clicável, com 18px de caixa e `--text-brand`, que tem variante escura.
+   A legenda repete o caption de `.form-group label` (global), para "Papéis"
+   ficar igual a "Nome" e "E-mail"; as opções desfazem esse caption, que o
+   fieldset herda por ser `.form-group`. */
+.papeis {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  legend {
+    padding: 0;
+    margin-bottom: var(--sp-2);
+    font-size: var(--fs-caption);
+    font-weight: 500;
+    letter-spacing: var(--ls-caps-tight);
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+}
+
+.papeis-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.papel-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  color: var(--text-primary);
+  font-size: var(--fs-body-sm);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--text-brand);
+  }
+}

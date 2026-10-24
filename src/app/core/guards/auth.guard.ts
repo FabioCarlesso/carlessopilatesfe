@@ -6,9 +6,16 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
-    return true;
+  if (!authService.isAuthenticated()) {
+    return router.createUrlTree(['/login']);
   }
 
-  return router.createUrlTree(['/login']);
+  // Token sem usuário válido (ex.: sessão gravada antes da #128, com `role`
+  // único): descarta, como o `roleGuard`, em vez de abrir a tela sem papéis.
+  if (!authService.getCurrentUser()) {
+    authService.clearSession();
+    return router.createUrlTree(['/login']);
+  }
+
+  return true;
 };

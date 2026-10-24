@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthenticatedUser } from '../../../core/models/auth';
-import { ROLE_LABEL } from '../../../core/models/usuario-admin';
+import { rotuloPapeis } from '../../../core/models/usuario-admin';
 import { AuthService } from '../../../core/services/auth.service';
 import { StylePreferencesService } from '../../../core/services/style-preferences.service';
 import { MEDIA_QUERY_COMPACTO } from '../../utils/breakpoints';
@@ -111,7 +111,7 @@ export class MenuContaComponent implements OnInit {
   }
 
   get perfil(): string {
-    return this.usuario ? ROLE_LABEL[this.usuario.role] : '';
+    return this.usuario ? rotuloPapeis(this.usuario.roles) : '';
   }
 
   get temaEscuro(): boolean {

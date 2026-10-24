@@ -58,27 +58,32 @@
     </div>
 
     <div class="form-row">
-      <div class="form-group">
-        <label for="role">Perfil <span aria-hidden="true">*</span></label>
-        <select
-          id="role"
-          formControlName="role"
-          class="form-control"
-          aria-required="true"
-          aria-describedby="role-errors"
-          [class.is-invalid]="campo('role')?.invalid && campo('role')?.touched"
-        >
-          <option value="">Selecione...</option>
+      <fieldset class="form-group papeis" aria-describedby="roles-hint roles-errors">
+        <legend>Papéis <span aria-hidden="true">*</span></legend>
+        <div class="papeis-opcoes">
           @for (role of roles; track role.value) {
-            <option [value]="role.value">{{ role.label }}</option>
-          }
-        </select>
-        <div id="role-errors" aria-live="polite">
-          @if (campo('role')?.invalid && campo('role')?.touched) {
-            <div class="invalid-feedback">Perfil é obrigatório.</div>
+            <label class="papel-checkbox">
+              <!-- Sem formControlName o Angular não marca `ng-invalid` no input; a
+              classe manual é o que deixa o focarPrimeiroInvalido chegar ao grupo. -->
+              <input
+                type="checkbox"
+                [name]="'role-' + role.value"
+                [checked]="papelSelecionado(role.value)"
+                [class.ng-invalid]="campo('roles')?.invalid"
+                [attr.aria-invalid]="campo('roles')?.invalid && campo('roles')?.touched ? 'true' : null"
+                (change)="togglePapel(role.value)"
+              />
+              {{ role.label }}
+            </label>
           }
         </div>
-      </div>
+        <div id="roles-hint" class="field-hint">Marque todos os papéis do usuário: o acesso é a soma deles.</div>
+        <div id="roles-errors" aria-live="polite">
+          @if (campo('roles')?.invalid && campo('roles')?.touched) {
+            <div class="invalid-feedback">Selecione ao menos um papel.</div>
+          }
+        </div>
+      </fieldset>
 
       <div class="form-group">
         <label for="password">

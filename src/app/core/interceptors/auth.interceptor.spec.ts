@@ -71,7 +71,7 @@ describe('authInterceptor', () => {
       accessToken,
       refreshToken,
       tokenType: 'Bearer',
-      user: { id: 1, name: 'Admin', email: 'admin@carlessopilates.com', role: 'ADMIN' }
+      user: { id: 1, name: 'Admin', email: 'admin@carlessopilates.com', roles: ['ADMIN'] }
     };
   }
 

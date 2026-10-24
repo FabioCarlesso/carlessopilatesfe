@@ -7,6 +7,7 @@ import { LOCALE_ID } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
+import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
 
 registerLocaleData(localePt);
@@ -42,8 +43,9 @@ describe('DashboardComponent', () => {
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('DashboardService', ['resumo']);
     serviceSpy.resumo.and.returnValue(of(mockResumo));
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAdmin']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['isAdmin', 'hasAnyRole']);
     authServiceSpy.isAdmin.and.returnValue(true);
+    authServiceSpy.hasAnyRole.and.returnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent, RouterTestingModule],
@@ -107,13 +109,30 @@ describe('DashboardComponent', () => {
     expect(el.textContent).toContain('Aulas do mês atual');
   });
 
-  it('should render reports action when user is admin', () => {
+  it('should hide the revenue card when the API omits it for the user role', () => {
+    serviceSpy.resumo.and.returnValue(of({
+      ...mockResumo,
+      pagamentos: { ...mockResumo.pagamentos, receitaMesAtual: null }
+    }));
+
+    component.carregar();
+    fixture.detectChanges();
+
     const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).not.toContain('Receita do mês');
+    expect(el.textContent).toContain('Pacientes ativos');
+    expect(el.querySelector('.dashboard-grid')!.classList).toContain('dashboard-grid--sem-receita');
+  });
+
+  it('should render reports action when user reaches the fiscal area', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(authServiceSpy.hasAnyRole).toHaveBeenCalledWith(PAPEIS.fiscal);
     expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
   });
 
-  it('should hide reports action when user is not admin', () => {
+  it('should hide reports action when user has no fiscal role', () => {
     authServiceSpy.isAdmin.and.returnValue(false);
+    authServiceSpy.hasAnyRole.and.returnValue(false);
     const userFixture = TestBed.createComponent(DashboardComponent);
     userFixture.detectChanges();
 
