@@ -15,6 +15,8 @@ COPY --from=build /app/dist/carlessopilatesfe/browser /usr/share/nginx/html
 
 EXPOSE 80
 
+# 127.0.0.1, e não localhost: no Alpine o localhost resolve primeiro para ::1, e o
+# nginx só escuta em IPv4 (`listen 80`), então o healthcheck falhava sempre.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost/ || exit 1
+  CMD wget -qO- http://127.0.0.1/ || exit 1
 
