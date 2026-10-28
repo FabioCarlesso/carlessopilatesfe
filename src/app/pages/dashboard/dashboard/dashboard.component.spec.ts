@@ -130,6 +130,92 @@ describe('DashboardComponent', () => {
     expect(el.querySelector('.dashboard-grid')!.classList).toContain('dashboard-grid--sem-receita');
   });
 
+  it('should build the chart parts from the loaded summary', () => {
+    expect(component.segmentosPagamentos.map(s => [s.chave, s.valor])).toEqual([
+      ['pagos', 8], ['pendentes', 5], ['vencidos', 2]
+    ]);
+    expect(component.segmentosAulas.map(s => [s.chave, s.valor])).toEqual([
+      ['realizadas', 40], ['agendadas', 20]
+    ]);
+    expect(component.segmentosPacientes.map(s => [s.chave, s.valor])).toEqual([
+      ['ativos', 10], ['inativos', 2]
+    ]);
+  });
+
+  // Issue #120: os gráficos desenham o resumo já carregado e não buscam nada.
+  it('should render the three charts from a single summary request', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const graficos = Array.from(el.querySelectorAll('app-grafico-proporcao figure'))
+      .map(figura => figura.getAttribute('aria-label'));
+
+    expect(serviceSpy.resumo).toHaveBeenCalledTimes(1);
+    expect(graficos).toEqual([
+      'Distribuição dos pagamentos por status',
+      'Aulas realizadas e agendadas no mês atual',
+      'Pacientes ativos e inativos'
+    ]);
+    expect(el.querySelectorAll('.grafico-proporcao__fatia').length).toBe(3);
+  });
+
+  it('should keep the numbers in text next to the charts', () => {
+    const textos = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.grafico-proporcao__item'))
+      .map(item => (item.textContent ?? '').replace(/\s+/g, ' ').trim());
+
+    expect(textos).toEqual([
+      'Pagos 8 54%', 'Pendentes 5 33%', 'Vencidos 2 13%',
+      'Realizadas 40 67%', 'Agendadas 20 33%',
+      'Ativos 10 83%', 'Inativos 2 17%'
+    ]);
+  });
+
+  it('should explain empty charts when the month has no classes', () => {
+    serviceSpy.resumo.and.returnValue(of({
+      ...mockResumo,
+      aulas: { totalRealizadasMesAtual: 0, totalAgendadasMesAtual: 0 }
+    }));
+
+    component.carregar();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Nenhuma aula no mês atual.');
+    expect(el.textContent).not.toContain('Nenhum pagamento registrado.');
+  });
+
+  it('should keep the payments chart, which counts records, when revenue is omitted', () => {
+    serviceSpy.resumo.and.returnValue(of({
+      ...mockResumo,
+      pagamentos: { ...mockResumo.pagamentos, receitaMesAtual: null }
+    }));
+
+    component.carregar();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('figure[aria-label="Distribuição dos pagamentos por status"]')).not.toBeNull();
+    expect(el.textContent).toContain('Pagos 8');
+  });
+
+  it('should not render charts while the summary is loading', () => {
+    serviceSpy.resumo.and.returnValue(NEVER);
+    const carregando = TestBed.createComponent(DashboardComponent);
+    carregando.detectChanges();
+
+    const el = carregando.nativeElement as HTMLElement;
+    expect(el.querySelector('.loading')?.textContent).toContain('Carregando indicadores...');
+    expect(el.querySelector('app-grafico-proporcao')).toBeNull();
+  });
+
+  it('should not render charts when the summary fails', () => {
+    serviceSpy.resumo.and.returnValue(throwError(() => new Error('fail')));
+    const comErro = TestBed.createComponent(DashboardComponent);
+    comErro.detectChanges();
+
+    const el = comErro.nativeElement as HTMLElement;
+    expect(el.querySelector('app-grafico-proporcao')).toBeNull();
+    expect(el.querySelector('.alert-danger')?.textContent).toContain('Erro ao carregar indicadores do sistema.');
+  });
+
   it('should render reports action when user reaches the fiscal area', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(authServiceSpy.hasAnyRole).toHaveBeenCalledWith(PAPEIS.fiscal);

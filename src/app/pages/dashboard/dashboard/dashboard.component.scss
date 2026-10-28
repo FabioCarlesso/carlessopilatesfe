@@ -72,7 +72,7 @@
 
 .dashboard-panels {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-6);
 }
 
@@ -95,67 +95,6 @@
   }
 }
 
-.status-list {
-  display: grid;
-  gap: var(--sp-2);
-}
-
-.status-row {
-  align-items: center;
-  background: var(--bg-sunken);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  display: flex;
-  justify-content: space-between;
-  min-height: var(--row-h);
-  padding: 0 var(--sp-4);
-
-  strong {
-    color: var(--text-brand);
-    font-size: var(--fs-h3);
-    font-weight: 600;
-  }
-
-  &--danger strong {
-    color: var(--c-danger);
-  }
-
-  &__label {
-    color: var(--text-secondary);
-  }
-}
-
-.progress-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  padding-top: var(--sp-3);
-
-  &__bar {
-    background: var(--bg-sunken);
-    border-radius: var(--r-pill);
-    height: 12px;
-    overflow: hidden;
-
-    span {
-      background: var(--c-success);
-      border-radius: inherit;
-      display: block;
-      height: 100%;
-      min-width: 0;
-      transition: width 160ms ease;
-    }
-  }
-
-  &__legend {
-    color: var(--text-secondary);
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-4);
-    justify-content: space-between;
-  }
-}
-
 .dashboard-updated {
   color: var(--text-muted);
   font-size: var(--fs-caption);
@@ -167,6 +106,11 @@
   .dashboard-grid,
   .dashboard-panels {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  // Em duas colunas o terceiro painel ocuparia meia linha com um vazio ao lado.
+  .dashboard-panel:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 }
 

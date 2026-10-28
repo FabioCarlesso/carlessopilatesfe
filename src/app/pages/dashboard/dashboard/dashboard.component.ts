@@ -6,10 +6,12 @@ import { DashboardResumoDTO } from '../../../core/models/dashboard';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
+import { GraficoProporcaoComponent } from '../../../shared/components/grafico-proporcao/grafico-proporcao.component';
+import { SegmentoProporcao } from '../../../shared/utils/grafico-proporcao';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, CurrencyPipe, DatePipe],
+  imports: [RouterLink, CurrencyPipe, DatePipe, GraficoProporcaoComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,6 +26,11 @@ export class DashboardComponent implements OnInit {
   totalPagamentos = 0;
   totalAulasMesAtual = 0;
   percentualAulasRealizadas = 0;
+  // Partes dos gráficos (issue #120), montadas do mesmo resumo já carregado:
+  // nenhum gráfico faz chamada própria à API.
+  segmentosPagamentos: SegmentoProporcao[] = [];
+  segmentosAulas: SegmentoProporcao[] = [];
+  segmentosPacientes: SegmentoProporcao[] = [];
   readonly papeis = PAPEIS;
 
   constructor(
@@ -69,5 +76,19 @@ export class DashboardComponent implements OnInit {
     this.percentualAulasRealizadas = this.totalAulasMesAtual === 0
       ? 0
       : Math.round((realizadas / this.totalAulasMesAtual) * 100);
+
+    this.segmentosPagamentos = [
+      { chave: 'pagos', rotulo: 'Pagos', valor: p.totalPagos, variante: 'sucesso' },
+      { chave: 'pendentes', rotulo: 'Pendentes', valor: p.totalPendentes, variante: 'alerta' },
+      { chave: 'vencidos', rotulo: 'Vencidos', valor: p.totalVencidos, variante: 'perigo' }
+    ];
+    this.segmentosAulas = [
+      { chave: 'realizadas', rotulo: 'Realizadas', valor: realizadas, variante: 'sucesso' },
+      { chave: 'agendadas', rotulo: 'Agendadas', valor: agendadas, variante: 'marca' }
+    ];
+    this.segmentosPacientes = [
+      { chave: 'ativos', rotulo: 'Ativos', valor: this.resumo.pacientes.totalAtivos, variante: 'marca' },
+      { chave: 'inativos', rotulo: 'Inativos', valor: this.resumo.pacientes.totalInativos, variante: 'neutro' }
+    ];
   }
 }
