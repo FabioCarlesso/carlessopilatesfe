@@ -91,11 +91,17 @@
 
 .grafico-proporcao__legenda {
   display: grid;
-  flex: 1 1 150px;
   gap: var(--sp-2);
   list-style: none;
   margin: 0;
   padding: 0;
+
+  // A base de 150px é largura só ao lado da rosca (flex em linha). Na barra o
+  // flex é em coluna, e a mesma base virava altura mínima: a grade esticava
+  // os itens e a marca, centralizada, descia para baixo do rótulo.
+  .grafico-proporcao--com-rosca > & {
+    flex: 1 1 150px;
+  }
 }
 
 .grafico-proporcao__item {
