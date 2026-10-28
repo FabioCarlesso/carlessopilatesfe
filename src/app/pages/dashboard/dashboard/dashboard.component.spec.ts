@@ -1,16 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NEVER, of, throwError } from 'rxjs';
-import { registerLocaleData } from '@angular/common';
-import localePt from '@angular/common/locales/pt';
-import { LOCALE_ID } from '@angular/core';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { DashboardResumoDTO } from '../../../core/models/dashboard';
 import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
-
-registerLocaleData(localePt);
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockResumo: DashboardResumoDTO = {
   pacientes: {
@@ -52,7 +48,7 @@ describe('DashboardComponent', () => {
       providers: [
         { provide: DashboardService, useValue: serviceSpy },
         { provide: AuthService, useValue: authServiceSpy },
-        { provide: LOCALE_ID, useValue: 'pt-BR' }
+        provideLocalePtBr()
       ]
     }).compileComponents();
 
@@ -107,6 +103,16 @@ describe('DashboardComponent', () => {
     expect(el.textContent).toContain('Receita do mês');
     expect(el.textContent).toContain('Status dos pagamentos');
     expect(el.textContent).toContain('Aulas do mês atual');
+  });
+
+  // O template não passa mais `'pt-BR'` ao pipe: o formato vem do `LOCALE_ID`
+  // da aplicação e precisa continuar o mesmo de antes (issue #254).
+  it('should render revenue and generation time in Brazilian format', () => {
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(normalizarEspacos(el.querySelector('.dashboard-card__value--currency')?.textContent).trim())
+      .toBe('R$ 1.600,00');
+    expect(el.textContent).toContain('Atualizado em 29/04/2026 10:00');
   });
 
   it('should hide the revenue card when the API omits it for the user role', () => {

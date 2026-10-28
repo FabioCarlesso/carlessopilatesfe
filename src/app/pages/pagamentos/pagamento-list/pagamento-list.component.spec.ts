@@ -9,6 +9,7 @@ import { PagamentoListComponent } from './pagamento-list.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PagamentoResponseDTO } from '../../../core/models/plano';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockPagamento: PagamentoResponseDTO = {
   id: 1, pacienteId: 10, pacienteNome: 'Ana Silva', planoId: 1, valor: 250, status: 'PENDENTE',
@@ -28,6 +29,7 @@ describe('PagamentoListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PagamentoListComponent, RouterTestingModule],
       providers: [
+        provideLocalePtBr(),
         { provide: PagamentoService, useValue: serviceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (key: string) => key === 'pacienteId' ? '10' : null } } } }
       ]
@@ -53,6 +55,14 @@ describe('PagamentoListComponent', () => {
 
   it('should track table rows by id', () => {
     expect(component.trackByPagamento(0, mockPagamento)).toBe(mockPagamento.id);
+  });
+
+  it('should render the value in Brazilian currency format and dates as dd/MM/yyyy', () => {
+    const celulas = Array.from(fixture.nativeElement.querySelectorAll('table.table tbody tr td') as NodeListOf<HTMLElement>)
+      .map(td => normalizarEspacos(td.textContent).trim());
+    expect(celulas).toContain('R$ 250,00');
+    expect(celulas).toContain('01/05/2026 – 31/05/2026');
+    expect(celulas).toContain('10/05/2026');
   });
 
   it('should wrap the table in a scroll container to keep overflow inside the card', () => {

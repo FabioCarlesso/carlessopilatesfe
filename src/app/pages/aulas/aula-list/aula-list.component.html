@@ -63,7 +63,7 @@
       <tbody>
         @for (aula of aulas; track trackByAula($index, aula)) {
           <tr>
-            <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</td>
+            <td data-label="Data">{{ aula.data | date:'dd/MM/yyyy (EEE)' }}</td>
             <td data-label="Horário">
               @if (horarioDaAula(aula); as horario) {
                 {{ horario }}
@@ -83,7 +83,7 @@
               @if (!aula.realizada) {
                 <select class="form-control form-control-sm"
                   [class.is-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro"
-                  [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy':'':'pt')"
+                  [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy')"
                   [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro || null"
                   [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id
                     : (feedbackDaAtribuicao(aula) ? 'atribuicao-' + aula.id : null)"
@@ -152,7 +152,7 @@
     <p>Confirma marcar como realizada a aula abaixo?</p>
     <dl class="confirmacao-detalhes">
       <dt>Data</dt>
-      <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}</dd>
+      <dd>{{ aula.data | date:'dd/MM/yyyy (EEE)' }}</dd>
       <dt>Horário</dt>
       <dd>{{ horarioDaAula(aula) ?? 'Sem horário' }}</dd>
       <dt>Profissional</dt>
@@ -169,7 +169,7 @@
     [fecharAoClicarFora]="false"
     (confirmar)="confirmarRemarcar()"
     (cancelar)="cancelarRemarcar()">
-    <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)':'':'pt' }}{{ horarioDaAula(aula) ? ' às ' + horarioDaAula(aula) : ', sem horário' }}.</p>
+    <p>Aula atualmente marcada para {{ aula.data | date:'dd/MM/yyyy (EEE)' }}{{ horarioDaAula(aula) ? ' às ' + horarioDaAula(aula) : ', sem horário' }}.</p>
     <div class="form-group">
       <label for="remarcarData">Nova data *</label>
       <input #remarcarDataInput id="remarcarData" type="date" class="form-control"

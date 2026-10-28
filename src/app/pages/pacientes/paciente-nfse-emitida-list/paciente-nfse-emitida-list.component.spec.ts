@@ -7,6 +7,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteNfseEmitidaListComponent } from './paciente-nfse-emitida-list.component';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockPaciente: PacienteResponseDTO = {
   version: 0,
@@ -60,6 +61,7 @@ describe('PacienteNfseEmitidaListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteNfseEmitidaListComponent, RouterTestingModule],
       providers: [
+        provideLocalePtBr(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: NfseEmitidaService, useValue: nfseEmitidaServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
@@ -72,6 +74,15 @@ describe('PacienteNfseEmitidaListComponent', () => {
   }
 
   afterEach(() => TestBed.resetTestingModule());
+
+  it('should render the nota value in Brazilian currency format', async () => {
+    await setup([mockNota]);
+
+    const valores = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.detail-item'))
+      .filter(item => item.querySelector('.label')?.textContent?.trim() === 'Valor')
+      .map(item => normalizarEspacos(item.querySelector('span:not(.label)')?.textContent).trim());
+    expect(valores).toEqual(['R$ 350,00']);
+  });
 
   it('should create and load patient and notas', async () => {
     await setup([mockNota]);
