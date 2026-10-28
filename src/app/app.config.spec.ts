@@ -1,5 +1,9 @@
+import { CurrencyPipe, DatePipe, registerLocaleData } from '@angular/common';
 import { FetchBackend, HttpBackend, HttpXhrBackend } from '@angular/common/http';
+import localePt from '@angular/common/locales/pt';
+import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { normalizarEspacos } from '../testing/locale';
 import { appConfig } from './app.config';
 
 /**
@@ -30,5 +34,42 @@ describe('appConfig — transporte HTTP', () => {
 
   it('não usa o FetchBackend, que é o padrão do v22', () => {
     expect(TestBed.inject(HttpBackend)).not.toBeInstanceOf(FetchBackend);
+  });
+});
+
+/**
+ * Guarda do locale da aplicação (issue #254).
+ *
+ * Os specs de componente montam o próprio TestBed e não passam por `appConfig`,
+ * então remover o `LOCALE_ID` dali não quebraria nenhum deles: a aplicação
+ * voltaria a mostrar `R$250.00` com a suíte verde. Este teste usa os providers
+ * reais e registra os dados de `pt` como faz o `main.ts`.
+ */
+describe('appConfig — locale', () => {
+  beforeEach(() => {
+    registerLocaleData(localePt);
+    TestBed.configureTestingModule({ providers: [...appConfig.providers, CurrencyPipe, DatePipe] });
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+  });
+
+  it('define o LOCALE_ID como pt-BR', () => {
+    expect(TestBed.inject(LOCALE_ID)).toBe('pt-BR');
+  });
+
+  it('formata moeda no padrão brasileiro, com vírgula decimal e ponto de milhar', () => {
+    const currency = TestBed.inject(CurrencyPipe);
+
+    expect(normalizarEspacos(currency.transform(250, 'BRL'))).toBe('R$ 250,00');
+    expect(normalizarEspacos(currency.transform(1250, 'BRL'))).toBe('R$ 1.250,00');
+  });
+
+  it('mantém as datas de formato fixo e traduz os nomes de dia da semana', () => {
+    const date = TestBed.inject(DatePipe);
+
+    expect(date.transform('2026-05-05T14:30:00', 'dd/MM/yyyy HH:mm')).toBe('05/05/2026 14:30');
+    expect(date.transform('2026-05-05T00:00:00', 'dd/MM/yyyy (EEE)')).toBe('05/05/2026 (ter.)');
   });
 });

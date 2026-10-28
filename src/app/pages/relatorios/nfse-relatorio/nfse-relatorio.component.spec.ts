@@ -6,6 +6,7 @@ import { NfseRelatorioComponent } from './nfse-relatorio.component';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
 import { renderizarEmViewport } from '../../../../testing/viewport';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockRelatorio: RelatorioNfseResponseDTO[] = [
   {
@@ -44,7 +45,7 @@ describe('NfseRelatorioComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [NfseRelatorioComponent, RouterTestingModule],
-      providers: [{ provide: RelatorioService, useValue: serviceSpy }]
+      providers: [provideLocalePtBr(), { provide: RelatorioService, useValue: serviceSpy }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(NfseRelatorioComponent);
@@ -102,6 +103,19 @@ describe('NfseRelatorioComponent', () => {
     component.registros = mockRelatorio;
 
     expect(component.totalValorPago()).toBe(250);
+  });
+
+  it('should render the total and each paid value in Brazilian currency format', () => {
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.consultar();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const totais = Array.from(el.querySelectorAll('.summary-item strong')).map(s => normalizarEspacos(s.textContent).trim());
+    expect(totais).toContain('R$ 250,00');
+    const celulas = Array.from(el.querySelectorAll('table tbody td')).map(td => normalizarEspacos(td.textContent).trim());
+    expect(celulas[2]).toBe('R$ 250,00');
+    expect(celulas[6]).toBe('10/04/2026');
   });
 
   it('should export XLSX and reset loading state', () => {

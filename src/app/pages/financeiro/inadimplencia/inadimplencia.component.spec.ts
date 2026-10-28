@@ -9,6 +9,7 @@ import { PagamentoResponseDTO } from '../../../core/models/plano';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { InadimplenciaComponent } from './inadimplencia.component';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 /** Segunda-feira, 12/10/2026: fixa o "hoje" dos dias em atraso. */
 const HOJE = new Date(2026, 9, 12, 9, 0);
@@ -106,6 +107,7 @@ describe('InadimplenciaComponent', () => {
     await TestBed.configureTestingModule({
       imports: [InadimplenciaComponent],
       providers: [
+        provideLocalePtBr(),
         provideRouter([]),
         { provide: PagamentoService, useValue: pagamentoSpy },
         { provide: PacienteService, useValue: pacienteSpy }
@@ -166,7 +168,7 @@ describe('InadimplenciaComponent', () => {
       expect(linhas.length).toBe(3);
       const celulas = Array.from(linhas[0].querySelectorAll('td')).map(td => td.textContent?.trim() ?? '');
       expect(celulas[0]).toBe('Ana Silva');
-      expect(celulas[1]).toContain('250');
+      expect(normalizarEspacos(celulas[1])).toBe('R$ 250,00');
       expect(celulas[2]).toBe('12/09/2026');
       expect(celulas[3]).toBe('30 dias');
       expect(celulas[4]).toBe('Vencido');
@@ -425,6 +427,7 @@ describe('InadimplenciaComponent', () => {
 
       expect(pagamentoSpy.listarCobrancas).toHaveBeenCalledOnceWith(1);
       expect(texto('.dialog-title')).toBe('Cobrança — Ana Silva');
+      expect(normalizarEspacos(texto('.cobranca-resumo'))).toContain('R$ 250,00 · vencimento 12/09/2026');
       expect(texto('.cobranca-resumo')).toContain('30 dias em atraso');
       const itens = todos('.cobranca-contato');
       expect(itens.length).toBe(2);

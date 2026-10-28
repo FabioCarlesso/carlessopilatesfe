@@ -150,6 +150,8 @@ Quando o usuário inativa o último item de uma página e o total de páginas é
 
 ## Planos, pagamentos e aulas
 
+Todo valor em reais aparece no padrão brasileiro — `R$ 250,00`, com ponto de milhar em `R$ 1.250,00` — em planos, pagamentos, inadimplência, relatórios, agenda do profissional, NFSEs emitidas e dashboard. Até a issue #254 só o dashboard seguia esse padrão; as demais telas mostravam o formato americano `R$250.00`.
+
 As telas de planos reutilizam as constantes `TIPO_LABEL`, `FREQUENCIA_LABEL` e `DIAS_SEMANA_LABEL` exportadas por `src/app/core/models/plano.ts`, mantendo as opções e exibições alinhadas entre formulário, listagem e demais fluxos.
 
 A listagem de planos mostra a coluna **Horário** — o horário em que o plano gera as aulas, ou "Sem horário" —, para que a recepção saiba o que um pagamento vai gerar sem abrir as aulas. O formulário de plano tem o campo opcional **Horário das aulas** (issue #266), um `<input type="time">` enviado como `horario` no `POST /api/planos`. Ele vale para todos os dias do plano e é copiado pela API para cada aula gerada na confirmação do pagamento; em branco, vai como `null` — a string vazia não é um horário válido para a API — e as aulas nascem sem horário. Planos não têm edição, então trocar o horário de um aluno é criar um novo plano; as aulas já geradas mudam de horário pela remarcação.

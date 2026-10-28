@@ -10,6 +10,7 @@ import {
   ProfissionalResponseDTO
 } from '../../../core/models/profissional';
 import { renderizarEmViewport } from '../../../../testing/viewport';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockProfissional: ProfissionalResponseDTO = {
   version: 0,
@@ -108,7 +109,7 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ProfissionalPagamentoRelatorioComponent, RouterTestingModule],
-      providers: [{ provide: ProfissionalService, useValue: serviceSpy }]
+      providers: [provideLocalePtBr(), { provide: ProfissionalService, useValue: serviceSpy }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProfissionalPagamentoRelatorioComponent);
@@ -157,6 +158,21 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
 
     expect(serviceSpy.relatorioPagamento).toHaveBeenCalledWith(1, '2026-04-01', '2026-04-30');
     expect(component.relatorio).toEqual(mockRelatorio);
+  });
+
+  it('should render totals and table values in Brazilian currency format', () => {
+    component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
+    component.consultar();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const resumo = Array.from(el.querySelectorAll('.summary-item strong')).map(s => normalizarEspacos(s.textContent).trim());
+    expect(resumo).toContain('01/04/2026 a 30/04/2026');
+    expect(resumo).toContain('R$ 11,25');
+    expect(resumo).toContain('R$ 200,00');
+    const celulas = Array.from(el.querySelectorAll('table tbody td')).map(td => normalizarEspacos(td.textContent).trim());
+    expect(celulas).toContain('R$ 25,00');
+    expect(celulas).toContain('03/04/2026');
   });
 
   it('should set erro when report request fails', () => {
