@@ -375,9 +375,11 @@ que a página é pública.
 A primeira versão dessas tags apontava `og:image` para `/landing/dashboard.webp`:
 caminho relativo, em WebP e sem `og:url` — título e descrição apareciam, a imagem
 não. A issue #246 corrigiu os três pontos com uma arte JPG dedicada em 1200×630 e
-URLs absolutas no host definitivo `software.carlessopilates.com.br`, aceitando o
-card sem imagem até a issue #115 publicar o subdomínio em vez de apontar para o
-provisório da Vercel e criar uma troca futura. As regras e a validação estão em
+URLs absolutas no host definitivo, em vez de apontar para o provisório da Vercel e
+criar uma troca futura. O host escolhido na época, `software.carlessopilates.com.br`
+(issue #115), nunca foi criado: a produção ficou em `app.carlessopilates.com.br`, e
+em 28/10/2026 as tags passaram a apontar para ele, já que até então o card saía
+sem imagem. A #115 foi fechada como obsoleta. As regras e a validação estão em
 "Card de compartilhamento", em [`deploy.md`](deploy.md).
 
 Os prints vivem em `public/landing/*.webp` e saíram de um ambiente de
