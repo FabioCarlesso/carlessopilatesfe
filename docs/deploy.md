@@ -73,17 +73,17 @@ três regras valem para as tags Open Graph (issue #246):
 - **Caminho liberado.** `public/robots.txt` traz `Allow: /landing/` explícito: um
   `Disallow` futuro que alcance a pasta deixa o crawler sem a imagem.
 
-**Host canônico: `software.carlessopilates.com.br`.** É o destino definitivo
-decidido na issue #115, e foi preferido ao provisório `carlessopilatesfe.vercel.app`
-porque URL de compartilhamento não se troca de graça: links já colados em
-conversas e o cache dos crawlers continuariam apontando para o domínio antigo.
-O custo é que, **até a #115 entrar**, o card sai com título e descrição, mas sem
-imagem — a URL de `og:image` ainda não resolve. Nenhuma mudança de código é
-necessária quando o subdomínio subir; basta revalidar:
+**Host canônico: `app.carlessopilates.com.br`.** É o domínio em que a aplicação
+está publicada em produção (Vercel), e foi preferido ao provisório
+`carlessopilatesfe.vercel.app` porque URL de compartilhamento não se troca de graça:
+links já colados em conversas e o cache dos crawlers continuariam apontando para o
+domínio antigo. Até 28/10/2026 as tags apontavam para `software.carlessopilates.com.br`,
+o subdomínio proposto na issue #115, que nunca foi criado: o card saía com título
+e descrição, mas sem imagem. Para revalidar depois de uma troca de arte ou de domínio:
 
 ```bash
-curl -s https://software.carlessopilates.com.br/ | grep -oE '<meta property="og:[^"]*" content="[^"]*"'
-curl -sI https://software.carlessopilates.com.br/landing/compartilhamento.jpg | grep -iE 'HTTP|content-type'
+curl -s https://app.carlessopilates.com.br/ | grep -oE '<meta property="og:[^"]*" content="[^"]*"'
+curl -sI https://app.carlessopilates.com.br/landing/compartilhamento.jpg | grep -iE 'HTTP|content-type'
 ```
 
 e forçar nova leitura no Facebook Sharing Debugger (*Scrape Again*) e no
