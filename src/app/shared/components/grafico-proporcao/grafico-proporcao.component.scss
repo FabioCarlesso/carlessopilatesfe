@@ -1,0 +1,145 @@
+// Cada variante define a cor da parte num token com versão nos dois temas.
+// `--c-*-text` e `--text-brand`, e não `--c-success`/`--c-danger`/`--primary`:
+// os originais ficam em ~2:1 sobre `--bg-elev` escuro, abaixo dos 3:1 da WCAG
+// 1.4.11 para elementos gráficos.
+.grafico-proporcao--marca { --segmento-cor: var(--text-brand); }
+.grafico-proporcao--sucesso { --segmento-cor: var(--c-success-text); }
+.grafico-proporcao--alerta { --segmento-cor: var(--c-warning-text); }
+.grafico-proporcao--perigo { --segmento-cor: var(--c-danger-text); }
+.grafico-proporcao--neutro { --segmento-cor: var(--text-muted); }
+
+.grafico-proporcao {
+  // `figure` vem com margem do UA.
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+
+  &--com-rosca {
+    align-items: center;
+    flex-flow: row wrap;
+    gap: var(--sp-5);
+  }
+}
+
+.grafico-proporcao__rosca {
+  flex: none;
+  height: 132px;
+  position: relative;
+  width: 132px;
+
+  svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.grafico-proporcao__trilho,
+.grafico-proporcao__fatia {
+  fill: none;
+  stroke-width: 6;
+}
+
+.grafico-proporcao__trilho {
+  stroke: var(--border-default);
+}
+
+.grafico-proporcao__fatia {
+  stroke: var(--segmento-cor);
+}
+
+.grafico-proporcao__centro {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  justify-content: center;
+  position: absolute;
+
+  strong {
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    font-size: var(--fs-display-sm);
+    line-height: var(--lh-tight);
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: var(--fs-micro);
+  }
+}
+
+// O vão entre as partes deixa o trilho aparecer: as fronteiras continuam
+// visíveis mesmo para quem não distingue as cores vizinhas.
+.grafico-proporcao__barra {
+  background-color: var(--border-default);
+  border-radius: var(--r-pill);
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.grafico-proporcao__parte {
+  background-color: var(--segmento-cor);
+  display: block;
+  height: 100%;
+  min-width: 0;
+  transition: width 160ms ease;
+}
+
+.grafico-proporcao__legenda {
+  display: grid;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  // A base de 150px é largura só ao lado da rosca (flex em linha). Na barra o
+  // flex é em coluna, e a mesma base virava altura mínima: a grade esticava
+  // os itens e a marca, centralizada, descia para baixo do rótulo.
+  .grafico-proporcao--com-rosca > & {
+    flex: 1 1 150px;
+  }
+}
+
+.grafico-proporcao__item {
+  align-items: baseline;
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.grafico-proporcao__marca {
+  align-self: center;
+  background-color: var(--segmento-cor);
+  border-radius: var(--r-sm);
+  flex: none;
+  height: 10px;
+  width: 10px;
+}
+
+.grafico-proporcao__rotulo {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.grafico-proporcao__valor {
+  color: var(--text-primary);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.grafico-proporcao__percentual {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  min-width: 4ch;
+  text-align: right;
+}
+
+.grafico-proporcao__vazio {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+  margin: 0;
+  width: 100%;
+}

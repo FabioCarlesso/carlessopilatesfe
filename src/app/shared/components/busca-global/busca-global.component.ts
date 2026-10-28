@@ -262,9 +262,10 @@ export class BuscaGlobalComponent implements OnInit {
     );
   }
 
-  // O filtro `cpf` da API é `LIKE %termo%` sobre o valor gravado, que o cadastro guarda
-  // exatamente como digitado (com ou sem máscara). Por isso o termo vai como veio: normalizar
-  // para só dígitos faria "12345678901" deixar de casar com um "123.456.789-01" gravado.
+  // O filtro `cpf` da API é `LIKE %termo%` sobre o valor gravado. Desde a máscara de CPF os
+  // cadastros novos (e a importação do seufisio) gravam só dígitos, mas registros antigos podem
+  // estar pontuados. Por isso o termo vai como veio: quem digita "123.456.789-01" ainda acha o
+  // registro antigo, e quem digita só dígitos acha os demais.
   private filtroPaciente(termo: string): PacienteFiltro {
     return this.pareceCpf(termo) ? { cpf: termo } : { nome: termo };
   }

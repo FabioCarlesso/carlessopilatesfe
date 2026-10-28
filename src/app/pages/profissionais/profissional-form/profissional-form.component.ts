@@ -7,10 +7,13 @@ import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissi
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { cpfValidator } from '../../../core/validators/cpf.validator';
+import { MascaraDirective } from '../../../shared/directives/mascara.directive';
+import { somenteDigitos } from '../../../shared/utils/mascara';
 
 @Component({
   selector: 'app-profissional-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, MascaraDirective],
   templateUrl: './profissional-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-form.component.scss'
@@ -45,7 +48,7 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      cpf: ['', Validators.required],
+      cpf: ['', [Validators.required, cpfValidator]],
       telefone: [''],
       // Opcional e sem máscara: o formato do registro varia por conselho
       // (CREFITO, CREF etc.) e nem todo profissional do estúdio tem um.
@@ -113,7 +116,12 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           dataInicio: valor.dataInicio,
           version: this.version
         })
-      : this.service.cadastrar(valor);
+      : this.service.cadastrar({
+          ...valor,
+          // Só dígitos, o formato único de envio (ver `shared/utils/mascara.ts`).
+          cpf: somenteDigitos(valor.cpf),
+          telefone: somenteDigitos(valor.telefone)
+        });
 
     request$.subscribe({
       next: () => this.router.navigate(['/profissionais']),

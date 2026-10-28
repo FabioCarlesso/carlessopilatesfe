@@ -44,7 +44,7 @@
       <article class="dashboard-card">
         <div class="dashboard-card__label">Receita do mês</div>
         <div class="dashboard-card__value dashboard-card__value--currency">
-          {{ resumo.pagamentos.receitaMesAtual | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+          {{ resumo.pagamentos.receitaMesAtual | currency:'BRL' }}
         </div>
         <div class="dashboard-card__meta">
           {{ resumo.pagamentos.totalPagos }} pagamentos confirmados
@@ -71,20 +71,12 @@
         <span class="badge">{{ totalPagamentos }} registros</span>
       </div>
 
-      <div class="status-list">
-        <div class="status-row">
-          <span class="status-row__label">Pendentes</span>
-          <strong>{{ resumo.pagamentos.totalPendentes }}</strong>
-        </div>
-        <div class="status-row">
-          <span class="status-row__label">Pagos</span>
-          <strong>{{ resumo.pagamentos.totalPagos }}</strong>
-        </div>
-        <div class="status-row status-row--danger">
-          <span class="status-row__label">Vencidos</span>
-          <strong>{{ resumo.pagamentos.totalVencidos }}</strong>
-        </div>
-      </div>
+      <app-grafico-proporcao
+        tipo="rosca"
+        titulo="Distribuição dos pagamentos por status"
+        rotuloTotal="pagamentos"
+        textoVazio="Nenhum pagamento registrado."
+        [segmentos]="segmentosPagamentos" />
     </article>
 
     <article class="dashboard-panel">
@@ -96,19 +88,29 @@
         <span class="badge">{{ totalAulasMesAtual }} aulas</span>
       </div>
 
-      <div class="progress-block" aria-label="Progresso de aulas realizadas no mês">
-        <div class="progress-block__bar">
-          <span [style.width.%]="percentualAulasRealizadas"></span>
+      <app-grafico-proporcao
+        titulo="Aulas realizadas e agendadas no mês atual"
+        textoVazio="Nenhuma aula no mês atual."
+        [segmentos]="segmentosAulas" />
+    </article>
+
+    <article class="dashboard-panel">
+      <div class="dashboard-panel__header">
+        <div>
+          <p class="dashboard-eyebrow">Cadastro</p>
+          <h2>Pacientes</h2>
         </div>
-        <div class="progress-block__legend">
-          <span>{{ resumo.aulas.totalRealizadasMesAtual }} realizadas</span>
-          <span>{{ resumo.aulas.totalAgendadasMesAtual }} agendadas</span>
-        </div>
+        <span class="badge">{{ totalPacientes }} cadastrados</span>
       </div>
+
+      <app-grafico-proporcao
+        titulo="Pacientes ativos e inativos"
+        textoVazio="Nenhum paciente cadastrado."
+        [segmentos]="segmentosPacientes" />
     </article>
   </section>
 
   <p class="dashboard-updated">
-    Atualizado em {{ resumo.geradoEm | date:'dd/MM/yyyy HH:mm':'':'pt-BR' }}
+    Atualizado em {{ resumo.geradoEm | date:'dd/MM/yyyy HH:mm' }}
   </p>
 }

@@ -14,6 +14,7 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
 import { ProfissionalAgendaComponent } from './profissional-agenda.component';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 /** Quarta-feira, 20/05/2026 — o dia âncora de todos os cenários. */
 const HOJE = new Date(2026, 4, 20, 9, 0);
@@ -139,6 +140,7 @@ describe('ProfissionalAgendaComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ProfissionalAgendaComponent, RouterTestingModule],
       providers: [
+        provideLocalePtBr(),
         { provide: ProfissionalService, useValue: profissionalServiceSpy },
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: AulaService, useValue: aulaServiceSpy },
@@ -262,12 +264,11 @@ describe('ProfissionalAgendaComponent', () => {
 
   // O valor sai do relatório de pagamento, não de uma conta local: o percentual
   // incide sobre o valor da aula, que vem do pagamento e não do DTO da aula.
-  // A asserção evita o formato da moeda, que depende do `LOCALE_ID` do ambiente.
   it('should show the commission of the period with the basis used', async () => {
     await setup();
 
     expect(component.comissao).toEqual({ total: 180, aulas: 2 });
-    expect(valorDoCard('Comissão do período')).toContain('180');
+    expect(normalizarEspacos(valorDoCard('Comissão do período'))).toBe('R$ 180,00');
     expect(card('Comissão do período')?.querySelector('.summary-nota')?.textContent?.trim())
       .toBe('50% sobre 2 aulas realizadas');
   });

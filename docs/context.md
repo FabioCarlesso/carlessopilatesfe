@@ -174,6 +174,13 @@ Todos os componentes são standalone (sem NgModules), seguindo a arquitetura mod
 
 Duas escolhas do v22 ficaram explícitas no código, e nenhuma delas é estado temporário: `withXhr()` no `provideHttpClient` mantém o transporte HTTP em XHR em vez do `FetchBackend`, que virou o padrão; e 35 componentes carregam `ChangeDetectionStrategy.Eager`, porque o OnPush passou a ser o padrão. Ambas as APIs são suportadas e não estão deprecadas — o que o v22 deprecou foi `ChangeDetectionStrategy.Default`, justamente em favor do `Eager`, de modo que as marcações são a forma atual e não dívida a ser desfeita. Adotar OnPush nos 35 é otimização de performance (exige `markForCheck()` nos callbacks assíncronos, um componente por vez, como fez a issue #25 nas cinco listagens), não continuação da migração.
 
+### Locale `pt-BR` como fonte única dos pipes
+O `appConfig` provê `{ provide: LOCALE_ID, useValue: 'pt-BR' }`, e o `main.ts` registra os dados de `pt` com `registerLocaleData(localePt)` — o Angular resolve `pt-BR` para esses dados. Até a issue #254 só o registro existia: sem `LOCALE_ID` o padrão é `en-US`, e todo `currency:'BRL'` sem locale explícito saía como `R$250.00` em pagamentos, planos, inadimplência, relatórios e agenda do profissional, enquanto o dashboard, que passava `'pt-BR'` ao pipe, já mostrava `R$ 1.600,00`. Os templates não passam mais locale aos pipes (`currency:'BRL'`, `date:'dd/MM/yyyy (EEE)'`): um argumento explícito é uma segunda fonte que diverge da primeira em silêncio.
+
+O efeito alcança todos os pipes de locale (`currency`, `date`, `number`, `percent`). Como as datas usam formato fixo (`dd/MM/yyyy`, `dd/MM/yyyy HH:mm`), só os nomes de dia e mês mudam de idioma — hoje apenas o `EEE` da listagem de aulas, que já era português pelo `'pt'` explícito. A formatação fora dos pipes (`Intl.NumberFormat` em `shared/utils/indicadores.ts`, `toLocaleString` em `metricas-posturais.ts`) já fixa `'pt-BR'` por conta própria e não depende do `LOCALE_ID`; os rótulos de `shared/utils/calendario.ts` continuam constantes locais, para a grade ser testável sem TestBed (ver o item do calendário do paciente em "Estado Atual").
+
+Os specs não passam pelo `appConfig`, então o TestBed continua em `en-US` a menos que o spec prove o locale. Os componentes que formatam moeda ou nome de dia usam `provideLocalePtBr()` de `src/testing/locale.ts`, que registra os dados e devolve o provider, e asseram o formato que o usuário vê (`R$ 250,00`), normalizando o espaço não separável (U+00A0) que o `CurrencyPipe` põe depois do símbolo com `normalizarEspacos()`. O `app.config.spec.ts` guarda o provider real: sem ele, remover o `LOCALE_ID` do `appConfig` deixaria a suíte inteira verde.
+
 ### Design System por tokens
 Os protótipos do Design System foram preservados em `assets/` para consulta e validação visual. O frontend Angular importa os tokens por `src/styles/_tokens.scss`, mantendo nomes semânticos para cores, tipografia, espaçamento, raios, sombras e densidade. A camada de componentes deve preferir esses tokens a valores hexadecimais ou medidas avulsas.
 
@@ -200,6 +207,15 @@ O backend não remove pacientes fisicamente. Inativação usa `PATCH /pacientes/
 
 ### CPF imutável após cadastro
 Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulário de edição desabilita apenas o campo CPF. O e-mail pode ser atualizado via `PUT /pacientes/{id}` e é incluído no `PacienteUpdateDTO`.
+
+### Máscaras de CPF, telefone e CEP enviando só dígitos
+A API grava CPF, telefone e CEP como texto livre, sem validar nem normalizar: a duplicidade de CPF (`existsByCpf`) compara o texto exato e os filtros `cpf`/`telefone` da listagem são `LIKE %termo%` sobre o valor gravado. Antes das máscaras, cada cadastro manual gravava o que fosse digitado, enquanto a importação do seufisio (`scripts/import_seufisio.py` da API) grava CPF e CEP **só com dígitos** e o telefone como veio da origem. A base de desenvolvimento confirma a mistura: CPFs de paciente em dígitos, de profissional pontuados, telefones dos dois jeitos.
+
+Por isso o formulário envia **só dígitos** nos três campos e os filtros de CPF e telefone da listagem também. É o formato da maior parte dos dados (a carga do seufisio), faz a checagem de duplicidade da API casar com os CPFs importados e torna trivial normalizar na API, se um dia for preciso. A pontuação é só de exibição, feita por uma diretiva `ControlValueAccessor` própria (`shared/directives/mascara.directive.ts`), que serve igual a Reactive Forms e `ngModel` sem adicionar dependência; as funções de formatação ficam em `shared/utils/mascara.ts`, como o precedente `competencia-mask.ts`.
+
+O custo conhecido: um registro antigo gravado pontuado não é encontrado pelo filtro da listagem quando o termo atravessa a pontuação (o CPF inteiro, por exemplo). Trechos curtos que caem dentro de um bloco continuam casando. A busca global da navbar segue enviando o termo como digitado, o que cobre esse caso. Normalizar os dados gravados, ou fazer a API comparar só dígitos, fica fora do frontend.
+
+Valores gravados que não são editados voltam à API como vieram — normalizar no `PUT` mudaria registros antigos só por abrir e salvar a tela, e destruiria telefones com observação. O `cpfValidator` fica em `core/validators/` por ser um `ValidatorFn` de formulário, não um utilitário de formatação. Como controles desabilitados não são validados, ele só atua no cadastro.
 
 ### Anamnese do paciente
 A tela `/pacientes/:pacienteId/anamnese` usa Reactive Forms para criar ou editar a anamnese principal do paciente. O componente valida o parâmetro `pacienteId` com `parseRouteNumberParam`, carrega a identificação do paciente por `PacienteService.buscar` e tenta carregar a anamnese via `GET /api/anamneses/paciente/{pacienteId}`. Retorno `404` nessa consulta indica ausência de anamnese e mantém o formulário em modo de cadastro. O salvamento usa `POST /api/anamneses` quando ainda não há registro e `PUT /api/anamneses/{id}` quando a anamnese já existe. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam conteúdo somente com espaços, refletindo o contrato `@NotBlank` do backend.
@@ -294,6 +310,8 @@ O dashboard inicial usa `GET /api/dashboard/resumo`, que o proxy local e o Nginx
 
 O retorno esperado segue o contrato `DashboardResumoDTO`, com grupos `pacientes`, `profissionais`, `pagamentos`, `aulas` e o timestamp `geradoEm`. O componente trata carregamento e falha de consulta com mensagens dedicadas, sem tentar reconstruir os indicadores por múltiplas chamadas de listagem.
 
+Os gráficos do dashboard (issue #120) seguem a decisão do gráfico de dor e dos indicadores históricos: desenho próprio, sem biblioteca. As três visualizações são proporções de um único total — uma rosca e duas barras —, o que cabe num `<circle>` com `stroke-dasharray` e numa `div` flex; uma biblioteca de gráficos traria uma dependência nova e dezenas de kB ao bundle, que tem budget estrito, para desenhar o que o CSS já desenha. Ao contrário de `montarGraficoBarras`, que é específico de séries mensais com eixos, aqui o desenho virou um componente compartilhado (`app-grafico-proporcao`), porque os três gráficos têm a mesma forma e só mudam as partes. Os números ficam numa legenda em texto, e não dentro do SVG: o desenho é decorativo para o leitor de tela e o texto não encolhe com ele no celular. A rosca ficou só para os pagamentos, a única proporção com três partes; com duas, a barra lê melhor e ocupa menos altura. Pendentes e vencidos usam âmbar e vermelho porque o status é, de fato, um alerta; ativos × inativos usam marca e neutro, e não verde e vermelho, para inativo não parecer erro.
+
 ### Bloqueios de agenda
 Feriados, manutenções e eventos ganharam cadastro próprio em `/admin/bloqueios` (issue #135). A decisão que organiza tudo o mais é que o bloqueio é **informativo**: a API não impede a geração automática de aulas do pagamento nem o agendamento de sessões no período, e o frontend não inventa a regra que o backend não tem. A tela avisa — na agenda e no formulário de sessão — e a decisão continua com a recepção. A listagem diz isso em texto, porque "bloqueio" sugere impedimento e a leitura errada seria cara: alguém confiaria que cadastrar o feriado limpou a agenda.
 
@@ -375,9 +393,11 @@ que a página é pública.
 A primeira versão dessas tags apontava `og:image` para `/landing/dashboard.webp`:
 caminho relativo, em WebP e sem `og:url` — título e descrição apareciam, a imagem
 não. A issue #246 corrigiu os três pontos com uma arte JPG dedicada em 1200×630 e
-URLs absolutas no host definitivo `software.carlessopilates.com.br`, aceitando o
-card sem imagem até a issue #115 publicar o subdomínio em vez de apontar para o
-provisório da Vercel e criar uma troca futura. As regras e a validação estão em
+URLs absolutas no host definitivo, em vez de apontar para o provisório da Vercel e
+criar uma troca futura. O host escolhido na época, `software.carlessopilates.com.br`
+(issue #115), nunca foi criado: a produção ficou em `app.carlessopilates.com.br`, e
+em 28/10/2026 as tags passaram a apontar para ele, já que até então o card saía
+sem imagem. A #115 foi fechada como obsoleta. As regras e a validação estão em
 "Card de compartilhamento", em [`deploy.md`](deploy.md).
 
 Os prints vivem em `public/landing/*.webp` e saíram de um ambiente de

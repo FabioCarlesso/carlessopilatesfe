@@ -15,6 +15,13 @@ npm test
 `npm run test:ci` roda em Chrome headless, sem watch, e grava o relatório de
 cobertura em `coverage/` — é o mesmo comando executado pela CI.
 
+Os specs não passam pelo `appConfig`, então o TestBed formata em `en-US`. Spec
+de componente que renderiza moeda, número ou nome de dia/mês inclui
+`provideLocalePtBr()` (de `src/testing/locale.ts`) nos `providers` e compara o
+texto passado por `normalizarEspacos()`, porque o `CurrencyPipe` em `pt-BR` separa
+o símbolo com espaço não separável: `'R$ 250,00'` escrito no spec só casa depois
+da normalização.
+
 Cada serviço, componente de página e utilitário tem seu `.spec.ts` ao lado do
 arquivo que testa. Para listar os testes existentes:
 

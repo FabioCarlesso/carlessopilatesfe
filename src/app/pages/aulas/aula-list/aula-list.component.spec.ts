@@ -1,8 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { registerLocaleData } from '@angular/common';
-import localePt from '@angular/common/locales/pt';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
@@ -14,6 +12,7 @@ import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { AulaResponseDTO, PagamentoResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
+import { provideLocalePtBr } from '../../../../testing/locale';
 
 const mockAula: AulaResponseDTO = {
   id: 1, pacienteId: 10, pacienteNome: 'Ana Silva', pagamentoId: 1, data: '2026-05-05', horario: null, realizada: false
@@ -44,8 +43,6 @@ const mockProfissionalPage: ProfissionalPage = {
   page: { totalElements: 1, totalPages: 1, size: 100, number: 0 }
 };
 
-registerLocaleData(localePt);
-
 describe('AulaListComponent', () => {
   describe('when route has pacienteId', () => {
     let component: AulaListComponent;
@@ -64,6 +61,7 @@ describe('AulaListComponent', () => {
       await TestBed.configureTestingModule({
         imports: [AulaListComponent, RouterTestingModule],
         providers: [
+          provideLocalePtBr(),
           { provide: AulaService, useValue: serviceSpy },
           { provide: PagamentoService, useValue: pagamentoServiceSpy },
           { provide: ProfissionalService, useValue: profissionalServiceSpy },
@@ -163,8 +161,15 @@ describe('AulaListComponent', () => {
       fixture.detectChanges();
       const dialog = fixture.nativeElement.querySelector('app-confirmar-dialog');
       expect(dialog).toBeTruthy();
-      expect(dialog.textContent).toContain('05/05/2026');
+      expect(dialog.textContent).toContain('05/05/2026 (ter.)');
       expect(dialog.textContent).toContain('Paula Mendes');
+    });
+
+    // Sem o `'pt'` explícito no template, o dia da semana em português depende
+    // só do `LOCALE_ID` da aplicação (issue #254).
+    it('should render the weekday in Portuguese from the application locale', () => {
+      const celula: HTMLElement = fixture.nativeElement.querySelector('td[data-label="Data"]');
+      expect(celula.textContent?.trim()).toBe('05/05/2026 (ter.)');
     });
 
     it('should call realizar and reload after confirming', () => {
@@ -808,6 +813,7 @@ describe('AulaListComponent', () => {
       await TestBed.configureTestingModule({
         imports: [AulaListComponent, RouterTestingModule],
         providers: [
+          provideLocalePtBr(),
           { provide: AulaService, useValue: serviceSpy },
           { provide: PagamentoService, useValue: pagamentoServiceSpy },
           { provide: ProfissionalService, useValue: profissionalServiceSpy },

@@ -9,6 +9,7 @@ import { PlanoService } from '../../../core/services/plano.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PlanoResponseDTO } from '../../../core/models/plano';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockPlano: PlanoResponseDTO = {
   id: 1, pacienteId: 10, tipo: 'MENSAL', valor: 250,
@@ -37,6 +38,7 @@ describe('PlanoListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PlanoListComponent, RouterTestingModule],
       providers: [
+        provideLocalePtBr(),
         { provide: PlanoService, useValue: serviceSpy },
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '10' } } } }
@@ -63,6 +65,13 @@ describe('PlanoListComponent', () => {
 
   it('should track table rows by id', () => {
     expect(component.trackByPlano(0, mockPlano)).toBe(mockPlano.id);
+  });
+
+  it('should render the value in Brazilian currency format', () => {
+    const celulas = Array.from(fixture.nativeElement.querySelectorAll('table.table tbody tr td') as NodeListOf<HTMLElement>)
+      .map(td => normalizarEspacos(td.textContent).trim());
+    expect(celulas).toContain('R$ 250,00');
+    expect(celulas).toContain('01/05/2026');
   });
 
   it('should wrap the table in a scroll container to keep overflow inside the card', () => {
