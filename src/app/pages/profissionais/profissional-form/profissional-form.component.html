@@ -41,11 +41,17 @@
       </div>
       <div class="form-group">
         <label for="cpf">CPF *</label>
-        <input id="cpf" formControlName="cpf" type="text" inputmode="numeric" class="form-control"
+        <input id="cpf" formControlName="cpf" appMascara="cpf" type="text" inputmode="numeric"
+          placeholder="000.000.000-00" class="form-control"
           [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
-        @if (campo('cpf')?.touched && campo('cpf')?.invalid) {
+        @if (campo('cpf')?.errors?.['required'] && campo('cpf')?.touched) {
           <div class="invalid-feedback">
             CPF é obrigatório.
+          </div>
+        }
+        @if (campo('cpf')?.errors?.['cpf'] && campo('cpf')?.touched) {
+          <div class="invalid-feedback">
+            CPF inválido.
           </div>
         }
       </div>
@@ -53,7 +59,8 @@
     <div class="form-row">
       <div class="form-group">
         <label for="telefone">Telefone</label>
-        <input id="telefone" formControlName="telefone" type="tel" autocomplete="tel" class="form-control" />
+        <input id="telefone" formControlName="telefone" appMascara="telefone" type="tel" autocomplete="tel"
+          placeholder="(00) 00000-0000" class="form-control" />
       </div>
       <div class="form-group">
         <label for="numeroRegistro">Nr. de Registro</label>

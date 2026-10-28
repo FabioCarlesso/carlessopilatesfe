@@ -9,6 +9,8 @@ import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/o
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
+import { MascaraDirective } from '../../../shared/directives/mascara.directive';
+import { somenteDigitos } from '../../../shared/utils/mascara';
 
 interface FiltroUI {
   nome: string;
@@ -20,7 +22,10 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-paciente-list',
-  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
+  imports: [
+    FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent,
+    MascaraDirective
+  ],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -140,8 +145,11 @@ export class PacienteListComponent implements OnInit, OnDestroy {
     const filtro: PacienteFiltro = {
       nome: this.filtro.nome.trim(),
       email: this.filtro.email.trim(),
-      cpf: this.filtro.cpf.trim(),
-      telefone: this.filtro.telefone.trim(),
+      // Só dígitos, o mesmo formato que os formulários gravam e que a importação do
+      // seufisio usa para o CPF. A API filtra com `LIKE %termo%` sobre o texto
+      // gravado, então um termo pontuado não casaria com esses registros.
+      cpf: somenteDigitos(this.filtro.cpf),
+      telefone: somenteDigitos(this.filtro.telefone),
     };
     if (this.filtro.status !== 'todos') {
       filtro.ativo = this.filtro.status === 'ativos';

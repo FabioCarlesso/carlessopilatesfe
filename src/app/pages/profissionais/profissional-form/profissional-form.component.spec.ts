@@ -65,7 +65,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
-        cpf: '123.456.111-00',
+        cpf: '123.456.111-54',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -95,7 +95,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
-        cpf: '123.456.111-00',
+        cpf: '123.456.111-54',
         telefone: '(11) 98888-1111',
         numeroRegistro: '350544-F',
         tipoContrato: 'PJ',
@@ -115,7 +115,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
-        cpf: '123.456.111-00',
+        cpf: '123.456.111-54',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -135,7 +135,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
-        cpf: '123.456.111-00',
+        cpf: '123.456.111-54',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -143,6 +143,61 @@ describe('ProfissionalFormComponent', () => {
       component.salvar();
       expect(component.erro).toBe('Erro ao salvar profissional.');
       expect(component.salvando).toBeFalse();
+    });
+
+    it('should reject an invalid CPF inline without calling the API', () => {
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-00',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+      component.salvar();
+      fixture.detectChanges();
+
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
+      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
+      expect(mensagens).toEqual(['CPF inválido.']);
+    });
+
+    it('should show only the required message when CPF is empty', () => {
+      component.form.get('cpf')?.markAsTouched();
+      fixture.detectChanges();
+
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
+      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
+      expect(mensagens).toEqual(['CPF é obrigatório.']);
+    });
+
+    it('should mask CPF and phone inputs and send only digits to the API', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockProfissional));
+      const el = fixture.nativeElement as HTMLElement;
+      const digitar = (id: string, valor: string) => {
+        const input = el.querySelector(`#${id}`) as HTMLInputElement;
+        input.value = valor;
+        input.dispatchEvent(new Event('input'));
+        return input;
+      };
+
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+      expect(digitar('cpf', '12345611154').value).toBe('123.456.111-54');
+      expect(digitar('telefone', '(11) 98888-1111').value).toBe('(11) 98888-1111');
+
+      component.salvar();
+
+      expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+        cpf: '12345611154',
+        telefone: '11988881111'
+      }));
     });
 
     it('campo() should return the matching AbstractControl', () => {
@@ -201,6 +256,15 @@ describe('ProfissionalFormComponent', () => {
 
     it('should disable cpf field in edit mode', () => {
       expect(component.form.get('cpf')?.disabled).toBeTrue();
+    });
+
+    // O CPF do mock tem dígito verificador errado: desabilitado, ele não é
+    // validado, e um cadastro antigo fora do padrão continua editável.
+    it('should save the rest of the record even when the stored CPF is invalid', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockProfissional));
+      expect(component.form.valid).toBeTrue();
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalled();
     });
 
     it('should call atualizar and navigate on valid submit', () => {
@@ -318,7 +382,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
-        cpf: '123.456.111-00',
+        cpf: '123.456.111-54',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'

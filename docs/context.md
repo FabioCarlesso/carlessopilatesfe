@@ -201,6 +201,15 @@ O backend não remove pacientes fisicamente. Inativação usa `PATCH /pacientes/
 ### CPF imutável após cadastro
 Por regra de negócio, o CPF não pode ser alterado após o cadastro. O formulário de edição desabilita apenas o campo CPF. O e-mail pode ser atualizado via `PUT /pacientes/{id}` e é incluído no `PacienteUpdateDTO`.
 
+### Máscaras de CPF, telefone e CEP enviando só dígitos
+A API grava CPF, telefone e CEP como texto livre, sem validar nem normalizar: a duplicidade de CPF (`existsByCpf`) compara o texto exato e os filtros `cpf`/`telefone` da listagem são `LIKE %termo%` sobre o valor gravado. Antes das máscaras, cada cadastro manual gravava o que fosse digitado, enquanto a importação do seufisio (`scripts/import_seufisio.py` da API) grava CPF e CEP **só com dígitos** e o telefone como veio da origem. A base de desenvolvimento confirma a mistura: CPFs de paciente em dígitos, de profissional pontuados, telefones dos dois jeitos.
+
+Por isso o formulário envia **só dígitos** nos três campos e os filtros de CPF e telefone da listagem também. É o formato da maior parte dos dados (a carga do seufisio), faz a checagem de duplicidade da API casar com os CPFs importados e torna trivial normalizar na API, se um dia for preciso. A pontuação é só de exibição, feita por uma diretiva `ControlValueAccessor` própria (`shared/directives/mascara.directive.ts`), que serve igual a Reactive Forms e `ngModel` sem adicionar dependência; as funções de formatação ficam em `shared/utils/mascara.ts`, como o precedente `competencia-mask.ts`.
+
+O custo conhecido: um registro antigo gravado pontuado não é encontrado pelo filtro da listagem quando o termo atravessa a pontuação (o CPF inteiro, por exemplo). Trechos curtos que caem dentro de um bloco continuam casando. A busca global da navbar segue enviando o termo como digitado, o que cobre esse caso. Normalizar os dados gravados, ou fazer a API comparar só dígitos, fica fora do frontend.
+
+Valores gravados que não são editados voltam à API como vieram — normalizar no `PUT` mudaria registros antigos só por abrir e salvar a tela, e destruiria telefones com observação. O `cpfValidator` fica em `core/validators/` por ser um `ValidatorFn` de formulário, não um utilitário de formatação. Como controles desabilitados não são validados, ele só atua no cadastro.
+
 ### Anamnese do paciente
 A tela `/pacientes/:pacienteId/anamnese` usa Reactive Forms para criar ou editar a anamnese principal do paciente. O componente valida o parâmetro `pacienteId` com `parseRouteNumberParam`, carrega a identificação do paciente por `PacienteService.buscar` e tenta carregar a anamnese via `GET /api/anamneses/paciente/{pacienteId}`. Retorno `404` nessa consulta indica ausência de anamnese e mantém o formulário em modo de cadastro. O salvamento usa `POST /api/anamneses` quando ainda não há registro e `PUT /api/anamneses/{id}` quando a anamnese já existe. Os campos `queixaPrincipal` e `objetivos` são obrigatórios e rejeitam conteúdo somente com espaços, refletindo o contrato `@NotBlank` do backend.
 

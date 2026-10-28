@@ -7,9 +7,9 @@ SPA Angular com componentes standalone, organizada em três camadas dentro de
 
 | Camada | Responsabilidade |
 |---|---|
-| `core/` | Integração com a API e regras de acesso: `models/` (DTOs e interfaces), `services/` (um serviço por recurso REST), `interceptors/` (token, renovação de sessão e tratamento de `403`) e `guards/` (`authGuard` e `roleGuard`). |
+| `core/` | Integração com a API e regras de acesso: `models/` (DTOs e interfaces), `services/` (um serviço por recurso REST), `validators/` (`ValidatorFn` reutilizáveis de formulário), `interceptors/` (token, renovação de sessão e tratamento de `403`) e `guards/` (`authGuard` e `roleGuard`). |
 | `pages/` | Uma pasta por área funcional, com um componente por tela. Componentes de página orquestram serviços do `core` e não falam com a API diretamente. |
-| `shared/` | Reuso entre páginas: `components/` (componentes de UI), `services/` (utilitários injetáveis), `pipes/` e `utils/` (funções puras, sem dependência do DOM e com cobertura própria). |
+| `shared/` | Reuso entre páginas: `components/` (componentes de UI), `directives/` (diretivas de atributo, como a máscara de entrada), `services/` (utilitários injetáveis), `pipes/` e `utils/` (funções puras, sem dependência do DOM e com cobertura própria). |
 
 Lógica que não depende do DOM — aritmética de datas, conversão de coordenadas,
 cálculo de métricas, extração de mensagem de erro — vive em `shared/utils/` para
@@ -24,6 +24,7 @@ ser testada isoladamente do componente que a consome.
 │   │   ├── core/
 │   │   │   ├── models/             # DTOs e interfaces
 │   │   │   ├── services/           # Integração com a API REST
+│   │   │   ├── validators/         # ValidatorFn reutilizáveis de formulário
 │   │   │   ├── interceptors/       # HTTP interceptors (auth e 403)
 │   │   │   └── guards/             # Route guards (auth e role)
 │   │   ├── pages/
@@ -42,6 +43,7 @@ ser testada isoladamente do componente que a consome.
 │   │   │   └── relatorios/         # Relatórios administrativos
 │   │   └── shared/
 │   │       ├── components/         # Componentes reutilizáveis
+│   │       ├── directives/         # Diretivas de atributo (máscara de entrada)
 │   │       ├── pipes/              # Pipes de formatação
 │   │       ├── services/           # Serviços utilitários injetáveis
 │   │       └── utils/              # Funções utilitárias puras
