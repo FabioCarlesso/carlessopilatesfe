@@ -63,13 +63,13 @@ describe('PagamentoService', () => {
   });
 
   describe('pagar', () => {
-    it('should PATCH /api/pagamentos/:id/pagar with dataPagamento', () => {
+    it('should PATCH /api/pagamentos/:id/pagar with dataPagamento in the body', () => {
       const pagoPagamento = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
       service.pagar(1, '2026-05-05').subscribe(p => expect(p.status).toBe('PAGO'));
       const req = httpMock.expectOne(r => r.url === '/api/pagamentos/1/pagar');
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({});
-      expect(req.request.params.get('dataPagamento')).toBe('2026-05-05');
+      expect(req.request.body).toEqual({ dataPagamento: '2026-05-05' });
+      expect(req.request.params.keys()).toEqual([]);
       req.flush(pagoPagamento);
     });
   });
