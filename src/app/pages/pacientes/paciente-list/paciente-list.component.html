@@ -36,12 +36,12 @@
 
   <label>
     CPF
-    <input type="text" class="form-control" inputmode="numeric" name="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
+    <input type="text" class="form-control" inputmode="numeric" name="cpf" appMascara="cpf" [(ngModel)]="filtro.cpf" placeholder="000.000.000-00">
   </label>
 
   <label>
     Telefone
-    <input type="tel" class="form-control" name="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
+    <input type="tel" class="form-control" name="telefone" appMascara="telefone" [(ngModel)]="filtro.telefone" placeholder="(00) 00000-0000">
   </label>
 
   <label>

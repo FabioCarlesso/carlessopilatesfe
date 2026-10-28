@@ -22,9 +22,9 @@ container com `docker compose up --build` antes de abrir a PR.
 
 ## Arquitetura
 
-`src/app` tem três camadas: `core/` (models, services da API, interceptors,
-guards), `pages/` (uma pasta por área, um componente por tela) e `shared/`
-(components, pipes, services e utils). Componentes de página orquestram serviços
+`src/app` tem três camadas: `core/` (models, services da API, validators,
+interceptors, guards), `pages/` (uma pasta por área, um componente por tela) e
+`shared/` (components, directives, pipes, services e utils). Componentes de página orquestram serviços
 do `core` e nunca chamam a API diretamente. Lógica sem dependência do DOM vive em
 `shared/utils/` com cobertura própria.
 

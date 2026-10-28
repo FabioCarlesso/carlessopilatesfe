@@ -331,6 +331,39 @@ describe('PacienteListComponent', () => {
     }, 'nome,asc');
   });
 
+  it('should send only the digits of punctuated CPF and phone filters', () => {
+    component.filtro = {
+      nome: '',
+      email: '',
+      cpf: '529.982.247-25',
+      telefone: '(11) 99999-8888',
+      status: 'ativos'
+    };
+
+    component.buscar();
+
+    expect(serviceSpy.listar).toHaveBeenCalledWith(0, 10, jasmine.objectContaining({
+      cpf: '52998224725',
+      telefone: '11999998888'
+    }), 'nome,asc');
+  });
+
+  it('should mask the CPF and phone filters while keeping digits in the model', async () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const cpf = el.querySelector('input[name="cpf"]') as HTMLInputElement;
+    const telefone = el.querySelector('input[name="telefone"]') as HTMLInputElement;
+
+    cpf.value = '52998224725';
+    cpf.dispatchEvent(new Event('input'));
+    telefone.value = '1133334444';
+    telefone.dispatchEvent(new Event('input'));
+
+    expect(cpf.value).toBe('529.982.247-25');
+    expect(telefone.value).toBe('(11) 3333-4444');
+    expect(component.filtro.cpf).toBe('52998224725');
+    expect(component.filtro.telefone).toBe('1133334444');
+  });
+
   it('should omit ativo param when status is todos', () => {
     component.filtro = {
       nome: '',

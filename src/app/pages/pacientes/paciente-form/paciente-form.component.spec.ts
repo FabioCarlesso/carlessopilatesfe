@@ -83,7 +83,7 @@ describe('PacienteFormComponent', () => {
       component.form.patchValue({
         nome: 'Ana Silva',
         email: 'ana@email.com',
-        cpf: '123.456.789-00'
+        cpf: '123.456.789-09'
       });
       component.salvar();
       expect(serviceSpy.cadastrar).toHaveBeenCalled();
@@ -118,10 +118,87 @@ describe('PacienteFormComponent', () => {
 
     it('should set erro and clear salvando flag on cadastrar failure', () => {
       serviceSpy.cadastrar.and.returnValue(throwError(() => new Error('fail')));
-      component.form.patchValue({ nome: 'Ana Silva', email: 'ana@email.com', cpf: '123' });
+      component.form.patchValue({ nome: 'Ana Silva', email: 'ana@email.com', cpf: '12345678909' });
       component.salvar();
       expect(component.erro).toBe('Erro ao salvar paciente.');
       expect(component.salvando).toBeFalse();
+    });
+
+    it('should reject an invalid CPF without calling the API', () => {
+      component.form.patchValue({ nome: 'Ana Silva', email: 'ana@email.com', cpf: '123.456.789-00' });
+      component.salvar();
+      fixture.detectChanges();
+
+      expect(component.form.get('cpf')?.hasError('cpf')).toBeTrue();
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
+      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
+      expect(mensagens).toEqual(['CPF inválido.']);
+    });
+
+    it('should reject a CPF made of a single repeated digit', () => {
+      component.form.get('cpf')?.setValue('111.111.111-11');
+      expect(component.form.get('cpf')?.hasError('cpf')).toBeTrue();
+    });
+
+    it('should show only the required message when CPF is empty', () => {
+      component.form.get('cpf')?.markAsTouched();
+      fixture.detectChanges();
+
+      const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
+      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
+      expect(mensagens).toEqual(['CPF é obrigatório.']);
+    });
+
+    it('should accept a valid CPF with or without punctuation', () => {
+      const cpf = component.form.get('cpf');
+      cpf?.setValue('529.982.247-25');
+      expect(cpf?.valid).toBeTrue();
+      cpf?.setValue('52998224725');
+      expect(cpf?.valid).toBeTrue();
+    });
+
+    it('should mask CPF, phone and CEP inputs and send only digits to the API', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+      const el = fixture.nativeElement as HTMLElement;
+      const digitar = (id: string, valor: string) => {
+        const input = el.querySelector(`#${id}`) as HTMLInputElement;
+        input.value = valor;
+        input.dispatchEvent(new Event('input'));
+        return input;
+      };
+
+      component.form.patchValue({ nome: 'Ana Silva', email: 'ana@email.com' });
+      expect(digitar('cpf', '529.982.247-25').value).toBe('529.982.247-25');
+      expect(digitar('telefone', '11999998888').value).toBe('(11) 99999-8888');
+      expect(digitar('cep', '01310-100').value).toBe('01310-100');
+
+      component.salvar();
+
+      expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+        cpf: '52998224725',
+        telefone: '11999998888',
+        endereco: jasmine.objectContaining({ cep: '01310100' })
+      }));
+    });
+
+    it('should normalize punctuated values set programmatically before creating', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+      component.form.patchValue({
+        nome: 'Ana Silva',
+        email: 'ana@email.com',
+        cpf: '529.982.247-25',
+        telefone: '(11) 3333-4444',
+        endereco: { cep: '01310-100' }
+      });
+
+      component.salvar();
+
+      expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+        cpf: '52998224725',
+        telefone: '1133334444',
+        endereco: jasmine.objectContaining({ cep: '01310100' })
+      }));
     });
 
     it('campo() should return the matching AbstractControl', () => {
@@ -192,6 +269,29 @@ describe('PacienteFormComponent', () => {
 
     it('should disable only cpf field in edit mode (cpf is immutable)', () => {
       expect(component.form.get('cpf')?.disabled).toBeTrue();
+    });
+
+    // O CPF gravado no mock tem dígito verificador errado: como o campo fica
+    // desabilitado na edição, o Angular não o valida e o cadastro continua editável.
+    it('should save the rest of the record even when the stored CPF is invalid', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      expect(component.form.valid).toBeTrue();
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalled();
+    });
+
+    it('should show the stored CPF masked in the disabled field', () => {
+      const cpf = (fixture.nativeElement as HTMLElement).querySelector('#cpf') as HTMLInputElement;
+      expect(cpf.disabled).toBeTrue();
+      expect(cpf.value).toBe('123.456.789-00');
+    });
+
+    // Telefone gravado e não editado volta como veio: normalizar aqui mudaria
+    // registros antigos só por abrir e salvar a tela.
+    it('should send an untouched stored phone unchanged', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ telefone: '(11) 99999-9999' }));
     });
 
     it('should include email in atualizar payload', () => {

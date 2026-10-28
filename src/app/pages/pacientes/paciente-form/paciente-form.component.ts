@@ -6,10 +6,13 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { cpfValidator } from '../../../core/validators/cpf.validator';
+import { MascaraDirective } from '../../../shared/directives/mascara.directive';
+import { somenteDigitos } from '../../../shared/utils/mascara';
 
 @Component({
   selector: 'app-paciente-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, MascaraDirective],
   templateUrl: './paciente-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-form.component.scss'
@@ -41,7 +44,7 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      cpf: ['', Validators.required],
+      cpf: ['', [Validators.required, cpfValidator]],
       telefone: [''],
       dataNascimento: [''],
       endereco: this.fb.group({
@@ -103,7 +106,15 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           endereco: valor.endereco,
           version: this.version
         })
-      : this.service.cadastrar(valor);
+      : this.service.cadastrar({
+          ...valor,
+          // Só dígitos, o formato único de envio (ver `shared/utils/mascara.ts`). A
+          // máscara já entrega assim; normalizar aqui garante o contrato mesmo que o
+          // valor chegue ao controle por outro caminho.
+          cpf: somenteDigitos(valor.cpf),
+          telefone: somenteDigitos(valor.telefone),
+          endereco: { ...valor.endereco, cep: somenteDigitos(valor.endereco.cep) }
+        });
 
     obs.subscribe({
       next: () => this.router.navigate(['/pacientes']),
