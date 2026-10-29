@@ -114,12 +114,8 @@ describe('UsuarioAdminService', () => {
     req.flush(mockUsuario);
   });
 
-  it('should DELETE /api/users/:id', () => {
-    service.excluir(1).subscribe();
-
-    const req = httpMock.expectOne('/api/users/1');
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null);
+  it('should not expose a DELETE: the API has no physical deletion of users', () => {
+    expect('excluir' in service).toBeFalse();
   });
 
   it('should PATCH /api/users/:id/ativar', () => {
