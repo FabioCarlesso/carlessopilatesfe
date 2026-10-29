@@ -111,18 +111,14 @@ describe('PagamentoListComponent', () => {
     expect(component.pagarForm.value.formaPagamento).toBeNull();
   });
 
-  it('should not call pagar without formaPagamento and flag the select as invalid', () => {
+  it('should call pagar with a null formaPagamento when it is not informed', () => {
+    serviceSpy.pagar.and.returnValue(of({ ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' }));
     abrirDialogoPagar();
     component.pagarForm.patchValue({ dataPagamento: '2026-05-05' });
     (fixture.nativeElement.querySelector('.dialog-actions .btn:not(.btn-outline)') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(serviceSpy.pagar).not.toHaveBeenCalled();
-    const select: HTMLSelectElement = fixture.nativeElement.querySelector('select#formaPagamento')!;
-    expect(select.classList).toContain('is-invalid');
-    expect(select.getAttribute('aria-describedby')).toBe('formaPagamento-erro');
-    expect(fixture.nativeElement.querySelector('#formaPagamento-erro')?.textContent?.trim())
-      .toBe('Forma de pagamento é obrigatória.');
+    expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05', null);
   });
 
   it('should offer every forma de pagamento with its centralized label in the confirmation dialog', () => {
@@ -130,7 +126,7 @@ describe('PagamentoListComponent', () => {
 
     const opcoes = Array.from(fixture.nativeElement.querySelectorAll('select#formaPagamento option') as NodeListOf<HTMLOptionElement>)
       .map(o => o.textContent?.trim());
-    expect(opcoes).toEqual(['Selecione...', ...FORMA_PAGAMENTO_OPCOES.map(f => FORMA_PAGAMENTO_LABEL[f])]);
+    expect(opcoes).toEqual(['Não informada', ...FORMA_PAGAMENTO_OPCOES.map(f => FORMA_PAGAMENTO_LABEL[f])]);
   });
 
   it('should show the forma de pagamento label in the list and a dash when it is missing', () => {

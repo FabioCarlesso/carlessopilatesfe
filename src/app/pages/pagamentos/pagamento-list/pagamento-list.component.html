@@ -93,19 +93,13 @@
         <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
       </div>
       <div class="form-group">
-        <label for="formaPagamento">Forma de Pagamento *</label>
-        <select id="formaPagamento" formControlName="formaPagamento" class="form-control"
-          [class.is-invalid]="campoInvalido('formaPagamento')"
-          [attr.aria-invalid]="campoInvalido('formaPagamento') || null"
-          [attr.aria-describedby]="campoInvalido('formaPagamento') ? 'formaPagamento-erro' : null">
-          <option [ngValue]="null">Selecione...</option>
+        <label for="formaPagamento">Forma de Pagamento</label>
+        <select id="formaPagamento" formControlName="formaPagamento" class="form-control">
+          <option [ngValue]="null">Não informada</option>
           @for (forma of formasPagamento; track forma) {
             <option [ngValue]="forma">{{ formaPagamentoLabel[forma] }}</option>
           }
         </select>
-        @if (campoInvalido('formaPagamento')) {
-          <div id="formaPagamento-erro" class="invalid-feedback">Forma de pagamento é obrigatória.</div>
-        }
       </div>
     </form>
   </app-confirmar-dialog>

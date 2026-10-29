@@ -54,11 +54,10 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    // A API aceita confirmar sem forma, mas a tela a exige: é na confirmação que ela é
-    // definitiva, e um pagamento confirmado sem forma não fecha na conferência de caixa.
+    // A forma é opcional, como na API: sem ela o pagamento é confirmado com `formaPagamento: null`.
     this.pagarForm = this.fb.group({
       dataPagamento: ['', Validators.required],
-      formaPagamento: [null, Validators.required]
+      formaPagamento: [null]
     });
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
@@ -98,11 +97,6 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
 
   trackByPagamento(_: number, pagamento: PagamentoResponseDTO): number {
     return pagamento.id;
-  }
-
-  campoInvalido(nome: string): boolean {
-    const controle = this.pagarForm.get(nome);
-    return !!controle && controle.invalid && controle.touched;
   }
 
   private exibirSucesso(mensagem: string): void {

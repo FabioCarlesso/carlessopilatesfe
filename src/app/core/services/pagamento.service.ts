@@ -35,11 +35,11 @@ export class PagamentoService {
   }
 
   // A API lê a data só do corpo; na query string ela é ignorada e o pagamento fica
-  // gravado com a data do dia da confirmação. A forma de pagamento (#132) vai no mesmo corpo.
+  // gravado com a data do dia da confirmação. A forma de pagamento (#132), opcional, vai no mesmo corpo.
   pagar(
     pagamentoId: number,
     dataPagamento: string,
-    formaPagamento: FormaPagamento
+    formaPagamento: FormaPagamento | null
   ): Observable<PagamentoResponseDTO> {
     return this.http.patch<PagamentoResponseDTO>(`${this.apiUrl}/pagamentos/${pagamentoId}/pagar`, {
       dataPagamento,
