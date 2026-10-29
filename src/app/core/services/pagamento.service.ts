@@ -7,7 +7,7 @@ import {
   ContatoCobrancaRequestDTO,
   PagamentoFiltro
 } from '../models/inadimplencia';
-import { PagamentoRequestDTO, PagamentoResponseDTO } from '../models/plano';
+import { FormaPagamento, PagamentoRequestDTO, PagamentoResponseDTO } from '../models/plano';
 import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
 
 @Injectable({ providedIn: 'root' })
@@ -35,10 +35,15 @@ export class PagamentoService {
   }
 
   // A API lê a data só do corpo; na query string ela é ignorada e o pagamento fica
-  // gravado com a data do dia da confirmação.
-  pagar(pagamentoId: number, dataPagamento: string): Observable<PagamentoResponseDTO> {
+  // gravado com a data do dia da confirmação. A forma de pagamento (#132) vai no mesmo corpo.
+  pagar(
+    pagamentoId: number,
+    dataPagamento: string,
+    formaPagamento: FormaPagamento
+  ): Observable<PagamentoResponseDTO> {
     return this.http.patch<PagamentoResponseDTO>(`${this.apiUrl}/pagamentos/${pagamentoId}/pagar`, {
-      dataPagamento
+      dataPagamento,
+      formaPagamento
     });
   }
 

@@ -7,7 +7,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL } from '../../../core/models/plano';
+import {
+  FORMA_PAGAMENTO_LABEL,
+  FORMA_PAGAMENTO_OPCOES,
+  PagamentoResponseDTO,
+  STATUS_PAGAMENTO_LABEL
+} from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -32,6 +37,8 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = STATUS_PAGAMENTO_LABEL;
+  readonly formaPagamentoLabel = FORMA_PAGAMENTO_LABEL;
+  readonly formasPagamento = FORMA_PAGAMENTO_OPCOES;
   readonly papeis = PAPEIS;
 
   constructor(
@@ -46,7 +53,12 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    this.pagarForm = this.fb.group({ dataPagamento: ['', Validators.required] });
+    // A API aceita confirmar sem forma, mas a tela a exige: é na confirmação que ela é
+    // definitiva, e um pagamento confirmado sem forma não fecha na conferência de caixa.
+    this.pagarForm = this.fb.group({
+      dataPagamento: ['', Validators.required],
+      formaPagamento: [null, Validators.required]
+    });
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
       return;
@@ -87,6 +99,11 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
     return pagamento.id;
   }
 
+  campoInvalido(nome: string): boolean {
+    const controle = this.pagarForm.get(nome);
+    return !!controle && controle.invalid && controle.touched;
+  }
+
   private exibirSucesso(mensagem: string): void {
     this.sucesso = mensagem;
     if (this.successTimer !== null) {
@@ -115,9 +132,9 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
       focarPrimeiroInvalido(this.pagarForm, this.host);
       return;
     }
-    const { dataPagamento } = this.pagarForm.value;
+    const { dataPagamento, formaPagamento } = this.pagarForm.value;
     this.acaoEmAndamento = true;
-    this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.pagar(this.pagarId, dataPagamento, formaPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.acaoEmAndamento = false;
         this.pagarId = null;
