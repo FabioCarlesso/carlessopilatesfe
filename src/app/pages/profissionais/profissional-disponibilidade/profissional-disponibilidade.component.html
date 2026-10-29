@@ -1,0 +1,130 @@
+<section class="detail-section disponibilidade" aria-labelledby="disponibilidadeTitulo">
+  <h2 id="disponibilidadeTitulo">Disponibilidade semanal</h2>
+  <p class="disponibilidade-intro">
+    Dias e faixas de horário em que o profissional atende. O horário final não entra na faixa: em 07:00–12:00,
+    uma sessão às 12:00 já está fora. Sem nenhuma faixa cadastrada, o agendamento não exibe aviso.
+  </p>
+
+  @if (!ativo) {
+    <div class="alert alert-warning">
+      Profissional inativo: a grade não aceita faixas novas nem alterações. A exclusão continua liberada.
+    </div>
+  }
+  @if (erroAcao) {
+    <div class="alert alert-danger" role="alert">{{ erroAcao }}</div>
+  }
+  @if (sucesso) {
+    <div class="alert alert-success" role="status">{{ sucesso }}</div>
+  }
+
+  @if (loading) {
+    <app-carregando mensagem="Carregando disponibilidade..." />
+  } @else if (erroCarga) {
+    <div class="alert alert-danger">
+      {{ erroCarga }}
+      <button type="button" class="btn btn-outline btn-sm tentar-novamente" (click)="carregar()">Tentar novamente</button>
+    </div>
+  } @else {
+    <ul class="grade-semanal">
+      @for (dia of grade; track dia.dia) {
+        <li class="grade-dia" [attr.data-dia]="dia.dia">
+          <h3 class="grade-dia-titulo">{{ diaLabel[dia.dia] }}</h3>
+          @if (dia.faixas.length === 0) {
+            <p class="grade-vazia">Sem atendimento</p>
+          } @else {
+            <ul class="grade-faixas">
+              @for (faixa of dia.faixas; track faixa.id) {
+                <li class="grade-faixa" [class.em-edicao]="editando?.id === faixa.id">
+                  <span class="grade-faixa-horario">{{ descrever(faixa) }}</span>
+                  <span class="grade-faixa-acoes">
+                    @if (ativo) {
+                      <button type="button" class="btn btn-outline btn-sm" (click)="editar(faixa)"
+                        [attr.aria-label]="'Editar faixa de ' + diaLabel[faixa.diaSemana] + ', ' + descrever(faixa)">
+                        Editar
+                      </button>
+                    }
+                    <button type="button" class="btn btn-danger btn-sm" (click)="confirmarExclusao(faixa)"
+                      [attr.aria-label]="'Excluir faixa de ' + diaLabel[faixa.diaSemana] + ', ' + descrever(faixa)">
+                      Excluir
+                    </button>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (ativo) {
+      <form [formGroup]="form" (ngSubmit)="salvar()" class="faixa-form" aria-labelledby="faixaFormTitulo" novalidate>
+        <h3 id="faixaFormTitulo" class="faixa-form-titulo">
+          {{ editando ? 'Editar faixa de ' + diaLabel[editando.diaSemana] + ', ' + descrever(editando) : 'Nova faixa' }}
+        </h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="diaSemana">Dia da semana *</label>
+            <select id="diaSemana" formControlName="diaSemana" class="form-control"
+              aria-describedby="diaSemanaError"
+              [class.is-invalid]="campoInvalido('diaSemana')">
+              <option value="" disabled>Selecione</option>
+              @for (dia of dias; track dia) {
+                <option [value]="dia">{{ diaLabel[dia] }}</option>
+              }
+            </select>
+            @if (campoInvalido('diaSemana')) {
+              <div id="diaSemanaError" class="invalid-feedback">Dia da semana é obrigatório.</div>
+            }
+          </div>
+          <div class="form-group">
+            <label for="horaInicio">Início *</label>
+            <input id="horaInicio" type="time" formControlName="horaInicio" class="form-control"
+              aria-describedby="horaInicioError faixaError"
+              [class.is-invalid]="campoInvalido('horaInicio') || mostrarErroDeFaixa" />
+            @if (campoInvalido('horaInicio')) {
+              <div id="horaInicioError" class="invalid-feedback">Início é obrigatório.</div>
+            }
+          </div>
+          <div class="form-group">
+            <label for="horaFim">Fim *</label>
+            <input id="horaFim" type="time" formControlName="horaFim" class="form-control"
+              aria-describedby="horaFimError faixaError"
+              [class.is-invalid]="campoInvalido('horaFim') || mostrarErroDeFaixa" />
+            @if (campoInvalido('horaFim')) {
+              <div id="horaFimError" class="invalid-feedback">Fim é obrigatório.</div>
+            }
+          </div>
+        </div>
+        @if (mostrarErroDeFaixa) {
+          <div id="faixaError" class="invalid-feedback faixa-erro" role="alert">
+            @if (form.hasError('faixaInvertida')) {
+              O início precisa ser anterior ao fim.
+            } @else {
+              Esta faixa se sobrepõe a {{ faixaConflitante ? descrever(faixaConflitante) : 'outra' }}, já cadastrada
+              no mesmo dia.
+            }
+          </div>
+        }
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="salvando">
+            {{ salvando ? 'Salvando...' : (editando ? 'Atualizar faixa' : 'Adicionar faixa') }}
+          </button>
+          @if (editando) {
+            <button type="button" class="btn btn-outline" (click)="cancelarEdicao()">Cancelar edição</button>
+          }
+        </div>
+      </form>
+    }
+  }
+</section>
+
+@if (aExcluir) {
+  <app-confirmar-dialog
+    titulo="Excluir faixa"
+    variante="perigo"
+    [processando]="excluindo"
+    (confirmar)="excluir()"
+    (cancelar)="aExcluir = null">
+    <p>Excluir a faixa de <strong>{{ diaLabel[aExcluir.diaSemana] }}, {{ descrever(aExcluir) }}</strong>?</p>
+  </app-confirmar-dialog>
+}
