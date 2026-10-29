@@ -48,9 +48,7 @@
 </form>
 
 @if (loading || exportando) {
-  <div class="loading">
-    {{ exportando ? 'Gerando arquivo...' : 'Carregando...' }}
-  </div>
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
 }
 
 @if (relatorio) {

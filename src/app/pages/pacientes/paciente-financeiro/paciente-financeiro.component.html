@@ -24,7 +24,7 @@
   <div class="alert alert-danger">{{ erro }}</div>
 }
 @if (carregandoPaciente) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (paciente) {
@@ -40,7 +40,7 @@
         <div class="alert alert-danger">{{ erroPagamentos }}</div>
       }
       @if (carregandoPagamentos) {
-        <div class="loading">Carregando pagamentos...</div>
+        <app-carregando mensagem="Carregando pagamentos..." />
       }
 
       @if (resumo && !carregandoPagamentos) {
@@ -112,7 +112,7 @@
         <div class="alert alert-danger">{{ erroPlanos }}</div>
       }
       @if (carregandoPlanos) {
-        <div class="loading">Carregando planos...</div>
+        <app-carregando mensagem="Carregando planos..." />
       }
 
       @if (!carregandoPlanos && !erroPlanos) {
@@ -162,7 +162,7 @@
           <div class="alert alert-danger">{{ erroAulas }}</div>
         }
         @if (carregandoAulas) {
-          <div class="loading">Carregando aulas...</div>
+          <app-carregando mensagem="Carregando aulas..." />
         }
         @if (aulas && !carregandoAulas) {
           <app-grafico-proporcao
@@ -185,7 +185,7 @@
           <div class="alert alert-danger">{{ erroNfse }}</div>
         }
         @if (carregandoNfse) {
-          <div class="loading">Carregando NFSEs...</div>
+          <app-carregando mensagem="Carregando NFSEs..." />
         }
         @if (nfsesCarregadas && !carregandoNfse) {
           @if (ultimaNfse) {

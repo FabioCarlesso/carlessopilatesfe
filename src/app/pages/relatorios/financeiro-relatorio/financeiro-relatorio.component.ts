@@ -14,6 +14,7 @@ import { focarPrimeiroCampo } from '../../../shared/utils/form-focus';
 // O teto de 366 dias e a regra `inicio <= fim` são os mesmos do ranking de
 // indicadores, e o relatório financeiro da API aplica os dois.
 import { periodoDoMesAtual, validarPeriodoRanking } from '../../../shared/utils/indicadores';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 export const MENSAGEM_SEM_PERMISSAO_FINANCEIRO =
   'Você não tem permissão para acessar o relatório financeiro do estúdio.';
@@ -25,7 +26,7 @@ export const MENSAGEM_SEM_PERMISSAO_FINANCEIRO =
  */
 @Component({
   selector: 'app-financeiro-relatorio',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, CarregandoComponent],
   templateUrl: './financeiro-relatorio.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './financeiro-relatorio.component.scss'

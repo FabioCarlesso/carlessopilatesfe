@@ -22,6 +22,7 @@ import { PagamentoService } from '../../../core/services/pagamento.service';
 import { PlanoService } from '../../../core/services/plano.service';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { GraficoProporcaoComponent } from '../../../shared/components/grafico-proporcao/grafico-proporcao.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { hojeIso } from '../../../shared/utils/calendario';
 import { SegmentoProporcao } from '../../../shared/utils/grafico-proporcao';
@@ -57,7 +58,7 @@ export interface PagamentoNoHistorico {
  */
 @Component({
   selector: 'app-paciente-financeiro',
-  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent, GraficoProporcaoComponent, LocalDatePipe],
+  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent, GraficoProporcaoComponent, LocalDatePipe, CarregandoComponent],
   templateUrl: './paciente-financeiro.component.html',
   styleUrl: './paciente-financeiro.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
