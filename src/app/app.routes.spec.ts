@@ -1,8 +1,13 @@
-import { Routes } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CanActivateFn, Routes, UrlTree } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { UserRole } from './core/models/auth';
 import { routes } from './app.routes';
 import { authGuard } from './core/guards/auth.guard';
 import { visitanteGuard } from './core/guards/visitante.guard';
 import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
+import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-relatorio/financeiro-relatorio.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
   const result: string[] = [];
@@ -67,6 +72,7 @@ describe('app routes', () => {
       'relatorios',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
+      'relatorios/financeiro',
       'relatorios/indicadores',
       'financeiro/inadimplencia',
       'admin',
@@ -210,6 +216,32 @@ describe('app routes', () => {
     expect(route).toBeTruthy();
     expect(route!.canActivate?.length).toBe(1);
     expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(InadimplenciaComponent);
+  });
+
+  it('should guard the financial report and lazy load its component', async () => {
+    const route = routes.find(r => r.path === 'relatorios/financeiro');
+    expect(route).toBeTruthy();
+    expect(route!.canActivate?.length).toBe(1);
+    expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(FinanceiroRelatorioComponent);
+  });
+
+  it('should open the financial report to ADMIN and FINANCEIRO only, as the API does', () => {
+    TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
+    const guard = routes.find(r => r.path === 'relatorios/financeiro')!.canActivate![0] as CanActivateFn;
+    const ativar = (roles: UserRole[]) => {
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+    };
+
+    try {
+      expect(ativar(['ADMIN'])).toBeTrue();
+      expect(ativar(['FINANCEIRO'])).toBeTrue();
+      expect(ativar(['RECEPCAO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['PROFISSIONAL'])).toBeInstanceOf(UrlTree);
+    } finally {
+      localStorage.clear();
+    }
   });
 
   it('should protect every admin route with a canActivate guard on the parent', () => {
