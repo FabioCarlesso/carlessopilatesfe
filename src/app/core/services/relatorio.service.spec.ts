@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { RelatorioService } from './relatorio.service';
-import { RelatorioNfseResponseDTO } from '../models/relatorio';
+import { RelatorioFinanceiroDTO, RelatorioNfseResponseDTO } from '../models/relatorio';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 
 const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
   {
@@ -70,4 +71,33 @@ describe('RelatorioService', () => {
     expect(req.request.responseType).toBe('blob');
     req.flush(blob);
   });
+
+  it('should GET the consolidated financial report with inicio and fim', () => {
+    const relatorio = { resultadoLiquido: 100 } as RelatorioFinanceiroDTO;
+    service.relatorioFinanceiro('2026-10-01', '2026-10-31').subscribe(r => expect(r).toEqual(relatorio));
+
+    const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/financeiro');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('inicio')).toBe('2026-10-01');
+    expect(req.request.params.get('fim')).toBe('2026-10-31');
+    expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+    req.flush(relatorio);
+  });
+
+  for (const formato of ['pdf', 'xlsx'] as const) {
+    it(`should export the financial report as ${formato} blob through its own route`, () => {
+      const blob = new Blob([formato]);
+      service.exportarRelatorioFinanceiro('2026-10-01', '2026-10-31', formato)
+        .subscribe(response => expect(response.body).toBe(blob));
+
+      const req = httpMock.expectOne(r => r.url === `/api/api/relatorios/financeiro/${formato}`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('inicio')).toBe('2026-10-01');
+      expect(req.request.params.get('fim')).toBe('2026-10-31');
+      expect(req.request.params.has('formato')).toBeFalse();
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(blob);
+    });
+  }
 });

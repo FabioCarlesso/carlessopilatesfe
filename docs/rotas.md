@@ -16,7 +16,7 @@ grupo; sem nenhum, o `roleGuard` leva a `/403`.
 | clínica | `ADMIN`, `PROFISSIONAL` | Prontuário: anamnese, avaliações, análise postural, evoluções, planos de tratamento, reavaliações |
 | agenda | `ADMIN`, `PROFISSIONAL`, `RECEPCAO` | Agenda, lista de espera, sessões, calendário e aulas |
 | cobrança | `ADMIN`, `RECEPCAO`, `FINANCEIRO` | Planos e pagamentos do paciente |
-| fiscal | `ADMIN`, `FINANCEIRO` | NFSEs emitidas e relatórios de pagamento de profissional e de NFSE |
+| fiscal | `ADMIN`, `FINANCEIRO` | NFSEs emitidas e relatórios de pagamento de profissional, de NFSE e financeiro do estúdio |
 | admin | `ADMIN` | Profissionais, indicadores, inadimplência e `/admin` |
 
 `/inicio` e `/perfil/alterar-senha` exigem só autenticação. `/aulas/pagamento/:pagamentoId`
@@ -63,6 +63,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/relatorios`           | Seção de relatórios (_fiscal_) |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (_fiscal_) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (_fiscal_) |
+| `/relatorios/financeiro` | Relatório financeiro consolidado do estúdio: receita, repasses, inadimplência e resultado líquido (_fiscal_) |
 | `/relatorios/indicadores` | Indicadores históricos: receita, ocupação e evasão mês a mês, e ranking de aulas por profissional (`ADMIN`) |
 | `/financeiro/inadimplencia` | Gestão de inadimplência: lista global paginada de pagamentos com dias em atraso, filtros e contatos de cobrança (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |
