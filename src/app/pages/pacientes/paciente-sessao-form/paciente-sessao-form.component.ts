@@ -23,6 +23,7 @@ import { bloqueiosDoHorario, descreverBloqueio } from '../../../shared/utils/blo
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 /** Formato que o `input[type=datetime-local]` aceita — sem segundos. */
@@ -49,7 +50,7 @@ function ehDataHoraLocalValida(valor: string): boolean {
 
 @Component({
   selector: 'app-paciente-sessao-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-sessao-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-sessao-form.component.scss'

@@ -9,10 +9,11 @@ import {
 } from '../../../core/models/profissional';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-profissional-pagamento-relatorio',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, CarregandoComponent],
   templateUrl: './profissional-pagamento-relatorio.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-pagamento-relatorio.component.scss'

@@ -21,7 +21,7 @@
   </div>
 }
 @if (carregando) {
-  <div class="loading">Carregando planos...</div>
+  <app-carregando mensagem="Carregando planos..." />
 }
 
 @if (!carregando && planos.length === 0 && !erro) {

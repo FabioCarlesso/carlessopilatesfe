@@ -43,6 +43,7 @@ import {
   sortDaInadimplencia,
   validarFaixaVencimento
 } from '../../../shared/utils/inadimplencia';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /** Mesmos números da busca de paciente da lista de espera e da busca global. */
 const TAMANHO_MINIMO_TERMO = 2;
@@ -108,7 +109,8 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
     ConfirmarDialogComponent,
     PaginationSummaryComponent,
     SortableHeaderComponent,
-    LocalDatePipe
+    LocalDatePipe,
+    CarregandoComponent
   ],
   templateUrl: './inadimplencia.component.html',
   styleUrl: './inadimplencia.component.scss',

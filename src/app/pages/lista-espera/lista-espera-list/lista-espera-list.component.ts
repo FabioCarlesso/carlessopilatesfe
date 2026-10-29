@@ -14,6 +14,7 @@ import {
   formatarFaixa,
   proximoAgendamento
 } from '../../../shared/utils/lista-espera';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /**
  * Uma linha da fila, montada na carga. A conversão em sessão precisa da próxima
@@ -49,7 +50,7 @@ interface LinhaDaFila {
  */
 @Component({
   selector: 'app-lista-espera-list',
-  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, CarregandoComponent],
   templateUrl: './lista-espera-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './lista-espera-list.component.scss'

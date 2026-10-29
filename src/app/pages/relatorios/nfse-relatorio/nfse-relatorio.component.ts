@@ -7,10 +7,11 @@ import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { formatCompetencia } from '../../../shared/utils/competencia-mask';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-nfse-relatorio',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, CarregandoComponent],
   templateUrl: './nfse-relatorio.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './nfse-relatorio.component.scss'

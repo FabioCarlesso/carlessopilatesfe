@@ -8,10 +8,11 @@ import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
 import { GraficoProporcaoComponent } from '../../../shared/components/grafico-proporcao/grafico-proporcao.component';
 import { SegmentoProporcao } from '../../../shared/utils/grafico-proporcao';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, CurrencyPipe, DatePipe, GraficoProporcaoComponent],
+  imports: [RouterLink, CurrencyPipe, DatePipe, GraficoProporcaoComponent, CarregandoComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

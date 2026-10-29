@@ -18,6 +18,7 @@ import {
   taxaOcupacao,
   validarPeriodoRanking
 } from '../../../shared/utils/indicadores';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 interface LinhaIndicadores {
   mes: string;
@@ -51,7 +52,7 @@ interface LinhaRanking extends AulasPorProfissionalDTO {
  */
 @Component({
   selector: 'app-indicadores',
-  imports: [DatePipe, FormsModule, NgTemplateOutlet, RouterLink],
+  imports: [DatePipe, FormsModule, NgTemplateOutlet, RouterLink, CarregandoComponent],
   templateUrl: './indicadores.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './indicadores.component.scss'

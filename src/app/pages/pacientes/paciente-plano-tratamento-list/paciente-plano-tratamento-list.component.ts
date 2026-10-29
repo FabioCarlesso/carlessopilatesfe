@@ -11,10 +11,11 @@ import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-plano-tratamento-list',
-  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-plano-tratamento-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-plano-tratamento-list.component.scss'

@@ -27,7 +27,7 @@
   <div class="alert alert-danger">{{ erro }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && reavaliacoes.length === 0 && !erro) {

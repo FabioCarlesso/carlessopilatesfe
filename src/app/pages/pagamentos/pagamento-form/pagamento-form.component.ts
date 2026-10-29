@@ -15,10 +15,11 @@ import {
   ehDataIsoValida,
   lerPreenchimentoRenovacao
 } from '../../../shared/utils/renovacao-plano';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-pagamento-form',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './pagamento-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './pagamento-form.component.scss'

@@ -106,7 +106,7 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
 <p class="calendario-resumo" role="status">{{ resumoPeriodo }}</p>
 
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && !erro) {

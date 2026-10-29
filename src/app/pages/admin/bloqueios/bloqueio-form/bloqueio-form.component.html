@@ -12,7 +12,7 @@
   <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && !parametroInvalido && !cargaFalhou) {

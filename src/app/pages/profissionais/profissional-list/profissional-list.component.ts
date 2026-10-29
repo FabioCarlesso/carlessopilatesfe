@@ -10,6 +10,7 @@ import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/o
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 interface FiltroUI {
   nome: string;
@@ -21,7 +22,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
+  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

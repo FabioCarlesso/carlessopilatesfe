@@ -18,6 +18,7 @@ import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { calcularMetricas } from '../../../shared/utils/metricas-posturais';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../shared/utils/simetrografo';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /**
  * Telas 2 e 3 do simetrógrafo virtual: carrega a análise e a foto autenticada,
@@ -26,7 +27,7 @@ import { EstadoMarcacao, PRUMO_PADRAO, montarPayloadRascunho } from '../../../sh
  */
 @Component({
   selector: 'app-paciente-avaliacao-postural-editor',
-  imports: [RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent],
+  imports: [RouterLink, SimetrografoEditorComponent, PainelMedidasPosturaisComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-avaliacao-postural-editor.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-editor.component.scss'
