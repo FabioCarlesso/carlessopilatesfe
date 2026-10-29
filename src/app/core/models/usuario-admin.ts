@@ -6,7 +6,8 @@ export interface UsuarioAdminResponseDTO {
   name: string;
   email: string;
   roles: UserRole[];
-  ativo?: boolean;
+  /** A API sempre envia o status; `GET /users` lista ativos e inativos. */
+  ativo: boolean;
   /** Versão do registro para o locking otimista: devolva-a no próximo update. */
   version: number;
 }
