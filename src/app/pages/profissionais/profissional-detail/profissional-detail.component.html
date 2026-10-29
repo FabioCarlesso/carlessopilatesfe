@@ -23,48 +23,69 @@
 }
 
 @if (profissional) {
-  <div class="detail-card">
-    <div class="badge-status" [class.inativo]="!profissional.ativo">
-      {{ profissional.ativo ? 'Ativo' : 'Inativo' }}
-    </div>
-    <section class="detail-section">
-      <h2>Dados do Profissional</h2>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="label">Nome</span>
-          <span>{{ profissional.nome }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">E-mail</span>
-          <span>{{ profissional.email }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">CPF</span>
-          <span>{{ profissional.cpf }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Telefone</span>
-          <span>{{ profissional.telefone || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Nr. de Registro</span>
-          <span>{{ profissional.numeroRegistro || '-' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Contrato</span>
-          <span>{{ tipoContratoLabel[profissional.tipoContrato] }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">% por Aula</span>
-          <span>{{ profissional.percentualPagamentoAula }}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">Data de Início</span>
-          <span>{{ profissional.dataInicio | date:'dd/MM/yyyy' }}</span>
-        </div>
-      </div>
-    </section>
+  <div class="abas" role="tablist" aria-label="Seções do profissional">
+    <button type="button" role="tab" id="aba-dados" class="aba"
+      [attr.aria-controls]="aba === 'dados' ? 'painel-dados' : null"
+      [attr.aria-selected]="aba === 'dados'"
+      [attr.tabindex]="aba === 'dados' ? 0 : -1"
+      (click)="selecionarAba('dados')"
+      (keydown)="navegarAbas($event)">Dados</button>
+    <button type="button" role="tab" id="aba-disponibilidade" class="aba"
+      [attr.aria-controls]="aba === 'disponibilidade' ? 'painel-disponibilidade' : null"
+      [attr.aria-selected]="aba === 'disponibilidade'"
+      [attr.tabindex]="aba === 'disponibilidade' ? 0 : -1"
+      (click)="selecionarAba('disponibilidade')"
+      (keydown)="navegarAbas($event)">Disponibilidade</button>
   </div>
+
+  @if (aba === 'disponibilidade') {
+    <div class="detail-card" role="tabpanel" id="painel-disponibilidade" aria-labelledby="aba-disponibilidade">
+      <app-profissional-disponibilidade [profissionalId]="profissional.id" [ativo]="profissional.ativo" />
+    </div>
+  } @else {
+    <div class="detail-card" role="tabpanel" id="painel-dados" aria-labelledby="aba-dados">
+      <div class="badge-status" [class.inativo]="!profissional.ativo">
+        {{ profissional.ativo ? 'Ativo' : 'Inativo' }}
+      </div>
+      <section class="detail-section">
+        <h2>Dados do Profissional</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Nome</span>
+            <span>{{ profissional.nome }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">E-mail</span>
+            <span>{{ profissional.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">CPF</span>
+            <span>{{ profissional.cpf }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Telefone</span>
+            <span>{{ profissional.telefone || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Nr. de Registro</span>
+            <span>{{ profissional.numeroRegistro || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Contrato</span>
+            <span>{{ tipoContratoLabel[profissional.tipoContrato] }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">% por Aula</span>
+            <span>{{ profissional.percentualPagamentoAula }}%</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Data de Início</span>
+            <span>{{ profissional.dataInicio | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
 }
 
 @if (confirmarAtivar) {

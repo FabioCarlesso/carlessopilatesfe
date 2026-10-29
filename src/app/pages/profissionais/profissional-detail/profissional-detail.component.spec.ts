@@ -5,6 +5,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { ProfissionalDetailComponent } from './profissional-detail.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
+import { DisponibilidadeProfissionalService } from '../../../core/services/disponibilidade-profissional.service';
 
 const mockProfissional: ProfissionalResponseDTO = {
   version: 0,
@@ -24,6 +25,7 @@ describe('ProfissionalDetailComponent', () => {
   let component: ProfissionalDetailComponent;
   let fixture: ComponentFixture<ProfissionalDetailComponent>;
   let serviceSpy: jasmine.SpyObj<ProfissionalService>;
+  let disponibilidadeSpy: jasmine.SpyObj<DisponibilidadeProfissionalService>;
   let router: Router;
 
   /** Valor exibido no `detail-item` de um rótulo, sem depender da ordem do grid. */
@@ -36,11 +38,14 @@ describe('ProfissionalDetailComponent', () => {
   beforeEach(async () => {
     serviceSpy = jasmine.createSpyObj('ProfissionalService', ['buscar', 'ativar', 'inativar']);
     serviceSpy.buscar.and.returnValue(of(mockProfissional));
+    disponibilidadeSpy = jasmine.createSpyObj('DisponibilidadeProfissionalService', ['listar']);
+    disponibilidadeSpy.listar.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [ProfissionalDetailComponent, RouterTestingModule],
       providers: [
         { provide: ProfissionalService, useValue: serviceSpy },
+        { provide: DisponibilidadeProfissionalService, useValue: disponibilidadeSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
       ]
     }).compileComponents();
@@ -143,4 +148,53 @@ describe('ProfissionalDetailComponent', () => {
     expect(component.acaoEmAndamento).toBeTrue();
   });
 
+
+  // Aba "Disponibilidade" (issue #134).
+  describe('abas', () => {
+    function abas(): HTMLButtonElement[] {
+      return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    }
+
+    it('should open on the data tab without loading the availability', () => {
+      expect(abas().map(a => a.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+      expect(fixture.nativeElement.querySelector('#painel-dados')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('app-profissional-disponibilidade')).toBeNull();
+      expect(disponibilidadeSpy.listar).not.toHaveBeenCalled();
+    });
+
+    it('should show the weekly availability of the professional when its tab is clicked', () => {
+      abas()[1].click();
+      fixture.detectChanges();
+
+      expect(component.aba).toBe('disponibilidade');
+      expect(abas()[1].getAttribute('aria-selected')).toBe('true');
+      expect(abas()[1].getAttribute('tabindex')).toBe('0');
+      expect(abas()[0].getAttribute('tabindex')).toBe('-1');
+      expect(fixture.nativeElement.querySelector('#painel-dados')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-profissional-disponibilidade')).not.toBeNull();
+      expect(disponibilidadeSpy.listar).toHaveBeenCalledWith(1);
+    });
+
+    it('should move between tabs with the arrow keys, taking the focus along', () => {
+      abas()[0].focus();
+      abas()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.aba).toBe('disponibilidade');
+      expect(document.activeElement).toBe(abas()[1]);
+
+      abas()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      fixture.detectChanges();
+      expect(component.aba).toBe('dados');
+
+      abas()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      fixture.detectChanges();
+      expect(component.aba).toBe('disponibilidade');
+    });
+
+    it('should ignore other keys', () => {
+      abas()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+      expect(component.aba).toBe('dados');
+    });
+  });
 });

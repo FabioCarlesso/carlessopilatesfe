@@ -58,7 +58,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo) (_equipe_) |
 | `/profissionais`        | Lista de profissionais com filtros e paginação (`ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
-| `/profissionais/:id`    | Detalhes do profissional (`ADMIN`)         |
+| `/profissionais/:id`    | Detalhes do profissional, com as abas Dados e Disponibilidade (grade semanal de horários de atendimento) (`ADMIN`) |
 | `/profissionais/:id/editar` | Formulário de edição de profissional (`ADMIN`) |
 | `/profissionais/:id/agenda` | Agenda semanal do profissional: aulas e sessões do período, contadores e comissão (somente leitura, `ADMIN`) |
 | `/relatorios`           | Seção de relatórios (_fiscal_) |
