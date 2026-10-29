@@ -14,6 +14,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /** Tendência da dor entre o início e o fim da sessão. */
 export type TendenciaDor = 'melhora' | 'piora' | 'estavel';
@@ -337,7 +338,7 @@ export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvoluc
 
 @Component({
   selector: 'app-paciente-evolucao-list',
-  imports: [DatePipe, FormsModule, RouterLink, BreadcrumbComponent],
+  imports: [DatePipe, FormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-evolucao-list.component.html',
   styleUrl: './paciente-evolucao-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -38,7 +38,7 @@
   <div class="alert alert-success" role="status">{{ sucesso }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && aulas.length === 0 && !erro) {

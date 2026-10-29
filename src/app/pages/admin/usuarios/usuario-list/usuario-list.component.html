@@ -11,7 +11,7 @@
 }
 
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando variante="skeleton" mensagem="Carregando usuários..." />
 }
 
 @if (!loading && usuarios.length === 0 && !erro) {

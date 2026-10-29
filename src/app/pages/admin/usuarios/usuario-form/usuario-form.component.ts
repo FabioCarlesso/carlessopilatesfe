@@ -10,11 +10,12 @@ import { UsuarioAdminService } from '../../../../core/services/usuario-admin.ser
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-usuario-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, CarregandoComponent],
   templateUrl: './usuario-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-form.component.scss'

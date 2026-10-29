@@ -8,10 +8,11 @@ import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-reavaliacao-list',
-  imports: [LocalDatePipe, RouterLink, BreadcrumbComponent],
+  imports: [LocalDatePipe, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-reavaliacao-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-list.component.scss'

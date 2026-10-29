@@ -54,9 +54,7 @@
 </form>
 
 @if (loadingRelatorio || exportandoCsv || exportandoExcel) {
-  <div class="loading">
-    {{ exportandoCsv || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
-  </div>
+  <app-carregando [mensagem]="exportandoCsv || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...'" />
 }
 
 @if (consultado) {

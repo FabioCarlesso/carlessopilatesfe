@@ -10,10 +10,11 @@ import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../..
 import { cpfValidator } from '../../../core/validators/cpf.validator';
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
 import { somenteDigitos } from '../../../shared/utils/mascara';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-profissional-form',
-  imports: [ReactiveFormsModule, RouterLink, MascaraDirective],
+  imports: [ReactiveFormsModule, RouterLink, MascaraDirective, CarregandoComponent],
   templateUrl: './profissional-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-form.component.scss'

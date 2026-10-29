@@ -5,10 +5,11 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent],
   templateUrl: './profissional-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-detail.component.scss'

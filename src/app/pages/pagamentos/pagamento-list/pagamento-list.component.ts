@@ -11,10 +11,11 @@ import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL } from '../../../core/mode
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

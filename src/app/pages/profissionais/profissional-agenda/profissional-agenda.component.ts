@@ -26,6 +26,7 @@ import {
   montarGrade,
   navegarPeriodo
 } from '../../../shared/utils/calendario';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /** Contadores do período, sobre os eventos que o próprio período trouxe. */
 export interface ProfissionalAgendaResumo {
@@ -57,7 +58,7 @@ export interface ProfissionalAgendaComissao {
  */
 @Component({
   selector: 'app-profissional-agenda',
-  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent],
+  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './profissional-agenda.component.html',
   styleUrl: './profissional-agenda.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

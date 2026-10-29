@@ -1,0 +1,13 @@
+<div class="loading" [class.loading--skeleton]="variante === 'skeleton'" role="status" aria-live="polite">
+  @if (variante === 'skeleton') {
+    <div class="loading__skeleton" aria-hidden="true">
+      @for (indice of indicesLinhas; track indice) {
+        <span class="loading__skeleton-linha"></span>
+      }
+    </div>
+    <span class="loading__sr">{{ mensagem }}</span>
+  } @else {
+    <span class="loading__spinner" aria-hidden="true"></span>
+    <span class="loading__texto">{{ mensagem }}</span>
+  }
+</div>

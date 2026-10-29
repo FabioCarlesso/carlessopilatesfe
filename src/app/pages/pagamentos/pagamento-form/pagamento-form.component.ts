@@ -8,10 +8,11 @@ import { PlanoService } from '../../../core/services/plano.service';
 import { PlanoResponseDTO, TIPO_LABEL } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-pagamento-form',
-  imports: [CurrencyPipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [CurrencyPipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './pagamento-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './pagamento-form.component.scss'

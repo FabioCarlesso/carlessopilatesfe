@@ -1,0 +1,85 @@
+// O `.loading` global (styles.scss) já dá padding, centralização e cor
+// `--text-muted`; aqui só entram o indicador e o layout dele.
+:host {
+  display: block;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+.loading__spinner {
+  flex: none;
+  width: var(--sp-6);
+  height: var(--sp-6);
+  border: 3px solid var(--border-default);
+  border-top-color: var(--text-brand);
+  border-radius: 50%;
+  animation: carregando-giro 0.8s linear infinite;
+}
+
+.loading--skeleton {
+  display: block;
+  padding: var(--sp-4) 0;
+}
+
+.loading__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.loading__skeleton-linha {
+  display: block;
+  height: var(--row-h);
+  border-radius: var(--r-sm);
+  // Sobreposição translúcida: aparece tanto sobre `--bg-app` quanto sobre
+  // `--bg-elev`, nos dois temas (`--bg-sunken` some sobre o fundo escuro).
+  background-color: var(--border-subtle);
+  animation: carregando-pulso 1.4s ease-in-out infinite;
+}
+
+// Mensagem só para leitor de tela no skeleton (visually hidden).
+.loading__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes carregando-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes carregando-pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// Movimento reduzido: o spinner gira devagar (ainda sinaliza atividade) e o
+// skeleton fica estático.
+@media (prefers-reduced-motion: reduce) {
+  .loading__spinner {
+    animation-duration: 2.4s;
+  }
+
+  .loading__skeleton-linha {
+    animation: none;
+  }
+}

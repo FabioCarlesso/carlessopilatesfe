@@ -11,6 +11,7 @@ import { PaginationSummaryComponent } from '../../../shared/components/paginatio
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
 import { somenteDigitos } from '../../../shared/utils/mascara';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 interface FiltroUI {
   nome: string;
@@ -24,7 +25,8 @@ interface FiltroUI {
   selector: 'app-paciente-list',
   imports: [
     FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent,
-    MascaraDirective
+    MascaraDirective,
+    CarregandoComponent
   ],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',

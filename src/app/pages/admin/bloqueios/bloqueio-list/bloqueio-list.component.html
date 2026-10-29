@@ -38,7 +38,7 @@ corrente porque feriado se confere para o ano inteiro de uma vez. -->
 </form>
 
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && !erro && bloqueios.length === 0) {

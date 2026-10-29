@@ -7,10 +7,11 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-detail',
-  imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent],
   templateUrl: './paciente-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-detail.component.scss'

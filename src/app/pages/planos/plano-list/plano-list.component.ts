@@ -9,10 +9,11 @@ import { PlanoResponseDTO, TIPO_LABEL, FREQUENCIA_LABEL, DIAS_SEMANA_LABEL } fro
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-plano-list',
-  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './plano-list.component.html',
   styleUrl: './plano-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

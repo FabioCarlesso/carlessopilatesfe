@@ -26,6 +26,7 @@ import {
   montarGrade,
   navegarPeriodo
 } from '../../../shared/utils/calendario';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /**
  * Calendário mensal/semanal das sessões e aulas do paciente (issue #119). É a
@@ -39,7 +40,7 @@ import {
  */
 @Component({
   selector: 'app-paciente-calendario',
-  imports: [RouterLink, BreadcrumbComponent],
+  imports: [RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-calendario.component.html',
   styleUrl: './paciente-calendario.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

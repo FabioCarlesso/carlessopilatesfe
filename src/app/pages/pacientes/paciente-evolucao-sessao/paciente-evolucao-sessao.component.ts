@@ -19,10 +19,11 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-evolucao-sessao.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-evolucao-sessao.component.scss'

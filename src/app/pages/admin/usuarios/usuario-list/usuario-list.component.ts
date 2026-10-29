@@ -9,6 +9,7 @@ import { UsuarioAdminService } from '../../../../core/services/usuario-admin.ser
 import { AuthService } from '../../../../core/services/auth.service';
 import { UsuarioAdminResponseDTO, rotuloPapeis } from '../../../../core/models/usuario-admin';
 import { PageMetadata } from '../../../../core/models/common';
+import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
 
 type ConfirmacaoAcao = 'inativar' | 'ativar' | 'excluir';
 
@@ -20,7 +21,7 @@ interface Confirmacao {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
+  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent],
   templateUrl: './usuario-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-list.component.scss'
