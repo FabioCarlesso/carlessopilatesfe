@@ -86,6 +86,6 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/planos/paciente/:pacienteId` | Lista de planos do paciente (_cobrança_) |
 | `/planos/novo/:pacienteId` | Criar novo plano (_cobrança_) |
 | `/pagamentos/paciente/:pacienteId` | Lista de pagamentos (_cobrança_) |
-| `/pagamentos/novo/:pacienteId` | Registrar novo pagamento (_cobrança_) |
+| `/pagamentos/novo/:pacienteId` | Registrar novo pagamento (_cobrança_); aceita `planoId`, `valor`, `periodoInicio` e `dataVencimento` na query string para a renovação (issue #133) |
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas (_agenda_) |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento (_agenda + cobrança_) |

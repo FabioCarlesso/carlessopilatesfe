@@ -13,7 +13,12 @@
 </div>
 
 @if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+  <div class="alert alert-danger">
+    {{ erro }}
+    @if (conflitoPeriodo) {
+      <a [routerLink]="['/pagamentos/paciente', pacienteId]">Ver pagamentos do paciente</a>
+    }
+  </div>
 }
 @if (carregando) {
   <div class="loading">Carregando planos...</div>
@@ -28,6 +33,16 @@
 @if (!carregando && planos.length > 0) {
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
     <h2 class="form-section-title">Dados do Pagamento</h2>
+    @if (renovacao) {
+      <div class="alert alert-warning" data-testid="aviso-renovacao">
+        <strong>Renovação de plano.</strong>
+        @if (periodoRenovacao; as periodo) {
+          Esta cobrança cobre o período de {{ periodo.inicio | date:'dd/MM/yyyy' }}
+          a {{ periodo.fim | date:'dd/MM/yyyy' }}.
+        }
+        Confira os dados antes de salvar; todos os campos podem ser alterados.
+      </div>
+    }
     <div class="form-row">
       <div class="form-group">
         <label for="planoId">Plano *</label>
