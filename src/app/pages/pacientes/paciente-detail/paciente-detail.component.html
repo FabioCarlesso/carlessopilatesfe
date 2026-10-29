@@ -91,6 +91,12 @@
             <span>Pagamentos</span>
           </a>
         }
+        @if (authService.hasAnyRole(papeis.cobranca)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'financeiro']" class="link-card">
+            <span class="link-icon">💰</span>
+            <span>Histórico Financeiro</span>
+          </a>
+        }
         @if (authService.hasAnyRole(papeis.agenda)) {
           <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
             <span class="link-icon">🗓</span>

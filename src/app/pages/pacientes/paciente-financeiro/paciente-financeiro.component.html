@@ -1,0 +1,217 @@
+@if (pacienteId) {
+<app-breadcrumb [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Histórico financeiro' }
+]"></app-breadcrumb>
+}
+
+<div class="page-header">
+  <div>
+    <h1>Histórico Financeiro</h1>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
+  </div>
+  @if (pacienteId) {
+    <div class="acoes">
+      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    </div>
+  }
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (carregandoPaciente) {
+  <div class="loading">Carregando...</div>
+}
+
+@if (paciente) {
+  <div class="financeiro-grid">
+    <!-- Pagamentos -->
+    <section class="card financeiro-bloco financeiro-bloco--largo" aria-labelledby="titulo-pagamentos">
+      <div class="financeiro-bloco__cabecalho">
+        <h2 id="titulo-pagamentos">Pagamentos</h2>
+        <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar pagamentos</a>
+      </div>
+
+      @if (erroPagamentos) {
+        <div class="alert alert-danger">{{ erroPagamentos }}</div>
+      }
+      @if (carregandoPagamentos) {
+        <div class="loading">Carregando pagamentos...</div>
+      }
+
+      @if (resumo && !carregandoPagamentos) {
+        @if (temVencidos) {
+          <div class="alert alert-danger" role="alert">
+            {{ resumo.porSituacao.VENCIDO.quantidade === 1 ? '1 pagamento vencido' : resumo.porSituacao.VENCIDO.quantidade + ' pagamentos vencidos' }}
+            somando {{ resumo.porSituacao.VENCIDO.valor | currency:'BRL' }}.
+          </div>
+        }
+
+        <div class="totais">
+          @for (situacao of situacoes; track situacao) {
+            <div [class]="'total total--' + situacao.toLowerCase()" [attr.data-situacao]="situacao">
+              <span class="total__rotulo">{{ statusLabel[situacao] }}</span>
+              <span class="total__valor">{{ resumo.porSituacao[situacao].valor | currency:'BRL' }}</span>
+              <span class="total__qtd">
+                {{ resumo.porSituacao[situacao].quantidade === 1 ? '1 pagamento' : resumo.porSituacao[situacao].quantidade + ' pagamentos' }}
+              </span>
+            </div>
+          }
+          <div class="total total--ano" data-situacao="ANO">
+            <span class="total__rotulo">Pago em {{ resumo.ano }}</span>
+            <span class="total__valor">{{ resumo.pagoNoAno | currency:'BRL' }}</span>
+            <span class="total__qtd">pela data do pagamento</span>
+          </div>
+        </div>
+
+        @if (pagamentos.length === 0) {
+          <div class="empty-state">Nenhum pagamento registrado.</div>
+        } @else {
+          <div class="table-wrap" tabindex="0" role="region" aria-label="Pagamentos do paciente">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Situação</th>
+                  <th>Valor</th>
+                  <th>Período</th>
+                  <th>Vencimento</th>
+                  <th>Pago em</th>
+                  <th>Atraso</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (linha of pagamentos; track linha.pagamento.id) {
+                  <tr [class.linha-vencida]="linha.situacao === 'VENCIDO'">
+                    <td><span [class]="classeBadge(linha.situacao)">{{ statusLabel[linha.situacao] }}</span></td>
+                    <td>{{ linha.pagamento.valor | currency:'BRL' }}</td>
+                    <td>{{ linha.pagamento.periodoInicio | localDate }} – {{ linha.pagamento.periodoFim | localDate }}</td>
+                    <td>{{ linha.pagamento.dataVencimento | localDate }}</td>
+                    <td>{{ linha.pagamento.dataPagamento ? (linha.pagamento.dataPagamento | localDate) : '—' }}</td>
+                    <td>{{ linha.atraso }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- Planos -->
+    <section class="card financeiro-bloco" aria-labelledby="titulo-planos">
+      <div class="financeiro-bloco__cabecalho">
+        <h2 id="titulo-planos">Plano</h2>
+        <a [routerLink]="['/planos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar planos</a>
+      </div>
+
+      @if (erroPlanos) {
+        <div class="alert alert-danger">{{ erroPlanos }}</div>
+      }
+      @if (carregandoPlanos) {
+        <div class="loading">Carregando planos...</div>
+      }
+
+      @if (!carregandoPlanos && !erroPlanos) {
+        @if (planoAtivo) {
+          <div class="detail-grid plano-ativo">
+            <div class="detail-item">
+              <span class="label">Plano ativo</span>
+              <span>{{ tipoLabel[planoAtivo.tipo] }} · {{ frequenciaLabel[planoAtivo.frequenciaSemanal] }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Valor</span>
+              <span>{{ planoAtivo.valor | currency:'BRL' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Início</span>
+              <span>{{ planoAtivo.dataInicio | localDate }}</span>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-state">Nenhum plano ativo.</div>
+        }
+
+        @if (planosAnteriores.length > 0) {
+          <h3 class="financeiro-subtitulo">Planos anteriores</h3>
+          <ul class="planos-anteriores">
+            @for (plano of planosAnteriores; track plano.id) {
+              <li>
+                <span>{{ tipoLabel[plano.tipo] }} · {{ frequenciaLabel[plano.frequenciaSemanal] }}</span>
+                <span>{{ plano.valor | currency:'BRL' }}</span>
+                <span class="texto-secundario">desde {{ plano.dataInicio | localDate }}</span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </section>
+
+    <!-- Aulas -->
+    @if (podeVerAulas) {
+      <section class="card financeiro-bloco" aria-labelledby="titulo-aulas">
+        <div class="financeiro-bloco__cabecalho">
+          <h2 id="titulo-aulas">Aulas</h2>
+          <a [routerLink]="['/aulas/paciente', paciente.id]" class="btn btn-sm btn-outline">Ver aulas</a>
+        </div>
+
+        @if (erroAulas) {
+          <div class="alert alert-danger">{{ erroAulas }}</div>
+        }
+        @if (carregandoAulas) {
+          <div class="loading">Carregando aulas...</div>
+        }
+        @if (aulas && !carregandoAulas) {
+          <app-grafico-proporcao
+            titulo="Aulas realizadas e pendentes"
+            textoVazio="Nenhuma aula gerada."
+            [segmentos]="segmentosAulas" />
+        }
+      </section>
+    }
+
+    <!-- NFSE -->
+    @if (podeVerNfse) {
+      <section class="card financeiro-bloco" aria-labelledby="titulo-nfse">
+        <div class="financeiro-bloco__cabecalho">
+          <h2 id="titulo-nfse">Última NFSE</h2>
+          <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="btn btn-sm btn-outline">Ver NFSEs</a>
+        </div>
+
+        @if (erroNfse) {
+          <div class="alert alert-danger">{{ erroNfse }}</div>
+        }
+        @if (carregandoNfse) {
+          <div class="loading">Carregando NFSEs...</div>
+        }
+        @if (nfsesCarregadas && !carregandoNfse) {
+          @if (ultimaNfse) {
+            <div class="detail-grid ultima-nfse">
+              <div class="detail-item">
+                <span class="label">Competência</span>
+                <span>{{ ultimaNfse.competencia }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Emitida em</span>
+                <span>{{ ultimaNfse.dataEmissao | localDate }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Número</span>
+                <span>{{ ultimaNfse.numeroNota || '—' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Valor</span>
+                <span>{{ ultimaNfse.valor !== null ? (ultimaNfse.valor | currency:'BRL') : '—' }}</span>
+              </div>
+            </div>
+          } @else {
+            <div class="empty-state">Nenhuma NFSE registrada.</div>
+          }
+        }
+      </section>
+    }
+  </div>
+}

@@ -3,6 +3,7 @@ import { routes } from './app.routes';
 import { authGuard } from './core/guards/auth.guard';
 import { visitanteGuard } from './core/guards/visitante.guard';
 import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
+import { PacienteFinanceiroComponent } from './pages/pacientes/paciente-financeiro/paciente-financeiro.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
   const result: string[] = [];
@@ -57,6 +58,7 @@ describe('app routes', () => {
       'pacientes/:pacienteId/nfse-emitidas/nova',
       'pacientes/:pacienteId/nfse-emitidas/:id/editar',
       'pacientes/:pacienteId/nfse-emitidas',
+      'pacientes/:pacienteId/financeiro',
       'pacientes/:id',
       'planos/novo/:pacienteId',
       'planos/paciente/:pacienteId',
@@ -107,6 +109,7 @@ describe('app routes', () => {
     const nfseEmitidaNovaIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas/nova');
     const nfseEmitidaEditarIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas/:id/editar');
     const nfseEmitidaListIndex = paths.indexOf('pacientes/:pacienteId/nfse-emitidas');
+    const financeiroIndex = paths.indexOf('pacientes/:pacienteId/financeiro');
     const editarIndex = paths.indexOf('pacientes/:id/editar');
     const novoIndex = paths.indexOf('pacientes/novo');
     const listIndex = paths.indexOf('pacientes');
@@ -133,7 +136,8 @@ describe('app routes', () => {
     expect(reavaliacaoListIndex).toBeLessThan(nfseEmitidaNovaIndex);
     expect(nfseEmitidaNovaIndex).toBeLessThan(nfseEmitidaEditarIndex);
     expect(nfseEmitidaEditarIndex).toBeLessThan(nfseEmitidaListIndex);
-    expect(nfseEmitidaListIndex).toBeLessThan(idIndex);
+    expect(nfseEmitidaListIndex).toBeLessThan(financeiroIndex);
+    expect(financeiroIndex).toBeLessThan(idIndex);
   });
 
   it('should place pacientes/:id before planos routes', () => {
@@ -210,6 +214,13 @@ describe('app routes', () => {
     expect(route).toBeTruthy();
     expect(route!.canActivate?.length).toBe(1);
     expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(InadimplenciaComponent);
+  });
+
+  it('should guard the patient financial history with the billing roles and lazy load it', async () => {
+    const route = routes.find(r => r.path === 'pacientes/:pacienteId/financeiro');
+    expect(route).toBeTruthy();
+    expect(route!.canActivate?.length).toBe(1);
+    expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(PacienteFinanceiroComponent);
   });
 
   it('should protect every admin route with a canActivate guard on the parent', () => {

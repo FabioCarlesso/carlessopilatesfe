@@ -54,6 +54,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:pacienteId/nfse-emitidas` | Lista de NFSEs emitidas do paciente, com destaque para a última (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/nova` | Registro de NFSE emitida (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/:id/editar` | Edição de NFSE emitida (_fiscal_) |
+| `/pacientes/:pacienteId/financeiro` | Histórico financeiro consolidado do paciente: plano, pagamentos com totais e vencidos, aulas e última NFSE; os blocos de aulas e NFSE só aparecem para _agenda_ e _fiscal_ (_cobrança_) |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo) (_equipe_) |
 | `/profissionais`        | Lista de profissionais com filtros e paginação (`ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |

@@ -5,6 +5,8 @@ import { Subject, of, throwError } from 'rxjs';
 import { PacienteDetailComponent } from './paciente-detail.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models/auth';
 
 const mockPacienteAtivo: PacienteResponseDTO = {
   version: 0,
@@ -152,6 +154,38 @@ describe('PacienteDetailComponent', () => {
 
     expect(serviceSpy.inativar).toHaveBeenCalledTimes(1);
     expect(component.acaoEmAndamento).toBeTrue();
+  });
+
+  describe('financial history shortcut', () => {
+    function renderComPapeis(papeis: UserRole[]): HTMLAnchorElement | null {
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar']);
+      serviceSpy.buscar.and.returnValue(of(mockPacienteAtivo));
+      const authSpy = jasmine.createSpyObj('AuthService', ['hasAnyRole']);
+      authSpy.hasAnyRole.and.callFake((roles: readonly UserRole[]) => roles.some(r => papeis.includes(r)));
+
+      TestBed.configureTestingModule({
+        imports: [PacienteDetailComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: serviceSpy },
+          { provide: AuthService, useValue: authSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
+        ]
+      });
+      fixture = TestBed.createComponent(PacienteDetailComponent);
+      fixture.detectChanges();
+      const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.link-card'));
+      return links.find(a => a.textContent?.includes('Histórico Financeiro')) ?? null;
+    }
+
+    it('should link to the consolidated financial history for billing roles', () => {
+      const link = renderComPapeis(['RECEPCAO']);
+      expect(link).toBeTruthy();
+      expect(link!.getAttribute('href')).toBe('/pacientes/1/financeiro');
+    });
+
+    it('should hide the shortcut from roles without access to plans and payments', () => {
+      expect(renderComPapeis(['PROFISSIONAL'])).toBeNull();
+    });
   });
 
 });

@@ -224,6 +224,15 @@ export const routes: Routes = [
         .then(m => m.PacienteNfseEmitidaListComponent)
   },
   {
+    // Histórico financeiro consolidado (issue #118). A rota é de quem lê planos e
+    // pagamentos; aulas e NFSE aparecem só para quem também acessa essas áreas.
+    path: 'pacientes/:pacienteId/financeiro',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-financeiro/paciente-financeiro.component')
+        .then(m => m.PacienteFinanceiroComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [roleGuard(PAPEIS.equipe)],
     loadComponent: () =>
