@@ -295,4 +295,22 @@ describe('PacienteDetailComponent', () => {
       expect(component.carregandoSituacao).toBeFalse();
     });
   });
+
+  describe('financial history shortcut', () => {
+    function linkHistorico(papeis: UserRole[]): HTMLAnchorElement | null {
+      setup(mockPacienteAtivo, papeis);
+      const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.link-card'));
+      return links.find(a => a.textContent?.includes('Histórico Financeiro')) ?? null;
+    }
+
+    it('should link to the consolidated financial history for billing roles', () => {
+      const link = linkHistorico(['RECEPCAO']);
+      expect(link).toBeTruthy();
+      expect(link!.getAttribute('href')).toBe('/pacientes/1/financeiro');
+    });
+
+    it('should hide the shortcut from roles without access to plans and payments', () => {
+      expect(linkHistorico(['PROFISSIONAL'])).toBeNull();
+    });
+  });
 });
