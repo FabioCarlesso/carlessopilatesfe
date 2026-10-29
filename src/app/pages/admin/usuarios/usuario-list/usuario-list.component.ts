@@ -9,8 +9,11 @@ import { UsuarioAdminService } from '../../../../core/services/usuario-admin.ser
 import { AuthService } from '../../../../core/services/auth.service';
 import { UsuarioAdminResponseDTO, rotuloPapeis } from '../../../../core/models/usuario-admin';
 import { PageMetadata } from '../../../../core/models/common';
+import { extrairMensagemErro } from '../../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
 
-type ConfirmacaoAcao = 'inativar' | 'ativar' | 'excluir';
+// Sem 'excluir': a API não tem exclusão física de usuário, só inativação.
+type ConfirmacaoAcao = 'inativar' | 'ativar';
 
 interface Confirmacao {
   acao: ConfirmacaoAcao;
@@ -20,7 +23,7 @@ interface Confirmacao {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent],
+  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent],
   templateUrl: './usuario-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-list.component.scss'
@@ -110,8 +113,9 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
 
     this.acaoEmAndamento = true;
 
-    const onError = () => {
-      this.erro = this.mensagemErro(acao);
+    // As recusas 422 da API (inativar a si mesmo ou o último ADMIN ativo) trazem o motivo no corpo.
+    const onError = (err: unknown) => {
+      this.erro = extrairMensagemErro(err, this.mensagemErro(acao));
       this.confirmacao = null;
       this.acaoEmAndamento = false;
     };
@@ -129,9 +133,6 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         break;
       case 'ativar':
         this.service.ativar(usuario.id).subscribe({ next: onSuccess, error: onError });
-        break;
-      case 'excluir':
-        this.service.excluir(usuario.id).subscribe({ next: onSuccess, error: onError });
         break;
     }
   }
@@ -174,8 +175,6 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         return `Confirma a inativação do usuário ${nome}?`;
       case 'ativar':
         return `Confirma a reativação do usuário ${nome}?`;
-      case 'excluir':
-        return `Confirma a exclusão do usuário ${nome}? Esta ação não pode ser desfeita.`;
     }
   }
 
@@ -185,8 +184,6 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         return 'Erro ao inativar usuário.';
       case 'ativar':
         return 'Erro ao reativar usuário.';
-      case 'excluir':
-        return 'Erro ao excluir usuário.';
     }
   }
 
@@ -196,8 +193,6 @@ export class UsuarioListComponent implements OnInit, OnDestroy {
         return 'Usuário inativado com sucesso.';
       case 'ativar':
         return 'Usuário reativado com sucesso.';
-      case 'excluir':
-        return 'Usuário excluído com sucesso.';
     }
   }
 

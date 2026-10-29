@@ -1,0 +1,135 @@
+<div class="page-header">
+  <h1>Relatório Financeiro</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Receita pelo regime de caixa: entram os pagamentos confirmados com <strong>data de pagamento</strong> no
+  período, não pela data de vencimento. Os repasses contam as aulas realizadas no período, e a inadimplência é
+  informativa — não entra no resultado líquido.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="inicio">Início *</label>
+      <input id="inicio" type="date" formControlName="inicio" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="fim">Fim *</label>
+      <input id="fim" type="date" formControlName="fim" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+  </div>
+
+  @if (erroPeriodo) {
+    <div class="invalid-feedback periodo-erro" role="alert">{{ erroPeriodo }}</div>
+  }
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">
+      Consultar
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('pdf')"
+      [disabled]="loading || exportando !== null">
+      {{ exportando === 'pdf' ? 'Gerando PDF...' : 'Exportar PDF' }}
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('xlsx')"
+      [disabled]="loading || exportando !== null">
+      {{ exportando === 'xlsx' ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
+  </div>
+</form>
+
+@if (loading || exportando) {
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
+}
+
+@if (relatorio) {
+  <section class="relatorio-resultado" aria-label="Resultado do relatório financeiro">
+    <p class="periodo-consultado">
+      Período de {{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}
+    </p>
+
+    @if (semMovimento) {
+      <div class="empty-state sem-movimento">
+        Nenhum pagamento recebido, repasse ou inadimplência no período informado.
+      </div>
+    }
+
+    <div class="summary-grid">
+      <div class="summary-item" data-card="receita">
+        <span class="label">Receita</span>
+        <strong>{{ relatorio.receita.total | currency:'BRL' }}</strong>
+        <span class="detalhe">{{ relatorio.receita.quantidadePagamentos }} pagamento(s) recebido(s)</span>
+      </div>
+      <div class="summary-item" data-card="repasses">
+        <span class="label">Repasses</span>
+        <strong>{{ relatorio.repasses.total | currency:'BRL' }}</strong>
+        <span class="detalhe">{{ relatorio.repasses.totalAulas }} aula(s) com repasse</span>
+      </div>
+      <div class="summary-item" data-card="inadimplencia">
+        <span class="label">Inadimplência</span>
+        <strong>{{ relatorio.inadimplencia.total | currency:'BRL' }}</strong>
+        <span class="detalhe">{{ relatorio.inadimplencia.quantidadePagamentos }} pagamento(s) vencido(s) em aberto</span>
+      </div>
+      <div class="summary-item" data-card="resultado"
+        [class.resultado-negativo]="relatorio.resultadoLiquido < 0">
+        <span class="label">Resultado líquido</span>
+        <strong>{{ relatorio.resultadoLiquido | currency:'BRL' }}</strong>
+        <span class="detalhe">Receita menos repasses</span>
+      </div>
+    </div>
+
+    <h2 class="secao-titulo">Repasses por profissional</h2>
+    @if (relatorio.repasses.profissionais.length === 0) {
+      <div class="empty-state">Nenhum repasse no período.</div>
+    } @else {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Repasses por profissional">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Profissional</th>
+              <th>Percentual</th>
+              <th>Aulas</th>
+              <th>Pagamentos</th>
+              <th>Total bruto</th>
+              <th>Repasse</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (repasse of relatorio.repasses.profissionais; track repasse.profissionalId) {
+              <tr>
+                <td>{{ repasse.nome }}</td>
+                <td>{{ repasse.percentualPagamentoAula }}%</td>
+                <td>{{ repasse.totalAulas }}</td>
+                <td>{{ repasse.quantidadePagamentos }}</td>
+                <td>{{ repasse.totalPagamentosBruto | currency:'BRL' }}</td>
+                <td>{{ repasse.totalProfissional | currency:'BRL' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="linha-total">
+              <th scope="row">Total</th>
+              <td></td>
+              <td>{{ relatorio.repasses.totalAulas }}</td>
+              <td></td>
+              <td></td>
+              <td>{{ relatorio.repasses.total | currency:'BRL' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </section>
+}

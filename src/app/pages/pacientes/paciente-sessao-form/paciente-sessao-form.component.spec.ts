@@ -6,6 +6,7 @@ import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
+import { DisponibilidadeProfissionalService } from '../../../core/services/disponibilidade-profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteSessaoFormComponent } from './paciente-sessao-form.component';
@@ -58,6 +59,7 @@ describe('PacienteSessaoFormComponent', () => {
   let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
   let sessaoServiceSpy: jasmine.SpyObj<SessaoService>;
   let bloqueioServiceSpy: jasmine.SpyObj<BloqueioAgendaService>;
+  let disponibilidadeServiceSpy: jasmine.SpyObj<DisponibilidadeProfissionalService>;
   let router: Router;
 
   async function setup(
@@ -77,6 +79,8 @@ describe('PacienteSessaoFormComponent', () => {
     ]);
     bloqueioServiceSpy = jasmine.createSpyObj('BloqueioAgendaService', ['listarPorPeriodo']);
     bloqueioServiceSpy.listarPorPeriodo.and.returnValue(of(bloqueios));
+    disponibilidadeServiceSpy = jasmine.createSpyObj('DisponibilidadeProfissionalService', ['verificar']);
+    disponibilidadeServiceSpy.verificar.and.returnValue(of({ dentroDaDisponibilidade: true }));
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
 
@@ -90,6 +94,7 @@ describe('PacienteSessaoFormComponent', () => {
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy },
+        { provide: DisponibilidadeProfissionalService, useValue: disponibilidadeServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap(params), queryParams } }
@@ -498,6 +503,108 @@ describe('PacienteSessaoFormComponent', () => {
       expect(bloqueioServiceSpy.listarPorPeriodo).toHaveBeenCalledWith('2026-05-10', '2026-05-10');
       expect(component.avisoBloqueio)
         .toBe('Manutenção dos equipamentos — 10/05/2026, das 08:00 às 12:00');
+    });
+  });
+
+  // Aviso de horário fora da disponibilidade do profissional (issue #134). Como
+  // o bloqueio, a disponibilidade é informativa na API: avisa, mas não impede.
+  describe('aviso de disponibilidade', () => {
+    function aviso(): string {
+      return (fixture.nativeElement as HTMLElement)
+        .querySelector('.disponibilidade-aviso')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    }
+
+    async function aguardarDebounce(): Promise<void> {
+      await new Promise(resolve => setTimeout(resolve, 370));
+    }
+
+    it('should not query before both professional and date are filled', async () => {
+      await setup({ pacienteId: '10' });
+
+      component.form.patchValue({ dataHora: '2026-11-02T09:30' });
+      await aguardarDebounce();
+
+      expect(disponibilidadeServiceSpy.verificar).not.toHaveBeenCalled();
+      expect(component.foraDaDisponibilidade).toBeFalse();
+    });
+
+    it('should query the chosen professional, date and time', async () => {
+      await setup({ pacienteId: '10' });
+
+      component.form.patchValue({ dataHora: '2026-11-02T09:30', profissionalId: 3 });
+      await aguardarDebounce();
+
+      expect(disponibilidadeServiceSpy.verificar).toHaveBeenCalledOnceWith(3, '2026-11-02', '09:30');
+    });
+
+    it('should warn when the time is outside the availability', async () => {
+      await setup({ pacienteId: '10' });
+      disponibilidadeServiceSpy.verificar.and.returnValue(of({ dentroDaDisponibilidade: false }));
+
+      component.form.patchValue({ dataHora: '2026-11-02T20:00', profissionalId: 3 });
+      await aguardarDebounce();
+      fixture.detectChanges();
+
+      expect(component.foraDaDisponibilidade).toBeTrue();
+      expect(aviso()).toContain('Horário fora da disponibilidade do profissional.');
+      expect(aviso()).toContain('O agendamento continua permitido');
+    });
+
+    it('should not warn when the time is inside the availability', async () => {
+      await setup({ pacienteId: '10' });
+
+      component.form.patchValue({ dataHora: '2026-11-02T09:30', profissionalId: 3 });
+      await aguardarDebounce();
+      fixture.detectChanges();
+
+      expect(aviso()).toBe('');
+    });
+
+    it('should clear the warning when the professional is removed', async () => {
+      await setup({ pacienteId: '10' });
+      disponibilidadeServiceSpy.verificar.and.returnValue(of({ dentroDaDisponibilidade: false }));
+      component.form.patchValue({ dataHora: '2026-11-02T20:00', profissionalId: 3 });
+      await aguardarDebounce();
+      expect(component.foraDaDisponibilidade).toBeTrue();
+
+      component.form.patchValue({ profissionalId: null });
+      await aguardarDebounce();
+
+      expect(component.foraDaDisponibilidade).toBeFalse();
+    });
+
+    it('should stay silent when the check fails', async () => {
+      await setup({ pacienteId: '10' });
+      disponibilidadeServiceSpy.verificar.and.returnValue(throwError(() => new Error('404')));
+
+      component.form.patchValue({ dataHora: '2026-11-02T20:00', profissionalId: 999 });
+      await aguardarDebounce();
+      fixture.detectChanges();
+
+      expect(component.foraDaDisponibilidade).toBeFalse();
+      expect(component.erro).toBeNull();
+    });
+
+    it('should not block saving a session outside the availability', async () => {
+      await setup({ pacienteId: '10' });
+      disponibilidadeServiceSpy.verificar.and.returnValue(of({ dentroDaDisponibilidade: false }));
+      sessaoServiceSpy.criar.and.returnValue(of(mockSessao));
+      spyOn(router, 'navigate');
+      component.form.patchValue({ dataHora: '2026-11-02T20:00', tipo: 'PILATES', duracao: 60, profissionalId: 3 });
+      await aguardarDebounce();
+
+      component.salvar();
+
+      expect(component.foraDaDisponibilidade).toBeTrue();
+      expect(sessaoServiceSpy.criar).toHaveBeenCalled();
+    });
+
+    // Na edição o profissional fica desabilitado, mas continua valendo para o aviso.
+    it('should check a session opened for editing with its disabled professional', async () => {
+      await setup({ pacienteId: '10', id: '1' }, { ...mockSessao, profissionalId: 3, dataHora: '2026-05-10T10:00:00' });
+      await aguardarDebounce();
+
+      expect(disponibilidadeServiceSpy.verificar).toHaveBeenCalledWith(3, '2026-05-10', '10:00');
     });
   });
 });

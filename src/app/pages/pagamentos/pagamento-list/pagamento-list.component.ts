@@ -7,14 +7,20 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PAPEIS } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL } from '../../../core/models/plano';
+import {
+  FORMA_PAGAMENTO_LABEL,
+  FORMA_PAGAMENTO_OPCOES,
+  PagamentoResponseDTO,
+  STATUS_PAGAMENTO_LABEL
+} from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,6 +38,8 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = STATUS_PAGAMENTO_LABEL;
+  readonly formaPagamentoLabel = FORMA_PAGAMENTO_LABEL;
+  readonly formasPagamento = FORMA_PAGAMENTO_OPCOES;
   readonly papeis = PAPEIS;
 
   constructor(
@@ -46,7 +54,11 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    this.pagarForm = this.fb.group({ dataPagamento: ['', Validators.required] });
+    // A forma é opcional, como na API: sem ela o pagamento é confirmado com `formaPagamento: null`.
+    this.pagarForm = this.fb.group({
+      dataPagamento: ['', Validators.required],
+      formaPagamento: [null]
+    });
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
       return;
@@ -115,9 +127,9 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
       focarPrimeiroInvalido(this.pagarForm, this.host);
       return;
     }
-    const { dataPagamento } = this.pagarForm.value;
+    const { dataPagamento, formaPagamento } = this.pagarForm.value;
     this.acaoEmAndamento = true;
-    this.service.pagar(this.pagarId, dataPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.service.pagar(this.pagarId, dataPagamento, formaPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.acaoEmAndamento = false;
         this.pagarId = null;

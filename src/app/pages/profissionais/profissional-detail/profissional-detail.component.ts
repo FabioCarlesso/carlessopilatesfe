@@ -5,10 +5,15 @@ import { ProfissionalService } from '../../../core/services/profissional.service
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { ProfissionalDisponibilidadeComponent } from '../profissional-disponibilidade/profissional-disponibilidade.component';
+
+export type AbaProfissional = 'dados' | 'disponibilidade';
+const ABAS: readonly AbaProfissional[] = ['dados', 'disponibilidade'];
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [DatePipe, RouterLink, ConfirmarDialogComponent],
+  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent, ProfissionalDisponibilidadeComponent],
   templateUrl: './profissional-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-detail.component.scss'
@@ -20,6 +25,12 @@ export class ProfissionalDetailComponent implements OnInit {
   confirmarAtivar = false;
   confirmarInativar = false;
   acaoEmAndamento = false;
+  /**
+   * Aba visível (issue #134). A de disponibilidade só é montada quando
+   * escolhida: a grade custa um `GET` próprio, que quem abre o detalhe para
+   * editar ou inativar o cadastro não precisa pagar.
+   */
+  aba: AbaProfissional = 'dados';
 
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
 
@@ -75,5 +86,27 @@ export class ProfissionalDetailComponent implements OnInit {
         this.confirmarInativar = false;
       }
     });
+  }
+
+  selecionarAba(aba: AbaProfissional): void {
+    this.aba = aba;
+  }
+
+  /** Padrão de abas da WAI-ARIA: setas e Home/End trocam de aba e levam o foco junto. */
+  navegarAbas(evento: KeyboardEvent): void {
+    const atual = ABAS.indexOf(this.aba);
+    const destinos: Record<string, number> = {
+      ArrowRight: (atual + 1) % ABAS.length,
+      ArrowLeft: (atual - 1 + ABAS.length) % ABAS.length,
+      Home: 0,
+      End: ABAS.length - 1
+    };
+    const destino = destinos[evento.key];
+    if (destino === undefined) return;
+
+    evento.preventDefault();
+    this.aba = ABAS[destino];
+    const lista = (evento.target as HTMLElement).closest('[role="tablist"]');
+    lista?.querySelector<HTMLElement>(`#aba-${this.aba}`)?.focus();
   }
 }

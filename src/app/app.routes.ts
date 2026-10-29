@@ -224,6 +224,15 @@ export const routes: Routes = [
         .then(m => m.PacienteNfseEmitidaListComponent)
   },
   {
+    // Histórico financeiro consolidado (issue #118). A rota é de quem lê planos e
+    // pagamentos; aulas e NFSE aparecem só para quem também acessa essas áreas.
+    path: 'pacientes/:pacienteId/financeiro',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-financeiro/paciente-financeiro.component')
+        .then(m => m.PacienteFinanceiroComponent)
+  },
+  {
     path: 'pacientes/:id',
     canActivate: [roleGuard(PAPEIS.equipe)],
     loadComponent: () =>
@@ -285,6 +294,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/relatorios/nfse-relatorio/nfse-relatorio.component')
         .then(m => m.NfseRelatorioComponent)
+  },
+  {
+    // Relatório financeiro consolidado (issue #268). A API o libera para
+    // `ADMIN` e `FINANCEIRO` (carlessopilatesapi#108), como o resto do hub.
+    path: 'relatorios/financeiro',
+    canActivate: [roleGuard(PAPEIS.fiscal)],
+    loadComponent: () =>
+      import('./pages/relatorios/financeiro-relatorio/financeiro-relatorio.component')
+        .then(m => m.FinanceiroRelatorioComponent)
   },
   {
     // Indicadores históricos (issue #130). A API só expõe as séries e o

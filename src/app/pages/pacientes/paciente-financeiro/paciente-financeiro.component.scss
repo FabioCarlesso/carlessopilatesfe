@@ -1,0 +1,108 @@
+.page-subtitle { margin-top: var(--sp-2); color: var(--text-secondary); }
+
+// Pagamentos ocupam a largura toda; plano, aulas e NFSE dividem a linha de baixo.
+.financeiro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-5);
+}
+
+.financeiro-bloco--largo { grid-column: 1 / -1; }
+
+.financeiro-bloco__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+
+  h2 {
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    color: var(--text-brand);
+    margin: 0;
+  }
+}
+
+.financeiro-subtitulo {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+
+.totais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+// Faixa lateral com a cor da situação; o rótulo escrito continua sendo o sinal
+// principal, porque cor sozinha não é informação (WCAG 1.4.1).
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--border-default);
+  border-radius: var(--r-md);
+  background-color: var(--bg-sunken);
+
+  &--pago { border-left-color: var(--c-success-text); }
+  &--pendente { border-left-color: var(--c-warning-text); }
+  &--vencido { border-left-color: var(--c-danger-text); }
+  &--ano { border-left-color: var(--text-brand); }
+}
+
+.total__rotulo {
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.total__valor {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.total__qtd {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.total--vencido .total__valor { color: var(--c-danger-text); }
+
+.table { min-width: 720px; }
+.table td { white-space: nowrap; }
+
+// Pagamento vencido: fundo de perigo na linha inteira, além do badge "Vencido"
+// e dos dias em atraso escritos na própria linha.
+.table tbody tr.linha-vencida td {
+  background-color: var(--c-danger-bg);
+  color: var(--c-danger-text);
+}
+
+.planos-anteriores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--border-subtle);
+
+    &:last-child { border-bottom: none; }
+  }
+}
+
+.texto-secundario { color: var(--text-secondary); }
+
+.empty-state { padding: var(--sp-4); }

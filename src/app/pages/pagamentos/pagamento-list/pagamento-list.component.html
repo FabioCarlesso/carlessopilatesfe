@@ -26,7 +26,7 @@
   <div class="alert alert-success" role="status">{{ sucesso }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && pagamentos.length === 0 && !erro) {
@@ -45,6 +45,7 @@
           <th>Período</th>
           <th>Vencimento</th>
           <th>Pago em</th>
+          <th>Forma</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -60,6 +61,7 @@
             <td>{{ p.periodoInicio | date:'dd/MM/yyyy' }} – {{ p.periodoFim | date:'dd/MM/yyyy' }}</td>
             <td>{{ p.dataVencimento | date:'dd/MM/yyyy' }}</td>
             <td>{{ p.dataPagamento ? (p.dataPagamento | date:'dd/MM/yyyy') : '-' }}</td>
+            <td>{{ p.formaPagamento ? formaPagamentoLabel[p.formaPagamento] : '—' }}</td>
             <td>
               @if (p.status === 'PENDENTE') {
                 <button class="btn btn-secondary btn-sm" (click)="abrirPagar(p.id)">
@@ -89,6 +91,15 @@
       <div class="form-group">
         <label for="dataPagamento">Data do Pagamento *</label>
         <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="formaPagamento">Forma de Pagamento</label>
+        <select id="formaPagamento" formControlName="formaPagamento" class="form-control">
+          <option [ngValue]="null">Não informada</option>
+          @for (forma of formasPagamento; track forma) {
+            <option [ngValue]="forma">{{ formaPagamentoLabel[forma] }}</option>
+          }
+        </select>
       </div>
     </form>
   </app-confirmar-dialog>

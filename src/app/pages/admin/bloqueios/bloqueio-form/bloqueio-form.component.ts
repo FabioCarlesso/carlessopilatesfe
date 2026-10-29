@@ -29,6 +29,7 @@ import { ehDiaInteiro } from '../../../../shared/utils/bloqueio-agenda';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../../shared/utils/form-focus';
 import { normalizarHora } from '../../../../shared/utils/hora';
 import { parseRouteNumberParam } from '../../../../shared/utils/route-param';
+import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
 
 /**
  * Regras que a API valida entre campos e que aqui evitam um `400` previsível:
@@ -73,7 +74,7 @@ function periodoCoerente(grupo: AbstractControl): ValidationErrors | null {
  */
 @Component({
   selector: 'app-bloqueio-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, CarregandoComponent],
   templateUrl: './bloqueio-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './bloqueio-form.component.scss'

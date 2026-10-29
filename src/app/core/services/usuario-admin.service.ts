@@ -40,10 +40,8 @@ export class UsuarioAdminService {
     return this.http.put<UsuarioAdminResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
-  excluir(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
+  // Não há exclusão física de usuário: o `DELETE /users/{id}` da API é só um
+  // alias deprecated de inativar. A tela usa os dois PATCH.
   ativar(id: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/ativar`, {});
   }

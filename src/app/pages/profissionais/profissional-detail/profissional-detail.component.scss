@@ -9,3 +9,36 @@
   display: flex;
   gap: .5rem;
 }
+
+/* Abas do detalhe (issue #134). Botões sem cara de botão: o sublinhado em
+   `--text-brand` (com versão no tema escuro) marca a aba ativa, e a cor não é o
+   único sinal — o peso da fonte também muda (WCAG 1.4.1). */
+.abas {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.aba {
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    border-bottom-color: var(--text-brand);
+    color: var(--text-brand);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-brand);
+    outline-offset: 2px;
+  }
+}

@@ -22,6 +22,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
 type CampoTexto = 'intervencoesPlanejadas' | 'frequenciaSessoes' | 'responsavelTratamento' | 'observacoes';
@@ -36,7 +37,7 @@ function periodoCoerente(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-paciente-plano-tratamento-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-plano-tratamento-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-plano-tratamento-form.component.scss'

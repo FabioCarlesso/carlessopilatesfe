@@ -48,6 +48,7 @@ describe('RelatorioListComponent', () => {
 
     expect(el.querySelector('a[href="/relatorios/indicadores"]')).toBeNull();
     expect(el.querySelector('a[href="/relatorios/nfse"]')).toBeTruthy();
+    expect(el.querySelector('a[href="/relatorios/financeiro"]')).toBeTruthy();
     expect(el.querySelector('a[href="/relatorios/pagamento-profissional"]')).toBeTruthy();
   });
 
@@ -57,5 +58,13 @@ describe('RelatorioListComponent', () => {
 
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Emissão de NFSEs');
+  });
+
+  it('should render the consolidated financial report link', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const link = el.querySelector('a[href="/relatorios/financeiro"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Financeiro do Estúdio');
   });
 });

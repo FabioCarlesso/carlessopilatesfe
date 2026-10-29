@@ -19,6 +19,7 @@ import { avisoDeInteressados, faixaDoAgendamento } from '../../../shared/utils/l
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 function dataHoraFutura(control: AbstractControl): ValidationErrors | null {
   const valor = control.value;
@@ -41,7 +42,7 @@ function formatarDataHoraLocal(data: Date): string {
 
 @Component({
   selector: 'app-paciente-sessao-list',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-sessao-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-sessao-list.component.scss'

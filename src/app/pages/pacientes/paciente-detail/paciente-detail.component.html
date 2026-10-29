@@ -18,7 +18,7 @@
   <div class="alert alert-danger">{{ erro }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (paciente) {
@@ -74,6 +74,62 @@
         </div>
       </section>
     }
+    <!-- Renovação assistida (issue #133): só a cobrança acessa planos e
+    pagamentos na API, e só para ela o componente faz as chamadas. -->
+    @if (authService.hasAnyRole(papeis.cobranca)) {
+      <section class="detail-section plano-renovacao" aria-labelledby="plano-renovacao-titulo">
+        <h2 id="plano-renovacao-titulo">Plano e renovação</h2>
+        @if (carregandoSituacao) {
+          <p class="plano-renovacao__info">Carregando situação do plano...</p>
+        }
+        @if (erroSituacao) {
+          <div class="alert alert-danger">{{ erroSituacao }}</div>
+        }
+        @if (situacaoPlano; as situacao) {
+          @if (situacao.tipo === 'SEM_PLANO') {
+            <p class="plano-renovacao__info" data-situacao="SEM_PLANO">
+              Sem plano ativo.
+              <a [routerLink]="['/planos/novo', paciente.id]">Criar plano</a>
+            </p>
+          } @else if (situacao.tipo === 'SEM_PAGAMENTO') {
+            <p class="plano-renovacao__info" data-situacao="SEM_PAGAMENTO">
+              Plano {{ tipoLabel[situacao.plano.tipo] }} — {{ situacao.plano.valor | currency:'BRL' }}.
+              Nenhuma cobrança registrada.
+              <a [routerLink]="['/pagamentos/novo', paciente.id]">Registrar pagamento</a>
+            </p>
+          } @else if (situacao.tipo === 'EM_ABERTO') {
+            <div class="plano-renovacao__info" data-situacao="EM_ABERTO">
+              <p>
+                <strong>Cobrança em aberto</strong>
+                <span [class]="'badge badge-' + situacao.ultimo.status.toLowerCase()">
+                  {{ statusPagamentoLabel[situacao.ultimo.status] }}
+                </span>
+              </p>
+              <p>
+                Período de {{ situacao.ultimo.periodoInicio | date:'dd/MM/yyyy' }}
+                a {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }},
+                vencimento em {{ situacao.ultimo.dataVencimento | date:'dd/MM/yyyy' }}.
+                <a [routerLink]="['/pagamentos/paciente', paciente.id]">Ver pagamentos</a>
+              </p>
+            </div>
+          } @else if (situacao.tipo === 'PAGO') {
+            <p class="plano-renovacao__info" data-situacao="PAGO">
+              Plano {{ tipoLabel[situacao.plano.tipo] }} pago até
+              <strong>{{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}</strong>.
+            </p>
+          } @else {
+            <div class="alert alert-warning plano-renovacao__alerta" data-situacao="RENOVAR">
+              <span>
+                <strong>{{ descreverPrazo(situacao.diasRestantes) }}</strong>
+                — pago até {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}, sem cobrança seguinte.
+              </span>
+              <a [routerLink]="['/pagamentos/novo', paciente.id]" [queryParams]="situacao.renovacao"
+                class="btn btn-primary btn-sm">Renovar</a>
+            </div>
+          }
+        }
+      </section>
+    }
     <!-- Cada atalho só aparece para quem acessa a área: sem isso a recepção
     abriria o prontuário e cairia no /403. -->
     <section class="detail-section links-section">
@@ -89,6 +145,12 @@
           <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
             <span class="link-icon">💳</span>
             <span>Pagamentos</span>
+          </a>
+        }
+        @if (authService.hasAnyRole(papeis.cobranca)) {
+          <a [routerLink]="['/pacientes', paciente.id, 'financeiro']" class="link-card">
+            <span class="link-icon">💰</span>
+            <span>Histórico Financeiro</span>
           </a>
         }
         @if (authService.hasAnyRole(papeis.agenda)) {

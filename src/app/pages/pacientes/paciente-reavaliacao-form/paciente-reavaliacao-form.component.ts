@@ -15,6 +15,7 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
 type CampoTexto =
@@ -30,7 +31,7 @@ type CampoTexto =
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-form.component.scss'

@@ -52,10 +52,6 @@
     background: var(--c-danger-bg);
     color: var(--c-danger-text);
   }
-
-  &--desconhecido {
-    color: var(--text-light);
-  }
 }
 
 // Só espaçamento externo: o `.btn` global monta o botão como `inline-flex` e

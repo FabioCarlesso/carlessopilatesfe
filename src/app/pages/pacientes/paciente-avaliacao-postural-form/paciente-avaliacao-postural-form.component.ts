@@ -13,10 +13,11 @@ import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ImageCompressorService } from '../../../shared/services/image-compressor.service';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-avaliacao-postural-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-avaliacao-postural-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-form.component.scss'

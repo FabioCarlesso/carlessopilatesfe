@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
 import { UsuarioListComponent } from './usuario-list.component';
 import { UsuarioAdminService } from '../../../../core/services/usuario-admin.service';
@@ -39,8 +40,7 @@ describe('UsuarioListComponent', () => {
     serviceSpy = jasmine.createSpyObj('UsuarioAdminService', [
       'listar',
       'inativar',
-      'ativar',
-      'excluir'
+      'ativar'
     ]);
     serviceSpy.listar.and.returnValue(of(mockPage));
 
@@ -313,18 +313,6 @@ describe('UsuarioListComponent', () => {
     expect(component.confirmacao).toBeNull();
   });
 
-  it('should call excluir and reload when executarConfirmacao runs for excluir', () => {
-    serviceSpy.excluir.and.returnValue(of(undefined));
-    serviceSpy.listar.calls.reset();
-
-    component.confirmacao = { acao: 'excluir', usuario: mockUsuario };
-    component.executarConfirmacao();
-
-    expect(serviceSpy.excluir).toHaveBeenCalledWith(1);
-    expect(serviceSpy.listar).toHaveBeenCalledTimes(1);
-    expect(component.confirmacao).toBeNull();
-  });
-
   it('should show sucesso with role status after inativar and clear it after timeout', fakeAsync(() => {
     serviceSpy.inativar.and.returnValue(of(undefined));
     component.confirmacao = { acao: 'inativar', usuario: mockUsuario };
@@ -347,15 +335,6 @@ describe('UsuarioListComponent', () => {
     expect(component.sucesso).toBeNull();
   }));
 
-  it('should show sucesso after excluir', fakeAsync(() => {
-    serviceSpy.excluir.and.returnValue(of(undefined));
-    component.confirmacao = { acao: 'excluir', usuario: mockUsuario };
-    component.executarConfirmacao();
-    expect(component.sucesso).toBe('Usuário excluído com sucesso.');
-    tick(4000);
-    expect(component.sucesso).toBeNull();
-  }));
-
   it('should set erro when inativar fails', () => {
     serviceSpy.inativar.and.returnValue(throwError(() => new Error('fail')));
     component.confirmacao = { acao: 'inativar', usuario: mockUsuario };
@@ -371,25 +350,29 @@ describe('UsuarioListComponent', () => {
     expect(component.erro).toBe('Erro ao reativar usuário.');
   });
 
-  it('should set erro when excluir fails', () => {
-    serviceSpy.excluir.and.returnValue(throwError(() => new Error('fail')));
-    component.confirmacao = { acao: 'excluir', usuario: mockUsuario };
+  it('should show the API detail when inativar is refused with 422', () => {
+    const detail = 'Não é permitido inativar o último administrador ativo.';
+    serviceSpy.inativar.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 422,
+      error: { status: 422, detail }
+    })));
+    component.confirmacao = { acao: 'inativar', usuario: mockUsuario };
     component.executarConfirmacao();
-    expect(component.erro).toBe('Erro ao excluir usuário.');
+    expect(component.erro).toBe(detail);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.alert-danger').textContent).toContain(detail);
   });
 
   it('should not call any service when executarConfirmacao runs with no confirmacao set', () => {
     serviceSpy.inativar.calls.reset();
     serviceSpy.ativar.calls.reset();
-    serviceSpy.excluir.calls.reset();
     component.confirmacao = null;
     component.executarConfirmacao();
     expect(serviceSpy.inativar).not.toHaveBeenCalled();
     expect(serviceSpy.ativar).not.toHaveBeenCalled();
-    expect(serviceSpy.excluir).not.toHaveBeenCalled();
   });
 
-  it('should disable inativar/excluir buttons for the currently logged-in user', () => {
+  it('should disable the inativar button for the currently logged-in user', () => {
     authSpy.getCurrentUser.and.returnValue({
       id: mockUsuario.id,
       name: mockUsuario.name,
@@ -512,7 +495,7 @@ describe('UsuarioListComponent', () => {
   });
 
   it('should close the dialog when the Cancelar button is clicked', () => {
-    component.confirmarAcao('excluir', mockUsuario);
+    component.confirmarAcao('inativar', mockUsuario);
     fixture.detectChanges();
 
     const cancelBtn = fixture.nativeElement.querySelector('.dialog .btn-outline') as HTMLButtonElement;
@@ -520,11 +503,11 @@ describe('UsuarioListComponent', () => {
     cancelBtn.click();
 
     expect(component.confirmacao).toBeNull();
-    expect(serviceSpy.excluir).not.toHaveBeenCalled();
+    expect(serviceSpy.inativar).not.toHaveBeenCalled();
   });
 
   it('should close the dialog when the overlay is clicked', () => {
-    component.confirmarAcao('excluir', mockUsuario);
+    component.confirmarAcao('inativar', mockUsuario);
     fixture.detectChanges();
 
     const overlay = fixture.nativeElement.querySelector('.dialog-overlay') as HTMLElement;
@@ -534,7 +517,7 @@ describe('UsuarioListComponent', () => {
   });
 
   it('should not close the dialog when clicking inside the dialog content', () => {
-    component.confirmarAcao('excluir', mockUsuario);
+    component.confirmarAcao('inativar', mockUsuario);
     fixture.detectChanges();
 
     const dialog = fixture.nativeElement.querySelector('.dialog') as HTMLElement;
@@ -544,7 +527,7 @@ describe('UsuarioListComponent', () => {
   });
 
   it('should close the dialog when Escape is pressed', () => {
-    component.confirmarAcao('excluir', mockUsuario);
+    component.confirmarAcao('inativar', mockUsuario);
     fixture.detectChanges();
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -604,26 +587,17 @@ describe('UsuarioListComponent', () => {
     expect(component.erro).toBeNull();
   });
 
-  it('should not render Inativar/Reativar/Excluir buttons when ativo is undefined', () => {
-    const usuarioDesconhecido: UsuarioAdminResponseDTO = {
-      version: 0,
-      id: 3,
-      name: 'Estado Desconhecido',
-      email: 'desconhecido@carlessopilates.com',
-      roles: ['RECEPCAO']
-    };
-    serviceSpy.listar.and.returnValue(of({
-      content: [usuarioDesconhecido],
-      page: { totalElements: 1, totalPages: 1, size: 10, number: 0 }
-    }));
-    component.carregar();
-    fixture.detectChanges();
-
-    const row = fixture.nativeElement.querySelector('tbody tr') as HTMLElement;
-    expect(row.textContent).toContain('—');
-    expect(row.textContent).not.toContain('Inativar');
-    expect(row.textContent).not.toContain('Reativar');
-    expect(row.textContent).not.toContain('Excluir');
+  it('should render Inativar for active users, Reativar for inactive ones and never Excluir', () => {
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>;
+    expect(rows[0].textContent).toContain('Inativar');
+    expect(rows[0].textContent).not.toContain('Reativar');
+    expect(rows[1].textContent).toContain('Reativar');
+    expect(rows[1].textContent).not.toContain('Inativar');
+    rows.forEach(row => {
+      expect(row.textContent).not.toContain('Excluir');
+      expect(row.textContent).not.toContain('—');
+    });
+    expect(fixture.nativeElement.querySelector('.btn-danger')).toBeNull();
   });
 
   it('should not disable the Reativar button for the currently logged-in user', () => {

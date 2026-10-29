@@ -50,7 +50,7 @@ que a inscrição vale para uma data só. -->
 </form>
 
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && !erro && linhas.length === 0) {

@@ -66,9 +66,7 @@
 </form>
 
 @if (loadingProfissionais || loadingRelatorio || exportandoPdf || exportandoExcel) {
-  <div class="loading">
-    {{ exportandoPdf || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...' }}
-  </div>
+  <app-carregando [mensagem]="exportandoPdf || exportandoExcel ? 'Gerando arquivo...' : 'Carregando...'" />
 }
 
 @if (relatorio) {

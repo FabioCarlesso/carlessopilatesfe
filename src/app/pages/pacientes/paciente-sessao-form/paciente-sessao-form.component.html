@@ -28,7 +28,7 @@
   <div class="alert alert-success" role="status">{{ sucesso }}</div>
 }
 @if (loading) {
-  <div class="loading">Carregando...</div>
+  <app-carregando />
 }
 
 @if (!loading && !parametroInvalido) {
@@ -122,6 +122,14 @@
         <div id="profissionalIdError" class="invalid-feedback"
           >
           ID do profissional deve ser um número inteiro positivo.
+        </div>
+      }
+      <!-- Aviso, não impedimento (issue #134): a disponibilidade é informativa na
+      API, e a recepção decide se a sessão acontece fora do horário de atendimento. -->
+      @if (foraDaDisponibilidade) {
+        <div class="alert alert-warning disponibilidade-aviso" role="status">
+          <strong>Horário fora da disponibilidade do profissional.</strong>
+          O agendamento continua permitido — confirme antes de salvar.
         </div>
       }
     </div>

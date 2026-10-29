@@ -11,10 +11,11 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-avaliacao-fisioterapeutica',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-avaliacao-fisioterapeutica.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-fisioterapeutica.component.scss'

@@ -8,7 +8,7 @@ import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { PagamentoResponseDTO } from '../../../core/models/plano';
+import { FORMA_PAGAMENTO_LABEL, FORMA_PAGAMENTO_OPCOES, PagamentoResponseDTO } from '../../../core/models/plano';
 import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockPagamento: PagamentoResponseDTO = {
@@ -39,6 +39,13 @@ describe('PagamentoListComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
+
+  function abrirDialogoPagar(): void {
+    const botao = Array.from(fixture.nativeElement.querySelectorAll('tbody button') as NodeListOf<HTMLButtonElement>)
+      .find(b => b.textContent?.trim() === 'Confirmar Pagamento')!;
+    botao.click();
+    fixture.detectChanges();
+  }
 
   it('should create', () => expect(component).toBeTruthy());
 
@@ -101,6 +108,41 @@ describe('PagamentoListComponent', () => {
     component.abrirPagar(1);
     expect(component.pagarId).toBe(1);
     expect(component.pagarForm.value.dataPagamento).toBeFalsy();
+    expect(component.pagarForm.value.formaPagamento).toBeNull();
+  });
+
+  it('should call pagar with a null formaPagamento when it is not informed', () => {
+    serviceSpy.pagar.and.returnValue(of({ ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' }));
+    abrirDialogoPagar();
+    component.pagarForm.patchValue({ dataPagamento: '2026-05-05' });
+    (fixture.nativeElement.querySelector('.dialog-actions .btn:not(.btn-outline)') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05', null);
+  });
+
+  it('should offer every forma de pagamento with its centralized label in the confirmation dialog', () => {
+    abrirDialogoPagar();
+
+    const opcoes = Array.from(fixture.nativeElement.querySelectorAll('select#formaPagamento option') as NodeListOf<HTMLOptionElement>)
+      .map(o => o.textContent?.trim());
+    expect(opcoes).toEqual(['Não informada', ...FORMA_PAGAMENTO_OPCOES.map(f => FORMA_PAGAMENTO_LABEL[f])]);
+  });
+
+  it('should show the forma de pagamento label in the list and a dash when it is missing', () => {
+    const antigo = { ...mockPagamento, id: 2, status: 'PAGO' as const, dataPagamento: '2026-04-05', formaPagamento: null };
+    const semCampo = { ...mockPagamento, id: 3 };
+    const comForma = { ...mockPagamento, id: 4, status: 'PAGO' as const, dataPagamento: '2026-05-05', formaPagamento: 'CARTAO_CREDITO' as const };
+    serviceSpy.listar.and.returnValue(of([antigo, semCampo, comForma]));
+    component.carregar();
+    fixture.detectChanges();
+
+    const colunaForma = Array.from(fixture.nativeElement.querySelectorAll('table.table thead th') as NodeListOf<HTMLElement>)
+      .findIndex(th => th.textContent?.trim() === 'Forma');
+    expect(colunaForma).toBeGreaterThan(-1);
+    const formas = Array.from(fixture.nativeElement.querySelectorAll('table.table tbody tr') as NodeListOf<HTMLElement>)
+      .map(tr => tr.querySelectorAll('td')[colunaForma].textContent?.trim());
+    expect(formas).toEqual(['—', '—', 'Cartão de crédito']);
   });
 
   it('cancelarPagar should clear pagarId', () => {
@@ -119,9 +161,9 @@ describe('PagamentoListComponent', () => {
     const pago = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
     serviceSpy.pagar.and.returnValue(of(pago));
     component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05' });
+    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     component.confirmarPagar();
-    expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05');
+    expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05', 'DINHEIRO');
     expect(component.pagarId).toBeNull();
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
   });
@@ -130,7 +172,7 @@ describe('PagamentoListComponent', () => {
     const pago = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
     serviceSpy.pagar.and.returnValue(of(pago));
     component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05' });
+    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     component.confirmarPagar();
     expect(component.sucesso).toBe('Pagamento confirmado com sucesso.');
     fixture.detectChanges();
@@ -144,7 +186,7 @@ describe('PagamentoListComponent', () => {
   it('should set erro when pagar fails', () => {
     serviceSpy.pagar.and.returnValue(throwError(() => new Error('fail')));
     component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05' });
+    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     component.confirmarPagar();
     expect(component.erro).toBe('Erro ao confirmar pagamento.');
   });
@@ -165,7 +207,7 @@ describe('PagamentoListComponent', () => {
     serviceSpy.pagar.and.returnValue(pending.asObservable());
 
     component.abrirPagar(1);
-    component.pagarForm.setValue({ dataPagamento: '2026-05-10' });
+    component.pagarForm.setValue({ dataPagamento: '2026-05-10', formaPagamento: 'PIX' });
     component.confirmarPagar();
     component.confirmarPagar();
 

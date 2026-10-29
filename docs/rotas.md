@@ -16,7 +16,7 @@ grupo; sem nenhum, o `roleGuard` leva a `/403`.
 | clínica | `ADMIN`, `PROFISSIONAL` | Prontuário: anamnese, avaliações, análise postural, evoluções, planos de tratamento, reavaliações |
 | agenda | `ADMIN`, `PROFISSIONAL`, `RECEPCAO` | Agenda, lista de espera, sessões, calendário e aulas |
 | cobrança | `ADMIN`, `RECEPCAO`, `FINANCEIRO` | Planos e pagamentos do paciente |
-| fiscal | `ADMIN`, `FINANCEIRO` | NFSEs emitidas e relatórios de pagamento de profissional e de NFSE |
+| fiscal | `ADMIN`, `FINANCEIRO` | NFSEs emitidas e relatórios de pagamento de profissional, de NFSE e financeiro do estúdio |
 | admin | `ADMIN` | Profissionais, indicadores, inadimplência e `/admin` |
 
 `/inicio` e `/perfil/alterar-senha` exigem só autenticação. `/aulas/pagamento/:pagamentoId`
@@ -54,15 +54,17 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:pacienteId/nfse-emitidas` | Lista de NFSEs emitidas do paciente, com destaque para a última (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/nova` | Registro de NFSE emitida (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/:id/editar` | Edição de NFSE emitida (_fiscal_) |
+| `/pacientes/:pacienteId/financeiro` | Histórico financeiro consolidado do paciente: plano, pagamentos com totais e vencidos, aulas e última NFSE; os blocos de aulas e NFSE só aparecem para _agenda_ e _fiscal_ (_cobrança_) |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo) (_equipe_) |
 | `/profissionais`        | Lista de profissionais com filtros e paginação (`ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
-| `/profissionais/:id`    | Detalhes do profissional (`ADMIN`)         |
+| `/profissionais/:id`    | Detalhes do profissional, com as abas Dados e Disponibilidade (grade semanal de horários de atendimento) (`ADMIN`) |
 | `/profissionais/:id/editar` | Formulário de edição de profissional (`ADMIN`) |
 | `/profissionais/:id/agenda` | Agenda semanal do profissional: aulas e sessões do período, contadores e comissão (somente leitura, `ADMIN`) |
 | `/relatorios`           | Seção de relatórios (_fiscal_) |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (_fiscal_) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (_fiscal_) |
+| `/relatorios/financeiro` | Relatório financeiro consolidado do estúdio: receita, repasses, inadimplência e resultado líquido (_fiscal_) |
 | `/relatorios/indicadores` | Indicadores históricos: receita, ocupação e evasão mês a mês, e ranking de aulas por profissional (`ADMIN`) |
 | `/financeiro/inadimplencia` | Gestão de inadimplência: lista global paginada de pagamentos com dias em atraso, filtros e contatos de cobrança (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |
@@ -85,6 +87,6 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/planos/paciente/:pacienteId` | Lista de planos do paciente (_cobrança_) |
 | `/planos/novo/:pacienteId` | Criar novo plano (_cobrança_) |
 | `/pagamentos/paciente/:pacienteId` | Lista de pagamentos (_cobrança_) |
-| `/pagamentos/novo/:pacienteId` | Registrar novo pagamento (_cobrança_) |
+| `/pagamentos/novo/:pacienteId` | Registrar novo pagamento (_cobrança_); aceita `planoId`, `valor`, `periodoInicio` e `dataVencimento` na query string para a renovação (issue #133) |
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas (_agenda_) |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento (_agenda + cobrança_) |

@@ -1,0 +1,92 @@
+/* Relatório financeiro consolidado (issue #268). Cards e ações seguem o
+   relatório de pagamento de profissional; tabela e aviso de scroll vêm das
+   classes globais da #164. */
+
+.page-subtitle {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.relatorio-form {
+  margin-bottom: var(--sp-5);
+}
+
+.periodo-erro {
+  display: block;
+  margin-bottom: var(--sp-3);
+}
+
+.periodo-consultado {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+/* `auto-fit` com piso de 180px empilha os cards sozinho no mobile. */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+
+  .label {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: var(--fs-h3);
+  }
+
+  .detalhe {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+  }
+
+  &.resultado-negativo {
+    border-color: var(--c-danger);
+
+    strong {
+      color: var(--c-danger-text);
+    }
+  }
+}
+
+.sem-movimento {
+  padding: var(--sp-4);
+}
+
+.secao-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.linha-total {
+  th,
+  td {
+    font-weight: 700;
+    border-top: 2px solid var(--border-default);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+}

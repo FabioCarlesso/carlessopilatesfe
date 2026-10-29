@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, merge, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import {
   SessaoRequestDTO,
@@ -17,12 +17,15 @@ import {
 import { BloqueioAgendaResponseDTO } from '../../../core/models/bloqueio-agenda';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
+import { DisponibilidadeProfissionalService } from '../../../core/services/disponibilidade-profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { bloqueiosDoHorario, descreverBloqueio } from '../../../shared/utils/bloqueio-agenda';
+import { partesDataHora } from '../../../shared/utils/disponibilidade';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 const DIA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 /** Formato que o `input[type=datetime-local]` aceita — sem segundos. */
@@ -49,7 +52,7 @@ function ehDataHoraLocalValida(valor: string): boolean {
 
 @Component({
   selector: 'app-paciente-sessao-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-sessao-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-sessao-form.component.scss'
@@ -71,6 +74,12 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
    * de cada vez, e um `GET` por dia é mais barato que baixar o ano do estúdio.
    */
   bloqueiosDoDia: BloqueioAgendaResponseDTO[] = [];
+  /**
+   * `true` quando a API respondeu que o profissional não atende no horário
+   * escolhido (issue #134). Só `false` da API acende o aviso: consulta pendente,
+   * falha ou profissional sem faixas ficam em silêncio.
+   */
+  foraDaDisponibilidade = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly tipos: SessaoTipo[] = ['PILATES', 'FISIOTERAPIA'];
@@ -83,6 +92,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     private pacienteService: PacienteService,
     private sessaoService: SessaoService,
     private bloqueioService: BloqueioAgendaService,
+    private disponibilidadeService: DisponibilidadeProfissionalService,
     private route: ActivatedRoute,
     private router: Router,
     private destroyRef: DestroyRef,
@@ -102,6 +112,7 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     // Antes de `carregar()`: na edição é o `patchValue` da sessão carregada que
     // dispara a primeira consulta, e a inscrição precisa já existir.
     this.observarBloqueios();
+    this.observarDisponibilidade();
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.sessaoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
@@ -188,6 +199,51 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
       .subscribe(bloqueios => {
         this.bloqueiosDoDia = bloqueios;
       });
+  }
+
+  /**
+   * Consulta a disponibilidade do profissional (issue #134) quando muda o
+   * profissional ou o horário de início.
+   *
+   * Usa `GET .../disponibilidades/verificar`, que olha só o **início**: a duração
+   * não entra, e uma sessão que começa dentro da faixa e termina depois dela não
+   * acende aviso. O `debounceTime` cobre a digitação do ID e do ano do
+   * `datetime-local`, e o `distinctUntilChanged` evita repetir a mesma pergunta.
+   *
+   * Como o bloqueio, é **aviso**: a falha da consulta (profissional inexistente,
+   * rede, `403`) vira silêncio em vez de faixa de erro, e nada aqui impede salvar.
+   * Na edição o profissional fica desabilitado, mas o `getRawValue` o enxerga e o
+   * aviso continua acompanhando a remarcação.
+   */
+  private observarDisponibilidade(): void {
+    const profissional = this.form.get('profissionalId');
+    const dataHora = this.form.get('dataHora');
+    if (!profissional || !dataHora) return;
+
+    merge(profissional.valueChanges, dataHora.valueChanges)
+      .pipe(
+        map(() => this.consultaDisponibilidade()),
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        switchMap(consulta => (consulta === null
+          ? of(null)
+          : this.disponibilidadeService.verificar(consulta.profissionalId, consulta.data, consulta.horario).pipe(
+              map(resposta => resposta.dentroDaDisponibilidade),
+              catchError(() => of(null))
+            ))),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(dentro => {
+        this.foraDaDisponibilidade = dentro === false;
+      });
+  }
+
+  private consultaDisponibilidade(): { profissionalId: number; data: string; horario: string } | null {
+    const valor = this.form.getRawValue();
+    const profissionalId = Number(valor.profissionalId);
+    const partes = partesDataHora(valor.dataHora);
+    if (!Number.isInteger(profissionalId) || profissionalId < 1 || partes === null) return null;
+    return { profissionalId, ...partes };
   }
 
   /**

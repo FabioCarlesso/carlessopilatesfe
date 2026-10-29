@@ -9,10 +9,11 @@ import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../..
 import { cpfValidator } from '../../../core/validators/cpf.validator';
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
 import { somenteDigitos } from '../../../shared/utils/mascara';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-form',
-  imports: [ReactiveFormsModule, RouterLink, MascaraDirective],
+  imports: [ReactiveFormsModule, RouterLink, MascaraDirective, CarregandoComponent],
   templateUrl: './paciente-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-form.component.scss'

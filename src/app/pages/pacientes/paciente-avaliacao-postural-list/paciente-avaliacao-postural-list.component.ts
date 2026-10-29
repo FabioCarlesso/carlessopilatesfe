@@ -16,10 +16,11 @@ import { PacienteService } from '../../../core/services/paciente.service';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 @Component({
   selector: 'app-paciente-avaliacao-postural-list',
-  imports: [RouterLink, DatePipe, ConfirmarDialogComponent, BreadcrumbComponent],
+  imports: [RouterLink, DatePipe, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
   templateUrl: './paciente-avaliacao-postural-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-list.component.scss'

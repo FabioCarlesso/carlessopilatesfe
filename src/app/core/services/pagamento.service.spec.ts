@@ -63,14 +63,23 @@ describe('PagamentoService', () => {
   });
 
   describe('pagar', () => {
-    it('should PATCH /api/pagamentos/:id/pagar with dataPagamento in the body', () => {
-      const pagoPagamento = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
-      service.pagar(1, '2026-05-05').subscribe(p => expect(p.status).toBe('PAGO'));
+    it('should PATCH /api/pagamentos/:id/pagar with dataPagamento and formaPagamento in the body', () => {
+      const pagoPagamento = {
+        ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05', formaPagamento: 'PIX' as const
+      };
+      service.pagar(1, '2026-05-05', 'PIX').subscribe(p => expect(p.formaPagamento).toBe('PIX'));
       const req = httpMock.expectOne(r => r.url === '/api/pagamentos/1/pagar');
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ dataPagamento: '2026-05-05' });
+      expect(req.request.body).toEqual({ dataPagamento: '2026-05-05', formaPagamento: 'PIX' });
       expect(req.request.params.keys()).toEqual([]);
       req.flush(pagoPagamento);
+    });
+
+    it('should send formaPagamento as null when it is not informed', () => {
+      service.pagar(1, '2026-05-05', null).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/pagamentos/1/pagar');
+      expect(req.request.body).toEqual({ dataPagamento: '2026-05-05', formaPagamento: null });
+      req.flush({ ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' });
     });
   });
 

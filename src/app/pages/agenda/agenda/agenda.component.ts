@@ -42,6 +42,7 @@ import {
   montarGrade,
   navegarPeriodo
 } from '../../../shared/utils/calendario';
+import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
 /**
  * Visões da agenda do estúdio. O calendário do paciente também oferece a
@@ -78,7 +79,7 @@ const TAMANHO_PAGINA_PROFISSIONAIS = 100;
  */
 @Component({
   selector: 'app-agenda',
-  imports: [FormsModule, RouterLink, ConfirmarDialogComponent],
+  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, CarregandoComponent],
   templateUrl: './agenda.component.html',
   styleUrl: './agenda.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

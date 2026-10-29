@@ -5,6 +5,12 @@ import { Subject, of, throwError } from 'rxjs';
 import { PacienteDetailComponent } from './paciente-detail.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
+import { UserRole } from '../../../core/models/auth';
+import { PagamentoResponseDTO, PlanoResponseDTO } from '../../../core/models/plano';
+import { AuthService } from '../../../core/services/auth.service';
+import { PagamentoService } from '../../../core/services/pagamento.service';
+import { PlanoService } from '../../../core/services/plano.service';
+import { hojeIso, somarDias } from '../../../shared/utils/calendario';
 
 const mockPacienteAtivo: PacienteResponseDTO = {
   version: 0,
@@ -20,20 +26,70 @@ const mockPacienteAtivo: PacienteResponseDTO = {
 
 const mockPacienteInativo: PacienteResponseDTO = { ...mockPacienteAtivo, ativo: false };
 
+const mockPlano: PlanoResponseDTO = {
+  id: 7,
+  pacienteId: 1,
+  tipo: 'MENSAL',
+  valor: 250,
+  frequenciaSemanal: 'DUAS_VEZES',
+  dataInicio: '2026-01-01',
+  diasSemana: ['MONDAY', 'WEDNESDAY'],
+  ativo: true,
+  horario: null
+};
+
+function mockPagamento(parcial: Partial<PagamentoResponseDTO>): PagamentoResponseDTO {
+  return {
+    id: 1,
+    pacienteId: 1,
+    pacienteNome: 'Ana Silva',
+    planoId: 7,
+    valor: 250,
+    status: 'PAGO',
+    dataPagamento: '2026-01-05',
+    dataVencimento: '2026-01-11',
+    periodoInicio: '2026-01-01',
+    periodoFim: '2026-01-31',
+    ...parcial
+  };
+}
+
 describe('PacienteDetailComponent', () => {
   let component: PacienteDetailComponent;
   let fixture: ComponentFixture<PacienteDetailComponent>;
   let serviceSpy: jasmine.SpyObj<PacienteService>;
+  let planoServiceSpy: jasmine.SpyObj<PlanoService>;
+  let pagamentoServiceSpy: jasmine.SpyObj<PagamentoService>;
   let router: Router;
 
-  function setup(paciente: PacienteResponseDTO = mockPacienteAtivo) {
+  function criarSpiesCobranca(plano: PlanoResponseDTO | null, pagamentos: PagamentoResponseDTO[]) {
+    planoServiceSpy = jasmine.createSpyObj('PlanoService', ['buscarAtivo']);
+    planoServiceSpy.buscarAtivo.and.returnValue(of(plano));
+    pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar']);
+    pagamentoServiceSpy.listar.and.returnValue(of(pagamentos));
+  }
+
+  function authFake(roles: readonly UserRole[]) {
+    return { hasAnyRole: (aceitos: readonly UserRole[]) => aceitos.some(r => roles.includes(r)) };
+  }
+
+  function setup(
+    paciente: PacienteResponseDTO = mockPacienteAtivo,
+    roles: readonly UserRole[] = ['PROFISSIONAL'],
+    plano: PlanoResponseDTO | null = null,
+    pagamentos: PagamentoResponseDTO[] = []
+  ) {
     serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar']);
     serviceSpy.buscar.and.returnValue(of(paciente));
+    criarSpiesCobranca(plano, pagamentos);
 
     TestBed.configureTestingModule({
       imports: [PacienteDetailComponent, RouterTestingModule],
       providers: [
         { provide: PacienteService, useValue: serviceSpy },
+        { provide: PlanoService, useValue: planoServiceSpy },
+        { provide: PagamentoService, useValue: pagamentoServiceSpy },
+        { provide: AuthService, useValue: authFake(roles) },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
       ]
     });
@@ -125,11 +181,15 @@ describe('PacienteDetailComponent', () => {
 
   it('should not call buscar when id route param is invalid', () => {
     serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar']);
+    criarSpiesCobranca(null, []);
 
     TestBed.configureTestingModule({
       imports: [PacienteDetailComponent, RouterTestingModule],
       providers: [
         { provide: PacienteService, useValue: serviceSpy },
+        { provide: PlanoService, useValue: planoServiceSpy },
+        { provide: PagamentoService, useValue: pagamentoServiceSpy },
+        { provide: AuthService, useValue: authFake(['ADMIN']) },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
       ]
     });
@@ -154,4 +214,103 @@ describe('PacienteDetailComponent', () => {
     expect(component.acaoEmAndamento).toBeTrue();
   });
 
+  describe('bloco Plano e renovação (issue #133)', () => {
+    function bloco(): HTMLElement | null {
+      return fixture.nativeElement.querySelector('.plano-renovacao');
+    }
+
+    function situacaoExibida(): string | null {
+      return bloco()?.querySelector('[data-situacao]')?.getAttribute('data-situacao') ?? null;
+    }
+
+    it('should not render the block nor call plans/payments for PROFISSIONAL', () => {
+      setup(mockPacienteAtivo, ['PROFISSIONAL'], mockPlano, [mockPagamento({})]);
+      expect(bloco()).toBeNull();
+      expect(planoServiceSpy.buscarAtivo).not.toHaveBeenCalled();
+      expect(pagamentoServiceSpy.listar).not.toHaveBeenCalled();
+      expect(component.situacaoPlano).toBeNull();
+    });
+
+    for (const papel of ['ADMIN', 'RECEPCAO', 'FINANCEIRO'] as const) {
+      it(`should render the block for ${papel}`, () => {
+        setup(mockPacienteAtivo, [papel], mockPlano, [mockPagamento({ periodoFim: somarDias(hojeIso(), 40) })]);
+        expect(bloco()).not.toBeNull();
+        expect(planoServiceSpy.buscarAtivo).toHaveBeenCalledWith(1);
+        expect(pagamentoServiceSpy.listar).toHaveBeenCalledWith(1);
+        expect(situacaoExibida()).toBe('PAGO');
+      });
+    }
+
+    it('should show "Sem plano ativo" without fetching payments when the API answers 204', () => {
+      setup(mockPacienteAtivo, ['RECEPCAO'], null);
+      expect(situacaoExibida()).toBe('SEM_PLANO');
+      expect(bloco()?.textContent).toContain('Sem plano ativo');
+      expect(pagamentoServiceSpy.listar).not.toHaveBeenCalled();
+    });
+
+    it('should show "Nenhuma cobrança registrada" when the active plan has no payments', () => {
+      setup(mockPacienteAtivo, ['ADMIN'], mockPlano, [mockPagamento({ planoId: 99 })]);
+      expect(situacaoExibida()).toBe('SEM_PAGAMENTO');
+      expect(bloco()?.textContent).toContain('Nenhuma cobrança registrada');
+    });
+
+    it('should show the open charge when the last payment is pending', () => {
+      setup(mockPacienteAtivo, ['ADMIN'], mockPlano, [
+        mockPagamento({ id: 1 }),
+        mockPagamento({ id: 2, status: 'PENDENTE', periodoInicio: '2026-02-01', periodoFim: '2026-02-28' })
+      ]);
+      expect(situacaoExibida()).toBe('EM_ABERTO');
+      expect(bloco()?.textContent).toContain('Cobrança em aberto');
+      expect(bloco()?.querySelector('a.btn')).toBeNull();
+    });
+
+    it('should offer "Renovar" with prefill query params when the paid period is ending', () => {
+      const periodoFim = somarDias(hojeIso(), 5);
+      setup(mockPacienteAtivo, ['FINANCEIRO'], mockPlano, [mockPagamento({ periodoFim })]);
+      expect(situacaoExibida()).toBe('RENOVAR');
+      expect(bloco()?.textContent).toContain('Plano vence em 5 dias');
+
+      const renovar: HTMLAnchorElement = bloco()!.querySelector('a.btn')!;
+      expect(renovar.textContent?.trim()).toBe('Renovar');
+      const inicio = somarDias(periodoFim, 1);
+      const url = new URL(renovar.href);
+      expect(url.pathname).toBe('/pagamentos/novo/1');
+      expect(url.searchParams.get('planoId')).toBe('7');
+      expect(url.searchParams.get('valor')).toBe('250');
+      expect(url.searchParams.get('periodoInicio')).toBe(inicio);
+      expect(url.searchParams.get('dataVencimento')).toBe(somarDias(inicio, 10));
+    });
+
+    it('should not offer "Renovar" while more than 15 days remain', () => {
+      setup(mockPacienteAtivo, ['ADMIN'], mockPlano, [mockPagamento({ periodoFim: somarDias(hojeIso(), 16) })]);
+      expect(situacaoExibida()).toBe('PAGO');
+      expect(bloco()?.textContent).not.toContain('Renovar');
+    });
+
+    it('should show an error message when the plan lookup fails', () => {
+      setup(mockPacienteAtivo, ['ADMIN'], mockPlano);
+      planoServiceSpy.buscarAtivo.and.returnValue(throwError(() => new Error('fail')));
+      component.ngOnInit();
+      expect(component.erroSituacao).toBe('Erro ao carregar a situação do plano.');
+      expect(component.carregandoSituacao).toBeFalse();
+    });
+  });
+
+  describe('financial history shortcut', () => {
+    function linkHistorico(papeis: UserRole[]): HTMLAnchorElement | null {
+      setup(mockPacienteAtivo, papeis);
+      const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('a.link-card'));
+      return links.find(a => a.textContent?.includes('Histórico Financeiro')) ?? null;
+    }
+
+    it('should link to the consolidated financial history for billing roles', () => {
+      const link = linkHistorico(['RECEPCAO']);
+      expect(link).toBeTruthy();
+      expect(link!.getAttribute('href')).toBe('/pacientes/1/financeiro');
+    });
+
+    it('should hide the shortcut from roles without access to plans and payments', () => {
+      expect(linkHistorico(['PROFISSIONAL'])).toBeNull();
+    });
+  });
 });

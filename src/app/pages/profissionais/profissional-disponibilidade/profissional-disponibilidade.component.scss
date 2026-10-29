@@ -1,0 +1,100 @@
+.disponibilidade-intro {
+  margin-bottom: var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+/* Grade semanal (issue #134): sete colunas no desktop, uma por dia de segunda a
+   domingo; empilha no tablet e no mobile, onde a coluna não caberia nem o
+   horário nem os dois botões. */
+.grade-semanal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-6);
+  padding: 0;
+  list-style: none;
+}
+
+.grade-dia {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  background-color: var(--bg-sunken);
+  min-width: 0;
+}
+
+.grade-dia-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.grade-vazia {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.grade-faixas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grade-faixa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background-color: var(--bg-elev);
+
+  &.em-edicao {
+    border-color: var(--text-brand);
+  }
+}
+
+.grade-faixa-horario {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.grade-faixa-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.faixa-form-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.faixa-erro {
+  display: block;
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-4);
+}
+
+.tentar-novamente {
+  margin-left: var(--sp-2);
+}
+
+@media (max-width: 1024px) {
+  .grade-semanal {
+    grid-template-columns: 1fr;
+  }
+
+  .grade-faixa {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

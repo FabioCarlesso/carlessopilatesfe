@@ -28,7 +28,7 @@
 }
 
 @if (loadingIndicadores) {
-  <div class="loading" role="status">Carregando indicadores...</div>
+  <app-carregando mensagem="Carregando indicadores..." />
 }
 
 @if (!loadingIndicadores && indicadores && resumo) {
@@ -177,7 +177,7 @@
   }
 
   @if (loadingRanking) {
-    <div class="loading" role="status">Carregando ranking...</div>
+    <app-carregando mensagem="Carregando ranking..." />
   }
 
   @if (!loadingRanking && !erroRanking && periodoRanking) {
