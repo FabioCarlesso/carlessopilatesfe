@@ -2,6 +2,7 @@ export type TipoPagamento = 'MENSAL' | 'TRIMESTRAL' | 'ANUAL';
 export type FrequenciaSemanal = 'UMA_VEZ' | 'DUAS_VEZES' | 'TRES_VEZES';
 export type DiaSemana = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 export type StatusPagamento = 'PENDENTE' | 'PAGO' | 'VENCIDO';
+export type FormaPagamento = 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'DINHEIRO' | 'TRANSFERENCIA';
 
 export interface PlanoResponseDTO {
   id: number;
@@ -38,6 +39,11 @@ export interface PagamentoResponseDTO {
   dataVencimento: string;
   periodoInicio: string;
   periodoFim: string;
+  /**
+   * Como o pagamento foi recebido, informado só na confirmação (`pagar`). `null`
+   * em pagamento ainda não confirmado e nos confirmados antes da #215 da API.
+   */
+  formaPagamento?: FormaPagamento | null;
 }
 
 export interface PagamentoRequestDTO {
@@ -94,3 +100,20 @@ export const STATUS_PAGAMENTO_LABEL: Record<StatusPagamento, string> = {
   PAGO: 'Pago',
   VENCIDO: 'Vencido'
 };
+
+export const FORMA_PAGAMENTO_LABEL: Record<FormaPagamento, string> = {
+  PIX: 'PIX',
+  CARTAO_CREDITO: 'Cartão de crédito',
+  CARTAO_DEBITO: 'Cartão de débito',
+  DINHEIRO: 'Dinheiro',
+  TRANSFERENCIA: 'Transferência'
+};
+
+/** Ordem das opções no select de confirmação do pagamento. */
+export const FORMA_PAGAMENTO_OPCOES: readonly FormaPagamento[] = [
+  'PIX',
+  'CARTAO_CREDITO',
+  'CARTAO_DEBITO',
+  'DINHEIRO',
+  'TRANSFERENCIA'
+];
