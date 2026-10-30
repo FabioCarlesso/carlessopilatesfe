@@ -31,9 +31,11 @@
 }
 
 @if (!loading && reavaliacoes.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhuma reavaliação cadastrada.
-  </div>
+  <app-empty-state mensagem="Nenhuma reavaliação cadastrada.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'reavaliacoes', 'nova']" class="btn btn-primary">Nova Reavaliação</a>
+    }
+  </app-empty-state>
 }
 
 @if (reavaliacoes.length > 0) {

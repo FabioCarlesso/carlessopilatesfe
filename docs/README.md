@@ -5,7 +5,7 @@
 | [`arquitetura.md`](arquitetura.md) | Camadas `core`/`pages`/`shared`, estrutura de pastas e proxy de desenvolvimento |
 | [`funcionalidades.md`](funcionalidades.md) | Módulos implementados e o comportamento de cada tela: endpoints, validações e tratamento de erro |
 | [`rotas.md`](rotas.md) | Mapa completo de rotas e perfis exigidos |
-| [`design-system.md`](design-system.md) | Tokens, nomenclatura, `lint:tokens`, responsividade e tema claro/escuro |
+| [`design-system.md`](design-system.md) | Tokens, nomenclatura, `lint:tokens`, responsividade, tema claro/escuro e checklist de acessibilidade |
 | [`desenvolvimento.md`](desenvolvimento.md) | Testes, integração contínua e CodeGraph |
 | [`deploy.md`](deploy.md) | Docker/Nginx e Vercel |
 | [`context.md`](context.md) | Histórico de decisões técnicas e evolução do projeto |

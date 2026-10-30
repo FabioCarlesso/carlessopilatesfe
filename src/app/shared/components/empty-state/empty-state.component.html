@@ -1,0 +1,21 @@
+<div class="empty-state" [class.empty-state--filtrado]="variante === 'filtrado'">
+  <svg class="empty-state__icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    @if (variante === 'filtrado') {
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5 21 21" />
+      <path d="M8 10.5h5" />
+    } @else {
+      <path d="M3 13.5 5.5 5h13l2.5 8.5" />
+      <path d="M3 13.5V19h18v-5.5h-5.5a3.5 3.5 0 0 1-7 0z" />
+    }
+  </svg>
+  <div class="empty-state__conteudo" [attr.role]="anunciar ? 'status' : null">
+    <p class="empty-state__mensagem">{{ mensagem }}</p>
+    @if (texto) {
+      <p class="empty-state__texto">{{ texto }}</p>
+    }
+  </div>
+  <div class="empty-state__acoes">
+    <ng-content />
+  </div>
+</div>

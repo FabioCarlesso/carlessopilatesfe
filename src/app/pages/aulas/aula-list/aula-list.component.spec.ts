@@ -76,6 +76,18 @@ describe('AulaListComponent', () => {
 
     it('should create', () => expect(component).toBeTruthy());
 
+    it('should keep the explanation of generated classes in the empty state, with no create CTA (issue #146)', () => {
+      serviceSpy.listarPorPaciente.and.returnValue(of([]));
+      component.carregar();
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma aula gerada.');
+      expect(el.querySelector('.empty-state__texto')?.textContent?.trim())
+        .toBe('As aulas são criadas automaticamente após a confirmação de um pagamento.');
+      expect(el.querySelector('.empty-state__acoes')?.children.length).toBe(0);
+    });
+
     it('should use OnPush change detection strategy', () => {
       expect(isOnPush(AulaListComponent)).toBeTrue();
     });
@@ -782,6 +794,14 @@ describe('AulaListComponent', () => {
     it('should set an aria-label on the profissional select', () => {
       const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
       expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');
+    });
+
+    it('should include the horário in the profissional select aria-label when the aula has one', () => {
+      serviceSpy.listarPorPaciente.and.returnValue(of([{ ...mockAula, horario: '08:00:00' }]));
+      component.carregar();
+      fixture.detectChanges();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+      expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026 às 08:00');
     });
 
     it('should show a hint explaining the disabled button when there are no profissionais', () => {

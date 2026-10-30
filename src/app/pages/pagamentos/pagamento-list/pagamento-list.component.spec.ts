@@ -221,4 +221,15 @@ describe('PagamentoListComponent', () => {
     expect(component.pagarId).toBeNull();
   });
 
+
+  it('should offer the create CTA in the empty state (issue #146)', async () => {
+    serviceSpy.listar.and.returnValue(of([]));
+    component.carregar();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhum pagamento registrado.');
+    const cta = el.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('Novo Pagamento');
+    expect(cta?.getAttribute('href')).toBe('/pagamentos/novo/10');
+  });
 });

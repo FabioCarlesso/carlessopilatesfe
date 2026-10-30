@@ -43,9 +43,11 @@
 }
 
 @if (!loading && notas.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhuma NFSE emitida cadastrada para este paciente.
-  </div>
+  <app-empty-state mensagem="Nenhuma NFSE emitida cadastrada para este paciente.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas', 'nova']" class="btn btn-primary">Registrar NFSE</a>
+    }
+  </app-empty-state>
 }
 
 @if (notas.length > 0) {

@@ -110,6 +110,19 @@
   --shadow-3: 0 8px 32px rgba(20, 31, 45, 0.10), 0 2px 8px rgba(20, 31, 45, 0.06);
   --shadow-focus: 0 0 0 3px rgba(55, 79, 108, 0.18);
 
+  /*
+   * Anel de foco de teclado (`:focus-visible`), aplicado a todo controle
+   * interativo por uma regra global em `styles.scss` (issue #150). É um
+   * `outline` sólido, e não o `--shadow-focus`: com 18% de alfa aquele rende
+   * 1,32:1 sobre `--bg-app`, abaixo dos 3:1 da WCAG 1.4.11. A cor segue
+   * `--text-brand`, que tem variante escura — 7,2:1 sobre `--bg-app` no claro
+   * e 9,7:1 no escuro. Sobre fundo fixo escuro (navbar) o componente redefine
+   * `--focus-ring-color` para `--text-on-dark`.
+   */
+  --focus-ring-color: var(--text-brand);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
   /* Sombra nas bordas do contêiner de tabela que sinaliza colunas fora do
    * viewport. É um token à parte das `--shadow-*` porque precisa ser mais
    * densa que a `--shadow-1` para se destacar sobre as linhas (issue #164). */

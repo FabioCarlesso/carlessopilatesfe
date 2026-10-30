@@ -96,19 +96,28 @@ sem filtro ativo — e mudar para string vazia não anuncia nada. -->
 }
 
 @if (!loading && itensCarregados.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhuma evolução registrada.
-  </div>
+  <!-- Evolução não tem cadastro avulso: nasce de uma sessão. O CTA leva
+  para onde ela é registrada (issue #146). -->
+  <app-empty-state
+    mensagem="Nenhuma evolução registrada."
+    texto="A evolução é registrada a partir de cada sessão do paciente.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-primary">Ver sessões</a>
+    }
+  </app-empty-state>
 }
 
 <!-- Recorte sem resultados é um estado diferente de paciente sem evolução: aqui
 a saída é limpar o filtro, não registrar uma evolução (issue #146). -->
 @if (!loading && !erro && itensCarregados.length > 0 && itens.length === 0) {
-  <div
-    class="empty-state empty-state-filtrado">
-    <p>Nenhuma evolução para os filtros aplicados.</p>
+  <!-- `anunciar` desligado: o `.filtro-resumo` acima já é a região viva. -->
+  <app-empty-state
+    class="empty-state-filtrado"
+    mensagem="Nenhuma evolução para os filtros aplicados."
+    variante="filtrado"
+    [anunciar]="false">
     <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
-  </div>
+  </app-empty-state>
 }
 
 <!-- Derivado da mesma coleção da linha do tempo: nenhuma requisição a mais.

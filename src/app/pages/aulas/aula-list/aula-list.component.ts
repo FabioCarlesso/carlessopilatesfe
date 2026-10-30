@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -14,6 +14,7 @@ import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 /**
  * Largura a partir da qual a tabela vira cards (mesmo valor do media query do
@@ -33,7 +34,7 @@ const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 @Component({
   selector: 'app-aula-list',
-  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
+  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -194,6 +195,17 @@ export class AulaListComponent implements OnInit, OnDestroy {
 
   horarioDaAula(aula: AulaResponseDTO): string | null {
     return normalizarHora(aula.horario);
+  }
+
+  /**
+   * Nome acessível do select de profissional da linha. O cabeçalho da coluna
+   * não é rótulo do campo, e várias linhas podem cair no mesmo dia: data e
+   * horário dizem ao leitor de tela de qual aula é o select (issue #150).
+   */
+  rotuloSelectProfissional(aula: AulaResponseDTO): string {
+    const data = formatDate(aula.data, 'dd/MM/yyyy', 'en-US');
+    const horario = this.horarioDaAula(aula);
+    return `Profissional responsável pela aula de ${data}${horario ? ` às ${horario}` : ''}`;
   }
 
   /**

@@ -101,3 +101,7 @@
   }
   <router-outlet />
 </main>
+
+@if (atalhos.ajudaAberta() && authService.isAuthenticated()) {
+  <app-atalhos-ajuda [atalhos]="atalhos.atalhosDisponiveis()" (fechar)="atalhos.fecharAjuda()" />
+}

@@ -135,6 +135,9 @@
   @include secao.faixa;
   background: var(--bg-headline);
   text-align: center;
+  // Pelo mesmo motivo, o anel de foco do CTA precisa ser claro: o
+  // `--text-brand` do tema claro some sobre o tempestade (issue #150).
+  --focus-ring-color: var(--text-on-dark);
 }
 
 .fechamento__inner {

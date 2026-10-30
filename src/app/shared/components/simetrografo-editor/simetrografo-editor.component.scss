@@ -37,11 +37,6 @@
     border-color: var(--border-strong);
   }
 
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
-
   &.ativo {
     border-color: var(--c-horizonte);
     background: var(--c-info-bg);
@@ -268,11 +263,6 @@
   color: var(--text-secondary);
   font-size: var(--fs-micro);
   cursor: pointer;
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
 }
 
 .visually-hidden {

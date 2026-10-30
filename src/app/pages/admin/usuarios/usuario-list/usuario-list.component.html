@@ -15,9 +15,9 @@
 }
 
 @if (!loading && usuarios.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum usuário cadastrado.
-  </div>
+  <app-empty-state mensagem="Nenhum usuário cadastrado.">
+    <a routerLink="/admin/usuarios/novo" class="btn btn-primary">+ Novo Usuário</a>
+  </app-empty-state>
 }
 
 @if (!loading && usuarios.length > 0) {
@@ -91,6 +91,7 @@
     <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
     @for (p of visiblePages; track p) {
       <button
+        type="button"
         class="page-number"
         [class.active]="p === currentPage"
         [attr.aria-label]="'Página ' + (p + 1)"

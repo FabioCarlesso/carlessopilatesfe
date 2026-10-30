@@ -392,8 +392,12 @@ describe('PacienteEvolucaoListComponent', () => {
 
     expect(component.itens.length).toBe(0);
     expect(component.erro).toBeNull();
-    expect(fixture.nativeElement.querySelector('.empty-state')?.textContent?.trim())
+    expect(fixture.nativeElement.querySelector('.empty-state__mensagem')?.textContent?.trim())
       .toBe('Nenhuma evolução registrada.');
+    // Evolução nasce da sessão: o CTA leva para a lista de sessões (issue #146).
+    const cta: HTMLAnchorElement = fixture.nativeElement.querySelector('.empty-state__acoes a');
+    expect(cta.textContent?.trim()).toBe('Ver sessões');
+    expect(cta.getAttribute('href')).toBe('/pacientes/10/sessoes');
   });
 
   // `--surface`, `--c-primary` e `--radius-lg`, usados pelos cards das demais
@@ -839,6 +843,16 @@ describe('PacienteEvolucaoListComponent', () => {
       expect(fixture.nativeElement.querySelector('.empty-state-filtrado')).toBeNull();
     });
 
+    it('should not announce the filtered empty state twice (the summary is the live region)', async () => {
+      await setupTresSessoes();
+
+      preencher({ dataInicial: '2026-07-01', dataFinal: '2026-07-31' });
+
+      const vazio: HTMLElement = fixture.nativeElement.querySelector('.empty-state-filtrado');
+      expect(vazio.querySelector('[role="status"]')).toBeNull();
+      expect(vazio.querySelector('.empty-state--filtrado')).not.toBeNull();
+    });
+
     it('should restore the full collection from the filter bar action', async () => {
       await setupTresSessoes();
       preencher({ dataInicial: '2026-06-01', tipo: 'PILATES' });
@@ -1056,7 +1070,7 @@ describe('PacienteEvolucaoListComponent', () => {
       await setup([], []);
 
       expect(fixture.nativeElement.querySelector('.filtros')).toBeNull();
-      expect(fixture.nativeElement.querySelector('.empty-state')?.textContent?.trim())
+      expect(fixture.nativeElement.querySelector('.empty-state__mensagem')?.textContent?.trim())
         .toBe('Nenhuma evolução registrada.');
     });
 
@@ -1209,7 +1223,7 @@ describe('PacienteEvolucaoListComponent', () => {
     fixture.detectChanges();
 
     expect(component.erro).toBeNull();
-    expect(fixture.nativeElement.querySelector('.empty-state')?.textContent?.trim())
+    expect(fixture.nativeElement.querySelector('.empty-state__mensagem')?.textContent?.trim())
       .toBe('Nenhuma evolução registrada.');
   });
 

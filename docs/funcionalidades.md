@@ -24,7 +24,8 @@ validações, tratamento de erro e decisões de UX. As rotas estão em
 | **Relatórios** | Seção do financeiro (`ADMIN` e `FINANCEIRO`), com indicadores (só `ADMIN`) históricos (receita, ocupação, evasão e aulas por profissional), relatório de pagamento de profissional por período, relatório financeiro consolidado do estúdio, relatório de emissão de NFSEs por competência e exportações PDF/XLSX/CSV |
 | **Administração** | Seção administrativa restrita a `ADMIN` em `/admin`, com hub inicial, listagem de usuários em `/admin/usuarios` (paginação server-side, criar/editar/inativar/reativar com confirmação) bloqueios de agenda em `/admin/bloqueios` e atalho para a gestão de inadimplência em `/financeiro/inadimplencia` |
 | **Autenticação e Autorização** | Login com JWT via `POST /api/auth/login`, armazenamento centralizado do token e do usuário logado, papéis acumuláveis (`ADMIN`, `PROFISSIONAL`, `RECEPCAO`, `FINANCEIRO`) com navbar e atalhos por perfil, identificação do usuário autenticado na navbar, `authGuard`, `roleGuard`, rota `/403`, interceptors HTTP, logout, tratamento de `401` por token expirado e tratamento global de `403` da API |
-| **Busca global** | Campo de busca na navbar (atalhos `/` e `Ctrl`/`Cmd`+`K`) que consulta pacientes por nome ou CPF e, para `ADMIN`, também profissionais por nome, com dropdown navegável por teclado |
+| **Busca global** | Campo de busca na navbar (atalhos `/` e `Ctrl`/`Cmd`+`K`, do serviço de atalhos) que consulta pacientes por nome ou CPF e, para `ADMIN`, também profissionais por nome, com dropdown navegável por teclado |
+| **Atalhos de teclado** | Sequências `g`/`n` + letra para navegar entre os módulos e abrir cadastros, foco na busca com `/` ou `Ctrl`/`Cmd`+`K` e `?` para a lista dos atalhos do perfil, sem interceptar digitação |
 | **Troca de senha** | Tela `/perfil/alterar-senha` acessível ao usuário autenticado, com validação local (obrigatoriedade, mínimo de 8 caracteres, confirmação coincidente, nova ≠ atual), toggle de visibilidade por campo, integração com `PUT /api/users/me/senha` e limpeza de sessão com redirecionamento para `/login` após sucesso |
 | **Recuperação de senha** | Fluxo público de "Esqueci minha senha" para usuários não autenticados: tela `/esqueci-senha` (solicitação por e-mail com `POST /api/auth/forgot-password` e mensagem genérica única para não expor a existência do e-mail) e tela `/resetar-senha` (redefinição com token da query string via `POST /api/auth/reset-password`, mesmas validações de senha da troca de senha, tratamento de token inválido/expirado/já utilizado e redirecionamento para `/login` após sucesso) |
 
@@ -260,7 +261,56 @@ A recuperação de senha para usuários não autenticados é composta por duas t
 
 ## Busca global
 
-A busca global fica na navbar (`BuscaGlobalComponent`, em `shared/components/busca-global`) e está disponível para todo usuário autenticado. O campo aceita foco por atalho — `/` (quando o foco não está em outro campo de texto) e `Ctrl`/`Cmd`+`K` — e, a partir de 2 caracteres, consulta com debounce de 300 ms os endpoints já existentes com `size=5`: `GET /api/pacientes?nome=` quando o termo tem letras e `GET /api/pacientes?cpf=` quando o termo tem apenas dígitos e pontuação de máscara. O termo é enviado **como digitado**: o filtro `cpf` da API é um `LIKE` sobre o valor gravado e, embora os cadastros novos e a importação do seufisio gravem só dígitos, registros antigos podem estar pontuados; normalizar para só dígitos faria `12345678901` deixar de casar com um `123.456.789-01` salvo. Busca parcial de CPF funciona. Para usuários `ADMIN`, a busca também consulta `GET /api/profissionais?nome=`; para os demais perfis essa requisição não é disparada, evitando o `403` do backend. Como nenhum dos filtros envia `ativo`, a API devolve apenas registros ativos — mesmo padrão das listagens. O dropdown de resultados identifica cada item como **Paciente** ou **Profissional**, é navegável por teclado (setas ↑/↓ com `aria-activedescendant`, Enter para abrir o detalhe em `/pacientes/:id` ou `/profissionais/:id`, Esc para fechar) e distingue os estados "Buscando...", "Nenhum resultado encontrado." e falha de rede ("Não foi possível buscar agora."), anunciados por uma live region `aria-live="polite"` fixa no DOM.
+A busca global fica na navbar (`BuscaGlobalComponent`, em `shared/components/busca-global`) e está disponível para todo usuário autenticado. O campo aceita foco por atalho — `/` (quando o foco não está em outro campo de texto) e `Ctrl`/`Cmd`+`K`, reconhecidos pelo serviço de [atalhos de teclado](#atalhos-de-teclado) — e, a partir de 2 caracteres, consulta com debounce de 300 ms os endpoints já existentes com `size=5`: `GET /api/pacientes?nome=` quando o termo tem letras e `GET /api/pacientes?cpf=` quando o termo tem apenas dígitos e pontuação de máscara. O termo é enviado **como digitado**: o filtro `cpf` da API é um `LIKE` sobre o valor gravado e, embora os cadastros novos e a importação do seufisio gravem só dígitos, registros antigos podem estar pontuados; normalizar para só dígitos faria `12345678901` deixar de casar com um `123.456.789-01` salvo. Busca parcial de CPF funciona. Para usuários `ADMIN`, a busca também consulta `GET /api/profissionais?nome=`; para os demais perfis essa requisição não é disparada, evitando o `403` do backend. Como nenhum dos filtros envia `ativo`, a API devolve apenas registros ativos — mesmo padrão das listagens. O dropdown de resultados identifica cada item como **Paciente** ou **Profissional**, é navegável por teclado (setas ↑/↓ com `aria-activedescendant`, Enter para abrir o detalhe em `/pacientes/:id` ou `/profissionais/:id`, Esc para fechar) e distingue os estados "Buscando...", "Nenhum resultado encontrado." e falha de rede ("Não foi possível buscar agora."), anunciados por uma live region `aria-live="polite"` fixa no DOM.
+
+## Atalhos de teclado
+
+Atalhos para quem opera o sistema o dia inteiro (issue #124), ativos em toda tela
+autenticada. Um único serviço (`AtalhosTecladoService`, em `shared/services`)
+escuta o `keydown` do documento; o catálogo (`ATALHOS`) e as regras puras de
+reconhecimento ficam em `shared/utils/atalhos-teclado.ts`.
+
+| Teclas | Ação | Quem tem |
+|---|---|---|
+| `Ctrl`+`K` (`Cmd`+`K` no Mac) ou `/` | Foca o campo da busca global | Todo autenticado |
+| `?` | Abre a lista de atalhos | Todo autenticado |
+| `g` `d` | `/inicio` (dashboard) | Todo autenticado |
+| `g` `a` / `g` `e` | `/agenda` / `/lista-espera` | _agenda_ |
+| `g` `p` | `/pacientes` | _equipe_ |
+| `g` `f` | `/profissionais` | `ADMIN` |
+| `g` `r` | `/relatorios` | _fiscal_ |
+| `g` `m` | `/admin` | `ADMIN` |
+| `n` `p` | `/pacientes/novo` | _equipe_ |
+| `n` `e` | `/lista-espera/nova` | _agenda_ |
+
+Regras de disparo:
+
+- **Não intercepta digitação.** Com o foco em `input`, `textarea`, `select` ou
+  elemento `contenteditable`, nenhum atalho dispara — a exceção é `Ctrl`/`Cmd`+`K`,
+  que não digita caractere e por isso funciona também de dentro de um campo.
+- **Sem modificadores não previstos.** `Alt` (inclusive o `AltGr`) e `Ctrl`/`Cmd`
+  invalidam qualquer atalho além de `Ctrl`+`K`; `Shift` só é aceito em símbolos
+  (o `?` exige Shift na maioria dos layouts), nunca em letras. Caps Lock não
+  atrapalha. Tecla segurada (repetição), composição de IME e tecla que outro
+  componente já tratou (`preventDefault`) também são ignoradas.
+- **Sequências** aceitam a segunda tecla em até 1,5 s; depois disso, ou com uma
+  tecla que não continua nenhum atalho, a sequência é descartada. A tecla que
+  quebrou uma sequência pode iniciar outra (`g g p` leva a pacientes).
+- **Perfil.** Cada atalho de navegação usa o mesmo grupo de `PAPEIS` do
+  `roleGuard` da rota de destino; quem não tem o perfil não dispara o atalho
+  nem o vê na ajuda. Um teste compara cada atalho com o guard real da rota,
+  papel por papel.
+- **Sem sessão ou com diálogo aberto**, nada dispara: o serviço não age fora
+  da área autenticada nem por trás de um diálogo modal (`aria-modal="true"`).
+
+O `?` abre o `AtalhosAjudaComponent`, que reaproveita o `ConfirmarDialogComponent`
+em modo informativo: diálogo modal rotulado, foco inicial no botão **Fechar**,
+foco preso no diálogo, Esc ou o botão fecham e o foco volta ao elemento que o
+tinha antes. A lista é agrupada em Geral, Navegação e Cadastro e mostra só os
+atalhos do perfil atual.
+
+No layout compacto a busca fica dentro do menu colapsado; `/` e `Ctrl`+`K`
+abrem o menu antes de focar o campo.
 
 ## Landing de produto
 
@@ -303,6 +353,16 @@ Os campos de CPF e telefone dos formulários de paciente e de profissional, o CE
 O CPF passa pelo `cpfValidator` (`core/validators/cpf.validator.ts`) no cadastro de paciente e de profissional: com ou sem pontuação, ele exige 11 dígitos, recusa sequências de um dígito só (`111.111.111-11`) e confere os dois dígitos verificadores. O erro aparece inline como **CPF inválido.**, separado de **CPF é obrigatório.**, e o formulário não chama a API. A API não valida o CPF, então essa é a única barreira antes de gravar. Telefone e CEP não têm validação de completude.
 
 Na edição, o CPF continua desabilitado e, por isso, não é validado: um cadastro antigo com CPF fora do padrão segue editável. Valores já gravados aparecem formatados quando cabem na máscara e como estão quando não cabem (letras, dois números no mesmo campo), e só são reenviados em dígitos se o usuário editar o campo; o telefone e o CEP não tocados voltam à API exatamente como vieram.
+
+### Estados vazios das listagens
+
+Toda listagem sem linhas para mostrar distingue **"não há registros"** de **"o filtro não retornou nada"** e oferece uma saída (issue #146):
+
+- **Com filtro aplicado** — pacientes, profissionais, lista de espera, inadimplência e o recorte do histórico de evoluções: a mensagem diz que o filtro não retornou nada (**Nenhum resultado para os filtros aplicados.**, ou a frase própria da tela) e o botão **Limpar filtros** volta aos filtros padrão e recarrega. Em pacientes e profissionais, o que conta é o filtro da **última consulta**, e não o que está sendo digitado: o estado vazio descreve a lista que está na tela. O status padrão **Ativos** não conta como filtro. Na inadimplência, o filtro padrão (pendentes e vencidos, sem faixa nem paciente) também não conta, e a lista vazia ali diz **Nenhum pagamento pendente ou vencido.**
+- **Sem registros** — a mensagem da tela e o mesmo CTA de criação do cabeçalho (**+ Novo Paciente**, **+ Novo Profissional**, **+ Novo Usuário**, **Novo Plano**, **Novo Pagamento**, **Nova Sessão**, **Novo Plano** de tratamento, **Nova Reavaliação**, **Registrar NFSE**, **+ Novo bloqueio**, **+ Nova inscrição**, **+ Nova análise** postural). A rota de criação de cada uma exige o mesmo papel da listagem, então quem vê a lista pode usar o CTA.
+- **Sem ação de criação** — aulas não têm cadastro manual: o estado vazio mantém a explicação **As aulas são criadas automaticamente após a confirmação de um pagamento.**, sem botão. O histórico de evoluções explica que a evolução nasce da sessão e leva a **Ver sessões**.
+
+Os painéis de relatórios, agenda, calendários e histórico financeiro, que mostram um período e não uma listagem de cadastro, mantêm a frase simples.
 
 ### Identificadores de rota
 

@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { PacienteResponseDTO, Page } from '../../../core/models/paciente';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { isOnPush } from '../../../../testing/onpush';
+import { AtalhosTecladoService } from '../../services/atalhos-teclado.service';
 import { BuscaGlobalComponent } from './busca-global.component';
 
 const DEBOUNCE_MS = 300;
@@ -53,6 +54,7 @@ describe('BuscaGlobalComponent', () => {
   let profissionalService: jasmine.SpyObj<ProfissionalService>;
   let authService: jasmine.SpyObj<AuthService>;
   let router: jasmine.SpyObj<Router>;
+  let focoBusca: Subject<void>;
   let fixture: ComponentFixture<BuscaGlobalComponent>;
   let component: BuscaGlobalComponent;
 
@@ -61,6 +63,7 @@ describe('BuscaGlobalComponent', () => {
     profissionalService = jasmine.createSpyObj<ProfissionalService>('ProfissionalService', ['listar']);
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['isAdmin']);
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    focoBusca = new Subject<void>();
 
     authService.isAdmin.and.returnValue(admin);
     pacienteService.listar.and.returnValue(of(pagina<PacienteResponseDTO>([])));
@@ -72,7 +75,8 @@ describe('BuscaGlobalComponent', () => {
         { provide: PacienteService, useValue: pacienteService },
         { provide: ProfissionalService, useValue: profissionalService },
         { provide: AuthService, useValue: authService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: AtalhosTecladoService, useValue: { focoBusca$: focoBusca.asObservable() } }
       ]
     });
 
@@ -287,32 +291,29 @@ describe('BuscaGlobalComponent', () => {
     expect(component.aberto).toBeTrue();
   }));
 
-  it('deve focar o campo com o atalho "/" sem digitar a barra no campo', fakeAsync(() => {
+  it('deve focar o campo, fora do keydown, quando o serviço de atalhos pede a busca', fakeAsync(() => {
     setup();
     const campo = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
     const focus = spyOn(campo, 'focus');
 
-    const evento = new KeyboardEvent('keydown', { key: '/', cancelable: true });
-    document.dispatchEvent(evento);
+    focoBusca.next();
 
-    // O `preventDefault` impede a inserção do caractere e o foco é adiado para fora do
-    // keydown — focar durante o evento faria a própria "/" cair dentro do campo.
-    expect(evento.defaultPrevented).toBeTrue();
+    // O foco é adiado para fora do keydown que disparou o atalho — focar durante o
+    // evento faria a própria "/" cair dentro do campo.
     expect(focus).not.toHaveBeenCalled();
-
     tick();
     expect(focus).toHaveBeenCalled();
     expect(component.termo.value).toBe('');
   }));
 
-  it('deve focar o campo com o atalho Ctrl+K', fakeAsync(() => {
+  it('não deve reagir mais às teclas do documento por conta própria', fakeAsync(() => {
     setup();
     const campo = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
     const focus = spyOn(campo, 'focus');
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', cancelable: true }));
     tick();
 
-    expect(focus).toHaveBeenCalled();
+    expect(focus).not.toHaveBeenCalled();
   }));
 });
