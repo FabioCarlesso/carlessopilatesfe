@@ -11,6 +11,7 @@ import { UsuarioAdminResponseDTO, rotuloPapeis } from '../../../../core/models/u
 import { PageMetadata } from '../../../../core/models/common';
 import { extrairMensagemErro } from '../../../../shared/utils/api-error';
 import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
 // Sem 'excluir': a API não tem exclusão física de usuário, só inativação.
 type ConfirmacaoAcao = 'inativar' | 'ativar';
@@ -23,7 +24,7 @@ interface Confirmacao {
 @Component({
   selector: 'app-usuario-list',
   standalone: true,
-  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent],
+  imports: [RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './usuario-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuario-list.component.scss'

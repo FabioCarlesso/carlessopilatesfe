@@ -753,4 +753,57 @@ describe('PacienteListComponent', () => {
     expect(headers[1].getAttribute('aria-sort')).toBe('ascending');
   });
 
+
+  describe('estado vazio (issue #146)', () => {
+    const vazio = { content: [], page: { totalElements: 0, totalPages: 0, size: 10, number: 0 } };
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should offer the create CTA when there is no record and no filter', () => {
+      serviceSpy.listar.and.returnValue(of(vazio));
+      component.carregar();
+      fixture.detectChanges();
+
+      expect(el().querySelector('.empty-state__mensagem')?.textContent?.trim())
+        .toBe('Nenhum paciente ativo cadastrado.');
+      const cta = el().querySelector('.empty-state__acoes a') as HTMLAnchorElement;
+      expect(cta.textContent?.trim()).toBe('+ Novo Paciente');
+      expect(cta.getAttribute('href')).toBe('/pacientes/novo');
+      expect(el().querySelector('.empty-state--filtrado')).toBeNull();
+    });
+
+    it('should offer to clear the filters when the applied filter returns nothing', () => {
+      serviceSpy.listar.and.returnValue(of(vazio));
+      component.filtro.nome = 'Zé';
+      component.buscar();
+      fixture.detectChanges();
+
+      expect(el().querySelector('.empty-state--filtrado')).not.toBeNull();
+      expect(el().querySelector('.empty-state__mensagem')?.textContent?.trim())
+        .toBe('Nenhum resultado para os filtros aplicados.');
+      expect(el().querySelector('.empty-state__acoes a')).toBeNull();
+
+      serviceSpy.listar.calls.reset();
+      const limpar = el().querySelector('.empty-state__acoes button') as HTMLButtonElement;
+      expect(limpar.textContent?.trim()).toBe('Limpar filtros');
+      limpar.click();
+      fixture.detectChanges();
+
+      expect(component.filtro.nome).toBe('');
+      expect(serviceSpy.listar).toHaveBeenCalledTimes(1);
+      expect(component.buscaFiltrada).toBeFalse();
+      expect(el().querySelector('.empty-state--filtrado')).toBeNull();
+    });
+
+    it('should describe the search that produced the list, not unsubmitted input', () => {
+      serviceSpy.listar.and.returnValue(of(vazio));
+      component.carregar();
+      component.filtro.nome = 'Zé';
+      fixture.detectChanges();
+
+      expect(el().querySelector('.empty-state--filtrado')).toBeNull();
+    });
+  });
 });

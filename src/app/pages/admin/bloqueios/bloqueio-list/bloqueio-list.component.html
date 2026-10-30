@@ -42,9 +42,9 @@ corrente porque feriado se confere para o ano inteiro de uma vez. -->
 }
 
 @if (!loading && !erro && bloqueios.length === 0) {
-  <div class="empty-state">
-    Nenhum bloqueio cadastrado no período.
-  </div>
+  <app-empty-state mensagem="Nenhum bloqueio cadastrado no período.">
+    <a routerLink="/admin/bloqueios/novo" class="btn btn-primary">+ Novo bloqueio</a>
+  </app-empty-state>
 }
 
 @if (!loading && bloqueios.length > 0) {

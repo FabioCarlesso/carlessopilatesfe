@@ -13,6 +13,7 @@ import { extrairMensagemErro } from '../../../../shared/utils/api-error';
 import { formatarFaixaHoraria, formatarPeriodo } from '../../../../shared/utils/bloqueio-agenda';
 import { diasEntre, hojeIso } from '../../../../shared/utils/calendario';
 import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
 /**
  * Cadastro de bloqueios de agenda (issue #135): feriados, manutenções e eventos
@@ -26,7 +27,7 @@ import { CarregandoComponent } from '../../../../shared/components/carregando/ca
  */
 @Component({
   selector: 'app-bloqueio-list',
-  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, LocalDatePipe, CarregandoComponent],
+  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, LocalDatePipe, CarregandoComponent, EmptyStateComponent],
   templateUrl: './bloqueio-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './bloqueio-list.component.scss'

@@ -76,6 +76,18 @@ describe('AulaListComponent', () => {
 
     it('should create', () => expect(component).toBeTruthy());
 
+    it('should keep the explanation of generated classes in the empty state, with no create CTA (issue #146)', () => {
+      serviceSpy.listarPorPaciente.and.returnValue(of([]));
+      component.carregar();
+      fixture.detectChanges();
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma aula gerada.');
+      expect(el.querySelector('.empty-state__texto')?.textContent?.trim())
+        .toBe('As aulas são criadas automaticamente após a confirmação de um pagamento.');
+      expect(el.querySelector('.empty-state__acoes')?.children.length).toBe(0);
+    });
+
     it('should use OnPush change detection strategy', () => {
       expect(isOnPush(AulaListComponent)).toBeTrue();
     });

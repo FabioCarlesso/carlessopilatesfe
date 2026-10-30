@@ -261,4 +261,20 @@ describe('PacienteAvaliacaoPosturalListComponent', () => {
 
     httpMock.expectOne('/api/avaliacoes-posturais/10/cancelar').flush({ ...mockAnaliseFrente, status: 'RASCUNHO' });
   });
+
+  it('should offer the new-analysis CTA in the empty state (issue #146)', () => {
+    criarComponente();
+    fixture.detectChanges();
+
+    httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
+    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
+    httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush([]);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma análise postural registrada ainda.');
+    const cta = el.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('+ Nova análise');
+    expect(cta?.getAttribute('href')).toBe('/pacientes/1/avaliacao-fisioterapeutica/postural/nova');
+  });
 });

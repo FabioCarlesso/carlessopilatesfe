@@ -11,6 +11,7 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 interface FiltroUI {
   nome: string;
@@ -22,7 +23,7 @@ interface FiltroUI {
 
 @Component({
   selector: 'app-profissional-list',
-  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent],
+  imports: [FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './profissional-list.component.html',
   styleUrl: './profissional-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -41,6 +42,12 @@ export class ProfissionalListComponent implements OnInit {
   confirmarInativarId: number | null = null;
   acaoEmAndamento = false;
   filtrosAbertos = false;
+  /**
+   * Se a última consulta saiu com algum filtro (issue #146). Capturado em
+   * `carregar`, e não lido de `filtrosAtivos()` no template, para o estado vazio
+   * descrever a busca que produziu a lista, e não o que está sendo digitado.
+   */
+  buscaFiltrada = false;
   readonly ordenacaoPadrao: Ordenacao = { campo: 'nome', direcao: 'asc' };
   ordenacao: Ordenacao = { ...this.ordenacaoPadrao };
   filtro: FiltroUI = {
@@ -62,6 +69,7 @@ export class ProfissionalListComponent implements OnInit {
 
   carregar(retryCount = 0): void {
     this.loading = true;
+    this.buscaFiltrada = this.filtrosAtivos() > 0;
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize, this.montarFiltro(), toSortParam(this.ordenacao)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {

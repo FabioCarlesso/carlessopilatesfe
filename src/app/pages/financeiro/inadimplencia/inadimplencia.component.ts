@@ -44,6 +44,7 @@ import {
   validarFaixaVencimento
 } from '../../../shared/utils/inadimplencia';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 /** Mesmos números da busca de paciente da lista de espera e da busca global. */
 const TAMANHO_MINIMO_TERMO = 2;
@@ -110,7 +111,7 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
     PaginationSummaryComponent,
     SortableHeaderComponent,
     LocalDatePipe,
-    CarregandoComponent
+    CarregandoComponent, EmptyStateComponent
   ],
   templateUrl: './inadimplencia.component.html',
   styleUrl: './inadimplencia.component.scss',
@@ -147,6 +148,18 @@ export class InadimplenciaComponent implements OnInit {
    * um filtro que o usuário ainda não confirmou com **Buscar**.
    */
   private filtroAplicado: PagamentoFiltro = { status: [...STATUS_INADIMPLENCIA_PADRAO] };
+
+  /**
+   * Se o filtro aplicado difere do padrão (pendentes e vencidos, sem faixa nem
+   * paciente). Só nesse caso o estado vazio oferece **Limpar filtros**: no
+   * padrão, lista vazia quer dizer que não há inadimplência (issue #146).
+   */
+  get buscaPersonalizada(): boolean {
+    const { status = [], vencimentoDe, vencimentoAte, pacienteId } = this.filtroAplicado;
+    const statusPadrao = status.length === STATUS_INADIMPLENCIA_PADRAO.length
+      && STATUS_INADIMPLENCIA_PADRAO.every(s => status.includes(s));
+    return !statusPadrao || !!vencimentoDe || !!vencimentoAte || pacienteId != null;
+  }
 
   readonly busca = new FormControl('', { nonNullable: true });
   sugestoes: PacienteResponseDTO[] = [];

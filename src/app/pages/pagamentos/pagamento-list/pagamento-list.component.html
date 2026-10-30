@@ -30,9 +30,11 @@
 }
 
 @if (!loading && pagamentos.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum pagamento registrado.
-  </div>
+  <app-empty-state mensagem="Nenhum pagamento registrado.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
+    }
+  </app-empty-state>
 }
 
 @if (pagamentos.length > 0) {

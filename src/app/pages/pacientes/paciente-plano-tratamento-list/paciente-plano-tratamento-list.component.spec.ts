@@ -152,7 +152,8 @@ describe('PacientePlanoTratamentoListComponent', () => {
     expect(component.erro).toBeNull();
     expect(component.loading).toBeFalse();
     const vazio: HTMLElement | null = fixture.nativeElement.querySelector('.empty-state');
-    expect(vazio?.textContent?.trim()).toBe('Nenhum plano de tratamento cadastrado.');
+    expect(vazio?.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhum plano de tratamento cadastrado.');
+    expect(vazio?.querySelector('.empty-state__acoes a')?.textContent?.trim()).toBe('Novo Plano');
     expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
   });
 

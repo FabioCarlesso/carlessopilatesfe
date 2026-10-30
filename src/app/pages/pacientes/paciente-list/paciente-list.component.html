@@ -64,9 +64,15 @@
 }
 
 @if (!loading && pacientes.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum paciente encontrado.
-  </div>
+  @if (buscaFiltrada) {
+    <app-empty-state mensagem="Nenhum resultado para os filtros aplicados." variante="filtrado">
+      <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
+    </app-empty-state>
+  } @else {
+    <app-empty-state mensagem="Nenhum paciente ativo cadastrado.">
+      <a routerLink="/pacientes/novo" class="btn btn-primary">+ Novo Paciente</a>
+    </app-empty-state>
+  }
 }
 
 @if (pacientes.length > 0) {

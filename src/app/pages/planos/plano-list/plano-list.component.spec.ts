@@ -204,4 +204,15 @@ describe('PlanoListComponent', () => {
     expect(component.confirmarInativarId).toBeNull();
   });
 
+
+  it('should offer the create CTA in the empty state (issue #146)', async () => {
+    serviceSpy.listar.and.returnValue(of([]));
+    component.carregar();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhum plano cadastrado.');
+    const cta = el.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('Novo Plano');
+    expect(cta?.getAttribute('href')).toBe('/planos/novo/10');
+  });
 });

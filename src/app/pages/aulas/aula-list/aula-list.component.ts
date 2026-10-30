@@ -14,6 +14,7 @@ import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 /**
  * Largura a partir da qual a tabela vira cards (mesmo valor do media query do
@@ -33,7 +34,7 @@ const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 @Component({
   selector: 'app-aula-list',
-  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
+  imports: [DatePipe, FormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './aula-list.component.html',
   styleUrl: './aula-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

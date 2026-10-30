@@ -11,10 +11,11 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-paciente-nfse-emitida-list',
-  imports: [CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent, CarregandoComponent],
+  imports: [CurrencyPipe, LocalDatePipe, RouterLink, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './paciente-nfse-emitida-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-nfse-emitida-list.component.scss'

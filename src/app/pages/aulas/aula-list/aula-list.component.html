@@ -42,9 +42,11 @@
 }
 
 @if (!loading && aulas.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhuma aula gerada. As aulas são criadas automaticamente após a confirmação de um pagamento.
-  </div>
+  <!-- Aulas não têm cadastro manual: o texto explica de onde elas vêm, no
+  lugar de um CTA de criação (issue #146). -->
+  <app-empty-state
+    mensagem="Nenhuma aula gerada."
+    texto="As aulas são criadas automaticamente após a confirmação de um pagamento." />
 }
 
 @if (aulas.length > 0) {

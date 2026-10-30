@@ -187,13 +187,33 @@ describe('ListaEsperaListComponent', () => {
 
   it('should tell an empty queue apart from an empty filtered result', async () => {
     await setup({ fila: [] });
-    expect(texto('.empty-state')).toBe('Nenhum paciente na lista de espera.');
+    expect(texto('.empty-state__mensagem')).toBe('Nenhum paciente na lista de espera.');
+    expect(texto('.empty-state__acoes a')).toBe('+ Nova inscrição');
+    expect(fixture.nativeElement.querySelector('.empty-state__acoes a').getAttribute('href')).toBe('/lista-espera/nova');
 
     component.filtro = { diaSemana: 'MONDAY', horaInicio: '', horaFim: '' };
     component.carregar();
     fixture.detectChanges();
 
-    expect(texto('.empty-state')).toBe('Nenhum interessado nesse dia e faixa de horário.');
+    expect(texto('.empty-state__mensagem')).toBe('Nenhum interessado nesse dia e faixa de horário.');
+    expect(fixture.nativeElement.querySelector('.empty-state__acoes a')).toBeNull();
+  });
+
+  it('should clear and reload the filters from the filtered empty state (issue #146)', async () => {
+    await setup({ fila: [] });
+    component.filtro = { diaSemana: 'MONDAY', horaInicio: '', horaFim: '' };
+    component.carregar();
+    fixture.detectChanges();
+    serviceSpy.listar.calls.reset();
+
+    const limpar = fixture.nativeElement.querySelector('.empty-state__acoes button') as HTMLButtonElement;
+    expect(limpar.textContent?.trim()).toBe('Limpar filtros');
+    limpar.click();
+    fixture.detectChanges();
+
+    expect(component.filtro).toEqual({ diaSemana: 'todos', horaInicio: '', horaFim: '' });
+    expect(serviceSpy.listar).toHaveBeenCalledWith({ diaSemana: null, horaInicio: null, horaFim: null });
+    expect(texto('.empty-state__mensagem')).toBe('Nenhum paciente na lista de espera.');
   });
 
   it('should show the API message when loading fails', async () => {

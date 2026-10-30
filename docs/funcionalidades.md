@@ -304,6 +304,16 @@ O CPF passa pelo `cpfValidator` (`core/validators/cpf.validator.ts`) no cadastro
 
 Na edição, o CPF continua desabilitado e, por isso, não é validado: um cadastro antigo com CPF fora do padrão segue editável. Valores já gravados aparecem formatados quando cabem na máscara e como estão quando não cabem (letras, dois números no mesmo campo), e só são reenviados em dígitos se o usuário editar o campo; o telefone e o CEP não tocados voltam à API exatamente como vieram.
 
+### Estados vazios das listagens
+
+Toda listagem sem linhas para mostrar distingue **"não há registros"** de **"o filtro não retornou nada"** e oferece uma saída (issue #146):
+
+- **Com filtro aplicado** — pacientes, profissionais, lista de espera, inadimplência e o recorte do histórico de evoluções: a mensagem diz que o filtro não retornou nada (**Nenhum resultado para os filtros aplicados.**, ou a frase própria da tela) e o botão **Limpar filtros** volta aos filtros padrão e recarrega. Em pacientes e profissionais, o que conta é o filtro da **última consulta**, e não o que está sendo digitado: o estado vazio descreve a lista que está na tela. O status padrão **Ativos** não conta como filtro. Na inadimplência, o filtro padrão (pendentes e vencidos, sem faixa nem paciente) também não conta, e a lista vazia ali diz **Nenhum pagamento pendente ou vencido.**
+- **Sem registros** — a mensagem da tela e o mesmo CTA de criação do cabeçalho (**+ Novo Paciente**, **+ Novo Profissional**, **+ Novo Usuário**, **Novo Plano**, **Novo Pagamento**, **Nova Sessão**, **Novo Plano** de tratamento, **Nova Reavaliação**, **Registrar NFSE**, **+ Novo bloqueio**, **+ Nova inscrição**, **+ Nova análise** postural). A rota de criação de cada uma exige o mesmo papel da listagem, então quem vê a lista pode usar o CTA.
+- **Sem ação de criação** — aulas não têm cadastro manual: o estado vazio mantém a explicação **As aulas são criadas automaticamente após a confirmação de um pagamento.**, sem botão. O histórico de evoluções explica que a evolução nasce da sessão e leva a **Ver sessões**.
+
+Os painéis de relatórios, agenda, calendários e histórico financeiro, que mostram um período e não uma listagem de cadastro, mantêm a frase simples.
+
 ### Identificadores de rota
 
 As rotas que recebem identificadores numéricos validam os parâmetros antes de chamar a API. Apenas inteiros positivos seguros são aceitos; URLs com identificadores ausentes, não numéricos ou em formato inválido exibem a mensagem **Identificador inválido.** e não disparam requisições com `NaN` no caminho.

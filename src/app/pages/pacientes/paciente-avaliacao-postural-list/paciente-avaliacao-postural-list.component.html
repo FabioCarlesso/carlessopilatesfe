@@ -53,7 +53,13 @@
         }
       </div>
       @if (analises.length === 0) {
-        <p class="empty-state">Nenhuma análise postural registrada ainda.</p>
+        <app-empty-state mensagem="Nenhuma análise postural registrada ainda.">
+          @if (pacienteId !== null) {
+            <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
+              + Nova análise
+            </a>
+          }
+        </app-empty-state>
       }
       @if (analises.length > 0) {
         <ul class="analises-list">

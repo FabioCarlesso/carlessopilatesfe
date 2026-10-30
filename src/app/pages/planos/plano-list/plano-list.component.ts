@@ -10,10 +10,11 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-plano-list',
-  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent],
+  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './plano-list.component.html',
   styleUrl: './plano-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
