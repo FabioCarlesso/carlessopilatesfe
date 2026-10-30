@@ -40,9 +40,11 @@
 }
 
 @if (!loading && sessoes.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhuma sessão cadastrada.
-  </div>
+  <app-empty-state mensagem="Nenhuma sessão cadastrada.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+    }
+  </app-empty-state>
 }
 
 @if (sessoes.length > 0) {

@@ -173,7 +173,10 @@ describe('UsuarioListComponent', () => {
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelector('.empty-state')?.textContent).toContain('Nenhum usuário cadastrado');
+    expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhum usuário cadastrado.');
+    const cta = el.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('+ Novo Usuário');
+    expect(cta?.getAttribute('href')).toBe('/admin/usuarios/novo');
   });
 
   it('should set erro when listar fails', () => {

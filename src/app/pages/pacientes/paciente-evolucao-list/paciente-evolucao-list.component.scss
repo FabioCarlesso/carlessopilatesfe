@@ -84,18 +84,6 @@
   font-weight: 700;
 }
 
-/* O `.empty-state` global centraliza o texto; aqui ele ganha o botão embaixo. */
-.empty-state-filtrado {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
-
-  p {
-    margin: 0;
-  }
-}
-
 .grafico {
   /* `figure` vem com margem lateral do UA. */
   margin: 0 0 var(--sp-5);

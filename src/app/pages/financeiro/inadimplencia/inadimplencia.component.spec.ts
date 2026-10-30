@@ -203,8 +203,31 @@ describe('InadimplenciaComponent', () => {
       pagamentoSpy.listarTodos.and.returnValue(of(pagina([])));
       criar();
 
-      expect(texto('.empty-state')).toBe('Nenhum pagamento encontrado para os filtros aplicados.');
+      // Filtro padrão: lista vazia quer dizer que não há inadimplência (issue #146).
+      expect(texto('.empty-state__mensagem')).toBe('Nenhum pagamento pendente ou vencido.');
+      expect(el().querySelector('.empty-state__acoes button')).toBeNull();
       expect(el().querySelector('.table')).toBeNull();
+    });
+
+    it('should offer to clear a custom filter that returned nothing (issue #146)', () => {
+      pagamentoSpy.listarTodos.and.returnValue(of(pagina([])));
+      criar();
+      component.filtro.vencimentoDe = '2026-01-01';
+      component.buscar();
+      fixture.detectChanges();
+
+      expect(texto('.empty-state__mensagem')).toBe('Nenhum resultado para os filtros aplicados.');
+      const limpar = el().querySelector('.empty-state__acoes button') as HTMLButtonElement;
+      expect(limpar.textContent?.trim()).toBe('Limpar filtros');
+
+      pagamentoSpy.listarTodos.calls.reset();
+      limpar.click();
+      fixture.detectChanges();
+
+      expect(component.filtro.vencimentoDe).toBe('');
+      expect(pagamentoSpy.listarTodos).toHaveBeenCalledTimes(1);
+      expect(component.buscaPersonalizada).toBeFalse();
+      expect(texto('.empty-state__mensagem')).toBe('Nenhum pagamento pendente ou vencido.');
     });
 
     it('should show the API message when loading fails', () => {

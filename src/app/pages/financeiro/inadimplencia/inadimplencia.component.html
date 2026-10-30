@@ -86,7 +86,13 @@
 }
 
 @if (!loading && !erro && linhas.length === 0) {
-  <div class="empty-state">Nenhum pagamento encontrado para os filtros aplicados.</div>
+  @if (buscaPersonalizada) {
+    <app-empty-state mensagem="Nenhum resultado para os filtros aplicados." variante="filtrado">
+      <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
+    </app-empty-state>
+  } @else {
+    <app-empty-state mensagem="Nenhum pagamento pendente ou vencido." />
+  }
 }
 
 @if (!loading && linhas.length > 0) {

@@ -12,6 +12,7 @@ import { SortableHeaderComponent } from '../../../shared/components/sortable-hea
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
 import { somenteDigitos } from '../../../shared/utils/mascara';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 interface FiltroUI {
   nome: string;
@@ -26,7 +27,7 @@ interface FiltroUI {
   imports: [
     FormsModule, RouterLink, ConfirmarDialogComponent, PaginationSummaryComponent, SortableHeaderComponent,
     MascaraDirective,
-    CarregandoComponent
+    CarregandoComponent, EmptyStateComponent
   ],
   templateUrl: './paciente-list.component.html',
   styleUrl: './paciente-list.component.scss',
@@ -47,6 +48,12 @@ export class PacienteListComponent implements OnInit, OnDestroy {
   confirmarAtivarId: number | null = null;
   acaoEmAndamento = false;
   filtrosAbertos = false;
+  /**
+   * Se a última consulta saiu com algum filtro (issue #146). Capturado em
+   * `carregar`, e não lido de `filtrosAtivos()` no template, para o estado vazio
+   * descrever a busca que produziu a lista, e não o que está sendo digitado.
+   */
+  buscaFiltrada = false;
   readonly ordenacaoPadrao: Ordenacao = { campo: 'nome', direcao: 'asc' };
   ordenacao: Ordenacao = { ...this.ordenacaoPadrao };
   private successTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,6 +79,7 @@ export class PacienteListComponent implements OnInit, OnDestroy {
 
   carregar(): void {
     this.loading = true;
+    this.buscaFiltrada = this.filtrosAtivos() > 0;
     this.erro = null;
     this.service.listar(this.currentPage, this.pageSize, this.montarFiltro(), toSortParam(this.ordenacao)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: page => {

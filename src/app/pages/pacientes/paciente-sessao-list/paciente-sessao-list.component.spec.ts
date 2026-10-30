@@ -169,7 +169,11 @@ describe('PacienteSessaoListComponent', () => {
     expect(component.erro).toBeNull();
     expect(component.loading).toBeFalse();
     const vazio: HTMLElement | null = fixture.nativeElement.querySelector('.empty-state');
-    expect(vazio?.textContent?.trim()).toBe('Nenhuma sessão cadastrada.');
+    expect(vazio?.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma sessão cadastrada.');
+    // Sem registros, o estado vazio oferece o CTA de criação (issue #146).
+    const cta = vazio?.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('Nova Sessão');
+    expect(cta?.getAttribute('href')).toBe('/pacientes/10/sessoes/nova');
     expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
   });
 

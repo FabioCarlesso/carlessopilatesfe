@@ -173,4 +173,13 @@ describe('PacienteReavaliacaoListComponent', () => {
       document.body.removeChild(fixture.nativeElement);
     }
   });
+
+  it('should offer the create CTA in the empty state (issue #146)', async () => {
+    await setup([]);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma reavaliação cadastrada.');
+    const cta = el.querySelector('.empty-state__acoes a');
+    expect(cta?.textContent?.trim()).toBe('Nova Reavaliação');
+    expect(cta?.getAttribute('href')).toBe('/pacientes/10/reavaliacoes/nova');
+  });
 });

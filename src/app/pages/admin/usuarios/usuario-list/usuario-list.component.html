@@ -15,9 +15,9 @@
 }
 
 @if (!loading && usuarios.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum usuário cadastrado.
-  </div>
+  <app-empty-state mensagem="Nenhum usuário cadastrado.">
+    <a routerLink="/admin/usuarios/novo" class="btn btn-primary">+ Novo Usuário</a>
+  </app-empty-state>
 }
 
 @if (!loading && usuarios.length > 0) {

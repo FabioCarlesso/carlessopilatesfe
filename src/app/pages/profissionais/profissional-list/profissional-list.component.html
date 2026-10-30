@@ -67,9 +67,15 @@
 }
 
 @if (!loading && profissionais.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum profissional ativo cadastrado.
-  </div>
+  @if (buscaFiltrada) {
+    <app-empty-state mensagem="Nenhum resultado para os filtros aplicados." variante="filtrado">
+      <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
+    </app-empty-state>
+  } @else {
+    <app-empty-state mensagem="Nenhum profissional ativo cadastrado.">
+      <a routerLink="/profissionais/novo" class="btn btn-primary">+ Novo Profissional</a>
+    </app-empty-state>
+  }
 }
 
 @if (profissionais.length > 0) {

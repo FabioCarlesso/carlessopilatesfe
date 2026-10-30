@@ -94,7 +94,8 @@ describe('BloqueioListComponent', () => {
   it('should show the empty state when the period has no blocks', async () => {
     await setup({ bloqueios: [] });
 
-    expect(texto('.empty-state')).toBe('Nenhum bloqueio cadastrado no período.');
+    expect(texto('.empty-state__mensagem')).toBe('Nenhum bloqueio cadastrado no período.');
+    expect(texto('.empty-state__acoes a')).toBe('+ Novo bloqueio');
     expect(todos('.table tbody tr').length).toBe(0);
   });
 

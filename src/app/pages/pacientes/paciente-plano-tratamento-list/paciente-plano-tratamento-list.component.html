@@ -34,9 +34,11 @@
 }
 
 @if (!loading && planos.length === 0 && !erro) {
-  <div class="empty-state">
-    Nenhum plano de tratamento cadastrado.
-  </div>
+  <app-empty-state mensagem="Nenhum plano de tratamento cadastrado.">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento', 'novo']" class="btn btn-primary">Novo Plano</a>
+    }
+  </app-empty-state>
 }
 
 @if (planos.length > 0) {

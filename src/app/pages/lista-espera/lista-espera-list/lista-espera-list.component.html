@@ -54,11 +54,15 @@ que a inscrição vale para uma data só. -->
 }
 
 @if (!loading && !erro && linhas.length === 0) {
-  <div class="empty-state">
-    {{ filtrada
-      ? 'Nenhum interessado nesse dia e faixa de horário.'
-      : 'Nenhum paciente na lista de espera.' }}
-  </div>
+  @if (filtrada) {
+    <app-empty-state mensagem="Nenhum interessado nesse dia e faixa de horário." variante="filtrado">
+      <button type="button" class="btn btn-outline" (click)="limparFiltro()">Limpar filtros</button>
+    </app-empty-state>
+  } @else {
+    <app-empty-state mensagem="Nenhum paciente na lista de espera.">
+      <a routerLink="/lista-espera/nova" class="btn btn-primary">+ Nova inscrição</a>
+    </app-empty-state>
+  }
 }
 
 @if (!loading && linhas.length > 0) {
