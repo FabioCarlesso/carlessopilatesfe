@@ -28,6 +28,18 @@ a {
   color: var(--text-brand);
 }
 
+// Foco de teclado único para todo controle interativo — links, botões, campos,
+// `summary`, contêineres com `tabindex` — nos dois temas (issue #150). A regra
+// é de baixa especificidade de propósito: componente que precisa de outro
+// desenho de foco declara o próprio `:focus-visible`, mas deve usar os tokens
+// `--focus-ring-*`. Sobre fundo fixo escuro (navbar), basta redefinir
+// `--focus-ring-color` no contêiner. Não zere o `outline` sem pôr outro
+// indicador visível no lugar.
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .container {
   max-width: 1120px;
   margin: var(--gutter) auto;
@@ -61,7 +73,13 @@ a {
 
 .navbar {
   background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
+  // `--text-on-dark`, e não `--c-cloud-dancer`, aqui e nos filhos da barra: o
+  // tema escuro redefine este para #0e1620 e a marca e a busca caíam para
+  // ~2:1 sobre o fundo fixo (apontado pelo axe na issue #150).
+  color: var(--text-on-dark);
+  // O fundo é fixo nos dois temas: o anel em `--text-brand` sumiria aqui no tema
+  // claro (é a própria cor da barra). `--text-on-dark` é claro nos dois temas.
+  --focus-ring-color: var(--text-on-dark);
   display: flex;
   // O wrapper estica até a altura da barra; é dele que os links herdam a altura
   // cheia para ancorar a marcação da seção ativa na borda inferior. A altura
@@ -98,7 +116,7 @@ a {
   }
 
   &-brand a {
-    color: var(--c-cloud-dancer);
+    color: var(--text-on-dark);
     text-decoration: none;
     font-family: var(--font-display);
     font-size: 1.35rem;
@@ -125,7 +143,7 @@ a {
       white-space: nowrap;
 
       &:hover {
-        color: var(--c-cloud-dancer);
+        color: var(--text-on-dark);
       }
 
       // Seção atual da navegação. Cores literais (não tokens) para manter o
@@ -191,11 +209,6 @@ a {
     opacity: .6;
     cursor: not-allowed;
   }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
 }
 
 .btn-primary {
@@ -249,12 +262,12 @@ a {
 
 .navbar-toggle {
   border-color: rgba(240, 237, 232, 0.55);
-  color: var(--c-cloud-dancer);
+  color: var(--text-on-dark);
   min-height: var(--btn-h-sm);
   padding: 0 var(--sp-4);
 
   &:hover:not(:disabled) {
-    background: var(--c-cloud-dancer);
+    background: var(--text-on-dark);
     color: var(--c-horizonte);
   }
 }
@@ -334,6 +347,13 @@ a {
     outline: none;
     border-color: var(--c-horizonte);
     box-shadow: var(--shadow-focus);
+  }
+
+  // O halo do `:focus` acima não chega a 3:1 sobre o fundo (WCAG 1.4.11): no
+  // foco de teclado o campo ganha também o anel global (issue #150).
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: 1px;
   }
 
   &.is-invalid {
@@ -433,8 +453,8 @@ select.form-control-sm {
   // 7,2:1 no claro e 9,67:1 no escuro (o `--border-brand` não é redefinido no
   // escuro e cairia para 2,26:1).
   &:focus-visible {
-    outline: 2px solid var(--text-brand);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 }
 
@@ -579,7 +599,7 @@ select.form-control-sm {
 
     &.active {
       background: var(--c-horizonte);
-      color: var(--c-cloud-dancer);
+      color: var(--text-on-dark);
       border-color: var(--c-horizonte);
     }
 

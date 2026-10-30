@@ -11,17 +11,15 @@
   border: 1px solid rgba(240, 237, 232, 0.55);
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--c-cloud-dancer);
+  color: var(--text-on-dark);
   font-size: var(--fs-body-sm);
 
   &::placeholder {
     color: rgba(240, 237, 232, 0.7);
   }
 
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
+  // Sem regra própria de foco: vale o anel global na cor clara definida pela
+  // navbar. O `--shadow-focus` usado antes tinha a cor da barra (issue #150).
 }
 
 .busca-global-painel {
@@ -39,6 +37,7 @@
   border-radius: var(--r-md);
   box-shadow: var(--shadow-2);
   overflow: hidden;
+  --focus-ring-color: var(--text-brand);
 }
 
 // A live region fica sempre no DOM; quando não há mensagem, sai da tela sem ser

@@ -34,10 +34,9 @@
     }
   }
 
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
+  // Sem regra própria de foco: vale o anel global, na cor clara que a navbar
+  // define em `--focus-ring-color` — o `--shadow-focus` usado antes era da cor
+  // da própria barra e não aparecia (issue #150).
 }
 
 .menu-conta-avatar {
@@ -93,6 +92,9 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   box-shadow: var(--shadow-2);
+  // O painel flutuante é `--bg-elev`, não o azul da navbar: volta ao anel de
+  // marca do tema.
+  --focus-ring-color: var(--text-brand);
 
   .menu-conta.is-aberto & {
     display: block;
@@ -151,9 +153,10 @@
     background: var(--bg-sunken);
   }
 
+  // Anel para dentro: o item ocupa a largura do painel e um anel externo
+  // vazaria da borda dele.
   &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
+    outline-offset: calc(var(--focus-ring-width) * -1);
   }
 }
 
@@ -205,6 +208,8 @@
     border: none;
     border-radius: 0;
     box-shadow: none;
+    // Lista plana sobre o azul da navbar: anel claro de novo.
+    --focus-ring-color: var(--text-on-dark);
   }
 
   .menu-conta-cabecalho {

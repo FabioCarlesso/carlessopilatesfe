@@ -133,6 +133,7 @@
           type="button"
           class="page-number"
           [class.active]="p === currentPage"
+          [attr.aria-label]="'Página ' + (p + 1)"
           [attr.aria-current]="p === currentPage ? 'page' : null"
           (click)="pagina(p)">
           {{ p + 1 }}

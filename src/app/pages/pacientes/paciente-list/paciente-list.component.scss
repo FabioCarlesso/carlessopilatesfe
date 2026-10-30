@@ -57,7 +57,7 @@
   padding: 0 .35rem;
   border-radius: 999px;
   background: var(--c-horizonte);
-  color: var(--c-cloud-dancer);
+  color: var(--text-on-dark);
   font-size: .75rem;
   font-weight: 700;
 }
@@ -144,7 +144,7 @@
     color: var(--text-secondary);
     border-radius: var(--r-md);
     cursor: pointer;
-    &.active { background: var(--c-horizonte); color: var(--c-cloud-dancer); }
+    &.active { background: var(--c-horizonte); color: var(--text-on-dark); }
     &:hover:not(.active) { background: var(--bg-sunken); }
     &:disabled { opacity: .5; cursor: not-allowed; }
   }

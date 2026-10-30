@@ -123,6 +123,12 @@
   --shadow-3: 0 8px 32px rgba(20, 31, 45, 0.10), 0 2px 8px rgba(20, 31, 45, 0.06);
   --shadow-focus: 0 0 0 3px rgba(55, 79, 108, 0.18);
 
+  /* Anel de foco de teclado: outline sólido na cor de marca do tema (o
+     --shadow-focus fica abaixo de 3:1 sobre o fundo). Issue #150. */
+  --focus-ring-color: var(--text-brand);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
   /* Sombra nas bordas do contêiner de tabela que sinaliza colunas fora do
      viewport. Mais densa que a --shadow-1 para se destacar sobre as linhas. */
   --table-scroll-shadow: rgba(20, 31, 45, 0.16);
@@ -257,7 +263,7 @@ input, select, textarea { font-family: inherit; }
   white-space: nowrap;
   user-select: none;
 }
-.btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+.btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 
 .btn--primary {
   background: var(--c-horizonte);

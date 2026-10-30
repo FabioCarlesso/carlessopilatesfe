@@ -445,6 +445,15 @@ describe('PacienteListComponent', () => {
     expect(component.canGoNext()).toBeFalse();
   });
 
+  // Sem o rótulo o leitor de tela anuncia só "botão 2" (issue #150).
+  it('should give each page button a descriptive aria-label', () => {
+    const buttons: HTMLButtonElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.pagination .page-number'));
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['Página 1', 'Página 2', 'Página 3']);
+    expect(buttons[0].getAttribute('aria-current')).toBe('page');
+    expect(buttons[1].getAttribute('aria-current')).toBeNull();
+  });
+
   // O intervalo exibido passou a ser calculado pelo `app-pagination-summary`
   // (issue #200): aqui basta garantir que a listagem alimenta o componente com
   // o estado certo. O cálculo em si é coberto por `pagination-summary.spec`.

@@ -796,6 +796,14 @@ describe('AulaListComponent', () => {
       expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026');
     });
 
+    it('should include the horário in the profissional select aria-label when the aula has one', () => {
+      serviceSpy.listarPorPaciente.and.returnValue(of([{ ...mockAula, horario: '08:00:00' }]));
+      component.carregar();
+      fixture.detectChanges();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('select.form-control-sm');
+      expect(select.getAttribute('aria-label')).toBe('Profissional responsável pela aula de 05/05/2026 às 08:00');
+    });
+
     it('should show a hint explaining the disabled button when there are no profissionais', () => {
       component.profissionais = [];
       fixture.detectChanges();
