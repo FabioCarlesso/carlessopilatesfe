@@ -12,14 +12,16 @@ import { filter } from 'rxjs';
 import { PAPEIS } from './core/models/auth';
 import { AuthService } from './core/services/auth.service';
 import { NotificacaoService } from './core/services/notificacao.service';
+import { AtalhosAjudaComponent } from './shared/components/atalhos-ajuda/atalhos-ajuda.component';
 import { BuscaGlobalComponent } from './shared/components/busca-global/busca-global.component';
 import { MenuContaComponent } from './shared/components/menu-conta/menu-conta.component';
+import { AtalhosTecladoService } from './shared/services/atalhos-teclado.service';
 import { DESKTOP_MIN_WIDTH } from './shared/utils/breakpoints';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, BuscaGlobalComponent, MenuContaComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BuscaGlobalComponent, MenuContaComponent, AtalhosAjudaComponent],
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.component.scss'
@@ -28,6 +30,8 @@ export class AppComponent {
   readonly authService = inject(AuthService);
   readonly papeis = PAPEIS;
   readonly notificacoes = inject(NotificacaoService);
+  // Injetado aqui para os atalhos de teclado valerem em toda a aplicação.
+  readonly atalhos = inject(AtalhosTecladoService);
   private readonly router = inject(Router);
 
   menuAberto = false;
@@ -55,6 +59,15 @@ export class AppComponent {
         // expandida no próximo login.
         this.fecharMenu();
       });
+
+    // No layout compacto a busca fica dentro do painel colapsado, invisível e sem
+    // foco possível; o atalho abre o painel antes de o BuscaGlobalComponent focar
+    // o campo (o foco dele é adiado, então já encontra o painel renderizado).
+    this.atalhos.focoBusca$.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (window.innerWidth < DESKTOP_MIN_WIDTH) {
+        this.menuAberto = true;
+      }
+    });
   }
 
   // A flag vale para a rota efetivamente ativada, então a busca desce até a

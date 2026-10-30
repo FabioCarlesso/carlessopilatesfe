@@ -1,0 +1,29 @@
+<app-confirmar-dialog
+  titulo="Atalhos de teclado"
+  textoCancelar="Fechar"
+  [exibirConfirmar]="false"
+  (cancelar)="fechar.emit()">
+  <p class="atalhos-ajuda-dica">
+    Os atalhos não funcionam enquanto você digita num campo. Nas sequências, pressione as teclas uma depois da outra.
+  </p>
+  @for (grupo of grupos; track grupo.nome) {
+    <h3 class="atalhos-ajuda-grupo">{{ grupo.nome }}</h3>
+    <dl class="atalhos-ajuda-lista">
+      @for (atalho of grupo.atalhos; track atalho.teclas.join(' ')) {
+        <div class="atalhos-ajuda-item">
+          <dt class="atalhos-ajuda-teclas">
+            @for (tecla of atalho.teclas; track $index; let ultima = $last) {
+              @for (parte of partes(tecla); track $index; let ultimaParte = $last) {
+                <kbd>{{ parte }}</kbd>@if (!ultimaParte) {<span aria-hidden="true">+</span>}
+              }
+              @if (!ultima) {
+                <span class="atalhos-ajuda-entao">depois</span>
+              }
+            }
+          </dt>
+          <dd class="atalhos-ajuda-descricao">{{ atalho.descricao }}</dd>
+        </div>
+      }
+    </dl>
+  }
+</app-confirmar-dialog>
