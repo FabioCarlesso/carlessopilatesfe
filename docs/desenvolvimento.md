@@ -45,8 +45,9 @@ algo que entra na imagem (`Dockerfile`, `nginx/`, `package.json`,
 `package-lock.json`). Assim uma quebra no container aparece na PR, e não só
 depois do merge, sem cobrar o build de PRs que mexem apenas no frontend.
 
-As dependências npm e as GitHub Actions são atualizadas automaticamente via
-[Dependabot](../.github/dependabot.yml). Majors do Angular e do Jasmine, e
+As dependências npm, as GitHub Actions e as imagens base do `Dockerfile` são
+atualizadas automaticamente via [Dependabot](../.github/dependabot.yml). Majors do
+Angular, do Jasmine e do Node (que precisa acompanhar o `NODE_VERSION` da CI), e
 major/minor do TypeScript, ficam de fora e são feitos à mão; o motivo de cada um
 está comentado no próprio arquivo.
 
