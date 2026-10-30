@@ -81,3 +81,21 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+
+  # Imagens base do Dockerfile (build com node, runtime com nginx).
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    # O major do Node da imagem de build precisa acompanhar o `NODE_VERSION`
+    # da CI (ci.yml), senao a imagem builda com um Node e os testes rodam com
+    # outro. Sobe a mao, nos dois lugares juntos. Minor/patch do nginx e do
+    # node continuam com o bot.
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
