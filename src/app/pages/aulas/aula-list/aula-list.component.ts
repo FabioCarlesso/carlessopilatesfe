@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
@@ -194,6 +194,17 @@ export class AulaListComponent implements OnInit, OnDestroy {
 
   horarioDaAula(aula: AulaResponseDTO): string | null {
     return normalizarHora(aula.horario);
+  }
+
+  /**
+   * Nome acessível do select de profissional da linha. O cabeçalho da coluna
+   * não é rótulo do campo, e várias linhas podem cair no mesmo dia: data e
+   * horário dizem ao leitor de tela de qual aula é o select (issue #150).
+   */
+  rotuloSelectProfissional(aula: AulaResponseDTO): string {
+    const data = formatDate(aula.data, 'dd/MM/yyyy', 'en-US');
+    const horario = this.horarioDaAula(aula);
+    return `Profissional responsável pela aula de ${data}${horario ? ` às ${horario}` : ''}`;
   }
 
   /**

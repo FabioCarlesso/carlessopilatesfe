@@ -91,6 +91,7 @@
     <span class="page-status" aria-live="polite">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
     @for (p of visiblePages; track p) {
       <button
+        type="button"
         class="page-number"
         [class.active]="p === currentPage"
         [attr.aria-label]="'Página ' + (p + 1)"

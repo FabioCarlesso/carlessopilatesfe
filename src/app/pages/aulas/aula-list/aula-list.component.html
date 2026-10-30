@@ -83,7 +83,7 @@
               @if (!aula.realizada) {
                 <select class="form-control form-control-sm"
                   [class.is-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro"
-                  [attr.aria-label]="'Profissional responsável pela aula de ' + (aula.data | date:'dd/MM/yyyy')"
+                  [attr.aria-label]="rotuloSelectProfissional(aula)"
                   [attr.aria-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro || null"
                   [attr.aria-describedby]="selectInvalidoPorAula[aula.id] ? 'profissional-erro-' + aula.id
                     : (feedbackDaAtribuicao(aula) ? 'atribuicao-' + aula.id : null)"

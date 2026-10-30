@@ -38,8 +38,8 @@
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 
   &.ativo {
@@ -270,8 +270,8 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
   }
 }
 

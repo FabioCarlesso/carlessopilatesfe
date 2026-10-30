@@ -23,7 +23,9 @@
 
   &__title {
     font-weight: 700;
-    color: var(--primary);
+    // `--text-brand`, e não `--primary`: este é o horizonte fixo e rendia ~2:1
+    // sobre `--bg-elev` no tema escuro (axe, issue #150).
+    color: var(--text-brand);
   }
 
   &__description {

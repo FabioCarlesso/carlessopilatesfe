@@ -160,7 +160,7 @@
   /* O painel recebe o foco ao abrir (`tabindex="-1"`): sem contorno próprio
      não haveria pista visual de onde o foco parou. */
   &:focus-visible {
-    outline: 2px solid var(--text-brand);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: 2px;
   }
 }
@@ -196,7 +196,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-brand);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: 1px;
   }
 }
@@ -361,7 +361,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-brand);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: 1px;
   }
 }
@@ -465,7 +465,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--text-brand);
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: 1px;
   }
 }
