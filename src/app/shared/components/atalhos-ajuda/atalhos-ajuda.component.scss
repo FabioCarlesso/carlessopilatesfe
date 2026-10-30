@@ -1,0 +1,54 @@
+.atalhos-ajuda-dica {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.atalhos-ajuda-grupo {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-body-sm);
+  color: var(--text-muted);
+}
+
+.atalhos-ajuda-lista {
+  margin: 0;
+}
+
+.atalhos-ajuda-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.atalhos-ajuda-teclas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 8rem;
+  font-weight: normal;
+}
+
+.atalhos-ajuda-descricao {
+  margin: 0;
+}
+
+.atalhos-ajuda-entao {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background-color: var(--bg-sunken);
+  color: var(--text-primary);
+  font-family: var(--font-aux);
+  font-size: var(--fs-caption);
+  text-align: center;
+}

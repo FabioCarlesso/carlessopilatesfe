@@ -15,6 +15,7 @@ import { Observable, catchError, combineLatest, debounceTime, distinctUntilChang
 import { AuthService } from '../../../core/services/auth.service';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
+import { AtalhosTecladoService } from '../../services/atalhos-teclado.service';
 
 export type BuscaGlobalTipo = 'paciente' | 'profissional';
 
@@ -73,10 +74,18 @@ export class BuscaGlobalComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private destroyRef: DestroyRef,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private atalhos: AtalhosTecladoService
   ) {}
 
   ngOnInit(): void {
+    // Os atalhos `/` e `Ctrl`/`Cmd`+`K` são reconhecidos pelo `AtalhosTecladoService`;
+    // o componente só executa o foco. Ele é adiado de propósito: focar ainda dentro do
+    // keydown faz o caractere da própria tecla ("/") ser inserido no campo recém-focado.
+    this.atalhos.focoBusca$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => setTimeout(() => this.campoBusca?.nativeElement.focus()));
+
     this.termo.valueChanges
       .pipe(
         debounceTime(DEBOUNCE_MS),
@@ -173,21 +182,6 @@ export class BuscaGlobalComponent implements OnInit {
     this.indiceAtivo = -1;
   }
 
-  // Atalhos globais de foco: `/` (fora de campos de texto) e `Ctrl/Cmd+K`.
-  @HostListener('document:keydown', ['$event'])
-  aoTeclarNoDocumento(event: KeyboardEvent): void {
-    const atalhoCtrlK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
-    const atalhoBarra = event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !this.digitandoEmCampo();
-
-    if (!atalhoCtrlK && !atalhoBarra) return;
-
-    event.preventDefault();
-    // O foco é adiado de propósito: focar ainda dentro do keydown faz o caractere da própria
-    // tecla ("/") ser inserido no campo recém-focado. Adiando, a tecla se resolve no elemento
-    // que tinha o foco (nunca um campo de texto, pela guarda acima) e o campo abre vazio.
-    setTimeout(() => this.campoBusca?.nativeElement.focus());
-  }
-
   @HostListener('document:click', ['$event'])
   aoClicarNoDocumento(event: MouseEvent): void {
     if (!this.aberto) return;
@@ -206,17 +200,6 @@ export class BuscaGlobalComponent implements OnInit {
     this.buscando = false;
     this.erro = false;
     this.fechar();
-  }
-
-  private digitandoEmCampo(): boolean {
-    const ativo = document.activeElement;
-    if (!(ativo instanceof HTMLElement)) return false;
-    return (
-      ativo instanceof HTMLInputElement ||
-      ativo instanceof HTMLTextAreaElement ||
-      ativo instanceof HTMLSelectElement ||
-      ativo.isContentEditable
-    );
   }
 
   private buscar(termo: string): Observable<BuscaParcial> {

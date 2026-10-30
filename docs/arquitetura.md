@@ -64,6 +64,17 @@ postural, sessões, evoluções, calendário, planos de tratamento, reavaliaçõ
 NFSEs emitidas. O detalhe de cada uma está em
 [`funcionalidades.md`](funcionalidades.md).
 
+## Atalhos de teclado
+
+Atalhos globais passam por um único ouvinte: o `AtalhosTecladoService`
+(`shared/services`), instanciado pelo `AppComponent`, escuta o `keydown` do
+documento. Componentes não registram `document:keydown` para atalhos próprios:
+quando o atalho mexe num componente (o foco da busca global), o serviço expõe
+um evento (`focoBusca$`) e o componente dono do elemento o executa. O catálogo
+e as regras puras ficam em `shared/utils/atalhos-teclado.ts`. Para acrescentar
+um atalho, inclua-o em `ATALHOS` com o mesmo grupo de `PAPEIS` da rota; o
+comportamento está em [`funcionalidades.md`](funcionalidades.md#atalhos-de-teclado).
+
 ## Sessão e interceptors HTTP
 
 `app.config.ts` registra, nesta ordem, o `authInterceptor` e o

@@ -631,4 +631,70 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('main.container')).toBeTruthy();
   });
+
+  it('should open the keyboard shortcuts help with "?" and close it with Escape', async () => {
+    await setup(true, false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true, cancelable: true }));
+    fixture.detectChanges();
+
+    const dialogo = el.querySelector('app-atalhos-ajuda [role="dialog"]');
+    expect(dialogo).toBeTruthy();
+    // Recepção não vê os atalhos exclusivos de ADMIN.
+    expect(dialogo?.textContent).toContain('Ir para pacientes');
+    expect(dialogo?.textContent).not.toContain('Ir para a administração');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(el.querySelector('app-atalhos-ajuda')).toBeNull();
+  });
+
+  it('should not open the keyboard shortcuts help without a session', async () => {
+    await setup(false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true }));
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-atalhos-ajuda')).toBeNull();
+  });
+
+  it('should open the collapsed menu when the search shortcut is used on a compact layout', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 600, configurable: true });
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', cancelable: true }));
+      fixture.detectChanges();
+      expect(el.querySelector('.navbar.is-open')).toBeTruthy();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
+    }
+  });
+
+  it('should keep the desktop navbar as is when the search shortcut is used', async () => {
+    await setup(true);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 1440, configurable: true });
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', cancelable: true }));
+      fixture.detectChanges();
+      expect(el.querySelector('.navbar.is-open')).toBeNull();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true });
+    }
+  });
 });
