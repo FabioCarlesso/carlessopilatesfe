@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27-alpine3.21
+FROM nginx:1.28-alpine3.21
 
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/carlessopilatesfe/browser /usr/share/nginx/html
