@@ -35,8 +35,26 @@
   }
 }
 
+.summary-item--pendente {
+  border-color: var(--c-warning);
+
+  strong {
+    color: var(--c-warning-text);
+  }
+}
+
 .nfse-table {
-  min-width: 980px;
+  min-width: 1180px;
+
+  .linha-pendente td {
+    background-color: var(--c-warning-bg);
+  }
+
+  .pendencia-texto {
+    display: block;
+    margin: var(--sp-1) 0;
+    color: var(--c-warning-text);
+  }
 }
 
 // Mesmo breakpoint do bloco mobile do `styles.scss` (o `.form-row` já empilha

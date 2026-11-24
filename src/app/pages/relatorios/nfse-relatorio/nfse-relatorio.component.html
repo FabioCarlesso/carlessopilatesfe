@@ -36,6 +36,15 @@
         <option [ngValue]="false">Não emitida</option>
       </select>
     </div>
+
+    <div class="form-group">
+      <label for="cpfNaNota">CPF na nota</label>
+      <select id="cpfNaNota" formControlName="cpfNaNota" class="form-control">
+        <option [ngValue]="null">Todos</option>
+        <option [ngValue]="true">Deseja CPF</option>
+        <option [ngValue]="false">Sem CPF</option>
+      </select>
+    </div>
   </div>
 
   <div class="form-actions">
@@ -72,7 +81,17 @@
         <span class="label">Valor pago</span>
         <strong>{{ totalValorPago() | currency:'BRL' }}</strong>
       </div>
+      <div class="summary-item" [class.summary-item--pendente]="totalPendencias() > 0">
+        <span class="label">Pendências</span>
+        <strong>{{ totalPendencias() }}</strong>
+      </div>
     </div>
+    @if (totalPendencias() > 0) {
+      <div class="alert alert-warning">
+        {{ totalPendencias() === 1 ? '1 registro precisa' : totalPendencias() + ' registros precisam' }}
+        de ajuste no cadastro do paciente para a nota sair como ele pediu. Use o link na coluna Pendência.
+      </div>
+    }
     @if (registros.length === 0) {
       <div class="empty-state">
         Nenhum pagamento confirmado encontrado para a competência informada.
@@ -90,6 +109,8 @@
             <tr>
               <th>Nome</th>
               <th>CPF/CNPJ</th>
+              <th>CPF na nota</th>
+              <th>Pendência</th>
               <th>Valor Pago</th>
               <th>Competência</th>
               <th>Descrição do Serviço</th>
@@ -100,9 +121,19 @@
           </thead>
           <tbody>
             @for (registro of registros; track registro) {
-              <tr>
+              <tr [class.linha-pendente]="!!registro.pendencia">
                 <td>{{ registro.nome }}</td>
-                <td>{{ registro.cpfCnpj }}</td>
+                <td>{{ registro.cpfCnpj || '—' }}</td>
+                <td>{{ registro.cpfNaNota ? 'Sim' : 'Não' }}</td>
+                <td>
+                  @if (registro.pendencia) {
+                    <span class="badge badge--warning">Pendente</span>
+                    <span class="pendencia-texto">{{ registro.pendencia }}</span>
+                    <a [routerLink]="['/pacientes', registro.pacienteId, 'editar']">Corrigir cadastro</a>
+                  } @else {
+                    -
+                  }
+                </td>
                 <td>{{ registro.valorPago | currency:'BRL' }}</td>
                 <td>{{ registro.competencia }}</td>
                 <td>{{ registro.descricaoServico }}</td>

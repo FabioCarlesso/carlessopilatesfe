@@ -30,7 +30,7 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="email">E-mail *</label>
+        <label for="email">E-mail</label>
         <input id="email" formControlName="email" type="email" autocomplete="email" class="form-control"
           [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
         @if (campo('email')?.touched && campo('email')?.invalid) {
@@ -40,15 +40,10 @@
         }
       </div>
       <div class="form-group">
-        <label for="cpf">CPF *</label>
+        <label for="cpf">CPF</label>
         <input id="cpf" formControlName="cpf" appMascara="cpf" type="text" inputmode="numeric"
           placeholder="000.000.000-00" class="form-control"
           [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
-        @if (campo('cpf')?.errors?.['required'] && campo('cpf')?.touched) {
-          <div class="invalid-feedback">
-            CPF é obrigatório.
-          </div>
-        }
         @if (campo('cpf')?.errors?.['cpf'] && campo('cpf')?.touched) {
           <div class="invalid-feedback">
             CPF inválido.
@@ -98,6 +93,46 @@
             placeholder="00000-000" class="form-control" />
         </div>
       </div>
+    </div>
+    <h2 class="form-section-title">Nota fiscal</h2>
+    <div formGroupName="notaFiscal">
+      <div class="form-group form-group--checkbox">
+        <label for="cpfNaNota">
+          <input id="cpfNaNota" type="checkbox" formControlName="cpfNaNota" />
+          Deseja CPF/CNPJ na nota
+        </label>
+        <div class="field-hint">
+          Sem marcar, a nota sai sem CPF. Marcado, sai com o CPF do paciente ou com o tomador informado abaixo.
+        </div>
+      </div>
+      @if (campo('notaFiscal.cpfNaNota')?.value) {
+        <div class="form-row">
+          <div class="form-group">
+            <label for="notaCpfCnpj">CPF/CNPJ do tomador</label>
+            <input id="notaCpfCnpj" formControlName="notaCpfCnpj" appMascara="cpfCnpj" type="text" inputmode="numeric"
+              placeholder="CPF ou CNPJ" class="form-control" aria-describedby="notaCpfCnpj-hint"
+              [class.is-invalid]="campo('notaFiscal.notaCpfCnpj')?.invalid && campo('notaFiscal.notaCpfCnpj')?.touched" />
+            <div id="notaCpfCnpj-hint" class="field-hint">
+              Opcional: para nota em nome de um responsável ou de uma empresa.
+            </div>
+            @if (campo('notaFiscal.notaCpfCnpj')?.errors?.['cpfCnpj'] && campo('notaFiscal.notaCpfCnpj')?.touched) {
+              <div class="invalid-feedback">
+                CPF ou CNPJ inválido.
+              </div>
+            }
+          </div>
+          <div class="form-group">
+            <label for="notaNome">Nome do tomador</label>
+            <input id="notaNome" formControlName="notaNome" type="text" maxlength="255" class="form-control"
+              [class.is-invalid]="campo('notaFiscal')?.errors?.['nomeSemDocumento'] && campo('notaFiscal.notaNome')?.touched" />
+            @if (campo('notaFiscal')?.errors?.['nomeSemDocumento'] && campo('notaFiscal.notaNome')?.touched) {
+              <div class="invalid-feedback">
+                Informe o CPF/CNPJ do tomador para usar outro nome na nota.
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary" [disabled]="salvando">

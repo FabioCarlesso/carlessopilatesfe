@@ -15,6 +15,7 @@ import {
   descreverPrazoRenovacao
 } from '../../../shared/utils/renovacao-plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { exibirValorGravado } from '../../../shared/utils/mascara';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
@@ -33,6 +34,8 @@ export class PacienteDetailComponent implements OnInit {
   confirmarAtivar = false;
   acaoEmAndamento = false;
   readonly papeis = PAPEIS;
+  /** CPF/CNPJ do tomador da nota, gravado só com dígitos, com a pontuação de exibição. */
+  readonly documentoTomador = (valor: string | null): string => exibirValorGravado('cpfCnpj', valor);
   readonly tipoLabel = TIPO_LABEL;
   readonly statusPagamentoLabel = STATUS_PAGAMENTO_LABEL;
   readonly descreverPrazo = descreverPrazoRenovacao;

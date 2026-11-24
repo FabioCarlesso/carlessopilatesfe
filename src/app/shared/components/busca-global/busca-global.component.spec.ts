@@ -29,7 +29,10 @@ function paciente(id: number, nome: string): PacienteResponseDTO {
     telefone: '11999999999',
     dataNascimento: '1990-01-01',
     endereco: null,
-    ativo: true
+    ativo: true,
+    cpfNaNota: false,
+    notaCpfCnpj: null,
+    notaNome: null
   };
 }
 

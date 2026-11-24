@@ -21,7 +21,10 @@ const mockPacienteAtivo: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  notaCpfCnpj: null,
+  notaNome: null
 };
 
 const mockPacienteInativo: PacienteResponseDTO = { ...mockPacienteAtivo, ativo: false };
@@ -101,6 +104,30 @@ describe('PacienteDetailComponent', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
   }
+
+  describe('nota fiscal (#287)', () => {
+    function secaoNotaFiscal(): string {
+      const secoes = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.detail-section'));
+      return secoes.find(sec => sec.querySelector('h2')?.textContent?.trim() === 'Nota fiscal')?.textContent ?? '';
+    }
+
+    it('should show that the patient does not want CPF on the invoice', () => {
+      setup(mockPacienteAtivo);
+      expect(secaoNotaFiscal()).toContain('Não');
+      expect(secaoNotaFiscal()).not.toContain('Tomador');
+    });
+
+    it('should show the tomador when the invoice goes to someone else', () => {
+      setup({ ...mockPacienteAtivo, cpfNaNota: true, notaCpfCnpj: '11222333000181', notaNome: 'Empresa Ltda' });
+      expect(secaoNotaFiscal()).toContain('Sim');
+      expect(secaoNotaFiscal()).toContain('Empresa Ltda — 11.222.333/0001-81');
+    });
+
+    it('should flag the pendencia when CPF is wanted but missing', () => {
+      setup({ ...mockPacienteAtivo, cpf: null, cpfNaNota: true });
+      expect(secaoNotaFiscal()).toContain('Sem CPF cadastrado');
+    });
+  });
 
   describe('with active patient', () => {
     beforeEach(() => setup(mockPacienteAtivo));

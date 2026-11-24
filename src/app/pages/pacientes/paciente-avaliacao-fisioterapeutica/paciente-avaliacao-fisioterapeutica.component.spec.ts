@@ -20,7 +20,10 @@ const mockPaciente: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  notaCpfCnpj: null,
+  notaNome: null
 };
 
 const mockAvaliacao: AvaliacaoFisioterapeuticaResponseDTO = {

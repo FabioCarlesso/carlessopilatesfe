@@ -2,7 +2,11 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { RelatorioNfseFormatoExportacao, RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
+import {
+  RelatorioNfseFiltros,
+  RelatorioNfseFormatoExportacao,
+  RelatorioNfseResponseDTO
+} from '../../../core/models/relatorio';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { formatCompetencia } from '../../../shared/utils/competencia-mask';
@@ -37,7 +41,8 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
         Validators.required,
         Validators.pattern(/^(0[1-9]|1[0-2])\/\d{4}$/)
       ]],
-      notaAnteriorEmitida: [null]
+      notaAnteriorEmitida: [null],
+      cpfNaNota: [null]
     });
   }
 
@@ -62,13 +67,13 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const { competencia, notaAnteriorEmitida } = this.form.value;
+    const competencia: string = this.form.value.competencia;
     this.loadingRelatorio = true;
     this.erro = null;
     this.consultado = false;
     this.registros = [];
 
-    this.relatorioService.relatorioNfse(competencia, notaAnteriorEmitida).subscribe({
+    this.relatorioService.relatorioNfse(competencia, this.filtros()).subscribe({
       next: registros => {
         this.registros = registros;
         this.consultado = true;
@@ -93,6 +98,16 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
     return this.registros.reduce((total, registro) => total + registro.valorPago, 0);
   }
 
+  /** Registros que não podem ser emitidos como o paciente pediu até o cadastro ser completado. */
+  totalPendencias(): number {
+    return this.registros.filter(registro => !!registro.pendencia).length;
+  }
+
+  private filtros(): RelatorioNfseFiltros {
+    const { notaAnteriorEmitida, cpfNaNota } = this.form.value;
+    return { notaAnteriorEmitida, cpfNaNota };
+  }
+
   private exportar(formato: RelatorioNfseFormatoExportacao): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -100,13 +115,13 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const { competencia, notaAnteriorEmitida } = this.form.value;
+    const competencia: string = this.form.value.competencia;
     const extensao = formato === 'CSV' ? 'csv' : 'xlsx';
     const fallbackNomeArquivo = `relatorio-nfse-${competencia.replace('/', '-')}.${extensao}`;
 
     this.setExportando(formato, true);
     this.erro = null;
-    this.relatorioService.exportarRelatorioNfse(competencia, formato, notaAnteriorEmitida).subscribe({
+    this.relatorioService.exportarRelatorioNfse(competencia, formato, this.filtros()).subscribe({
       next: response => {
         try {
           baixarBlob(response, fallbackNomeArquivo);

@@ -17,7 +17,10 @@ const mockPaciente: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  notaCpfCnpj: null,
+  notaNome: null
 };
 
 describe('PacienteFormComponent', () => {
@@ -141,13 +144,84 @@ describe('PacienteFormComponent', () => {
       expect(component.form.get('cpf')?.hasError('cpf')).toBeTrue();
     });
 
-    it('should show only the required message when CPF is empty', () => {
+    // E-mail e CPF são opcionais na API (#286): o formulário não pode exigi-los.
+    it('should accept an empty CPF and e-mail without any message', () => {
       component.form.get('cpf')?.markAsTouched();
+      component.form.get('email')?.markAsTouched();
       fixture.detectChanges();
 
+      expect(component.form.get('cpf')?.valid).toBeTrue();
+      expect(component.form.get('email')?.valid).toBeTrue();
       const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
-      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
-      expect(mensagens).toEqual(['CPF é obrigatório.']);
+      expect(grupo?.querySelectorAll('.invalid-feedback').length).toBe(0);
+      expect(grupo?.querySelector('label')?.textContent?.trim()).toBe('CPF');
+    });
+
+    it('should create a patient without e-mail and CPF, leaving both out of the payload', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+      component.form.patchValue({ nome: 'Ana Silva', email: '', cpf: '' });
+
+      component.salvar();
+
+      const payload = serviceSpy.cadastrar.calls.mostRecent().args[0];
+      expect(payload.nome).toBe('Ana Silva');
+      expect('email' in payload && payload.email !== undefined).toBeFalse();
+      expect('cpf' in payload && payload.cpf !== undefined).toBeFalse();
+      expect(payload.cpfNaNota).toBeFalse();
+    });
+
+    describe('nota fiscal (#287)', () => {
+      it('should keep the tomador fields disabled and hidden until the checkbox is checked', () => {
+        const el = fixture.nativeElement as HTMLElement;
+        expect(component.form.get('notaFiscal.notaCpfCnpj')?.disabled).toBeTrue();
+        expect(el.querySelector('#notaCpfCnpj')).toBeNull();
+
+        (el.querySelector('#cpfNaNota') as HTMLInputElement).click();
+        fixture.detectChanges();
+
+        expect(component.form.get('notaFiscal.notaCpfCnpj')?.enabled).toBeTrue();
+        expect(component.form.get('notaFiscal.notaNome')?.enabled).toBeTrue();
+        expect(el.querySelector('#notaCpfCnpj')).not.toBeNull();
+      });
+
+      it('should mask the tomador document as CPF or CNPJ and send only digits', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true } });
+        fixture.detectChanges();
+        const input = (fixture.nativeElement as HTMLElement).querySelector('#notaCpfCnpj') as HTMLInputElement;
+        input.value = '11222333000181';
+        input.dispatchEvent(new Event('input'));
+        component.form.get('notaFiscal.notaNome')?.setValue('  Empresa Ltda ');
+
+        expect(input.value).toBe('11.222.333/0001-81');
+        component.salvar();
+
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
+          cpfNaNota: true,
+          notaCpfCnpj: '11222333000181',
+          notaNome: 'Empresa Ltda'
+        }));
+      });
+
+      it('should reject an invalid tomador document without calling the API', () => {
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, notaCpfCnpj: '123' } });
+
+        component.salvar();
+
+        expect(component.form.get('notaFiscal.notaCpfCnpj')?.hasError('cpfCnpj')).toBeTrue();
+        expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      });
+
+      it('should require the tomador document when a tomador name is informed', () => {
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, notaNome: 'Responsável' } });
+        component.salvar();
+        fixture.detectChanges();
+
+        expect(component.form.get('notaFiscal')?.hasError('nomeSemDocumento')).toBeTrue();
+        expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+        expect((fixture.nativeElement as HTMLElement).textContent)
+          .toContain('Informe o CPF/CNPJ do tomador para usar outro nome na nota.');
+      });
     });
 
     it('should accept a valid CPF with or without punctuation', () => {
@@ -328,11 +402,103 @@ describe('PacienteFormComponent', () => {
       expect(component.salvando).toBeFalse();
     });
 
+    it('should not send the CPF of a patient that already has one', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar.calls.mostRecent().args[1].cpf).toBeUndefined();
+    });
+
+    it('should clear the tomador when the patient does not want CPF on the invoice', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({
+        cpfNaNota: false,
+        notaCpfCnpj: '',
+        notaNome: ''
+      }));
+    });
+
     it('should set erro when buscar fails on init', () => {
       serviceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar paciente.');
       expect(component.loading).toBeFalse();
+    });
+  });
+
+  // Pacientes importados do seufisio sem CPF ou e-mail (#286).
+  describe('in edit mode for an imported patient without CPF and e-mail', () => {
+    let component: PacienteFormComponent;
+    let fixture: ComponentFixture<PacienteFormComponent>;
+    let serviceSpy: jasmine.SpyObj<PacienteService>;
+
+    const semDocumentos: PacienteResponseDTO = {
+      ...mockPaciente,
+      id: 2,
+      email: null,
+      cpf: null,
+      cpfNaNota: true,
+      notaCpfCnpj: '11222333000181',
+      notaNome: 'Empresa Ltda',
+      version: 3
+    };
+
+    beforeEach(async () => {
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy.buscar.and.returnValue(of(semDocumentos));
+
+      await TestBed.configureTestingModule({
+        imports: [PacienteFormComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: serviceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '2' } } } }
+        ]
+      }).compileComponents();
+
+      spyOn(TestBed.inject(Router), 'navigate');
+      fixture = TestBed.createComponent(PacienteFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('should keep the CPF field enabled so the record can be completed', () => {
+      expect(component.form.get('cpf')?.enabled).toBeTrue();
+      expect(component.form.valid).toBeTrue();
+    });
+
+    it('should save without e-mail and send the CPF typed in', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      component.form.get('cpf')?.setValue('529.982.247-25');
+
+      component.salvar();
+
+      const payload = serviceSpy.atualizar.calls.mostRecent().args[1];
+      expect(payload.cpf).toBe('52998224725');
+      expect(payload.email).toBeUndefined();
+      expect(payload.version).toBe(3);
+    });
+
+    it('should load the stored tomador with its fields enabled', () => {
+      expect(component.form.get('notaFiscal')?.value).toEqual({
+        cpfNaNota: true,
+        notaCpfCnpj: '11222333000181',
+        notaNome: 'Empresa Ltda'
+      });
+      const input = (fixture.nativeElement as HTMLElement).querySelector('#notaCpfCnpj') as HTMLInputElement;
+      expect(input.value).toBe('11.222.333/0001-81');
+    });
+
+    it('should show the API message when the CPF belongs to another patient', () => {
+      serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { detail: 'CPF já cadastrado' }
+      })));
+      component.form.get('cpf')?.setValue('52998224725');
+
+      component.salvar();
+
+      expect(component.erro).toBe('CPF já cadastrado');
+      expect(component.salvando).toBeFalse();
     });
   });
 

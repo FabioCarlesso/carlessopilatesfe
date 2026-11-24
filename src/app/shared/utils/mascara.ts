@@ -1,5 +1,5 @@
 /**
- * Máscaras de entrada de CPF, telefone e CEP.
+ * Máscaras de entrada de CPF, CPF/CNPJ, telefone e CEP.
  *
  * A pontuação é só de exibição: o valor que vai para o formulário (e daí para a
  * API) é sempre **apenas dígitos**. É o formato em que a importação do seufisio
@@ -7,11 +7,12 @@
  * (`existsByCpf`, comparação exata de texto) e o filtro `LIKE %termo%`
  * previsíveis. O porquê está em `docs/context.md`.
  */
-export type TipoMascara = 'cpf' | 'telefone' | 'cep';
+export type TipoMascara = 'cpf' | 'cpfCnpj' | 'telefone' | 'cep';
 
 /** Quantidade máxima de dígitos aceita por máscara. */
 export const MAX_DIGITOS: Readonly<Record<TipoMascara, number>> = {
   cpf: 11,
+  cpfCnpj: 14,
   telefone: 11,
   cep: 8
 };
@@ -27,6 +28,16 @@ export function formatarCpf(valor: string | null | undefined): string {
   if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
   if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+/**
+ * CPF (`000.000.000-00`) até 11 dígitos e CNPJ (`00.000.000/0000-00`) a partir do
+ * décimo segundo: o mesmo campo aceita os dois, como o tomador de uma nota fiscal.
+ */
+export function formatarCpfCnpj(valor: string | null | undefined): string {
+  const d = somenteDigitos(valor).slice(0, MAX_DIGITOS.cpfCnpj);
+  if (d.length <= MAX_DIGITOS.cpf) return formatarCpf(d);
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
 /**
@@ -54,6 +65,7 @@ export function formatarCep(valor: string | null | undefined): string {
 
 const FORMATADORES: Readonly<Record<TipoMascara, (valor: string | null | undefined) => string>> = {
   cpf: formatarCpf,
+  cpfCnpj: formatarCpfCnpj,
   telefone: formatarTelefone,
   cep: formatarCep
 };
