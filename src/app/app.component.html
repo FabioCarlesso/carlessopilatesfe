@@ -45,16 +45,6 @@
               >Pacientes</a>
             </li>
           }
-          @if (authService.hasAnyRole(papeis.cobranca)) {
-            <li>
-              <a
-                routerLink="/tomadores"
-                routerLinkActive="is-active"
-                ariaCurrentWhenActive="page"
-                (click)="fecharMenu()"
-              >Tomadores</a>
-            </li>
-          }
           @if (authService.isAdmin()) {
             <li>
               <a

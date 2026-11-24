@@ -1,6 +1,11 @@
 <div class="page-header">
   <h1>Pacientes</h1>
-  <a routerLink="/pacientes/novo" class="btn btn-primary">+ Novo Paciente</a>
+  <div class="page-header-actions">
+    @if (podeGerenciarTomadores) {
+      <a routerLink="/tomadores" class="btn btn-outline">Tomadores da nota</a>
+    }
+    <a routerLink="/pacientes/novo" class="btn btn-primary">+ Novo Paciente</a>
+  </div>
 </div>
 
 @if (erro) {

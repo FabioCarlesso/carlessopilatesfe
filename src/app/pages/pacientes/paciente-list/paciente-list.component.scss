@@ -192,3 +192,11 @@
     justify-content: space-between;
   }
 }
+
+// Ações do cabeçalho lado a lado; no mobile o `.page-header` empilha e os botões
+// quebram linha juntos.
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
