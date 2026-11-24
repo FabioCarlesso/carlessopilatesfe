@@ -31,8 +31,9 @@ function paciente(id: number, nome: string): PacienteResponseDTO {
     endereco: null,
     ativo: true,
     cpfNaNota: false,
-    notaCpfCnpj: null,
-    notaNome: null
+    tomadorId: null,
+    tomadorNome: null,
+    tomadorCpfCnpj: null
   };
 }
 

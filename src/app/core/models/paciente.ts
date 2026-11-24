@@ -20,23 +20,27 @@ export interface PacienteResponseDTO {
   ativo: boolean;
   /** Se o paciente deseja CPF/CNPJ na nota fiscal (carlessopilatesapi#229). */
   cpfNaNota: boolean;
-  /** Tomador alternativo da nota (responsável ou empresa), só dígitos; nulo = o próprio paciente. */
-  notaCpfCnpj: string | null;
-  notaNome: string | null;
+  /** Tomador da nota (responsável ou empresa, ver `/tomadores`); nulo = a nota sai no próprio paciente. */
+  tomadorId: number | null;
+  tomadorNome: string | null;
+  /** Só dígitos (11 ou 14). */
+  tomadorCpfCnpj: string | null;
   /** Versão do registro para o locking otimista: devolva-a no próximo update. */
   version: number;
 }
 
-/** Campos da nota fiscal, comuns ao cadastro e à edição. */
+/**
+ * Preferência de nota fiscal, comum ao cadastro e à edição. O tomador não muda pela
+ * edição: só por `PATCH /pacientes/{id}/tomador` (ver `PacienteService.vincularTomador`),
+ * para que desmarcar "CPF na nota" não apague o vínculo.
+ */
 export interface PacienteNotaFiscalDTO {
   cpfNaNota?: boolean;
-  /** Só dígitos (11 ou 14). Na edição, `''` remove o tomador alternativo. */
-  notaCpfCnpj?: string;
-  /** Exige `notaCpfCnpj`. Na edição, `''` remove o nome. */
-  notaNome?: string;
 }
 
 export interface PacienteRequestDTO extends PacienteNotaFiscalDTO {
+  /** Tomador vinculado já no cadastro. */
+  tomadorId?: number | null;
   nome: string;
   email?: string;
   cpf?: string;

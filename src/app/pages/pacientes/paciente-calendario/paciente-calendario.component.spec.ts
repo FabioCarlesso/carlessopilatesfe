@@ -27,8 +27,9 @@ const mockPaciente: PacienteResponseDTO = {
   endereco: null,
   ativo: true,
   cpfNaNota: false,
-  notaCpfCnpj: null,
-  notaNome: null
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 function sessao(dados: Partial<SessaoResponseDTO> & { id: number; dataHora: string }): SessaoResponseDTO {

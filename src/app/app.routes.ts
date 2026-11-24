@@ -364,6 +364,31 @@ export const routes: Routes = [
       }
     ]
   },
+  // Tomadores da nota fiscal (carlessopilatesapi#229): cadastro de quem cuida de cobrança e nota.
+  {
+    path: 'tomadores',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/tomadores/tomador-list/tomador-list.component').then(m => m.TomadorListComponent)
+  },
+  {
+    path: 'tomadores/novo',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/tomadores/tomador-form/tomador-form.component').then(m => m.TomadorFormComponent)
+  },
+  {
+    path: 'tomadores/:id/editar',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/tomadores/tomador-form/tomador-form.component').then(m => m.TomadorFormComponent)
+  },
+  {
+    path: 'tomadores/:id',
+    canActivate: [roleGuard(PAPEIS.cobranca)],
+    loadComponent: () =>
+      import('./pages/tomadores/tomador-detail/tomador-detail.component').then(m => m.TomadorDetailComponent)
+  },
   {
     path: 'profissionais',
     canActivate: [roleGuard(PAPEIS.admin)],

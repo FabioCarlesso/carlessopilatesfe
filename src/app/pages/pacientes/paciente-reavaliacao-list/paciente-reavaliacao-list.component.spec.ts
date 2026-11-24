@@ -19,8 +19,9 @@ const mockPaciente: PacienteResponseDTO = {
   endereco: null,
   ativo: true,
   cpfNaNota: false,
-  notaCpfCnpj: null,
-  notaNome: null
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 const mockReavaliacao: ReavaliacaoResponseDTO = {

@@ -78,8 +78,9 @@ const ana: PacienteResponseDTO = {
   endereco: null,
   ativo: false,
   cpfNaNota: false,
-  notaCpfCnpj: null,
-  notaNome: null
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 function pagina(content: PagamentoResponseDTO[], meta: Partial<Page<PagamentoResponseDTO>['page']> = {}) {

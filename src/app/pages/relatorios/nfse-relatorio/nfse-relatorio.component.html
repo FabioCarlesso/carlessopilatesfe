@@ -45,6 +45,16 @@
         <option [ngValue]="false">Sem CPF</option>
       </select>
     </div>
+
+    <div class="form-group">
+      <label for="tomadorId">Tomador</label>
+      <select id="tomadorId" formControlName="tomadorId" class="form-control">
+        <option [ngValue]="null">Todos</option>
+        @for (t of tomadores; track t.id) {
+          <option [ngValue]="t.id">{{ t.nome }}{{ t.ativo ? '' : ' (inativo)' }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   <div class="form-actions">
@@ -107,7 +117,8 @@
         <table class="table nfse-table table-sticky-first-col">
           <thead>
             <tr>
-              <th>Nome</th>
+              <th>Nome na nota</th>
+              <th>Paciente</th>
               <th>CPF/CNPJ</th>
               <th>CPF na nota</th>
               <th class="coluna-pendencia">Pendência</th>
@@ -123,6 +134,7 @@
             @for (registro of registros; track registro) {
               <tr [class.linha-pendente]="!!registro.pendencia">
                 <td>{{ registro.nome }}</td>
+                <td>{{ registro.pacienteNome }}</td>
                 <td class="coluna-documento">{{ documento(registro.cpfCnpj) }}</td>
                 <td>{{ registro.cpfNaNota ? 'Sim' : 'Não' }}</td>
                 <td class="coluna-pendencia">

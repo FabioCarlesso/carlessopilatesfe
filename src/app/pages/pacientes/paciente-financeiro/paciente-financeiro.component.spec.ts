@@ -20,7 +20,7 @@ const ANO = new Date().getFullYear();
 const paciente: PacienteResponseDTO = {
   version: 0, id: 10, nome: 'Ana Silva', email: 'ana@email.com', cpf: '123.456.789-00',
   telefone: '(11) 99999-9999', dataNascimento: '1990-05-15', endereco: null, ativo: true,
-  cpfNaNota: false, notaCpfCnpj: null, notaNome: null
+  cpfNaNota: false, tomadorId: null, tomadorNome: null, tomadorCpfCnpj: null
 };
 
 const planoAtivo: PlanoResponseDTO = {

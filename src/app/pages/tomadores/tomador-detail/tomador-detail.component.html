@@ -1,0 +1,92 @@
+<div class="page-header">
+  <h1>{{ tomador?.nome ?? 'Tomador' }}</h1>
+  <a routerLink="/tomadores" class="btn btn-outline">Voltar</a>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+@if (loading) {
+  <app-carregando mensagem="Carregando tomador..." />
+} @else if (tomador) {
+  <section class="detail-section">
+    <h2>Dados do tomador</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="label">CPF/CNPJ</span>
+        <span>{{ documento(tomador.cpfCnpj) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Situação</span>
+        <span>{{ tomador.ativo ? 'Ativo' : 'Inativo' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">E-mail</span>
+        <span>{{ tomador.email || '-' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Telefone</span>
+        <span>{{ tomador.telefone ? telefone(tomador.telefone) : '-' }}</span>
+      </div>
+      @if (tomador.observacoes) {
+        <div class="detail-item">
+          <span class="label">Observações</span>
+          <span>{{ tomador.observacoes }}</span>
+        </div>
+      }
+    </div>
+    <div class="form-actions">
+      <a [routerLink]="['/tomadores', tomador.id, 'editar']" class="btn btn-secondary">Editar</a>
+      @if (authService.hasAnyRole(papeis.fiscal)) {
+        <a routerLink="/relatorios/nfse" [queryParams]="{ tomadorId: tomador.id }" class="btn btn-outline">
+          Ver notas deste tomador
+        </a>
+      }
+      <button type="button" class="btn" [class.btn-danger]="tomador.ativo" [class.btn-primary]="!tomador.ativo"
+        (click)="confirmandoSituacao = true">
+        {{ tomador.ativo ? 'Inativar' : 'Ativar' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="detail-section">
+    <h2>Pacientes vinculados ({{ pacientes.length }})</h2>
+    @if (pacientes.length === 0) {
+      <p class="field-hint">Nenhum paciente vinculado. O vínculo é feito no cadastro do paciente, em "Nota fiscal".</p>
+    } @else {
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Pacientes vinculados ao tomador">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Situação</th>
+              <th>CPF na nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of pacientes; track p.id) {
+              <tr>
+                <td><a [routerLink]="['/pacientes', p.id]">{{ p.nome }}</a></td>
+                <td>{{ p.ativo ? 'Ativo' : 'Inativo' }}</td>
+                <td>{{ p.cpfNaNota ? 'Sim' : 'Não (tomador não usado na nota)' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+@if (confirmandoSituacao && tomador) {
+  <app-confirmar-dialog
+    [titulo]="tomador.ativo ? 'Inativar tomador' : 'Ativar tomador'"
+    [mensagem]="tomador.ativo
+      ? 'Os pacientes já vinculados continuam com este tomador; ele só deixa de aparecer para novos vínculos.'
+      : 'O tomador volta a aparecer para novos vínculos.'"
+    [variante]="tomador.ativo ? 'perigo' : 'primaria'"
+    [processando]="processando"
+    (confirmar)="alterarSituacao()"
+    (cancelar)="confirmandoSituacao = false" />
+}

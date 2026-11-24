@@ -1,16 +1,12 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  ValidationErrors
-} from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable, of, switchMap } from 'rxjs';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { TomadorService } from '../../../core/services/tomador.service';
+import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import {
@@ -19,11 +15,18 @@ import {
   MENSAGEM_CONFLITO_CONCORRENCIA
 } from '../../../shared/utils/api-error';
 import { cpfValidator } from '../../../core/validators/cpf.validator';
-import { cpfCnpjValidator } from '../../../core/validators/cpf-cnpj.validator';
-import { PacienteNotaFiscalDTO } from '../../../core/models/paciente';
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
-import { somenteDigitos } from '../../../shared/utils/mascara';
+import { exibirValorGravado, somenteDigitos } from '../../../shared/utils/mascara';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+
+/** Opção do seletor de tomador da nota fiscal. */
+export interface TomadorOpcao {
+  id: number;
+  nome: string;
+  cpfCnpj: string;
+  /** Vinculado ao paciente mas inativado depois: aparece para não sumir da tela. */
+  inativo?: boolean;
+}
 
 @Component({
   selector: 'app-paciente-form',
@@ -44,14 +47,32 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
   private version: number | null = null;
   /** Se o paciente em edição já tinha CPF gravado (o campo fica travado). */
   private cpfGravado = false;
+  /** Tomador vinculado ao carregar: o vínculo só muda por `PATCH /pacientes/{id}/tomador`, e só se a escolha mudou. */
+  private tomadorOriginal: number | null = null;
+  private tomadoresAtivos: TomadorOpcao[] = [];
+  private vinculado: TomadorOpcao | null = null;
 
   constructor(
     private fb: FormBuilder,
     private service: PacienteService,
     private route: ActivatedRoute,
     private router: Router,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private tomadorService: TomadorService
   ) {}
+
+  /** Tomadores ativos, mais o vinculado ao paciente se ele foi inativado depois do vínculo. */
+  get tomadores(): TomadorOpcao[] {
+    const vinculado = this.vinculado;
+    if (vinculado && !this.tomadoresAtivos.some(t => t.id === vinculado.id)) {
+      return [...this.tomadoresAtivos, { ...vinculado, inativo: true }];
+    }
+    return this.tomadoresAtivos;
+  }
+
+  documento(cpfCnpj: string): string {
+    return exibirValorGravado('cpfCnpj', cpfCnpj);
+  }
 
   ngAfterViewInit(): void {
     if (!this.isEdit) focarPrimeiroCampo(this.host);
@@ -76,11 +97,10 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
       }),
       notaFiscal: this.fb.group({
         cpfNaNota: [false],
-        notaCpfCnpj: [{ value: '', disabled: true }, [cpfCnpjValidator]],
-        notaNome: [{ value: '', disabled: true }, [Validators.maxLength(255)]]
-      }, { validators: nomeExigeDocumentoDoTomador })
+        tomadorId: [null as number | null]
+      })
     });
-    this.form.get('notaFiscal.cpfNaNota')?.valueChanges.subscribe(marcado => this.alternarTomador(!!marcado));
+    this.carregarTomadores();
 
     const rawId = this.route.snapshot.paramMap.get('id');
     if (rawId === null) return;
@@ -97,11 +117,11 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     this.service.buscar(this.pacienteId).subscribe({
       next: p => {
         this.form.patchValue(p);
-        this.form.get('notaFiscal')?.patchValue({
-          cpfNaNota: p.cpfNaNota ?? false,
-          notaCpfCnpj: p.notaCpfCnpj ?? '',
-          notaNome: p.notaNome ?? ''
-        });
+        this.form.get('notaFiscal')?.patchValue({ cpfNaNota: p.cpfNaNota ?? false, tomadorId: p.tomadorId ?? null });
+        this.tomadorOriginal = p.tomadorId ?? null;
+        if (p.tomadorId != null && p.tomadorCpfCnpj != null) {
+          this.vinculado = { id: p.tomadorId, nome: p.tomadorNome ?? '', cpfCnpj: p.tomadorCpfCnpj };
+        }
         this.version = p.version;
         this.cpfGravado = !!p.cpf;
         // Só trava o CPF de quem já tem um; sem CPF, o campo fica aberto para completar o cadastro.
@@ -135,9 +155,10 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     // ausente mantém o valor gravado, e a API não aceita CPF ou e-mail em branco.
     const email = texto(valor.email) || undefined;
     const cpf = somenteDigitos(valor.cpf) || undefined;
-    const notaFiscal = this.notaFiscal(valor.notaFiscal);
+    const cpfNaNota = !!valor.notaFiscal.cpfNaNota;
+    const tomadorId: number | null = valor.notaFiscal.tomadorId ?? null;
 
-    const obs = this.isEdit && this.pacienteId !== null
+    const obs: Observable<unknown> = this.isEdit && this.pacienteId !== null
       ? this.service.atualizar(this.pacienteId, {
           nome: valor.nome,
           email,
@@ -145,9 +166,9 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           telefone: valor.telefone,
           dataNascimento: valor.dataNascimento,
           endereco: valor.endereco,
-          ...notaFiscal,
+          cpfNaNota,
           version: this.version
-        })
+        }).pipe(switchMap(salvo => this.atualizarTomador(salvo, cpfNaNota, tomadorId)))
       : this.service.cadastrar({
           nome: valor.nome,
           email,
@@ -155,7 +176,8 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           telefone: somenteDigitos(valor.telefone),
           dataNascimento: valor.dataNascimento,
           endereco: { ...valor.endereco, cep: somenteDigitos(valor.endereco.cep) },
-          ...notaFiscal
+          cpfNaNota,
+          tomadorId: cpfNaNota ? tomadorId : null
         });
 
     obs.subscribe({
@@ -168,35 +190,41 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Na edição, o tomador alternativo vai como `''` quando vazio ou quando o
-   * paciente deixa de querer CPF na nota: é o que a API usa para apagá-lo. No
-   * cadastro, campo vazio simplesmente não vai.
+   * Depois do PUT, ajusta o vínculo do tomador só se a escolha mudou. Com "CPF na
+   * nota" desmarcado, o vínculo fica como estava: o tomador é ignorado na nota, mas
+   * não se perde, e volta a valer se a opção for marcada de novo.
    */
-  private notaFiscal(valor: { cpfNaNota: boolean; notaCpfCnpj?: string; notaNome?: string }): PacienteNotaFiscalDTO {
-    const cpfNaNota = !!valor.cpfNaNota;
-    const documento = cpfNaNota ? somenteDigitos(valor.notaCpfCnpj) : '';
-    const nome = cpfNaNota && documento ? texto(valor.notaNome) : '';
-    if (!this.isEdit) {
-      return { cpfNaNota, notaCpfCnpj: documento || undefined, notaNome: nome || undefined };
+  private atualizarTomador(
+    salvo: PacienteResponseDTO,
+    cpfNaNota: boolean,
+    tomadorId: number | null
+  ): Observable<PacienteResponseDTO> {
+    if (!cpfNaNota || this.pacienteId === null || tomadorId === this.tomadorOriginal) {
+      return of(salvo);
     }
-    return { cpfNaNota, notaCpfCnpj: documento, notaNome: nome };
+    return this.service.vincularTomador(this.pacienteId, tomadorId);
   }
 
-  private alternarTomador(marcado: boolean): void {
-    for (const nome of ['notaCpfCnpj', 'notaNome']) {
-      const controle = this.form.get(`notaFiscal.${nome}`);
-      if (marcado) controle?.enable({ emitEvent: false });
-      else controle?.disable({ emitEvent: false });
-    }
+  private carregarTomadores(): void {
+    // Lista curta (responsáveis e empresas): uma página basta. Sem a lista, o seletor
+    // fica só com "O próprio paciente" e o restante do formulário segue funcionando.
+    this.tomadorService.listar(0, 200, { ativo: true }).subscribe({
+      next: pagina => {
+        this.tomadoresAtivos = pagina.content.map(t => ({ id: t.id, nome: t.nome, cpfCnpj: t.cpfCnpj }));
+      },
+      error: () => {
+        this.tomadoresAtivos = [];
+      }
+    });
   }
 
   /**
-   * `400` (CPF/CNPJ do tomador inválido) e `409` (CPF ou e-mail de outro paciente)
-   * trazem a mensagem da API, que diz o que corrigir.
+   * `400`, `409` (CPF ou e-mail de outro paciente) e `422` (tomador inativo) trazem
+   * a mensagem da API, que diz o que corrigir.
    */
   private mensagemErro(err: unknown): string {
     if (ehConflitoConcorrencia(err)) return MENSAGEM_CONFLITO_CONCORRENCIA;
-    if (err instanceof HttpErrorResponse && (err.status === 400 || err.status === 409)) {
+    if (err instanceof HttpErrorResponse && [400, 409, 422].includes(err.status)) {
       return extrairMensagemErro(err, 'Erro ao salvar paciente.');
     }
     return 'Erro ao salvar paciente.';
@@ -209,11 +237,4 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
 
 function texto(valor: string | null | undefined): string {
   return (valor ?? '').trim();
-}
-
-/** O nome do tomador só faz sentido com o CPF/CNPJ dele, como a API exige. Erro: `{ nomeSemDocumento: true }`. */
-function nomeExigeDocumentoDoTomador(grupo: AbstractControl): ValidationErrors | null {
-  const nome = texto(grupo.get('notaNome')?.value);
-  const documento = somenteDigitos(grupo.get('notaCpfCnpj')?.value);
-  return grupo.get('cpfNaNota')?.value && nome && !documento ? { nomeSemDocumento: true } : null;
 }

@@ -58,13 +58,18 @@
           <span class="label">CPF/CNPJ na nota</span>
           <span>{{ paciente.cpfNaNota ? 'Sim' : 'Não' }}</span>
         </div>
-        @if (paciente.cpfNaNota && paciente.notaCpfCnpj) {
+        @if (paciente.tomadorId && paciente.tomadorCpfCnpj) {
           <div class="detail-item">
             <span class="label">Tomador</span>
-            <span>{{ paciente.notaNome || paciente.nome }} — {{ documentoTomador(paciente.notaCpfCnpj) }}</span>
+            <span>
+              <a [routerLink]="['/tomadores', paciente.tomadorId]">{{ paciente.tomadorNome }}</a> — {{ documentoTomador(paciente.tomadorCpfCnpj) }}
+              @if (!paciente.cpfNaNota) {
+                <span class="field-hint">(não usado enquanto "CPF na nota" estiver desmarcado)</span>
+              }
+            </span>
           </div>
         }
-        @if (paciente.cpfNaNota && !paciente.notaCpfCnpj && !paciente.cpf) {
+        @if (paciente.cpfNaNota && !paciente.tomadorId && !paciente.cpf) {
           <div class="detail-item">
             <span class="label">Pendência</span>
             <span class="badge badge--warning">Sem CPF cadastrado</span>

@@ -23,8 +23,9 @@ const mockPacienteAtivo: PacienteResponseDTO = {
   endereco: null,
   ativo: true,
   cpfNaNota: false,
-  notaCpfCnpj: null,
-  notaNome: null
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 const mockPacienteInativo: PacienteResponseDTO = { ...mockPacienteAtivo, ativo: false };
@@ -118,7 +119,7 @@ describe('PacienteDetailComponent', () => {
     });
 
     it('should show the tomador when the invoice goes to someone else', () => {
-      setup({ ...mockPacienteAtivo, cpfNaNota: true, notaCpfCnpj: '11222333000181', notaNome: 'Empresa Ltda' });
+      setup({ ...mockPacienteAtivo, cpfNaNota: true, tomadorId: 9, tomadorNome: 'Empresa Ltda', tomadorCpfCnpj: '11222333000181' });
       expect(secaoNotaFiscal()).toContain('Sim');
       expect(secaoNotaFiscal()).toContain('Empresa Ltda — 11.222.333/0001-81');
     });

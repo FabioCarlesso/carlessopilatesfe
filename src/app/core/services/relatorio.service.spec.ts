@@ -16,7 +16,9 @@ const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
     dataPagamento: '2026-04-10',
     observacoes: 'Plano mensal',
     cpfNaNota: true,
-    pendencia: null
+    pendencia: null,
+    pacienteNome: 'Paciente Teste',
+    tomadorId: null
   }
 ];
 

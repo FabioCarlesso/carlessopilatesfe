@@ -1,7 +1,10 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { TomadorResponseDTO } from '../../../core/models/tomador';
+import { TomadorService } from '../../../core/services/tomador.service';
 import {
   RelatorioNfseFiltros,
   RelatorioNfseFormatoExportacao,
@@ -30,10 +33,14 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
   consultado = false;
   erro: string | null = null;
 
+  tomadores: TomadorResponseDTO[] = [];
+
   constructor(
     private relatorioService: RelatorioService,
     private fb: FormBuilder,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private tomadorService: TomadorService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +50,32 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
         Validators.pattern(/^(0[1-9]|1[0-2])\/\d{4}$/)
       ]],
       notaAnteriorEmitida: [null],
-      cpfNaNota: [null]
+      cpfNaNota: [null],
+      tomadorId: [null as number | null]
+    });
+    // O detalhe do tomador abre o relatório já filtrado ("Ver notas deste tomador").
+    const tomadorId = Number(this.route.snapshot.queryParamMap.get('tomadorId'));
+    if (Number.isInteger(tomadorId) && tomadorId > 0) {
+      this.form.patchValue({ tomadorId });
+    }
+    this.carregarTomadores();
+  }
+
+  /**
+   * Ativos e inativos: um tomador inativado continua com pacientes vinculados, e as
+   * notas deles seguem saindo no nome dele.
+   */
+  private carregarTomadores(): void {
+    forkJoin([
+      this.tomadorService.listar(0, 200, { ativo: true }),
+      this.tomadorService.listar(0, 200, { ativo: false })
+    ]).subscribe({
+      next: ([ativos, inativos]) => {
+        this.tomadores = [...ativos.content, ...inativos.content].sort((a, b) => a.nome.localeCompare(b.nome));
+      },
+      error: () => {
+        this.tomadores = [];
+      }
     });
   }
 
@@ -99,19 +131,19 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
     return this.registros.reduce((total, registro) => total + registro.valorPago, 0);
   }
 
-  /** Registros que não podem ser emitidos como o paciente pediu até o cadastro ser completado. */
   /** CPF ou CNPJ com máscara; "—" quando o paciente não deseja CPF na nota (a API manda nulo). */
   documento(valor: string | null): string {
     return valor ? exibirValorGravado('cpfCnpj', valor) : '—';
   }
 
+  /** Registros que não podem ser emitidos como o paciente pediu até o cadastro ser completado. */
   totalPendencias(): number {
     return this.registros.filter(registro => !!registro.pendencia).length;
   }
 
   private filtros(): RelatorioNfseFiltros {
-    const { notaAnteriorEmitida, cpfNaNota } = this.form.value;
-    return { notaAnteriorEmitida, cpfNaNota };
+    const { notaAnteriorEmitida, cpfNaNota, tomadorId } = this.form.value;
+    return { notaAnteriorEmitida, cpfNaNota, tomadorId };
   }
 
   private exportar(formato: RelatorioNfseFormatoExportacao): void {

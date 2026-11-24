@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { PacienteFormComponent } from './paciente-form.component';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { TomadorService } from '../../../core/services/tomador.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
@@ -19,8 +20,20 @@ const mockPaciente: PacienteResponseDTO = {
   endereco: null,
   ativo: true,
   cpfNaNota: false,
-  notaCpfCnpj: null,
-  notaNome: null
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
+};
+
+/** Um tomador ativo (id 9). O tomador 5 do paciente importado foi inativado e não vem na lista. */
+const tomadorServiceStub = {
+  listar: () => of({
+    content: [{
+      id: 9, nome: 'Empresa Ltda', cpfCnpj: '11222333000181', email: null, telefone: null,
+      observacoes: null, ativo: true, quantidadePacientes: 2, version: 0
+    }],
+    page: { size: 200, number: 0, totalElements: 1, totalPages: 1 }
+  })
 };
 
 describe('PacienteFormComponent', () => {
@@ -31,12 +44,13 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar', 'vincularTomador']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } }
         ]
       }).compileComponents();
@@ -171,56 +185,33 @@ describe('PacienteFormComponent', () => {
     });
 
     describe('nota fiscal (#287)', () => {
-      it('should keep the tomador fields disabled and hidden until the checkbox is checked', () => {
+      it('should show the tomador select only when the checkbox is checked', () => {
         const el = fixture.nativeElement as HTMLElement;
-        expect(component.form.get('notaFiscal.notaCpfCnpj')?.disabled).toBeTrue();
-        expect(el.querySelector('#notaCpfCnpj')).toBeNull();
+        expect(el.querySelector('#tomadorId')).toBeNull();
 
         (el.querySelector('#cpfNaNota') as HTMLInputElement).click();
         fixture.detectChanges();
 
-        expect(component.form.get('notaFiscal.notaCpfCnpj')?.enabled).toBeTrue();
-        expect(component.form.get('notaFiscal.notaNome')?.enabled).toBeTrue();
-        expect(el.querySelector('#notaCpfCnpj')).not.toBeNull();
+        const opcoes = Array.from((el.querySelector('#tomadorId') as HTMLSelectElement).options).map(o => o.text.trim());
+        expect(opcoes).toEqual(['O próprio paciente', 'Empresa Ltda — 11.222.333/0001-81']);
       });
 
-      it('should mask the tomador document as CPF or CNPJ and send only digits', () => {
+      it('should send the chosen tomador when creating a patient that wants CPF on the invoice', () => {
         serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
-        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true } });
-        fixture.detectChanges();
-        const input = (fixture.nativeElement as HTMLElement).querySelector('#notaCpfCnpj') as HTMLInputElement;
-        input.value = '11222333000181';
-        input.dispatchEvent(new Event('input'));
-        component.form.get('notaFiscal.notaNome')?.setValue('  Empresa Ltda ');
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, tomadorId: 9 } });
 
-        expect(input.value).toBe('11.222.333/0001-81');
         component.salvar();
 
-        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({
-          cpfNaNota: true,
-          notaCpfCnpj: '11222333000181',
-          notaNome: 'Empresa Ltda'
-        }));
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ cpfNaNota: true, tomadorId: 9 }));
       });
 
-      it('should reject an invalid tomador document without calling the API', () => {
-        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, notaCpfCnpj: '123' } });
+      it('should not link a tomador when the patient does not want CPF on the invoice', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: false, tomadorId: 9 } });
 
         component.salvar();
 
-        expect(component.form.get('notaFiscal.notaCpfCnpj')?.hasError('cpfCnpj')).toBeTrue();
-        expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
-      });
-
-      it('should require the tomador document when a tomador name is informed', () => {
-        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, notaNome: 'Responsável' } });
-        component.salvar();
-        fixture.detectChanges();
-
-        expect(component.form.get('notaFiscal')?.hasError('nomeSemDocumento')).toBeTrue();
-        expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
-        expect((fixture.nativeElement as HTMLElement).textContent)
-          .toContain('Informe o CPF/CNPJ do tomador para usar outro nome na nota.');
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ cpfNaNota: false, tomadorId: null }));
       });
     });
 
@@ -308,13 +299,14 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
       serviceSpy.buscar.and.returnValue(of(mockPaciente));
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
         ]
       }).compileComponents();
@@ -408,14 +400,11 @@ describe('PacienteFormComponent', () => {
       expect(serviceSpy.atualizar.calls.mostRecent().args[1].cpf).toBeUndefined();
     });
 
-    it('should clear the tomador when the patient does not want CPF on the invoice', () => {
+    it('should not touch the tomador link when CPF on the invoice is unchecked', () => {
       serviceSpy.atualizar.and.returnValue(of(mockPaciente));
       component.salvar();
-      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({
-        cpfNaNota: false,
-        notaCpfCnpj: '',
-        notaNome: ''
-      }));
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ cpfNaNota: false }));
+      expect(serviceSpy.vincularTomador).not.toHaveBeenCalled();
     });
 
     it('should set erro when buscar fails on init', () => {
@@ -438,19 +427,21 @@ describe('PacienteFormComponent', () => {
       email: null,
       cpf: null,
       cpfNaNota: true,
-      notaCpfCnpj: '11222333000181',
-      notaNome: 'Empresa Ltda',
+      tomadorId: 5,
+      tomadorNome: 'Responsável Antigo',
+      tomadorCpfCnpj: '52998224725',
       version: 3
     };
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
       serviceSpy.buscar.and.returnValue(of(semDocumentos));
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '2' } } } }
         ]
       }).compileComponents();
@@ -478,14 +469,46 @@ describe('PacienteFormComponent', () => {
       expect(payload.version).toBe(3);
     });
 
-    it('should load the stored tomador with its fields enabled', () => {
-      expect(component.form.get('notaFiscal')?.value).toEqual({
-        cpfNaNota: true,
-        notaCpfCnpj: '11222333000181',
-        notaNome: 'Empresa Ltda'
-      });
-      const input = (fixture.nativeElement as HTMLElement).querySelector('#notaCpfCnpj') as HTMLInputElement;
-      expect(input.value).toBe('11.222.333/0001-81');
+    it('should load the linked tomador, keeping it in the list even after it was inactivated', () => {
+      expect(component.form.get('notaFiscal')?.value).toEqual({ cpfNaNota: true, tomadorId: 5 });
+      const select = (fixture.nativeElement as HTMLElement).querySelector('#tomadorId') as HTMLSelectElement;
+      expect(Array.from(select.options).map(o => o.text.trim()))
+        .toContain('Responsável Antigo — 529.982.247-25 (inativo)');
+    });
+
+    it('should relink the tomador after saving only when the choice changed', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(of({ ...semDocumentos, tomadorId: 9 }));
+
+      component.salvar();
+      expect(serviceSpy.vincularTomador).not.toHaveBeenCalled();
+
+      component.form.get('notaFiscal.tomadorId')?.setValue(9);
+      component.salvar();
+      expect(serviceSpy.vincularTomador).toHaveBeenCalledWith(2, 9);
+    });
+
+    it('should unlink the tomador when "the patient himself" is chosen', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(of({ ...semDocumentos, tomadorId: null }));
+      component.form.get('notaFiscal.tomadorId')?.setValue(null);
+
+      component.salvar();
+
+      expect(serviceSpy.vincularTomador).toHaveBeenCalledWith(2, null);
+    });
+
+    it('should show the API message when the tomador is inactive (422)', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 422,
+        error: { detail: 'Tomador inativo não pode ser vinculado: 7' }
+      })));
+      component.form.get('notaFiscal.tomadorId')?.setValue(7);
+
+      component.salvar();
+
+      expect(component.erro).toBe('Tomador inativo não pode ser vinculado: 7');
     });
 
     it('should show the API message when the CPF belongs to another patient', () => {
@@ -508,12 +531,13 @@ describe('PacienteFormComponent', () => {
     let serviceSpy: jasmine.SpyObj<PacienteService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
         ]
       }).compileComponents();

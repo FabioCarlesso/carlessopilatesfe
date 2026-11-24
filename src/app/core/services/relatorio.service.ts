@@ -74,6 +74,9 @@ export class RelatorioService {
     if (filtros.cpfNaNota !== null && filtros.cpfNaNota !== undefined) {
       params = params.set('cpfNaNota', String(filtros.cpfNaNota));
     }
+    if (filtros.tomadorId !== null && filtros.tomadorId !== undefined) {
+      params = params.set('tomadorId', String(filtros.tomadorId));
+    }
 
     return params;
   }
