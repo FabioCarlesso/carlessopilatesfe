@@ -228,6 +228,12 @@ describe('NfseRelatorioComponent', () => {
     });
   });
 
+  it('should mask CPF and CNPJ, which the API sends as digits only', () => {
+    expect(component.documento('12345678909')).toBe('123.456.789-09');
+    expect(component.documento('11222333000181')).toBe('11.222.333/0001-81');
+    expect(component.documento(null)).toBe('—');
+  });
+
   it('should not warn when there is no pendencia', () => {
     component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null });
     component.consultar();

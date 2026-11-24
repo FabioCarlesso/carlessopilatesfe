@@ -10,6 +10,7 @@ import {
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { formatCompetencia } from '../../../shared/utils/competencia-mask';
+import { exibirValorGravado } from '../../../shared/utils/mascara';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
@@ -99,6 +100,11 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
   }
 
   /** Registros que não podem ser emitidos como o paciente pediu até o cadastro ser completado. */
+  /** CPF ou CNPJ com máscara; "—" quando o paciente não deseja CPF na nota (a API manda nulo). */
+  documento(valor: string | null): string {
+    return valor ? exibirValorGravado('cpfCnpj', valor) : '—';
+  }
+
   totalPendencias(): number {
     return this.registros.filter(registro => !!registro.pendencia).length;
   }

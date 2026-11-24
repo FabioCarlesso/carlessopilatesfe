@@ -103,14 +103,14 @@
       </p>
     }
     @if (registros.length > 0) {
-      <div class="table-responsive" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
+      <div class="table-responsive nfse-table-wrap" tabindex="0" role="region" aria-label="Pagamentos para emissão de NFSE">
         <table class="table nfse-table table-sticky-first-col">
           <thead>
             <tr>
               <th>Nome</th>
               <th>CPF/CNPJ</th>
               <th>CPF na nota</th>
-              <th>Pendência</th>
+              <th class="coluna-pendencia">Pendência</th>
               <th>Valor Pago</th>
               <th>Competência</th>
               <th>Descrição do Serviço</th>
@@ -123,13 +123,13 @@
             @for (registro of registros; track registro) {
               <tr [class.linha-pendente]="!!registro.pendencia">
                 <td>{{ registro.nome }}</td>
-                <td>{{ registro.cpfCnpj || '—' }}</td>
+                <td class="coluna-documento">{{ documento(registro.cpfCnpj) }}</td>
                 <td>{{ registro.cpfNaNota ? 'Sim' : 'Não' }}</td>
-                <td>
+                <td class="coluna-pendencia">
                   @if (registro.pendencia) {
                     <span class="badge badge--warning">Pendente</span>
                     <span class="pendencia-texto">{{ registro.pendencia }}</span>
-                    <a [routerLink]="['/pacientes', registro.pacienteId, 'editar']">Corrigir cadastro</a>
+                    <a class="pendencia-link" [routerLink]="['/pacientes', registro.pacienteId, 'editar']">Corrigir cadastro</a>
                   } @else {
                     -
                   }
