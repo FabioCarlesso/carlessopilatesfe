@@ -1,0 +1,150 @@
+<div class="page-header">
+  <h1>Frequência e Faltas</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Aulas previstas, realizadas e faltas por paciente no período. Falta é a aula passada não realizada; aulas de
+  <strong>hoje em diante</strong> não contam. A lista começa por quem tem a menor presença.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="inicio">Início *</label>
+      <input id="inicio" type="date" formControlName="inicio" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="fim">Fim *</label>
+      <input id="fim" type="date" formControlName="fim" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="profissionalId">Profissional</label>
+      <select id="profissionalId" formControlName="profissionalId" class="form-control">
+        <option [ngValue]="null">Todos os profissionais</option>
+        @for (profissional of profissionais; track profissional.id) {
+          <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+        }
+      </select>
+      @if (erroProfissionais) {
+        <span class="campo-aviso">{{ erroProfissionais }}</span>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="taxaMaxima">Presença abaixo de (%)</label>
+      <input id="taxaMaxima" type="number" min="0" max="100" step="1" formControlName="taxaMaxima"
+        class="form-control" placeholder="Ex.: 75" [class.is-invalid]="!!erroTaxa" />
+    </div>
+  </div>
+
+  @if (erroPeriodo) {
+    <div class="invalid-feedback filtro-erro" role="alert">{{ erroPeriodo }}</div>
+  }
+  @if (erroTaxa) {
+    <div class="invalid-feedback filtro-erro" role="alert">{{ erroTaxa }}</div>
+  }
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">
+      Consultar
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar()" [disabled]="!podeExportar">
+      {{ exportando ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
+  </div>
+</form>
+
+@if (loading || exportando) {
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
+}
+
+@if (relatorio) {
+  <section class="relatorio-resultado" aria-label="Resultado do relatório de frequência">
+    <p class="periodo-consultado">
+      Aulas de {{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}
+      · <span class="considerado-ate">Considerado até {{ relatorio.consideradoAte | date:'dd/MM' }}</span>
+      @if (relatorio.filtros.profissionalNome) {
+        · {{ relatorio.filtros.profissionalNome }}
+      }
+    </p>
+
+    <div class="summary-grid">
+      <div class="summary-item" data-card="pacientes">
+        <span class="label">Pacientes</span>
+        <strong>{{ relatorio.totais.pacientes }}</strong>
+      </div>
+      <div class="summary-item" data-card="previstas">
+        <span class="label">Aulas previstas</span>
+        <strong>{{ relatorio.totais.aulasPrevistas }}</strong>
+      </div>
+      <div class="summary-item" data-card="realizadas">
+        <span class="label">Realizadas</span>
+        <strong>{{ relatorio.totais.aulasRealizadas }}</strong>
+      </div>
+      <div class="summary-item" data-card="faltas">
+        <span class="label">Faltas</span>
+        <strong>{{ relatorio.totais.faltas }}</strong>
+      </div>
+      <div class="summary-item summary-item--total" data-card="presenca">
+        <span class="label">Presença</span>
+        <strong>
+          @if (relatorio.totais.taxaPresenca !== null) {
+            {{ relatorio.totais.taxaPresenca | number:'1.0-1' }}%
+          } @else {
+            -
+          }
+        </strong>
+      </div>
+    </div>
+
+    @if (semPacientes) {
+      <div class="empty-state sem-pacientes">
+        Nenhuma aula passada no período com os filtros informados.
+      </div>
+    } @else {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Frequência por paciente">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Previstas</th>
+              <th>Realizadas</th>
+              <th>Faltas</th>
+              <th>Presença</th>
+              <th>Última aula realizada</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (paciente of relatorio.pacientes; track paciente.pacienteId) {
+              <tr [class.abaixo-limite]="abaixoDoLimite(paciente)">
+                <td>
+                  <a [routerLink]="['/pacientes', paciente.pacienteId]">{{ paciente.pacienteNome }}</a>
+                  @if (!paciente.ativo) {
+                    <span class="badge badge-inativo">Inativo</span>
+                  }
+                </td>
+                <td>{{ paciente.aulasPrevistas }}</td>
+                <td>{{ paciente.aulasRealizadas }}</td>
+                <td>{{ paciente.faltas }}</td>
+                <td class="coluna-presenca">{{ paciente.taxaPresenca | number:'1.0-1' }}%</td>
+                <td>{{ paciente.ultimaAulaRealizada ? (paciente.ultimaAulaRealizada | date:'dd/MM/yyyy') : '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

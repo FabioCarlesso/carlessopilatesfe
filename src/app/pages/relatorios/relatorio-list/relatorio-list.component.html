@@ -21,6 +21,15 @@
     </a>
   }
 
+  @if (authService.hasAnyRole(papeis.relatorioFrequencia)) {
+    <a routerLink="/relatorios/frequencia" class="relatorio-card">
+      <span class="relatorio-card__title">Frequência e Faltas</span>
+      <span class="relatorio-card__description">
+        Veja aulas previstas, realizadas e faltas por paciente, começando por quem tem a menor presença.
+      </span>
+    </a>
+  }
+
   @if (authService.hasAnyRole(papeis.fiscal)) {
     <a routerLink="/relatorios/financeiro" class="relatorio-card">
       <span class="relatorio-card__title">Financeiro do Estúdio</span>

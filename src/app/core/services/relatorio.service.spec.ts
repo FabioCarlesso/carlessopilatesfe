@@ -4,6 +4,7 @@ import { RelatorioService } from './relatorio.service';
 import { RelatorioFinanceiroDTO, RelatorioNfseResponseDTO } from '../models/relatorio';
 import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import { RelatorioRecebimentosDTO } from '../models/relatorio-recebimentos';
+import { RelatorioFrequenciaDTO } from '../models/relatorio-frequencia';
 
 const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
   {
@@ -211,5 +212,47 @@ describe('RelatorioService', () => {
         req.flush(blob);
       });
     }
+  });
+
+  describe('frequência e faltas', () => {
+    it('should GET the attendance report with the period only when no filter is informed', () => {
+      const relatorio = { pacientes: [] } as unknown as RelatorioFrequenciaDTO;
+      service.relatorioFrequencia('2026-11-01', '2026-11-30').subscribe(r => expect(r).toEqual(relatorio));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(relatorio);
+    });
+
+    it('should send profissionalId, pacienteId and taxaMaxima (including 0) and skip null filters', () => {
+      service.relatorioFrequencia('2026-11-01', '2026-11-30', { profissionalId: 4, pacienteId: 7, taxaMaxima: 0 })
+        .subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(req.request.params.get('profissionalId')).toBe('4');
+      expect(req.request.params.get('pacienteId')).toBe('7');
+      expect(req.request.params.get('taxaMaxima')).toBe('0');
+      req.flush({});
+
+      service.relatorioFrequencia('2026-11-01', '2026-11-30', { profissionalId: null, taxaMaxima: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(semFiltro.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      semFiltro.flush({});
+    });
+
+    it('should export the attendance report as an xlsx blob with the filters', () => {
+      const blob = new Blob(['xlsx']);
+      service.exportarRelatorioFrequencia('2026-11-01', '2026-11-30', { taxaMaxima: 75 })
+        .subscribe(response => expect(response.body).toBe(blob));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia/xlsx');
+      expect(req.request.params.get('inicio')).toBe('2026-11-01');
+      expect(req.request.params.get('fim')).toBe('2026-11-30');
+      expect(req.request.params.get('taxaMaxima')).toBe('75');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(blob);
+    });
   });
 });
