@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
@@ -101,7 +101,7 @@ describe('InadimplenciaComponent', () => {
   let pacienteSpy: jasmine.SpyObj<PacienteService>;
 
   beforeEach(async () => {
-    pagamentoSpy = jasmine.createSpyObj('PagamentoService', ['listarTodos', 'listarCobrancas', 'registrarCobranca']);
+    pagamentoSpy = jasmine.createSpyObj('PagamentoService', ['listarTodos', 'listarCobrancas', 'registrarCobranca', 'exportar']);
     pagamentoSpy.listarTodos.and.returnValue(of(pagina([vencido, pendente, pago])));
     pagamentoSpy.listarCobrancas.and.returnValue(of(contatos));
     pagamentoSpy.registrarCobranca.and.returnValue(of(contatos[0]));
@@ -642,6 +642,192 @@ describe('InadimplenciaComponent', () => {
 
       expect(component.registrando).toBeTrue();
       expect(component.cobranca).not.toBeNull();
+    });
+  });
+  describe('atalhos', () => {
+    /** Aplica o atalho com o relógio fixo em {@link HOJE}. */
+    function aplicar(indice: number): void {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(HOJE);
+      try {
+        todos('.atalhos button')[indice].click();
+        fixture.detectChanges();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    }
+
+    it('should start with "Todas em aberto" pressed', () => {
+      criar();
+      const botoes = todos('.atalhos button');
+      expect(botoes.map(b => b.textContent?.trim())).toEqual(['Vencidas', 'Vencem em 7 dias', 'Todas em aberto']);
+      expect(botoes.map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true']);
+    });
+
+    it('should search pending payments due from today to today + 7 with "Vencem em 7 dias"', () => {
+      criar();
+      aplicar(1);
+
+      expect(ultimaChamada()[0]).toEqual({
+        status: ['PENDENTE'],
+        vencimentoDe: '2026-10-12',
+        vencimentoAte: '2026-10-19',
+        pacienteId: undefined
+      });
+      expect(ultimaChamada()[1]).toBe(0);
+      expect(component.filtro).toEqual({
+        status: { PENDENTE: true, VENCIDO: false, PAGO: false },
+        vencimentoDe: '2026-10-12',
+        vencimentoAte: '2026-10-19'
+      });
+      expect(todos('.atalhos button')[1].getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should search open payments due until yesterday with "Vencidas", keeping the selected patient', () => {
+      criar();
+      component.selecionarPaciente(ana);
+      aplicar(0);
+
+      expect(ultimaChamada()[0]).toEqual({
+        status: ['PENDENTE', 'VENCIDO'],
+        vencimentoDe: undefined,
+        vencimentoAte: '2026-10-11',
+        pacienteId: 10
+      });
+    });
+
+    it('should go back to every open payment with "Todas em aberto"', () => {
+      criar();
+      aplicar(1);
+      aplicar(2);
+
+      expect(ultimaChamada()[0]).toEqual({
+        status: ['PENDENTE', 'VENCIDO'],
+        vencimentoDe: undefined,
+        vencimentoAte: undefined,
+        pacienteId: undefined
+      });
+      expect(todos('.atalhos button')[2].getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('should unpress every shortcut for a custom filter', () => {
+      criar();
+      component.filtro.status = { PENDENTE: false, VENCIDO: false, PAGO: true };
+      component.buscar();
+      fixture.detectChanges();
+
+      expect(todos('.atalhos button').map(b => b.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false']);
+    });
+  });
+
+  describe('exportação', () => {
+    const botaoExportar = () =>
+      todos('.page-header button').find(b => /Exportar Excel|Gerando Excel/.test(b.textContent ?? '')) as HTMLButtonElement;
+
+    function arquivo(nome: string): HttpResponse<Blob> {
+      return new HttpResponse({
+        body: new Blob(['xlsx']),
+        headers: new HttpHeaders({ 'Content-Disposition': `attachment; filename="${nome}"` })
+      });
+    }
+
+    it('should export the applied filter and sort, not the one still being edited', () => {
+      criar();
+      component.filtro.status = { PENDENTE: true, VENCIDO: false, PAGO: false };
+      component.filtro.vencimentoDe = '2026-10-12';
+      component.buscar();
+      component.ordenar(component.campoDiasAtraso);
+      // Editado, mas não confirmado com Buscar.
+      component.filtro.vencimentoAte = '2026-12-31';
+      pagamentoSpy.exportar.and.returnValue(new Subject<HttpResponse<Blob>>());
+
+      component.exportar();
+
+      expect(pagamentoSpy.exportar).toHaveBeenCalledOnceWith(
+        { status: ['PENDENTE'], vencimentoDe: '2026-10-12', vencimentoAte: undefined, pacienteId: undefined },
+        ['status,asc', 'dataVencimento,desc']
+      );
+    });
+
+    it('should download with the API file name and disable the button while generating', () => {
+      criar();
+      const resposta$ = new Subject<HttpResponse<Blob>>();
+      pagamentoSpy.exportar.and.returnValue(resposta$);
+      spyOn(window.URL, 'createObjectURL').and.returnValue('blob:cobrancas');
+      spyOn(window.URL, 'revokeObjectURL');
+      let baixado = '';
+      spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) {
+        baixado = this.download;
+      });
+
+      botaoExportar().click();
+      fixture.detectChanges();
+      expect(botaoExportar().disabled).toBeTrue();
+      expect(botaoExportar().textContent?.trim()).toBe('Gerando Excel...');
+
+      botaoExportar().click();
+      expect(pagamentoSpy.exportar).toHaveBeenCalledTimes(1);
+
+      resposta$.next(arquivo('cobrancas-2026-10-12.xlsx'));
+      resposta$.complete();
+      fixture.detectChanges();
+
+      expect(baixado).toBe('cobrancas-2026-10-12.xlsx');
+      expect(botaoExportar().disabled).toBeFalse();
+      expect(component.erroExportacao).toBeNull();
+    });
+
+    it('should disable the export when the list is empty', () => {
+      pagamentoSpy.listarTodos.and.returnValue(of(pagina([])));
+      criar();
+
+      expect(botaoExportar().disabled).toBeTrue();
+    });
+
+    /** `Blob.text()` resolve fora do controle do teste: espera a leitura do corpo terminar. */
+    async function aguardarExportacao(): Promise<void> {
+      for (let i = 0; i < 50 && component.exportando; i++) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      fixture.detectChanges();
+    }
+
+    it('should show the API detail of the 400 limit read from the Blob body, keeping the list', async () => {
+      criar();
+      const corpo = new Blob([JSON.stringify({ detail: 'Mais de 5000 pagamentos: restrinja os filtros.' })]);
+      pagamentoSpy.exportar.and.returnValue(throwError(() => erroHttp(400, corpo)));
+
+      component.exportar();
+      await aguardarExportacao();
+
+      expect(texto('.erro-exportacao')).toBe('Mais de 5000 pagamentos: restrinja os filtros.');
+      expect(component.exportando).toBeFalse();
+      expect(botaoExportar().disabled).toBeFalse();
+      expect(todos('.table tbody tr').length).toBe(3);
+    });
+
+    it('should fall back to a generic message when the error body is unreadable', async () => {
+      criar();
+      pagamentoSpy.exportar.and.returnValue(throwError(() => erroHttp(500, new Blob(['<html></html>']))));
+
+      component.exportar();
+      await aguardarExportacao();
+
+      expect(texto('.erro-exportacao')).toBe('Erro ao exportar as cobranças em Excel.');
+    });
+
+    it('should clear the previous export error on a new attempt', async () => {
+      criar();
+      pagamentoSpy.exportar.and.returnValue(throwError(() => erroHttp(500, new Blob([]))));
+      component.exportar();
+      await aguardarExportacao();
+      pagamentoSpy.exportar.and.returnValue(new Subject<HttpResponse<Blob>>());
+
+      component.exportar();
+      fixture.detectChanges();
+
+      expect(component.erroExportacao).toBeNull();
+      expect(el().querySelector('.erro-exportacao')).toBeNull();
     });
   });
 });
