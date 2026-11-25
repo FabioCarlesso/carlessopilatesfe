@@ -135,4 +135,16 @@ describe('RelatorioListComponent', () => {
     comPapeis(['FINANCEIRO']);
     expect(renderizar().querySelector('a[href="/relatorios/aulas-sem-evolucao"]')).toBeNull();
   });
+
+  it('should show the grade occupation to ADMIN and RECEPCAO and hide it from the financeiro', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/relatorios/ocupacao"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Ocupação da Grade');
+
+    comPapeis(['RECEPCAO']);
+    expect(renderizar().querySelector('a[href="/relatorios/ocupacao"]')).toBeTruthy();
+
+    comPapeis(['FINANCEIRO']);
+    expect(renderizar().querySelector('a[href="/relatorios/ocupacao"]')).toBeNull();
+  });
 });

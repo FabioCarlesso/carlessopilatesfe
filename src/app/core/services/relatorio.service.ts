@@ -14,6 +14,7 @@ import {
   RelatorioPacientesFiltros,
   RelatorioPacientesFormatoExportacao
 } from '../models/relatorio-pacientes';
+import { RelatorioOcupacaoDTO, RelatorioOcupacaoFiltros } from '../models/relatorio-ocupacao';
 import {
   RelatorioRecebimentosDTO,
   RelatorioRecebimentosFiltros,
@@ -35,6 +36,7 @@ export class RelatorioService {
   private readonly recebimentosUrl = '/api/api/relatorios/recebimentos';
   private readonly frequenciaUrl = '/api/api/relatorios/frequencia';
   private readonly aulasSemEvolucaoUrl = '/api/api/relatorios/aulas-sem-evolucao';
+  private readonly ocupacaoUrl = '/api/api/relatorios/ocupacao';
 
   constructor(private http: HttpClient) {}
 
@@ -267,4 +269,26 @@ export class RelatorioService {
   }
 
   // --- fim: aulas sem evolução ---
+
+  // --- Ocupação da grade (carlessopilatesapi#235) ---
+
+  /**
+   * Ocupação da grade semanal (carlessopilatesapi#235). `semana` é qualquer
+   * data da semana; sem ela, a API usa a semana de hoje.
+   */
+  relatorioOcupacao(filtros: RelatorioOcupacaoFiltros = {}): Observable<RelatorioOcupacaoDTO> {
+    let params = new HttpParams();
+    if (filtros.semana) {
+      params = params.set('semana', filtros.semana);
+    }
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    return this.http.get<RelatorioOcupacaoDTO>(this.ocupacaoUrl, {
+      params,
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  // --- fim: ocupação ---
 }
