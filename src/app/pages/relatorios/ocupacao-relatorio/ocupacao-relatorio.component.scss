@@ -81,29 +81,6 @@
   border: 1px solid var(--border-default);
 }
 
-/* Faixa de cor: vale para a amostra da legenda e para o item da grade. */
-[data-faixa='livre'] {
-  background-color: var(--c-success-bg);
-  border-color: var(--c-success);
-}
-
-[data-faixa='parcial'] {
-  background-color: var(--c-warning-bg);
-  border-color: var(--c-warning);
-}
-
-[data-faixa='lotado'] {
-  background-color: var(--c-danger-bg);
-  border-color: var(--c-danger);
-}
-
-[data-faixa='fora'],
-[data-faixa='sem-vaga'] {
-  background-color: var(--bg-sunken);
-  border-color: var(--border-default);
-  border-style: dashed;
-}
-
 .grade {
   th,
   td {
@@ -161,6 +138,30 @@
   color: var(--c-info);
   font-size: var(--fs-micro);
   font-weight: 600;
+}
+
+/* Faixa de cor: vale para a amostra da legenda e para o item da grade. Fica depois de `.item`, cujo atalho
+   `border` redefiniria cor e estilo da borda (mesma especificidade). */
+[data-faixa='livre'] {
+  background-color: var(--c-success-bg);
+  border-color: var(--c-success);
+}
+
+[data-faixa='parcial'] {
+  background-color: var(--c-warning-bg);
+  border-color: var(--c-warning);
+}
+
+[data-faixa='lotado'] {
+  background-color: var(--c-danger-bg);
+  border-color: var(--c-danger);
+}
+
+[data-faixa='fora'],
+[data-faixa='sem-vaga'] {
+  background-color: var(--bg-sunken);
+  border-color: var(--border-default);
+  border-style: dashed;
 }
 
 /* Lotado com gente esperando: borda mais grossa para chamar atenção. */
