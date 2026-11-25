@@ -65,6 +65,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (_fiscal_) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (_fiscal_) |
 | `/relatorios/financeiro` | Relatório financeiro consolidado do estúdio: receita, repasses, inadimplência e resultado líquido (_fiscal_) |
+| `/relatorios/recebimentos` | Recebimentos do período por data de pagamento, com totais por forma de pagamento (_fiscal_) |
 | `/relatorios/indicadores` | Indicadores históricos: receita, ocupação e evasão mês a mês, e ranking de aulas por profissional (`ADMIN`) |
 | `/financeiro/inadimplencia` | Gestão de inadimplência: lista global paginada de pagamentos com dias em atraso, filtros e contatos de cobrança (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |

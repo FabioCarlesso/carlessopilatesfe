@@ -67,4 +67,14 @@ describe('RelatorioListComponent', () => {
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Financeiro do Estúdio');
   });
+
+  it('should render the receipts report link for the financeiro too', () => {
+    authSpy.isAdmin.and.returnValue(false);
+    const financeiro = TestBed.createComponent(RelatorioListComponent);
+    financeiro.detectChanges();
+    const link = (financeiro.nativeElement as HTMLElement).querySelector('a[href="/relatorios/recebimentos"]');
+
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Recebimentos do Período');
+  });
 });

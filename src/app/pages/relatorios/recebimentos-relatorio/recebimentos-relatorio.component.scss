@@ -1,0 +1,165 @@
+/* Recebimentos do período (issue #289). Cards e ações seguem o relatório
+   financeiro; a busca de paciente segue a da inadimplência. Tabela e aviso de
+   scroll vêm das classes globais da #164. */
+
+.page-subtitle {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.relatorio-form {
+  margin-bottom: var(--sp-5);
+}
+
+.periodo-erro {
+  display: block;
+  margin-bottom: var(--sp-3);
+}
+
+.periodo-consultado {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+/* Busca de paciente: a lista de sugestões cresce para baixo dentro do campo. */
+.filtro-paciente {
+  min-width: 0;
+
+  .filtro-rotulo {
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm);
+    font-weight: 600;
+  }
+}
+
+.paciente-selecionado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--input-h);
+  padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3);
+  background-color: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow-wrap: anywhere;
+}
+
+.sugestoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+.sugestao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--border-strong);
+    background-color: var(--bg-sunken);
+  }
+}
+
+.sugestao-nome {
+  font-weight: 600;
+}
+
+.sugestao-detalhe,
+.sugestao-status {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.sugestao-status {
+  margin: 0;
+}
+
+/* `auto-fit` com piso de 160px empilha os sete cards sozinho no mobile. */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+
+  .label {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: var(--fs-h3);
+  }
+
+  .detalhe {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+  }
+
+  &--total {
+    border-color: var(--border-strong);
+  }
+
+  &--zerado strong {
+    color: var(--text-muted);
+  }
+}
+
+.sem-recebimentos {
+  padding: var(--sp-4);
+}
+
+.table {
+  min-width: 760px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.forma-nao-informada {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.linha-total {
+  th,
+  td {
+    font-weight: 700;
+    border-top: 2px solid var(--border-default);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+}
