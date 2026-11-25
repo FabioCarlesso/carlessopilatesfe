@@ -137,6 +137,38 @@ describe('PagamentoService', () => {
     });
   });
 
+  describe('exportar', () => {
+    it('should GET /api/pagamentos/xlsx as a blob response with the default sort and no pagination', () => {
+      const blob = new Blob(['xlsx']);
+      service.exportar().subscribe(resp => {
+        expect(resp.body).toBe(blob);
+        expect(resp.headers.get('Content-Disposition')).toContain('cobrancas-2026-10-12.xlsx');
+      });
+      const req = httpMock.expectOne(r => r.url === '/api/pagamentos/xlsx');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.params.keys()).toEqual(['sort']);
+      expect(req.request.params.get('sort')).toBe('dataVencimento,asc');
+      req.flush(blob, { headers: { 'Content-Disposition': 'attachment; filename="cobrancas-2026-10-12.xlsx"' } });
+    });
+
+    it('should send the same filters and sort criteria as the listing', () => {
+      service.exportar(
+        { status: ['PENDENTE'], vencimentoDe: '2026-10-12', vencimentoAte: '2026-10-19', pacienteId: 10 },
+        ['status,desc', 'dataVencimento,asc']
+      ).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/pagamentos/xlsx');
+      expect(req.request.params.getAll('status')).toEqual(['PENDENTE']);
+      expect(req.request.params.get('vencimentoDe')).toBe('2026-10-12');
+      expect(req.request.params.get('vencimentoAte')).toBe('2026-10-19');
+      expect(req.request.params.get('pacienteId')).toBe('10');
+      expect(req.request.params.getAll('sort')).toEqual(['status,desc', 'dataVencimento,asc']);
+      expect(req.request.params.has('page')).toBeFalse();
+      expect(req.request.params.has('size')).toBeFalse();
+      req.flush(new Blob());
+    });
+  });
+
   describe('cobranças', () => {
     const contato = {
       id: 5,

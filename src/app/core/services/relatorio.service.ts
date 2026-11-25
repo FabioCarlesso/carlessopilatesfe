@@ -9,6 +9,16 @@ import {
   RelatorioNfseFormatoExportacao,
   RelatorioNfseResponseDTO
 } from '../models/relatorio';
+import {
+  RelatorioPacientesDTO,
+  RelatorioPacientesFiltros,
+  RelatorioPacientesFormatoExportacao
+} from '../models/relatorio-pacientes';
+import {
+  RelatorioRecebimentosDTO,
+  RelatorioRecebimentosFiltros,
+  RelatorioRecebimentosFormatoExportacao
+} from '../models/relatorio-recebimentos';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +26,8 @@ import {
 export class RelatorioService {
   private readonly nfseUrl = '/api/api/relatorios/nfse';
   private readonly financeiroUrl = '/api/api/relatorios/financeiro';
+  private readonly pacientesUrl = '/api/api/relatorios/pacientes';
+  private readonly recebimentosUrl = '/api/api/relatorios/recebimentos';
 
   constructor(private http: HttpClient) {}
 
@@ -65,6 +77,52 @@ export class RelatorioService {
     });
   }
 
+  /**
+   * Relatório de pacientes (carlessopilatesapi#230), para `ADMIN` e `RECEPCAO`.
+   * Como o financeiro, exporta por rota (`/pdf`, `/xlsx`) e a tela trata o `403`.
+   */
+  relatorioPacientes(filtros: RelatorioPacientesFiltros = {}): Observable<RelatorioPacientesDTO> {
+    return this.http.get<RelatorioPacientesDTO>(this.pacientesUrl, {
+      params: this.pacientesParams(filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  exportarRelatorioPacientes(
+    formato: RelatorioPacientesFormatoExportacao,
+    filtros: RelatorioPacientesFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.pacientesUrl}/${formato}`, {
+      params: this.pacientesParams(filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  /** `semPlanoAtivo` e `cadastroIncompleto` só vão quando `true`: na API, `false` não filtra. */
+  private pacientesParams(filtros: RelatorioPacientesFiltros): HttpParams {
+    let params = new HttpParams();
+
+    if (filtros.situacao) {
+      params = params.set('situacao', filtros.situacao);
+    }
+    if (filtros.semPlanoAtivo) {
+      params = params.set('semPlanoAtivo', 'true');
+    }
+    if (filtros.cadastroIncompleto) {
+      params = params.set('cadastroIncompleto', 'true');
+    }
+    if (filtros.mesNascimento !== null && filtros.mesNascimento !== undefined) {
+      params = params.set('mesNascimento', String(filtros.mesNascimento));
+    }
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+
+    return params;
+  }
+
   private nfseParams(competencia: string, filtros: RelatorioNfseFiltros): HttpParams {
     let params = new HttpParams().set('competencia', competencia);
 
@@ -80,4 +138,46 @@ export class RelatorioService {
 
     return params;
   }
+
+  // --- Recebimentos do período (carlessopilatesapi#231) ---
+
+  /** Pagamentos confirmados no período, por data de pagamento. O `403` é tratado pela tela. */
+  relatorioRecebimentos(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioRecebimentosFiltros = {}
+  ): Observable<RelatorioRecebimentosDTO> {
+    return this.http.get<RelatorioRecebimentosDTO>(this.recebimentosUrl, {
+      params: this.recebimentosParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  /** Como no financeiro, a exportação é por rota (`/pdf`, `/xlsx`). */
+  exportarRelatorioRecebimentos(
+    inicio: string,
+    fim: string,
+    formato: RelatorioRecebimentosFormatoExportacao,
+    filtros: RelatorioRecebimentosFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.recebimentosUrl}/${formato}`, {
+      params: this.recebimentosParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private recebimentosParams(inicio: string, fim: string, filtros: RelatorioRecebimentosFiltros): HttpParams {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (filtros.formaPagamento) {
+      params = params.set('formaPagamento', filtros.formaPagamento);
+    }
+    if (filtros.pacienteId !== null && filtros.pacienteId !== undefined) {
+      params = params.set('pacienteId', String(filtros.pacienteId));
+    }
+    return params;
+  }
+
+  // --- fim: recebimentos ---
 }

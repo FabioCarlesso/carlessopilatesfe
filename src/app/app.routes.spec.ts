@@ -8,6 +8,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { visitanteGuard } from './core/guards/visitante.guard';
 import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
 import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-relatorio/financeiro-relatorio.component';
+import { RecebimentosRelatorioComponent } from './pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component';
 import { PacienteFinanceiroComponent } from './pages/pacientes/paciente-financeiro/paciente-financeiro.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
@@ -72,9 +73,11 @@ describe('app routes', () => {
       'aulas/paciente/:pacienteId',
       'aulas/pagamento/:pagamentoId',
       'relatorios',
+      'relatorios/pacientes',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
       'relatorios/financeiro',
+      'relatorios/recebimentos',
       'relatorios/indicadores',
       'financeiro/inadimplencia',
       'admin',
@@ -250,6 +253,27 @@ describe('app routes', () => {
     } finally {
       localStorage.clear();
     }
+  });
+
+  it('should open the receipts report to ADMIN and FINANCEIRO only and lazy load it', async () => {
+    TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
+    const route = routes.find(r => r.path === 'relatorios/recebimentos')!;
+    const guard = route.canActivate![0] as CanActivateFn;
+    const ativar = (roles: UserRole[]) => {
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+    };
+
+    try {
+      expect(ativar(['ADMIN'])).toBeTrue();
+      expect(ativar(['FINANCEIRO'])).toBeTrue();
+      expect(ativar(['RECEPCAO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['PROFISSIONAL'])).toBeInstanceOf(UrlTree);
+    } finally {
+      localStorage.clear();
+    }
+    expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(RecebimentosRelatorioComponent);
   });
 
   it('should guard the patient financial history with the billing roles and lazy load it', async () => {

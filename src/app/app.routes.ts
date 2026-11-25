@@ -276,10 +276,21 @@ export const routes: Routes = [
       import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
   },
   {
+    // O hub abre para a recepção por causa do relatório de pacientes (#288);
+    // cada card respeita o papel da própria tela.
     path: 'relatorios',
-    canActivate: [roleGuard(PAPEIS.fiscal)],
+    canActivate: [roleGuard(PAPEIS.relatorios)],
     loadComponent: () =>
       import('./pages/relatorios/relatorio-list/relatorio-list.component').then(m => m.RelatorioListComponent)
+  },
+  {
+    // Relatório de pacientes (issue #288). A API o libera para `ADMIN` e
+    // `RECEPCAO` (carlessopilatesapi#230), não para o financeiro.
+    path: 'relatorios/pacientes',
+    canActivate: [roleGuard(PAPEIS.relatorioPacientes)],
+    loadComponent: () =>
+      import('./pages/relatorios/pacientes-relatorio/pacientes-relatorio.component')
+        .then(m => m.PacientesRelatorioComponent)
   },
   {
     path: 'relatorios/pagamento-profissional',
@@ -303,6 +314,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/relatorios/financeiro-relatorio/financeiro-relatorio.component')
         .then(m => m.FinanceiroRelatorioComponent)
+  },
+  {
+    // Recebimentos do período (issue #289): mesmo público do relatório
+    // financeiro, porque a API (carlessopilatesapi#231) libera ADMIN e FINANCEIRO.
+    path: 'relatorios/recebimentos',
+    canActivate: [roleGuard(PAPEIS.fiscal)],
+    loadComponent: () =>
+      import('./pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component')
+        .then(m => m.RecebimentosRelatorioComponent)
   },
   {
     // Indicadores históricos (issue #130). A API só expõe as séries e o

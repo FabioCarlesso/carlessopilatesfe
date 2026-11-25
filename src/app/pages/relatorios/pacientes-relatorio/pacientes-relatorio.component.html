@@ -1,0 +1,179 @@
+<div class="page-header">
+  <h1>Relatório de Pacientes</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Pacientes por situação, com plano ativo, profissional das próximas aulas e pendências de cadastro.
+  O filtro <strong>Sem plano ativo</strong> considera só pacientes ativos.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="situacao">Situação</label>
+      <select id="situacao" formControlName="situacao" class="form-control">
+        @for (situacao of situacoes; track situacao[0]) {
+          <option [ngValue]="situacao[0]">{{ situacao[1] }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="mesNascimento">Aniversariantes do mês</label>
+      <select id="mesNascimento" formControlName="mesNascimento" class="form-control">
+        <option [ngValue]="null">Todos os meses</option>
+        @for (mes of meses; track mes.valor) {
+          <option [ngValue]="mes.valor">{{ mes.nome }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="profissionalId">Profissional</label>
+      <select id="profissionalId" formControlName="profissionalId" class="form-control">
+        <option [ngValue]="null">Todos os profissionais</option>
+        @for (profissional of profissionais; track profissional.id) {
+          <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+        }
+      </select>
+      @if (erroProfissionais) {
+        <div class="field-hint">{{ erroProfissionais }}</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-row filtros-checkbox">
+    <div class="form-group form-group--checkbox">
+      <label for="semPlanoAtivo">
+        <input id="semPlanoAtivo" type="checkbox" formControlName="semPlanoAtivo" />
+        Sem plano ativo
+      </label>
+    </div>
+
+    <div class="form-group form-group--checkbox">
+      <label for="cadastroIncompleto">
+        <input id="cadastroIncompleto" type="checkbox" formControlName="cadastroIncompleto" />
+        Cadastro incompleto
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">
+      Consultar
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('pdf')"
+      [disabled]="loading || exportando !== null || !filtrosConsultados">
+      {{ exportando === 'pdf' ? 'Gerando PDF...' : 'Exportar PDF' }}
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('xlsx')"
+      [disabled]="loading || exportando !== null || !filtrosConsultados">
+      {{ exportando === 'xlsx' ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
+  </div>
+</form>
+
+@if (loading || exportando) {
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
+}
+
+@if (relatorio) {
+  <section class="relatorio-resultado" aria-label="Resultado do relatório de pacientes">
+    <div class="summary-grid">
+      <div class="summary-item" data-card="total">
+        <span class="label">Pacientes</span>
+        <strong>{{ relatorio.totais.total }}</strong>
+        <span class="detalhe">no filtro consultado</span>
+      </div>
+      <div class="summary-item" data-card="ativos">
+        <span class="label">Ativos</span>
+        <strong>{{ relatorio.totais.ativos }}</strong>
+      </div>
+      <div class="summary-item" data-card="inativos">
+        <span class="label">Inativos</span>
+        <strong>{{ relatorio.totais.inativos }}</strong>
+      </div>
+      <div class="summary-item" data-card="pendencia">
+        <span class="label">Com pendência</span>
+        <strong>{{ relatorio.totais.comPendencia }}</strong>
+        <span class="detalhe">ao menos uma pendência de cadastro</span>
+      </div>
+    </div>
+
+    @if (relatorio.pacientes.length === 0) {
+      <div class="empty-state">Nenhum paciente encontrado com os filtros informados.</div>
+    } @else {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Pacientes">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Contato</th>
+              <th>Nascimento</th>
+              <th>Situação</th>
+              <th>Cadastro</th>
+              <th>Inativação</th>
+              <th>Plano ativo</th>
+              <th>Profissional</th>
+              <th>Pendências</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (paciente of relatorio.pacientes; track paciente.id) {
+              <tr>
+                <td>
+                  <a [routerLink]="['/pacientes', paciente.id]">{{ paciente.nome }}</a>
+                </td>
+                <td class="coluna-contato">
+                  <span>{{ paciente.telefone || '-' }}</span>
+                  <span class="texto-secundario">{{ paciente.email || '-' }}</span>
+                </td>
+                <td>
+                  @if (paciente.dataNascimento) {
+                    {{ paciente.dataNascimento | date:'dd/MM/yyyy' }}
+                    @if (paciente.idade !== null) {
+                      <span class="texto-secundario">{{ paciente.idade }} anos</span>
+                    }
+                  } @else {
+                    -
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class.badge--success]="paciente.ativo" [class.badge--danger]="!paciente.ativo">
+                    {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td>{{ paciente.dataCadastro ? (paciente.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
+                <td>{{ paciente.dataInativacao ? (paciente.dataInativacao | date:'dd/MM/yyyy') : '-' }}</td>
+                <td>
+                  @if (paciente.planoAtivo; as plano) {
+                    <span>{{ descricaoPlano(plano) }}</span>
+                    <span class="texto-secundario">{{ plano.valor | currency:'BRL' }}</span>
+                  } @else {
+                    -
+                  }
+                </td>
+                <td>{{ paciente.profissional?.nome || '-' }}</td>
+                <td class="coluna-pendencias">
+                  @for (pendencia of paciente.pendencias; track pendencia) {
+                    <span class="badge badge--warning">{{ rotuloPendencia(pendencia) }}</span>
+                  } @empty {
+                    -
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

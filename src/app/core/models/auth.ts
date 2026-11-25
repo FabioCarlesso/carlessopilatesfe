@@ -24,6 +24,10 @@ export const PAPEIS = {
   agenda: ['ADMIN', 'PROFISSIONAL', 'RECEPCAO'],
   cobranca: ['ADMIN', 'RECEPCAO', 'FINANCEIRO'],
   fiscal: ['ADMIN', 'FINANCEIRO'],
+  // Relatório de pacientes (carlessopilatesapi#230): é da recepção, não do financeiro.
+  relatorioPacientes: ['ADMIN', 'RECEPCAO'],
+  // Quem abre o hub `/relatorios`: a união de `fiscal` e `relatorioPacientes`.
+  relatorios: ['ADMIN', 'RECEPCAO', 'FINANCEIRO'],
   admin: ['ADMIN']
 } as const satisfies Record<string, readonly UserRole[]>;
 

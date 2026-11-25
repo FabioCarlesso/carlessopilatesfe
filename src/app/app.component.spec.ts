@@ -116,8 +116,26 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('a[href="/profissionais"]')).toBeNull();
-    expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
     expect(el.querySelector('a[href="/admin"]')).toBeNull();
+  });
+
+  it('should show the reports hub to RECEPCAO, owner of the patients report (#288)', async () => {
+    await setup(true, false);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('a[href="/relatorios"]')).not.toBeNull();
+  });
+
+  it('should hide the reports hub from PROFISSIONAL, which reaches no report', async () => {
+    await setup(true, false);
+    comPapeis(['PROFISSIONAL']);
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('a[href="/relatorios"]')).toBeNull();
   });
 
   it('should show only the links of the areas each role reaches', async () => {

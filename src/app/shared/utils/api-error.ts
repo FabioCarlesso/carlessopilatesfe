@@ -73,3 +73,29 @@ export function ehConflitoConcorrencia(err: unknown): boolean {
   const tipo = (err.error as { type?: unknown } | null)?.type;
   return typeof tipo === 'string' && tipo.endsWith('/concurrent-modification');
 }
+
+/**
+ * Versão de {@link extrairMensagemErro} para requisições com `responseType: 'blob'`
+ * (exportações): o `HttpClient` entrega o corpo de erro como `Blob`, e a
+ * mensagem do backend (o `detail` do `400`, por exemplo) só aparece depois de
+ * ler o texto e interpretar o JSON. Corpo ilegível ou que não é JSON cai no
+ * tratamento normal, ou seja, no `fallback`.
+ */
+export async function extrairMensagemErroBlob(err: unknown, fallback: string): Promise<string> {
+  if (!(err instanceof HttpErrorResponse) || !(err.error instanceof Blob)) {
+    return extrairMensagemErro(err, fallback);
+  }
+
+  let corpo: unknown;
+  try {
+    const texto = await err.error.text();
+    corpo = texto.trim() ? JSON.parse(texto) : null;
+  } catch {
+    corpo = null;
+  }
+
+  return extrairMensagemErro(
+    new HttpErrorResponse({ status: err.status, statusText: err.statusText, url: err.url ?? undefined, error: corpo }),
+    fallback
+  );
+}

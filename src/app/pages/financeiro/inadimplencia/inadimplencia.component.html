@@ -3,11 +3,37 @@
     <h1>Inadimplência</h1>
     <p class="page-subtitle">Pagamentos em aberto, dias em atraso e contatos de cobrança</p>
   </div>
+  <!-- Exporta o último filtro aplicado (o que está na tabela), não o que ainda está sendo editado. -->
+  <button
+    type="button"
+    class="btn btn-secondary"
+    [disabled]="loading || exportando || linhas.length === 0"
+    (click)="exportar()">
+    {{ exportando ? 'Gerando Excel...' : 'Exportar Excel' }}
+  </button>
 </div>
 
 @if (erro) {
   <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
+@if (erroExportacao) {
+  <div class="alert alert-danger erro-exportacao" role="alert">{{ erroExportacao }}</div>
+}
+
+<div class="atalhos" role="group" aria-label="Atalhos de filtro">
+  @for (atalho of atalhos; track atalho.id) {
+    <button
+      type="button"
+      class="btn btn-sm"
+      [class.btn-primary]="atalhoAtivo === atalho.id"
+      [class.btn-outline]="atalhoAtivo !== atalho.id"
+      [attr.aria-pressed]="atalhoAtivo === atalho.id"
+      [disabled]="loading"
+      (click)="aplicarAtalho(atalho.id)">
+      {{ atalho.rotulo }}
+    </button>
+  }
+</div>
 
 <form class="filtros" (ngSubmit)="buscar()" aria-label="Filtros de pagamentos">
   <fieldset class="filtro-status">
