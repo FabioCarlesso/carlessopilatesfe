@@ -55,6 +55,8 @@ export class PacientesRelatorioComponent implements OnInit, AfterViewInit {
   profissionais: ProfissionalResponseDTO[] = [];
   loading = false;
   exportando: RelatorioPacientesFormatoExportacao | null = null;
+  /** Filtros da última consulta bem-sucedida: são os que a exportação usa. */
+  filtrosConsultados: RelatorioPacientesFiltros | null = null;
   erro: string | null = null;
   erroProfissionais: string | null = null;
 
@@ -90,12 +92,15 @@ export class PacientesRelatorioComponent implements OnInit, AfterViewInit {
   }
 
   consultar(): void {
+    const filtros = this.filtros();
     this.loading = true;
     this.erro = null;
     this.relatorio = null;
-    this.relatorioService.relatorioPacientes(this.filtros()).subscribe({
+    this.filtrosConsultados = null;
+    this.relatorioService.relatorioPacientes(filtros).subscribe({
       next: relatorio => {
         this.relatorio = relatorio;
+        this.filtrosConsultados = filtros;
         this.loading = false;
       },
       error: (err: unknown) => {
@@ -105,8 +110,13 @@ export class PacientesRelatorioComponent implements OnInit, AfterViewInit {
     });
   }
 
+  /**
+   * Exporta com os filtros da consulta exibida, não com os do formulário: um filtro mudado sem consultar não pode
+   * gerar um arquivo diferente da tabela (mesmo critério de recebimentos e da inadimplência).
+   */
   exportar(formato: RelatorioPacientesFormatoExportacao): void {
-    const filtros = this.filtros();
+    const filtros = this.filtrosConsultados;
+    if (!filtros || this.exportando) return;
     const rotulo = formato === 'pdf' ? 'PDF' : 'Excel';
     const situacao = (filtros.situacao ?? 'ATIVOS').toLowerCase();
     const fallbackNomeArquivo = `relatorio-pacientes-${situacao}.${formato}`;

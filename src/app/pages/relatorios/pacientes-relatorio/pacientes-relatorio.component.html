@@ -68,11 +68,11 @@
       Consultar
     </button>
     <button type="button" class="btn btn-secondary" (click)="exportar('pdf')"
-      [disabled]="loading || exportando !== null">
+      [disabled]="loading || exportando !== null || !filtrosConsultados">
       {{ exportando === 'pdf' ? 'Gerando PDF...' : 'Exportar PDF' }}
     </button>
     <button type="button" class="btn btn-secondary" (click)="exportar('xlsx')"
-      [disabled]="loading || exportando !== null">
+      [disabled]="loading || exportando !== null || !filtrosConsultados">
       {{ exportando === 'xlsx' ? 'Gerando Excel...' : 'Exportar Excel' }}
     </button>
   </div>

@@ -224,7 +224,7 @@ describe('PacientesRelatorioComponent', () => {
   });
 
   for (const [formato, rotulo] of [['pdf', 'PDF'], ['xlsx', 'Excel']] as const) {
-    it(`should export the ${rotulo} with the form filters, disabling the buttons, and use the API file name`, () => {
+    it(`should export the ${rotulo} with the consulted filters, disabling the buttons, and use the API file name`, () => {
       const resposta$ = new Subject<HttpResponse<Blob>>();
       serviceSpy.exportarRelatorioPacientes.and.returnValue(resposta$);
       spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio');
@@ -234,6 +234,7 @@ describe('PacientesRelatorioComponent', () => {
         cliques.push(this.download);
       });
       component.form.patchValue({ situacao: 'INATIVOS', cadastroIncompleto: true });
+      component.consultar();
 
       component.exportar(formato);
       fixture.detectChanges();
@@ -259,6 +260,35 @@ describe('PacientesRelatorioComponent', () => {
       expect(botoes.every(b => !b.disabled)).toBeTrue();
     });
   }
+
+  it('should export the filters of the table, not a filter changed without querying', () => {
+    component.form.patchValue({ situacao: 'ATIVOS', cadastroIncompleto: true });
+    component.consultar();
+    component.form.patchValue({ situacao: 'INATIVOS', mesNascimento: 12 });
+
+    component.exportar('xlsx');
+
+    expect(serviceSpy.exportarRelatorioPacientes).toHaveBeenCalledOnceWith('xlsx', {
+      situacao: 'ATIVOS',
+      semPlanoAtivo: false,
+      cadastroIncompleto: true,
+      mesNascimento: null,
+      profissionalId: null
+    });
+  });
+
+  it('should not export without a successful query', () => {
+    serviceSpy.relatorioPacientes.and.returnValue(throwError(() => new Error('falha')));
+    component.consultar();
+    fixture.detectChanges();
+
+    component.exportar('pdf');
+
+    expect(serviceSpy.exportarRelatorioPacientes).not.toHaveBeenCalled();
+    const botoes = Array.from(el().querySelectorAll<HTMLButtonElement>('button[type="button"]'));
+    expect(botoes.length).toBe(2);
+    expect(botoes.every(b => b.disabled)).toBeTrue();
+  });
 
   it('should show the API detail of an export error that arrives as Blob', async () => {
     const corpo = new Blob([JSON.stringify({ detail: 'O relatório passa de 5000 pacientes.' })], { type: 'application/json' });
