@@ -3,6 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { RelatorioService } from './relatorio.service';
 import { RelatorioFinanceiroDTO, RelatorioNfseResponseDTO } from '../models/relatorio';
 import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
+import { RelatorioRecebimentosDTO } from '../models/relatorio-recebimentos';
 
 const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
   {
@@ -117,6 +118,54 @@ describe('RelatorioService', () => {
       req.flush(blob);
     });
   }
+
+  describe('recebimentos do período', () => {
+    it('should GET the receipts report with the period only when no filter is informed', () => {
+      const relatorio = { recebimentos: [] } as unknown as RelatorioRecebimentosDTO;
+      service.relatorioRecebimentos('2026-11-01', '2026-11-30').subscribe(r => expect(r).toEqual(relatorio));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/recebimentos');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      expect(req.request.params.get('inicio')).toBe('2026-11-01');
+      expect(req.request.params.get('fim')).toBe('2026-11-30');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(relatorio);
+    });
+
+    it('should send formaPagamento (including NAO_INFORMADA) and pacienteId and skip null filters', () => {
+      service.relatorioRecebimentos('2026-11-01', '2026-11-30', { formaPagamento: 'NAO_INFORMADA', pacienteId: 7 })
+        .subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/recebimentos');
+      expect(req.request.params.get('formaPagamento')).toBe('NAO_INFORMADA');
+      expect(req.request.params.get('pacienteId')).toBe('7');
+      req.flush({});
+
+      service.relatorioRecebimentos('2026-11-01', '2026-11-30', { formaPagamento: null, pacienteId: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/recebimentos');
+      expect(semFiltro.request.params.has('formaPagamento')).toBeFalse();
+      expect(semFiltro.request.params.has('pacienteId')).toBeFalse();
+      semFiltro.flush({});
+    });
+
+    for (const formato of ['pdf', 'xlsx'] as const) {
+      it(`should export the receipts report as ${formato} blob through its own route, with the filters`, () => {
+        const blob = new Blob([formato]);
+        service.exportarRelatorioRecebimentos('2026-11-01', '2026-11-30', formato, { formaPagamento: 'PIX', pacienteId: 3 })
+          .subscribe(response => expect(response.body).toBe(blob));
+
+        const req = httpMock.expectOne(r => r.url === `/api/api/relatorios/recebimentos/${formato}`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('inicio')).toBe('2026-11-01');
+        expect(req.request.params.get('fim')).toBe('2026-11-30');
+        expect(req.request.params.get('formaPagamento')).toBe('PIX');
+        expect(req.request.params.get('pacienteId')).toBe('3');
+        expect(req.request.responseType).toBe('blob');
+        expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+        req.flush(blob);
+      });
+    }
+  });
 
   describe('relatório de pacientes', () => {
     it('should GET /api/api/relatorios/pacientes sem parâmetros quando não há filtro', () => {

@@ -316,6 +316,15 @@ export const routes: Routes = [
         .then(m => m.FinanceiroRelatorioComponent)
   },
   {
+    // Recebimentos do período (issue #289): mesmo público do relatório
+    // financeiro, porque a API (carlessopilatesapi#231) libera ADMIN e FINANCEIRO.
+    path: 'relatorios/recebimentos',
+    canActivate: [roleGuard(PAPEIS.fiscal)],
+    loadComponent: () =>
+      import('./pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component')
+        .then(m => m.RecebimentosRelatorioComponent)
+  },
+  {
     // Indicadores históricos (issue #130). A API só expõe as séries e o
     // ranking para `ADMIN` (carlessopilatesapi#202); o restante do hub de
     // relatórios é do financeiro.

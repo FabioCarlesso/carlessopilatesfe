@@ -1,0 +1,180 @@
+<div class="page-header">
+  <h1>Recebimentos do Período</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Pagamentos confirmados pela <strong>data de pagamento</strong>, com o mesmo critério da receita do relatório
+  financeiro. Use para conferir o caixa e conciliar com o extrato. Pacientes inativos que pagaram no período também
+  aparecem.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="inicio">Início *</label>
+      <input id="inicio" type="date" formControlName="inicio" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="fim">Fim *</label>
+      <input id="fim" type="date" formControlName="fim" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="formaPagamento">Forma de pagamento</label>
+      <select id="formaPagamento" formControlName="formaPagamento" class="form-control">
+        <option value="">Todas</option>
+        @for (forma of formas; track forma) {
+          <option [value]="forma">{{ formaLabel[forma] }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group filtro-paciente">
+      @if (pacienteSelecionado) {
+        <span class="filtro-rotulo" id="pacienteFiltroRotulo">Paciente</span>
+        <div class="paciente-selecionado" role="group" aria-labelledby="pacienteFiltroRotulo">
+          <span>{{ pacienteSelecionado.nome }}</span>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            [attr.aria-label]="'Remover o filtro do paciente ' + pacienteSelecionado.nome"
+            (click)="limparPaciente()">
+            Remover
+          </button>
+        </div>
+      } @else {
+        <label for="buscaPaciente">Paciente</label>
+        <input
+          id="buscaPaciente"
+          type="text"
+          class="form-control"
+          [formControl]="busca"
+          autocomplete="off"
+          placeholder="Digite ao menos 2 letras"
+          [attr.aria-controls]="listaSugestoesId" />
+        <div [id]="listaSugestoesId" class="sugestoes" aria-live="polite">
+          @if (buscando) {
+            <p class="sugestao-status">Buscando...</p>
+          } @else if (buscaFalhou) {
+            <p class="sugestao-status">Não foi possível buscar agora.</p>
+          } @else {
+            @for (paciente of sugestoes; track paciente.id) {
+              <button type="button" class="sugestao" (click)="selecionarPaciente(paciente)">
+                <span class="sugestao-nome">{{ paciente.nome }}</span>
+                @if (!paciente.ativo) {
+                  <span class="sugestao-detalhe">Inativo</span>
+                }
+              </button>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (erroPeriodo) {
+    <div class="invalid-feedback periodo-erro" role="alert">{{ erroPeriodo }}</div>
+  }
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">
+      Consultar
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('pdf')"
+      [disabled]="loading || exportando !== null || !relatorio">
+      {{ exportando === 'pdf' ? 'Gerando PDF...' : 'Exportar PDF' }}
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar('xlsx')"
+      [disabled]="loading || exportando !== null || !relatorio">
+      {{ exportando === 'xlsx' ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
+  </div>
+</form>
+
+@if (loading || exportando) {
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
+}
+
+@if (relatorio) {
+  <section class="relatorio-resultado" aria-label="Resultado do relatório de recebimentos">
+    <p class="periodo-consultado">
+      Pagamentos de {{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }} a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}
+    </p>
+
+    <div class="summary-grid">
+      <div class="summary-item summary-item--total" data-card="total">
+        <span class="label">Total recebido</span>
+        <strong>{{ relatorio.resumo.total | currency:'BRL' }}</strong>
+        <span class="detalhe">{{ relatorio.resumo.quantidadePagamentos }} pagamento(s)</span>
+      </div>
+      @for (forma of relatorio.resumo.porFormaPagamento; track forma.formaPagamento) {
+        <div class="summary-item" [attr.data-card]="forma.formaPagamento"
+          [class.summary-item--zerado]="forma.quantidade === 0">
+          <span class="label">{{ forma.descricao }}</span>
+          <strong>{{ forma.total | currency:'BRL' }}</strong>
+          <span class="detalhe">{{ forma.quantidade }} pagamento(s)</span>
+        </div>
+      }
+    </div>
+
+    @if (semRecebimentos) {
+      <div class="empty-state sem-recebimentos">
+        Nenhum pagamento recebido no período com os filtros informados.
+      </div>
+    } @else {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Recebimentos do período">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Valor</th>
+              <th>Pagamento</th>
+              <th>Forma</th>
+              <th>Vencimento</th>
+              <th>Período</th>
+              <th>Plano</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (recebimento of relatorio.recebimentos; track recebimento.pagamentoId) {
+              <tr>
+                <td>
+                  <a [routerLink]="['/pacientes', recebimento.pacienteId, 'financeiro']"
+                    [title]="'Histórico financeiro de ' + recebimento.pacienteNome">{{ recebimento.pacienteNome }}</a>
+                </td>
+                <td>{{ recebimento.valor | currency:'BRL' }}</td>
+                <td>{{ recebimento.dataPagamento | date:'dd/MM/yyyy' }}</td>
+                <td [class.forma-nao-informada]="recebimento.formaPagamento === 'NAO_INFORMADA'">
+                  {{ formaLabel[recebimento.formaPagamento] }}
+                </td>
+                <td>{{ recebimento.dataVencimento | date:'dd/MM/yyyy' }}</td>
+                <td class="nowrap">
+                  {{ recebimento.periodoInicio | date:'dd/MM/yyyy' }} a {{ recebimento.periodoFim | date:'dd/MM/yyyy' }}
+                </td>
+                <td>{{ frequenciaLabel[recebimento.frequenciaSemanal] }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="linha-total">
+              <th scope="row">Total ({{ relatorio.resumo.quantidadePagamentos }})</th>
+              <td>{{ relatorio.resumo.total | currency:'BRL' }}</td>
+              <td colspan="5"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </section>
+}

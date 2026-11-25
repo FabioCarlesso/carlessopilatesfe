@@ -104,4 +104,14 @@ describe('RelatorioListComponent', () => {
     expect(el.querySelector('a[href="/relatorios/pagamento-profissional"]')).toBeNull();
     expect(el.querySelector('a[href="/relatorios/indicadores"]')).toBeNull();
   });
+
+  it('should render the receipts report link for the financeiro and hide it from RECEPCAO', () => {
+    comPapeis(['FINANCEIRO']);
+    const link = renderizar().querySelector('a[href="/relatorios/recebimentos"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Recebimentos do Período');
+
+    comPapeis(['RECEPCAO']);
+    expect(renderizar().querySelector('a[href="/relatorios/recebimentos"]')).toBeNull();
+  });
 });
