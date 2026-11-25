@@ -10,6 +10,13 @@
         Acompanhe receita, ocupação, evasão de pacientes e aulas por profissional mês a mês.
       </span>
     </a>
+
+    <a routerLink="/relatorios/aulas-sem-evolucao" class="relatorio-card">
+      <span class="relatorio-card__title">Aulas sem Evolução</span>
+      <span class="relatorio-card__description">
+        Liste as aulas realizadas sem evolução registrada, por profissional, para completar o prontuário.
+      </span>
+    </a>
   }
 
   @if (authService.hasAnyRole(papeis.relatorioPacientes)) {
@@ -17,6 +24,22 @@
       <span class="relatorio-card__title">Pacientes</span>
       <span class="relatorio-card__description">
         Liste pacientes por situação, sem plano ativo, com cadastro incompleto ou aniversariantes do mês.
+      </span>
+    </a>
+
+    <a routerLink="/relatorios/ocupacao" class="relatorio-card">
+      <span class="relatorio-card__title">Ocupação da Grade</span>
+      <span class="relatorio-card__description">
+        Veja alunos e vagas de cada horário da semana por profissional, com a lista de espera.
+      </span>
+    </a>
+  }
+
+  @if (authService.hasAnyRole(papeis.relatorioFrequencia)) {
+    <a routerLink="/relatorios/frequencia" class="relatorio-card">
+      <span class="relatorio-card__title">Frequência e Faltas</span>
+      <span class="relatorio-card__description">
+        Veja aulas previstas, realizadas e faltas por paciente, começando por quem tem a menor presença.
       </span>
     </a>
   }

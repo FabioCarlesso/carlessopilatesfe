@@ -4,6 +4,8 @@ import { RelatorioService } from './relatorio.service';
 import { RelatorioFinanceiroDTO, RelatorioNfseResponseDTO } from '../models/relatorio';
 import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import { RelatorioRecebimentosDTO } from '../models/relatorio-recebimentos';
+import { RelatorioFrequenciaDTO } from '../models/relatorio-frequencia';
+import { RelatorioAulasSemEvolucaoDTO } from '../models/relatorio-aulas-sem-evolucao';
 
 const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
   {
@@ -211,5 +213,114 @@ describe('RelatorioService', () => {
         req.flush(blob);
       });
     }
+  });
+
+  describe('frequência e faltas', () => {
+    it('should GET the attendance report with the period only when no filter is informed', () => {
+      const relatorio = { pacientes: [] } as unknown as RelatorioFrequenciaDTO;
+      service.relatorioFrequencia('2026-11-01', '2026-11-30').subscribe(r => expect(r).toEqual(relatorio));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(relatorio);
+    });
+
+    it('should send profissionalId, pacienteId and taxaMaxima (including 0) and skip null filters', () => {
+      service.relatorioFrequencia('2026-11-01', '2026-11-30', { profissionalId: 4, pacienteId: 7, taxaMaxima: 0 })
+        .subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(req.request.params.get('profissionalId')).toBe('4');
+      expect(req.request.params.get('pacienteId')).toBe('7');
+      expect(req.request.params.get('taxaMaxima')).toBe('0');
+      req.flush({});
+
+      service.relatorioFrequencia('2026-11-01', '2026-11-30', { profissionalId: null, taxaMaxima: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia');
+      expect(semFiltro.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      semFiltro.flush({});
+    });
+
+    it('should export the attendance report as an xlsx blob with the filters', () => {
+      const blob = new Blob(['xlsx']);
+      service.exportarRelatorioFrequencia('2026-11-01', '2026-11-30', { taxaMaxima: 75 })
+        .subscribe(response => expect(response.body).toBe(blob));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/frequencia/xlsx');
+      expect(req.request.params.get('inicio')).toBe('2026-11-01');
+      expect(req.request.params.get('fim')).toBe('2026-11-30');
+      expect(req.request.params.get('taxaMaxima')).toBe('75');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(blob);
+    });
+  });
+
+  describe('aulas realizadas sem evolução', () => {
+    it('should GET the report with the period only when no professional is informed', () => {
+      const relatorio = { aulas: [] } as unknown as RelatorioAulasSemEvolucaoDTO;
+      service.relatorioAulasSemEvolucao('2026-10-01', '2026-11-30').subscribe(r => expect(r).toEqual(relatorio));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/aulas-sem-evolucao');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().sort()).toEqual(['fim', 'inicio']);
+      expect(req.request.params.get('inicio')).toBe('2026-10-01');
+      expect(req.request.params.get('fim')).toBe('2026-11-30');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(relatorio);
+    });
+
+    it('should send profissionalId when informed and skip it when null', () => {
+      service.relatorioAulasSemEvolucao('2026-10-01', '2026-11-30', { profissionalId: 5 }).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/aulas-sem-evolucao');
+      expect(req.request.params.get('profissionalId')).toBe('5');
+      req.flush({});
+
+      service.relatorioAulasSemEvolucao('2026-10-01', '2026-11-30', { profissionalId: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/aulas-sem-evolucao');
+      expect(semFiltro.request.params.has('profissionalId')).toBeFalse();
+      semFiltro.flush({});
+    });
+
+    it('should export the report as an xlsx blob through its own route, with the filters', () => {
+      const blob = new Blob(['xlsx']);
+      service.exportarRelatorioAulasSemEvolucao('2026-10-01', '2026-11-30', { profissionalId: 5 })
+        .subscribe(response => expect(response.body).toBe(blob));
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/aulas-sem-evolucao/xlsx');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('inicio')).toBe('2026-10-01');
+      expect(req.request.params.get('fim')).toBe('2026-11-30');
+      expect(req.request.params.get('profissionalId')).toBe('5');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(blob);
+    });
+  });
+
+  describe('ocupação da grade', () => {
+    it('should GET /api/api/relatorios/ocupacao without params when no filter is given', () => {
+      service.relatorioOcupacao().subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush({});
+    });
+
+    it('should send semana and profissionalId and skip null filters', () => {
+      service.relatorioOcupacao({ semana: '2026-11-25', profissionalId: 5 }).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(req.request.params.get('semana')).toBe('2026-11-25');
+      expect(req.request.params.get('profissionalId')).toBe('5');
+      req.flush({});
+
+      service.relatorioOcupacao({ semana: null, profissionalId: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(semFiltro.request.params.keys()).toEqual([]);
+      semFiltro.flush({});
+    });
   });
 });

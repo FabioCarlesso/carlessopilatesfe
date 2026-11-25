@@ -14,11 +14,17 @@ import {
   RelatorioPacientesFiltros,
   RelatorioPacientesFormatoExportacao
 } from '../models/relatorio-pacientes';
+import { RelatorioOcupacaoDTO, RelatorioOcupacaoFiltros } from '../models/relatorio-ocupacao';
 import {
   RelatorioRecebimentosDTO,
   RelatorioRecebimentosFiltros,
   RelatorioRecebimentosFormatoExportacao
 } from '../models/relatorio-recebimentos';
+import { RelatorioFrequenciaDTO, RelatorioFrequenciaFiltros } from '../models/relatorio-frequencia';
+import {
+  RelatorioAulasSemEvolucaoDTO,
+  RelatorioAulasSemEvolucaoFiltros
+} from '../models/relatorio-aulas-sem-evolucao';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +34,9 @@ export class RelatorioService {
   private readonly financeiroUrl = '/api/api/relatorios/financeiro';
   private readonly pacientesUrl = '/api/api/relatorios/pacientes';
   private readonly recebimentosUrl = '/api/api/relatorios/recebimentos';
+  private readonly frequenciaUrl = '/api/api/relatorios/frequencia';
+  private readonly aulasSemEvolucaoUrl = '/api/api/relatorios/aulas-sem-evolucao';
+  private readonly ocupacaoUrl = '/api/api/relatorios/ocupacao';
 
   constructor(private http: HttpClient) {}
 
@@ -180,4 +189,106 @@ export class RelatorioService {
   }
 
   // --- fim: recebimentos ---
+
+  // --- Frequência e faltas por paciente (carlessopilatesapi#233) ---
+
+  /** Previstas, realizadas e faltas por paciente no período. O `403` é tratado pela tela. */
+  relatorioFrequencia(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioFrequenciaFiltros = {}
+  ): Observable<RelatorioFrequenciaDTO> {
+    return this.http.get<RelatorioFrequenciaDTO>(this.frequenciaUrl, {
+      params: this.frequenciaParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  /** A API só exporta em Excel (`/xlsx`). */
+  exportarRelatorioFrequencia(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioFrequenciaFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.frequenciaUrl}/xlsx`, {
+      params: this.frequenciaParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private frequenciaParams(inicio: string, fim: string, filtros: RelatorioFrequenciaFiltros): HttpParams {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    if (filtros.pacienteId !== null && filtros.pacienteId !== undefined) {
+      params = params.set('pacienteId', String(filtros.pacienteId));
+    }
+    if (filtros.taxaMaxima !== null && filtros.taxaMaxima !== undefined) {
+      params = params.set('taxaMaxima', String(filtros.taxaMaxima));
+    }
+    return params;
+  }
+
+  // --- fim: frequência ---
+
+  // --- Aulas realizadas sem evolução (carlessopilatesapi#234), só ADMIN ---
+
+  relatorioAulasSemEvolucao(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioAulasSemEvolucaoFiltros = {}
+  ): Observable<RelatorioAulasSemEvolucaoDTO> {
+    return this.http.get<RelatorioAulasSemEvolucaoDTO>(this.aulasSemEvolucaoUrl, {
+      params: this.aulasSemEvolucaoParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  exportarRelatorioAulasSemEvolucao(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioAulasSemEvolucaoFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.aulasSemEvolucaoUrl}/xlsx`, {
+      params: this.aulasSemEvolucaoParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private aulasSemEvolucaoParams(inicio: string, fim: string, filtros: RelatorioAulasSemEvolucaoFiltros): HttpParams {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    return params;
+  }
+
+  // --- fim: aulas sem evolução ---
+
+  // --- Ocupação da grade (carlessopilatesapi#235) ---
+
+  /**
+   * Ocupação da grade semanal (carlessopilatesapi#235). `semana` é qualquer
+   * data da semana; sem ela, a API usa a semana de hoje.
+   */
+  relatorioOcupacao(filtros: RelatorioOcupacaoFiltros = {}): Observable<RelatorioOcupacaoDTO> {
+    let params = new HttpParams();
+    if (filtros.semana) {
+      params = params.set('semana', filtros.semana);
+    }
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    return this.http.get<RelatorioOcupacaoDTO>(this.ocupacaoUrl, {
+      params,
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  // --- fim: ocupação ---
 }

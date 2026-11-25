@@ -1,0 +1,134 @@
+<div class="page-header">
+  <h1>Aulas sem Evolução</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Aulas <strong>realizadas</strong> no período cujo paciente não tem, na mesma data, sessão com evolução registrada.
+  Use para completar o prontuário: <strong>Registrar evolução</strong> abre as sessões do paciente.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="inicio">Início *</label>
+      <input id="inicio" type="date" formControlName="inicio" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="fim">Fim *</label>
+      <input id="fim" type="date" formControlName="fim" class="form-control"
+        [class.is-invalid]="!!erroPeriodo" />
+    </div>
+
+    <div class="form-group">
+      <label for="profissionalId">Profissional</label>
+      <select id="profissionalId" formControlName="profissionalId" class="form-control">
+        <option [ngValue]="null">Todos os profissionais</option>
+        @for (profissional of profissionais; track profissional.id) {
+          <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+        }
+      </select>
+      @if (erroProfissionais) {
+        <div class="field-hint">{{ erroProfissionais }}</div>
+      }
+    </div>
+  </div>
+
+  @if (erroPeriodo) {
+    <div class="invalid-feedback periodo-erro" role="alert">{{ erroPeriodo }}</div>
+  }
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">
+      Consultar
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="exportar()" [disabled]="!podeExportar">
+      {{ exportando ? 'Gerando Excel...' : 'Exportar Excel' }}
+    </button>
+  </div>
+</form>
+
+@if (loading || exportando) {
+  <app-carregando [mensagem]="exportando ? 'Gerando arquivo...' : 'Carregando...'" />
+}
+
+@if (relatorio) {
+  <section class="relatorio-resultado" aria-label="Resultado do relatório de aulas sem evolução">
+    <p class="periodo-consultado">
+      Aulas realizadas de {{ relatorio.periodo.inicio | date:'dd/MM/yyyy' }}
+      a {{ relatorio.periodo.fim | date:'dd/MM/yyyy' }}
+      @if (relatorio.filtros.profissionalNome) {
+        · {{ relatorio.filtros.profissionalNome }}
+      }
+    </p>
+
+    <div class="summary-grid">
+      <div class="summary-item summary-item--total" data-card="total">
+        <span class="label">Aulas sem evolução</span>
+        <strong>{{ relatorio.resumo.totalAulas }}</strong>
+      </div>
+      @for (grupo of relatorio.resumo.porProfissional; track grupo.profissionalId) {
+        <div class="summary-item" data-card="profissional"
+          [class.summary-item--sem-profissional]="grupo.profissionalId === null">
+          <span class="label">{{ grupo.profissionalNome }}</span>
+          <strong>{{ grupo.quantidade }}</strong>
+          <span class="detalhe">aula(s)</span>
+        </div>
+      }
+    </div>
+
+    @if (semAulas) {
+      <div class="empty-state sem-aulas">
+        Nenhuma aula realizada sem evolução no período com os filtros informados.
+      </div>
+    } @else {
+      <p class="table-scroll-hint">
+        Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Aulas realizadas sem evolução">
+        <table class="table table-sticky-first-col">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Horário</th>
+              <th>Paciente</th>
+              <th>Profissional</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (aula of relatorio.aulas; track aula.aulaId) {
+              <tr>
+                <td class="nowrap">{{ aula.data | date:'dd/MM/yyyy' }}</td>
+                <td>{{ horario(aula.horario) }}</td>
+                <td>
+                  <a [routerLink]="['/pacientes', aula.pacienteId]">{{ aula.pacienteNome }}</a>
+                </td>
+                <td [class.sem-profissional]="aula.profissionalId === null">
+                  {{ aula.profissionalNome ?? semProfissional }}
+                </td>
+                <td class="nowrap">
+                  <a class="btn btn-sm btn-outline" [routerLink]="['/pacientes', aula.pacienteId, 'sessoes']"
+                    [attr.aria-label]="'Registrar evolução de ' + aula.pacienteNome">
+                    Registrar evolução
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="linha-total">
+              <th scope="row" colspan="5">Total ({{ relatorio.resumo.totalAulas }})</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </section>
+}

@@ -1,9 +1,11 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
   ElementRef,
+  inject,
   OnDestroy,
   OnInit,
   ViewChild
@@ -43,6 +45,23 @@ import {
   navegarPeriodo
 } from '../../../shared/utils/calendario';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import {
+  formatarGeradoEm,
+  LinhaImpressao,
+  montarLinhasDaSemana,
+  ordenarEventosDoDia,
+  regraDePagina
+} from '../../../shared/utils/agenda-impressao';
+
+/**
+ * Classe do `body` enquanto a agenda está aberta: é ela que, no `@media print`
+ * global, esconde a navbar e o resto da casca da aplicação. Fica no `body` (e
+ * não só no clique do botão) para que o Ctrl+P do navegador imprima a mesma
+ * folha que o botão **Imprimir**.
+ */
+export const CLASSE_BODY_IMPRIMIVEL = 'agenda-imprimivel';
+/** `id` do `<style>` com a regra `@page` da vista atual. */
+export const ID_ESTILO_PAGINA = 'agenda-impressao-pagina';
 
 /**
  * Visões da agenda do estúdio. O calendário do paciente também oferece a
@@ -149,6 +168,20 @@ export class AgendaComponent implements OnInit, OnDestroy {
 
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * Agenda impressa (issue #291). As duas coleções derivam da mesma grade da
+   * tela, já recortada pelos filtros, e são remontadas junto com ela em
+   * `atualizarGrade` — a folha não pode mostrar um período ou um profissional
+   * diferente do que está na tela.
+   */
+  linhasImpressao: LinhaImpressao[] = [];
+  diasImpressao: CalendarioDia[] = [];
+  /** Data e hora do cabeçalho da folha; renovada a cada clique em **Imprimir**. */
+  geradoEm = formatarGeradoEm();
+
+  private readonly documento = inject(DOCUMENT);
+  private estiloPagina: HTMLStyleElement | null = null;
+
   readonly diasSemana = DIAS_SEMANA_ABREVIADO.map((abreviado, indice) => ({
     abreviado,
     extenso: DIAS_SEMANA_EXTENSO[indice]
@@ -228,12 +261,59 @@ export class AgendaComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.documento.body.classList.add(CLASSE_BODY_IMPRIMIVEL);
+    this.estiloPagina = this.documento.createElement('style');
+    this.estiloPagina.id = ID_ESTILO_PAGINA;
+    this.estiloPagina.textContent = regraDePagina(this.visao);
+    this.documento.head.appendChild(this.estiloPagina);
+
     this.carregarProfissionais();
     this.carregar();
   }
 
   ngOnDestroy(): void {
     if (this.successTimer !== null) clearTimeout(this.successTimer);
+    // Sem isto a regra `@page` e o esconderijo da navbar vazariam para a
+    // impressão de qualquer outra tela.
+    this.documento.body.classList.remove(CLASSE_BODY_IMPRIMIVEL);
+    this.estiloPagina?.remove();
+    this.estiloPagina = null;
+  }
+
+  /**
+   * Abre a impressão do navegador com o período e os filtros da tela. A folha
+   * já está no DOM, escondida pelo CSS de tela; só falta renovar a hora do
+   * cabeçalho antes de o navegador fotografar a página — daí o
+   * `detectChanges` síncrono, já que `print()` bloqueia antes do próximo ciclo.
+   */
+  imprimir(): void {
+    if (this.loading || this.erro) return;
+    this.geradoEm = formatarGeradoEm();
+    this.cdr.detectChanges();
+    this.documento.defaultView?.print();
+  }
+
+  /** Nome do profissional filtrado, para o cabeçalho da folha. */
+  get profissionalDaImpressao(): string {
+    if (this.filtro.profissionalId === 'todos') return 'Todos os profissionais';
+    return this.profissionais.find(p => p.id === this.filtro.profissionalId)?.nome ?? 'Profissional selecionado';
+  }
+
+  /** Tipo e situação filtrados; vazio quando só o profissional (ou nada) está filtrado. */
+  get outrosFiltrosDaImpressao(): string {
+    const partes: string[] = [];
+    if (this.filtro.tipo !== 'todos') {
+      partes.push(this.opcoesTipo.find(o => o.valor === this.filtro.tipo)?.rotulo ?? String(this.filtro.tipo));
+    }
+    if (this.filtro.status !== 'todos') {
+      partes.push(CALENDARIO_STATUS_LABEL[this.filtro.status]);
+    }
+    return partes.join(' · ');
+  }
+
+  /** "Agenda semanal" ou "Agenda do dia", no título da folha. */
+  get tituloDaImpressao(): string {
+    return this.visao === 'semanal' ? 'Agenda semanal' : 'Agenda do dia';
   }
 
   /**
@@ -312,6 +392,9 @@ export class AgendaComponent implements OnInit, OnDestroy {
   private atualizarGrade(): void {
     this.grade = montarGrade(this.visao, this.referencia, this.eventosFiltrados(), this.hoje);
     this.bloqueiosPorDia = agruparBloqueiosPorDia(this.bloqueios, this.grade.dias.map(dia => dia.dia));
+    this.diasImpressao = this.grade.dias.filter(dia => dia.doPeriodo);
+    this.linhasImpressao = this.visao === 'semanal' ? montarLinhasDaSemana(this.diasImpressao) : [];
+    if (this.estiloPagina) this.estiloPagina.textContent = regraDePagina(this.visao);
     this.cdr.markForCheck();
   }
 
@@ -655,6 +738,11 @@ export class AgendaComponent implements OnInit, OnDestroy {
       this.sucesso = null;
       this.cdr.markForCheck();
     }, 4000);
+  }
+
+  /** Lista do dia em ordem de horário, para a folha em retrato. */
+  eventosDoDiaImpresso(dia: CalendarioDia): CalendarioEvento[] {
+    return ordenarEventosDoDia(dia);
   }
 
   trackByDia(_indice: number, dia: CalendarioDia): string {

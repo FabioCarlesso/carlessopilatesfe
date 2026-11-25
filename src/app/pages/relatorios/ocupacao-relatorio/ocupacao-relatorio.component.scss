@@ -1,0 +1,208 @@
+/* Ocupação da grade (issue #294). Cards seguem os demais relatórios; as cores
+   das faixas usam os pares semânticos `--c-*` / `--c-*-bg`, que têm variante
+   no tema escuro. */
+
+.page-subtitle {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.relatorio-form {
+  margin-bottom: var(--sp-5);
+}
+
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+}
+
+.periodo {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+
+  .label {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: var(--fs-h3);
+  }
+
+  .detalhe {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+  }
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+}
+
+.amostra {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-default);
+}
+
+.grade {
+  th,
+  td {
+    vertical-align: top;
+    min-width: 120px;
+  }
+
+  tbody th {
+    white-space: nowrap;
+  }
+
+  td {
+    padding: var(--sp-2);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  margin-bottom: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid;
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: left;
+  cursor: pointer;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+.item__prof {
+  font-weight: 600;
+}
+
+.item__ocupacao {
+  color: var(--text-secondary);
+}
+
+.item__espera {
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-sm);
+  background-color: var(--c-info-bg);
+  color: var(--c-info);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+}
+
+/* Faixa de cor: vale para a amostra da legenda e para o item da grade. Fica depois de `.item`, cujo atalho
+   `border` redefiniria cor e estilo da borda (mesma especificidade). */
+[data-faixa='livre'] {
+  background-color: var(--c-success-bg);
+  border-color: var(--c-success);
+}
+
+[data-faixa='parcial'] {
+  background-color: var(--c-warning-bg);
+  border-color: var(--c-warning);
+}
+
+[data-faixa='lotado'] {
+  background-color: var(--c-danger-bg);
+  border-color: var(--c-danger);
+}
+
+[data-faixa='fora'],
+[data-faixa='sem-vaga'] {
+  background-color: var(--bg-sunken);
+  border-color: var(--border-default);
+  border-style: dashed;
+}
+
+/* Lotado com gente esperando: borda mais grossa para chamar atenção. */
+.item--espera {
+  border-width: 2px;
+  border-color: var(--c-danger);
+}
+
+.item--selecionado {
+  box-shadow: 0 0 0 2px var(--text-brand);
+}
+
+.detalhe-horario {
+  margin-top: var(--sp-4);
+
+  h2 {
+    margin: 0;
+    font-size: var(--fs-h3);
+  }
+}
+
+.detalhe-horario__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.detalhe-horario__resumo {
+  margin: var(--sp-2) 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.detalhe-horario__alunos {
+  margin: 0;
+  padding-left: var(--sp-5);
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+}

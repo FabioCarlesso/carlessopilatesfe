@@ -293,6 +293,15 @@ export const routes: Routes = [
         .then(m => m.PacientesRelatorioComponent)
   },
   {
+    // Frequência e faltas por paciente (issue #292). A API o libera para
+    // `ADMIN` e `RECEPCAO` (carlessopilatesapi#233): acompanhamento da recepção.
+    path: 'relatorios/frequencia',
+    canActivate: [roleGuard(PAPEIS.relatorioFrequencia)],
+    loadComponent: () =>
+      import('./pages/relatorios/frequencia-relatorio/frequencia-relatorio.component')
+        .then(m => m.FrequenciaRelatorioComponent)
+  },
+  {
     path: 'relatorios/pagamento-profissional',
     canActivate: [roleGuard(PAPEIS.fiscal)],
     loadComponent: () =>
@@ -325,6 +334,15 @@ export const routes: Routes = [
         .then(m => m.RecebimentosRelatorioComponent)
   },
   {
+    // Ocupação da grade semanal (issue #294): da recepção, como o relatório de
+    // pacientes; a API (carlessopilatesapi#235) libera ADMIN e RECEPCAO.
+    path: 'relatorios/ocupacao',
+    canActivate: [roleGuard(PAPEIS.relatorioPacientes)],
+    loadComponent: () =>
+      import('./pages/relatorios/ocupacao-relatorio/ocupacao-relatorio.component')
+        .then(m => m.OcupacaoRelatorioComponent)
+  },
+  {
     // Indicadores históricos (issue #130). A API só expõe as séries e o
     // ranking para `ADMIN` (carlessopilatesapi#202); o restante do hub de
     // relatórios é do financeiro.
@@ -333,6 +351,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/relatorios/indicadores/indicadores.component')
         .then(m => m.IndicadoresComponent)
+  },
+  {
+    // Aulas realizadas sem evolução (issue #293): controle do prontuário. A
+    // API (carlessopilatesapi#234) só o libera para `ADMIN`.
+    path: 'relatorios/aulas-sem-evolucao',
+    canActivate: [roleGuard(PAPEIS.admin)],
+    loadComponent: () =>
+      import('./pages/relatorios/aulas-sem-evolucao-relatorio/aulas-sem-evolucao-relatorio.component')
+        .then(m => m.AulasSemEvolucaoRelatorioComponent)
   },
   {
     // Gestão de inadimplência (issue #127): lista global de pagamentos e
