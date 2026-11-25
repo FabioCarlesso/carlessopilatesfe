@@ -3,6 +3,7 @@ import {
   formatar,
   formatarCep,
   formatarCpf,
+  formatarCpfCnpj,
   formatarTelefone,
   somenteDigitos
 } from './mascara';
@@ -83,9 +84,23 @@ describe('mascara', () => {
     });
   });
 
+  describe('formatarCpfCnpj', () => {
+    it('should format up to 11 digits as CPF', () => {
+      expect(formatarCpfCnpj('529982')).toBe('529.982');
+      expect(formatarCpfCnpj('52998224725')).toBe('529.982.247-25');
+    });
+
+    it('should switch to the CNPJ mask from the 12th digit on, ignoring digits beyond 14', () => {
+      expect(formatarCpfCnpj('112223330001')).toBe('11.222.333/0001-');
+      expect(formatarCpfCnpj('11.222.333/0001-81')).toBe('11.222.333/0001-81');
+      expect(formatarCpfCnpj('1122233300018199')).toBe('11.222.333/0001-81');
+    });
+  });
+
   describe('formatar', () => {
     it('should dispatch to the formatter of each type', () => {
       expect(formatar('cpf', '52998224725')).toBe('529.982.247-25');
+      expect(formatar('cpfCnpj', '11222333000181')).toBe('11.222.333/0001-81');
       expect(formatar('telefone', '11999998888')).toBe('(11) 99999-8888');
       expect(formatar('cep', '01310100')).toBe('01310-100');
     });

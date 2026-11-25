@@ -3,6 +3,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { NfseRelatorioComponent } from './nfse-relatorio.component';
+import { TomadorService } from '../../../core/services/tomador.service';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
 import { renderizarEmViewport } from '../../../../testing/viewport';
@@ -10,6 +11,7 @@ import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale
 
 const mockRelatorio: RelatorioNfseResponseDTO[] = [
   {
+    pacienteId: 1,
     nome: 'Ana Silva',
     cpfCnpj: '123.456.789-00',
     valorPago: 250,
@@ -17,9 +19,29 @@ const mockRelatorio: RelatorioNfseResponseDTO[] = [
     descricaoServico: 'Aulas de Pilates - Competência 04/2026',
     notaAnteriorEmitida: false,
     dataPagamento: '2026-04-10',
-    observacoes: 'Plano mensal'
+    observacoes: 'Plano mensal',
+    cpfNaNota: true,
+    pendencia: null,
+    pacienteNome: 'Paciente Teste',
+    tomadorId: null
   }
 ];
+
+const registroComPendencia: RelatorioNfseResponseDTO = {
+  pacienteId: 7,
+  nome: 'Bia Lima',
+  cpfCnpj: null,
+  valorPago: 300,
+  competencia: '04/2026',
+  descricaoServico: 'Aulas de Pilates - Competência 04/2026',
+  notaAnteriorEmitida: false,
+  dataPagamento: '2026-04-12',
+  observacoes: '',
+  cpfNaNota: true,
+  pendencia: 'Deseja CPF na nota, mas o CPF não está cadastrado',
+  pacienteNome: 'Paciente Teste',
+  tomadorId: null
+};
 
 const mockExportResponse = new HttpResponse({
   body: new Blob(['xlsx'], {
@@ -29,6 +51,17 @@ const mockExportResponse = new HttpResponse({
     'Content-Disposition': 'attachment; filename="relatorio-nfse-04-2026.xlsx"'
   })
 });
+
+const tomadorServiceStub = {
+  listar: (_p: number, _s: number, filtro: { ativo?: boolean }) => of({
+    content: filtro.ativo
+      ? [{ id: 3, nome: 'Empresa Ltda', cpfCnpj: '11222333000181', email: null, telefone: null, observacoes: null,
+          ativo: true, quantidadePacientes: 2, version: 0 }]
+      : [{ id: 4, nome: 'Antigo Responsável', cpfCnpj: '52998224725', email: null, telefone: null, observacoes: null,
+          ativo: false, quantidadePacientes: 1, version: 0 }],
+    page: { size: 200, number: 0, totalElements: 1, totalPages: 1 }
+  })
+};
 
 describe('NfseRelatorioComponent', () => {
   let component: NfseRelatorioComponent;
@@ -45,7 +78,11 @@ describe('NfseRelatorioComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [NfseRelatorioComponent, RouterTestingModule],
-      providers: [provideLocalePtBr(), { provide: RelatorioService, useValue: serviceSpy }]
+      providers: [
+        provideLocalePtBr(),
+        { provide: RelatorioService, useValue: serviceSpy },
+        { provide: TomadorService, useValue: tomadorServiceStub }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(NfseRelatorioComponent);
@@ -72,7 +109,7 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should not request report when form is invalid', () => {
-    component.form.setValue({ competencia: '13/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '13/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
 
     component.consultar();
 
@@ -80,18 +117,18 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should request report and store response', () => {
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: false });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: false, cpfNaNota: null, tomadorId: null });
 
     component.consultar();
 
-    expect(serviceSpy.relatorioNfse).toHaveBeenCalledWith('04/2026', false);
+    expect(serviceSpy.relatorioNfse).toHaveBeenCalledWith('04/2026', { notaAnteriorEmitida: false, cpfNaNota: null, tomadorId: null });
     expect(component.registros).toEqual(mockRelatorio);
     expect(component.consultado).toBeTrue();
   });
 
   it('should set erro when report request fails', () => {
     serviceSpy.relatorioNfse.and.returnValue(throwError(() => new Error('fail')));
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
 
     component.consultar();
 
@@ -106,7 +143,7 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should render the total and each paid value in Brazilian currency format', () => {
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
     component.consultar();
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
@@ -114,18 +151,18 @@ describe('NfseRelatorioComponent', () => {
     const totais = Array.from(el.querySelectorAll('.summary-item strong')).map(s => normalizarEspacos(s.textContent).trim());
     expect(totais).toContain('R$ 250,00');
     const celulas = Array.from(el.querySelectorAll('table tbody td')).map(td => normalizarEspacos(td.textContent).trim());
-    expect(celulas[2]).toBe('R$ 250,00');
-    expect(celulas[6]).toBe('10/04/2026');
+    expect(celulas[5]).toBe('R$ 250,00');
+    expect(celulas[9]).toBe('10/04/2026');
   });
 
   it('should export XLSX and reset loading state', () => {
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-xlsx');
     spyOn(window.URL, 'revokeObjectURL');
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: true });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: true, cpfNaNota: null, tomadorId: null });
 
     component.exportarExcel();
 
-    expect(serviceSpy.exportarRelatorioNfse).toHaveBeenCalledWith('04/2026', 'XLSX', true);
+    expect(serviceSpy.exportarRelatorioNfse).toHaveBeenCalledWith('04/2026', 'XLSX', { notaAnteriorEmitida: true, cpfNaNota: null, tomadorId: null });
     expect(component.exportandoExcel).toBeFalse();
     expect(component.erro).toBeNull();
   });
@@ -133,18 +170,18 @@ describe('NfseRelatorioComponent', () => {
   it('should export CSV and reset loading state', () => {
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-csv');
     spyOn(window.URL, 'revokeObjectURL');
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
 
     component.exportarCsv();
 
-    expect(serviceSpy.exportarRelatorioNfse).toHaveBeenCalledWith('04/2026', 'CSV', null);
+    expect(serviceSpy.exportarRelatorioNfse).toHaveBeenCalledWith('04/2026', 'CSV', { notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
     expect(component.exportandoCsv).toBeFalse();
     expect(component.erro).toBeNull();
   });
 
   it('should set friendly error when export fails', () => {
     serviceSpy.exportarRelatorioNfse.and.returnValue(throwError(() => new Error('fail')));
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
 
     component.exportarExcel();
 
@@ -153,7 +190,7 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should render report rows after successful query', () => {
-    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
     component.consultar();
     fixture.detectChanges();
 
@@ -163,13 +200,95 @@ describe('NfseRelatorioComponent', () => {
     expect(el.textContent).toContain('Não');
   });
 
-  // A tabela tem 8 colunas e `min-width: 980px`: em 375px o usuário vê ~2 delas
+  it('should send the cpfNaNota filter to the report and to the export', () => {
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-csv');
+    spyOn(window.URL, 'revokeObjectURL');
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: true, tomadorId: null });
+
+    component.consultar();
+    component.exportarCsv();
+
+    expect(serviceSpy.relatorioNfse).toHaveBeenCalledWith('04/2026', { notaAnteriorEmitida: null, cpfNaNota: true, tomadorId: null });
+    expect(serviceSpy.exportarRelatorioNfse)
+      .toHaveBeenCalledWith('04/2026', 'CSV', { notaAnteriorEmitida: null, cpfNaNota: true, tomadorId: null });
+  });
+
+  describe('pendências de CPF na nota (#287)', () => {
+    beforeEach(() => {
+      serviceSpy.relatorioNfse.and.returnValue(of([...mockRelatorio, registroComPendencia]));
+      component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
+      component.consultar();
+      fixture.detectChanges();
+    });
+
+    it('should count the records with pendencia and warn about them', () => {
+      const el = fixture.nativeElement as HTMLElement;
+
+      expect(component.totalPendencias()).toBe(1);
+      expect(el.querySelector('.summary-item--pendente strong')?.textContent?.trim()).toBe('1');
+      expect(el.querySelector('.alert-warning')?.textContent).toContain('1 registro precisa');
+    });
+
+    it('should highlight the row, show the pendencia and link to the patient edit page', () => {
+      const el = fixture.nativeElement as HTMLElement;
+      const linhas = el.querySelectorAll('table tbody tr');
+
+      expect(linhas[0].classList).not.toContain('linha-pendente');
+      expect(linhas[1].classList).toContain('linha-pendente');
+      expect(linhas[1].textContent).toContain('Deseja CPF na nota, mas o CPF não está cadastrado');
+      const link = linhas[1].querySelector('a') as HTMLAnchorElement;
+      expect(link.getAttribute('href')).toBe('/pacientes/7/editar');
+    });
+
+    it('should show a dash when the record goes without CPF/CNPJ', () => {
+      const celulas = (fixture.nativeElement as HTMLElement).querySelectorAll('table tbody tr')[1].querySelectorAll('td');
+
+      expect(celulas[2].textContent?.trim()).toBe('—');
+      expect(celulas[3].textContent?.trim()).toBe('Sim');
+    });
+  });
+
+  it('should list active and inactive tomadores in the filter and send the chosen one', () => {
+    expect(component.tomadores.map(t => t.nome)).toEqual(['Antigo Responsável', 'Empresa Ltda']);
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: 3 });
+
+    component.consultar();
+
+    expect(serviceSpy.relatorioNfse).toHaveBeenCalledWith('04/2026', jasmine.objectContaining({ tomadorId: 3 }));
+  });
+
+  it('should show the patient column, since a tomador answers for several patients', () => {
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
+    component.consultar();
+    fixture.detectChanges();
+
+    const cabecalhos = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('thead th'))
+      .map(th => th.textContent?.trim());
+    expect(cabecalhos.slice(0, 2)).toEqual(['Nome na nota', 'Paciente']);
+  });
+
+  it('should mask CPF and CNPJ, which the API sends as digits only', () => {
+    expect(component.documento('12345678909')).toBe('123.456.789-09');
+    expect(component.documento('11222333000181')).toBe('11.222.333/0001-81');
+    expect(component.documento(null)).toBe('—');
+  });
+
+  it('should not warn when there is no pendencia', () => {
+    component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
+    component.consultar();
+    fixture.detectChanges();
+
+    expect(component.totalPendencias()).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.alert-warning')).toBeNull();
+  });
+
+  // A tabela tem 10 colunas e `min-width: 1180px`: em 375px o usuário vê ~2 delas
   // e nada indicava que havia mais à direita, nem sobrava referência da linha
   // ao rolar (issue #164).
   describe('scroll horizontal da tabela no mobile (issue #164)', () => {
     /** Renderiza o resultado e anexa a fixture ao documento (computed styles). */
     function renderizarResultado(): HTMLElement {
-      component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null });
+      component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
       component.consultar();
       fixture.detectChanges();
       document.body.appendChild(fixture.nativeElement);

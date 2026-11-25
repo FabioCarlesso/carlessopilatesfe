@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { PacienteFormComponent } from './paciente-form.component';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { TomadorService } from '../../../core/services/tomador.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
@@ -17,7 +18,22 @@ const mockPaciente: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
+};
+
+/** Um tomador ativo (id 9). O tomador 5 do paciente importado foi inativado e não vem na lista. */
+const tomadorServiceStub = {
+  listar: () => of({
+    content: [{
+      id: 9, nome: 'Empresa Ltda', cpfCnpj: '11222333000181', email: null, telefone: null,
+      observacoes: null, ativo: true, quantidadePacientes: 2, version: 0
+    }],
+    page: { size: 200, number: 0, totalElements: 1, totalPages: 1 }
+  })
 };
 
 describe('PacienteFormComponent', () => {
@@ -28,12 +44,13 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar', 'vincularTomador']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } }
         ]
       }).compileComponents();
@@ -141,13 +158,61 @@ describe('PacienteFormComponent', () => {
       expect(component.form.get('cpf')?.hasError('cpf')).toBeTrue();
     });
 
-    it('should show only the required message when CPF is empty', () => {
+    // E-mail e CPF são opcionais na API (#286): o formulário não pode exigi-los.
+    it('should accept an empty CPF and e-mail without any message', () => {
       component.form.get('cpf')?.markAsTouched();
+      component.form.get('email')?.markAsTouched();
       fixture.detectChanges();
 
+      expect(component.form.get('cpf')?.valid).toBeTrue();
+      expect(component.form.get('email')?.valid).toBeTrue();
       const grupo = (fixture.nativeElement as HTMLElement).querySelector('#cpf')?.closest('.form-group');
-      const mensagens = Array.from(grupo?.querySelectorAll('.invalid-feedback') ?? []).map(m => m.textContent?.trim());
-      expect(mensagens).toEqual(['CPF é obrigatório.']);
+      expect(grupo?.querySelectorAll('.invalid-feedback').length).toBe(0);
+      expect(grupo?.querySelector('label')?.textContent?.trim()).toBe('CPF');
+    });
+
+    it('should create a patient without e-mail and CPF, leaving both out of the payload', () => {
+      serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+      component.form.patchValue({ nome: 'Ana Silva', email: '', cpf: '' });
+
+      component.salvar();
+
+      const payload = serviceSpy.cadastrar.calls.mostRecent().args[0];
+      expect(payload.nome).toBe('Ana Silva');
+      expect('email' in payload && payload.email !== undefined).toBeFalse();
+      expect('cpf' in payload && payload.cpf !== undefined).toBeFalse();
+      expect(payload.cpfNaNota).toBeFalse();
+    });
+
+    describe('nota fiscal (#287)', () => {
+      it('should show the tomador select only when the checkbox is checked', () => {
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('#tomadorId')).toBeNull();
+
+        (el.querySelector('#cpfNaNota') as HTMLInputElement).click();
+        fixture.detectChanges();
+
+        const opcoes = Array.from((el.querySelector('#tomadorId') as HTMLSelectElement).options).map(o => o.text.trim());
+        expect(opcoes).toEqual(['O próprio paciente', 'Empresa Ltda — 11.222.333/0001-81']);
+      });
+
+      it('should send the chosen tomador when creating a patient that wants CPF on the invoice', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: true, tomadorId: 9 } });
+
+        component.salvar();
+
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ cpfNaNota: true, tomadorId: 9 }));
+      });
+
+      it('should not link a tomador when the patient does not want CPF on the invoice', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva', notaFiscal: { cpfNaNota: false, tomadorId: 9 } });
+
+        component.salvar();
+
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ cpfNaNota: false, tomadorId: null }));
+      });
     });
 
     it('should accept a valid CPF with or without punctuation', () => {
@@ -234,13 +299,14 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
       serviceSpy.buscar.and.returnValue(of(mockPaciente));
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
         ]
       }).compileComponents();
@@ -328,11 +394,134 @@ describe('PacienteFormComponent', () => {
       expect(component.salvando).toBeFalse();
     });
 
+    it('should not send the CPF of a patient that already has one', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar.calls.mostRecent().args[1].cpf).toBeUndefined();
+    });
+
+    it('should not touch the tomador link when CPF on the invoice is unchecked', () => {
+      serviceSpy.atualizar.and.returnValue(of(mockPaciente));
+      component.salvar();
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ cpfNaNota: false }));
+      expect(serviceSpy.vincularTomador).not.toHaveBeenCalled();
+    });
+
     it('should set erro when buscar fails on init', () => {
       serviceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
       component.ngOnInit();
       expect(component.erro).toBe('Erro ao carregar paciente.');
       expect(component.loading).toBeFalse();
+    });
+  });
+
+  // Pacientes importados do seufisio sem CPF ou e-mail (#286).
+  describe('in edit mode for an imported patient without CPF and e-mail', () => {
+    let component: PacienteFormComponent;
+    let fixture: ComponentFixture<PacienteFormComponent>;
+    let serviceSpy: jasmine.SpyObj<PacienteService>;
+
+    const semDocumentos: PacienteResponseDTO = {
+      ...mockPaciente,
+      id: 2,
+      email: null,
+      cpf: null,
+      cpfNaNota: true,
+      tomadorId: 5,
+      tomadorNome: 'Responsável Antigo',
+      tomadorCpfCnpj: '52998224725',
+      version: 3
+    };
+
+    beforeEach(async () => {
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
+      serviceSpy.buscar.and.returnValue(of(semDocumentos));
+
+      await TestBed.configureTestingModule({
+        imports: [PacienteFormComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '2' } } } }
+        ]
+      }).compileComponents();
+
+      spyOn(TestBed.inject(Router), 'navigate');
+      fixture = TestBed.createComponent(PacienteFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('should keep the CPF field enabled so the record can be completed', () => {
+      expect(component.form.get('cpf')?.enabled).toBeTrue();
+      expect(component.form.valid).toBeTrue();
+    });
+
+    it('should save without e-mail and send the CPF typed in', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      component.form.get('cpf')?.setValue('529.982.247-25');
+
+      component.salvar();
+
+      const payload = serviceSpy.atualizar.calls.mostRecent().args[1];
+      expect(payload.cpf).toBe('52998224725');
+      expect(payload.email).toBeUndefined();
+      expect(payload.version).toBe(3);
+    });
+
+    it('should load the linked tomador, keeping it in the list even after it was inactivated', () => {
+      expect(component.form.get('notaFiscal')?.value).toEqual({ cpfNaNota: true, tomadorId: 5 });
+      const select = (fixture.nativeElement as HTMLElement).querySelector('#tomadorId') as HTMLSelectElement;
+      expect(Array.from(select.options).map(o => o.text.trim()))
+        .toContain('Responsável Antigo — 529.982.247-25 (inativo)');
+    });
+
+    it('should relink the tomador after saving only when the choice changed', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(of({ ...semDocumentos, tomadorId: 9 }));
+
+      component.salvar();
+      expect(serviceSpy.vincularTomador).not.toHaveBeenCalled();
+
+      component.form.get('notaFiscal.tomadorId')?.setValue(9);
+      component.salvar();
+      expect(serviceSpy.vincularTomador).toHaveBeenCalledWith(2, 9);
+    });
+
+    it('should unlink the tomador when "the patient himself" is chosen', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(of({ ...semDocumentos, tomadorId: null }));
+      component.form.get('notaFiscal.tomadorId')?.setValue(null);
+
+      component.salvar();
+
+      expect(serviceSpy.vincularTomador).toHaveBeenCalledWith(2, null);
+    });
+
+    it('should show the API message when the tomador is inactive (422)', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.vincularTomador.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 422,
+        error: { detail: 'Tomador inativo não pode ser vinculado: 7' }
+      })));
+      component.form.get('notaFiscal.tomadorId')?.setValue(7);
+
+      component.salvar();
+
+      expect(component.erro).toBe('Tomador inativo não pode ser vinculado: 7');
+    });
+
+    it('should show the API message when the CPF belongs to another patient', () => {
+      serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: { detail: 'CPF já cadastrado' }
+      })));
+      component.form.get('cpf')?.setValue('52998224725');
+
+      component.salvar();
+
+      expect(component.erro).toBe('CPF já cadastrado');
+      expect(component.salvando).toBeFalse();
     });
   });
 
@@ -342,12 +531,13 @@ describe('PacienteFormComponent', () => {
     let serviceSpy: jasmine.SpyObj<PacienteService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
+          { provide: TomadorService, useValue: tomadorServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
         ]
       }).compileComponents();

@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PacienteFiltro, PacienteService } from '../../../core/services/paciente.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { PAPEIS } from '../../../core/models/auth';
 import { PacienteResponseDTO, PageMetadata } from '../../../core/models/paciente';
 import { Ordenacao, proximaOrdenacao, toSortParam } from '../../../core/models/ordenacao';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -64,6 +66,12 @@ export class PacienteListComponent implements OnInit, OnDestroy {
     telefone: '',
     status: 'ativos'
   };
+
+  /**
+   * Atalho para os tomadores da nota fiscal (carlessopilatesapi#229), que não cabem no
+   * menu do topo: ele foi dimensionado para seis itens (#219).
+   */
+  readonly podeGerenciarTomadores = inject(AuthService).hasAnyRole(PAPEIS.cobranca);
 
   constructor(private service: PacienteService, private cdr: ChangeDetectorRef, private destroyRef: DestroyRef) {}
 

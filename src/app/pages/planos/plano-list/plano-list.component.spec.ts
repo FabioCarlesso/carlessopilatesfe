@@ -20,7 +20,8 @@ const mockPlano: PlanoResponseDTO = {
 const mockPaciente: PacienteResponseDTO = {
   version: 0,
   id: 10, nome: 'Ana Silva', email: 'ana@example.com', cpf: '123.456.789-00',
-  telefone: '(11) 90000-0000', dataNascimento: '1990-01-01', endereco: null, ativo: true
+  telefone: '(11) 90000-0000', dataNascimento: '1990-01-01', endereco: null, ativo: true,
+  cpfNaNota: false, tomadorId: null, tomadorNome: null, tomadorCpfCnpj: null
 };
 
 describe('PlanoListComponent', () => {

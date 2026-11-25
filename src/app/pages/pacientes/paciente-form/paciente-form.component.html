@@ -30,7 +30,7 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label for="email">E-mail *</label>
+        <label for="email">E-mail</label>
         <input id="email" formControlName="email" type="email" autocomplete="email" class="form-control"
           [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
         @if (campo('email')?.touched && campo('email')?.invalid) {
@@ -40,15 +40,10 @@
         }
       </div>
       <div class="form-group">
-        <label for="cpf">CPF *</label>
+        <label for="cpf">CPF</label>
         <input id="cpf" formControlName="cpf" appMascara="cpf" type="text" inputmode="numeric"
           placeholder="000.000.000-00" class="form-control"
           [class.is-invalid]="campo('cpf')?.invalid && campo('cpf')?.touched" />
-        @if (campo('cpf')?.errors?.['required'] && campo('cpf')?.touched) {
-          <div class="invalid-feedback">
-            CPF é obrigatório.
-          </div>
-        }
         @if (campo('cpf')?.errors?.['cpf'] && campo('cpf')?.touched) {
           <div class="invalid-feedback">
             CPF inválido.
@@ -98,6 +93,33 @@
             placeholder="00000-000" class="form-control" />
         </div>
       </div>
+    </div>
+    <h2 class="form-section-title">Nota fiscal</h2>
+    <div formGroupName="notaFiscal">
+      <div class="form-group form-group--checkbox">
+        <label for="cpfNaNota">
+          <input id="cpfNaNota" type="checkbox" formControlName="cpfNaNota" />
+          Deseja CPF/CNPJ na nota
+        </label>
+        <div class="field-hint">
+          Sem marcar, a nota sai sem CPF. Marcado, sai no tomador escolhido abaixo ou, sem tomador, no CPF do paciente.
+        </div>
+      </div>
+      @if (campo('notaFiscal.cpfNaNota')?.value) {
+        <div class="form-group">
+          <label for="tomadorId">Tomador da nota</label>
+          <select id="tomadorId" formControlName="tomadorId" class="form-control" aria-describedby="tomadorId-hint">
+            <option [ngValue]="null">O próprio paciente</option>
+            @for (t of tomadores; track t.id) {
+              <option [ngValue]="t.id">{{ t.nome }} — {{ documento(t.cpfCnpj) }}{{ t.inativo ? ' (inativo)' : '' }}</option>
+            }
+          </select>
+          <div id="tomadorId-hint" class="field-hint">
+            Responsável ou empresa que recebe a nota; um tomador pode atender vários pacientes.
+            <a routerLink="/tomadores/novo">Cadastrar tomador</a>
+          </div>
+        </div>
+      }
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary" [disabled]="salvando">

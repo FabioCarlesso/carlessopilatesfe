@@ -1,11 +1,19 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { RelatorioNfseFormatoExportacao, RelatorioNfseResponseDTO } from '../../../core/models/relatorio';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { TomadorResponseDTO } from '../../../core/models/tomador';
+import { TomadorService } from '../../../core/services/tomador.service';
+import {
+  RelatorioNfseFiltros,
+  RelatorioNfseFormatoExportacao,
+  RelatorioNfseResponseDTO
+} from '../../../core/models/relatorio';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { baixarBlob } from '../../../shared/utils/file-download';
 import { formatCompetencia } from '../../../shared/utils/competencia-mask';
+import { exibirValorGravado } from '../../../shared/utils/mascara';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 
@@ -25,10 +33,14 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
   consultado = false;
   erro: string | null = null;
 
+  tomadores: TomadorResponseDTO[] = [];
+
   constructor(
     private relatorioService: RelatorioService,
     private fb: FormBuilder,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private tomadorService: TomadorService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -37,7 +49,33 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
         Validators.required,
         Validators.pattern(/^(0[1-9]|1[0-2])\/\d{4}$/)
       ]],
-      notaAnteriorEmitida: [null]
+      notaAnteriorEmitida: [null],
+      cpfNaNota: [null],
+      tomadorId: [null as number | null]
+    });
+    // O detalhe do tomador abre o relatório já filtrado ("Ver notas deste tomador").
+    const tomadorId = Number(this.route.snapshot.queryParamMap.get('tomadorId'));
+    if (Number.isInteger(tomadorId) && tomadorId > 0) {
+      this.form.patchValue({ tomadorId });
+    }
+    this.carregarTomadores();
+  }
+
+  /**
+   * Ativos e inativos: um tomador inativado continua com pacientes vinculados, e as
+   * notas deles seguem saindo no nome dele.
+   */
+  private carregarTomadores(): void {
+    forkJoin([
+      this.tomadorService.listar(0, 200, { ativo: true }),
+      this.tomadorService.listar(0, 200, { ativo: false })
+    ]).subscribe({
+      next: ([ativos, inativos]) => {
+        this.tomadores = [...ativos.content, ...inativos.content].sort((a, b) => a.nome.localeCompare(b.nome));
+      },
+      error: () => {
+        this.tomadores = [];
+      }
     });
   }
 
@@ -62,13 +100,13 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const { competencia, notaAnteriorEmitida } = this.form.value;
+    const competencia: string = this.form.value.competencia;
     this.loadingRelatorio = true;
     this.erro = null;
     this.consultado = false;
     this.registros = [];
 
-    this.relatorioService.relatorioNfse(competencia, notaAnteriorEmitida).subscribe({
+    this.relatorioService.relatorioNfse(competencia, this.filtros()).subscribe({
       next: registros => {
         this.registros = registros;
         this.consultado = true;
@@ -93,6 +131,21 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
     return this.registros.reduce((total, registro) => total + registro.valorPago, 0);
   }
 
+  /** CPF ou CNPJ com máscara; "—" quando o paciente não deseja CPF na nota (a API manda nulo). */
+  documento(valor: string | null): string {
+    return valor ? exibirValorGravado('cpfCnpj', valor) : '—';
+  }
+
+  /** Registros que não podem ser emitidos como o paciente pediu até o cadastro ser completado. */
+  totalPendencias(): number {
+    return this.registros.filter(registro => !!registro.pendencia).length;
+  }
+
+  private filtros(): RelatorioNfseFiltros {
+    const { notaAnteriorEmitida, cpfNaNota, tomadorId } = this.form.value;
+    return { notaAnteriorEmitida, cpfNaNota, tomadorId };
+  }
+
   private exportar(formato: RelatorioNfseFormatoExportacao): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -100,13 +153,13 @@ export class NfseRelatorioComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const { competencia, notaAnteriorEmitida } = this.form.value;
+    const competencia: string = this.form.value.competencia;
     const extensao = formato === 'CSV' ? 'csv' : 'xlsx';
     const fallbackNomeArquivo = `relatorio-nfse-${competencia.replace('/', '-')}.${extensao}`;
 
     this.setExportando(formato, true);
     this.erro = null;
-    this.relatorioService.exportarRelatorioNfse(competencia, formato, notaAnteriorEmitida).subscribe({
+    this.relatorioService.exportarRelatorioNfse(competencia, formato, this.filtros()).subscribe({
       next: response => {
         try {
           baixarBlob(response, fallbackNomeArquivo);

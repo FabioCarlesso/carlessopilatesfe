@@ -52,6 +52,11 @@ export class PacienteService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/ativar`, {});
   }
 
+  /** Vincula (`tomadorId`) ou desvincula (`null`) o tomador da nota fiscal. */
+  vincularTomador(id: number, tomadorId: number | null): Observable<PacienteResponseDTO> {
+    return this.http.patch<PacienteResponseDTO>(`${this.apiUrl}/${id}/tomador`, { tomadorId });
+  }
+
   inativar(id: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
   }

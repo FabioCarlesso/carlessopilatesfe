@@ -1,12 +1,29 @@
 export interface RelatorioNfseResponseDTO {
+  pacienteId: number;
+  /** Nome do tomador alternativo, quando houver; senão, do paciente. */
   nome: string;
-  cpfCnpj: string;
+  /** Nulo quando o paciente não deseja CPF/CNPJ na nota. */
+  cpfCnpj: string | null;
   valorPago: number;
   competencia: string;
   descricaoServico: string;
   notaAnteriorEmitida: boolean;
   dataPagamento: string;
   observacoes: string | null;
+  cpfNaNota: boolean;
+  /** Dado faltante para emitir a nota como o paciente pediu (ex.: deseja CPF, mas não tem CPF cadastrado). */
+  pendencia: string | null;
+  /** Nome do aluno: com tomador, `nome` é o do tomador. */
+  pacienteNome: string;
+  tomadorId: number | null;
+}
+
+/** Filtros opcionais do relatório de NFSE; `null` ou ausente = todos. */
+export interface RelatorioNfseFiltros {
+  notaAnteriorEmitida?: boolean | null;
+  cpfNaNota?: boolean | null;
+  /** Só as notas deste tomador (de todos os pacientes vinculados). */
+  tomadorId?: number | null;
 }
 
 export type RelatorioNfseFormatoExportacao = 'CSV' | 'XLSX';

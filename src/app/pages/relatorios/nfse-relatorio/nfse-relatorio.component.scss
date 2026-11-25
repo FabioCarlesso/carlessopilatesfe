@@ -35,8 +35,43 @@
   }
 }
 
+.summary-item--pendente {
+  border-color: var(--c-warning);
+
+  strong {
+    color: var(--c-warning-text);
+  }
+}
+
+// Respiro sob a última linha: sem ele, a barra de rolagem horizontal ficava
+// colada no link "Corrigir cadastro" da última pendência e cobria parte dele.
+.nfse-table-wrap {
+  padding-bottom: var(--sp-3);
+}
+
 .nfse-table {
-  min-width: 980px;
+  min-width: 1300px;
+
+  // Larga o bastante para a mensagem de pendência caber em poucas linhas, em vez
+  // de virar uma coluna estreita que estica a linha inteira.
+  .coluna-pendencia {
+    min-width: 16rem;
+  }
+
+  .coluna-documento,
+  .pendencia-link {
+    white-space: nowrap;
+  }
+
+  .linha-pendente td {
+    background-color: var(--c-warning-bg);
+  }
+
+  .pendencia-texto {
+    display: block;
+    margin: var(--sp-1) 0;
+    color: var(--c-warning-text);
+  }
 }
 
 // Mesmo breakpoint do bloco mobile do `styles.scss` (o `.form-row` já empilha

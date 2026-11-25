@@ -1,0 +1,62 @@
+<div class="page-header">
+  <h1>{{ isEdit ? 'Editar Tomador' : 'Novo Tomador' }}</h1>
+  <a [routerLink]="isEdit && tomadorId !== null ? ['/tomadores', tomadorId] : ['/tomadores']" class="btn btn-outline">Voltar</a>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+@if (loading) {
+  <app-carregando mensagem="Carregando tomador..." />
+} @else if (!parametroInvalido) {
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card" novalidate>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nome">Nome ou razão social *</label>
+        <input id="nome" formControlName="nome" type="text" maxlength="255" class="form-control"
+          [class.is-invalid]="campo('nome')?.invalid && campo('nome')?.touched" />
+        @if (campo('nome')?.invalid && campo('nome')?.touched) {
+          <div class="invalid-feedback">Informe o nome.</div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="cpfCnpj">CPF/CNPJ *</label>
+        <input id="cpfCnpj" formControlName="cpfCnpj" appMascara="cpfCnpj" type="text" inputmode="numeric"
+          placeholder="CPF ou CNPJ" class="form-control"
+          [class.is-invalid]="campo('cpfCnpj')?.invalid && campo('cpfCnpj')?.touched" />
+        @if (campo('cpfCnpj')?.errors?.['required'] && campo('cpfCnpj')?.touched) {
+          <div class="invalid-feedback">Informe o CPF ou o CNPJ.</div>
+        } @else if (campo('cpfCnpj')?.errors?.['cpfCnpj'] && campo('cpfCnpj')?.touched) {
+          <div class="invalid-feedback">CPF ou CNPJ inválido.</div>
+        }
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input id="email" formControlName="email" type="email" class="form-control"
+          [class.is-invalid]="campo('email')?.invalid && campo('email')?.touched" />
+        @if (campo('email')?.invalid && campo('email')?.touched) {
+          <div class="invalid-feedback">E-mail inválido.</div>
+        }
+      </div>
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input id="telefone" formControlName="telefone" appMascara="telefone" type="text" inputmode="numeric"
+          placeholder="(00) 00000-0000" class="form-control" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="observacoes">Observações</label>
+      <textarea id="observacoes" formControlName="observacoes" rows="3" maxlength="500" class="form-control"
+        placeholder="Ex.: enviar a nota até o dia 10"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="salvando">
+        {{ salvando ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a routerLink="/tomadores" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+}

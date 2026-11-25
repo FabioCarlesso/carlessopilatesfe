@@ -1,0 +1,89 @@
+<div class="page-header">
+  <h1>Tomadores</h1>
+  <a routerLink="/tomadores/novo" class="btn btn-primary">+ Novo Tomador</a>
+</div>
+
+<p class="field-hint">
+  Quem recebe a nota fiscal quando não é o próprio paciente: o responsável por alunos menores ou a empresa que paga as
+  aulas. Um tomador pode atender vários pacientes.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+
+<form class="filters" (ngSubmit)="buscar()">
+  <label>
+    Nome
+    <input type="text" class="form-control" name="nome" [(ngModel)]="filtro.nome" placeholder="Nome ou razão social">
+  </label>
+  <label>
+    CPF/CNPJ
+    <input type="text" class="form-control" name="cpfCnpj" [(ngModel)]="filtro.cpfCnpj" placeholder="Parte do documento">
+  </label>
+  <label>
+    Situação
+    <select name="situacao" class="form-control" [(ngModel)]="filtro.situacao">
+      <option value="ativos">Ativos</option>
+      <option value="inativos">Inativos</option>
+    </select>
+  </label>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-primary">Buscar</button>
+    <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar</button>
+  </div>
+</form>
+
+@if (loading) {
+  <app-carregando variante="skeleton" mensagem="Carregando tomadores..." />
+}
+
+@if (!loading && tomadores.length === 0 && !erro) {
+  @if (buscaFiltrada) {
+    <app-empty-state mensagem="Nenhum tomador para os filtros aplicados." variante="filtrado">
+      <button type="button" class="btn btn-outline" (click)="limparFiltros()">Limpar filtros</button>
+    </app-empty-state>
+  } @else {
+    <app-empty-state mensagem="Nenhum tomador cadastrado.">
+      <a routerLink="/tomadores/novo" class="btn btn-primary">+ Novo Tomador</a>
+    </app-empty-state>
+  }
+}
+
+@if (!loading && tomadores.length > 0) {
+  <div class="table-wrap" tabindex="0" role="region" aria-label="Lista de tomadores">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF/CNPJ</th>
+          <th>Pacientes</th>
+          <th>Situação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of tomadores; track t.id) {
+          <tr>
+            <td>{{ t.nome }}</td>
+            <td>{{ documento(t.cpfCnpj) }}</td>
+            <td>{{ t.quantidadePacientes }}</td>
+            <td>{{ t.ativo ? 'Ativo' : 'Inativo' }}</td>
+            <td class="acoes">
+              <a [routerLink]="['/tomadores', t.id]" class="btn btn-sm btn-outline">Ver</a>
+              <a [routerLink]="['/tomadores', t.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (totalPaginas > 1) {
+    <div class="pagination" role="navigation" aria-label="Paginação de tomadores">
+      <button type="button" [disabled]="pagina === 0" (click)="irParaPagina(pagina - 1)">Anterior</button>
+      <span class="page-status" aria-live="polite">Página {{ pagina + 1 }} de {{ totalPaginas }}</span>
+      <button type="button" [disabled]="pagina === totalPaginas - 1" (click)="irParaPagina(pagina + 1)">Próxima</button>
+    </div>
+  }
+}

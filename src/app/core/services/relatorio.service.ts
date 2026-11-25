@@ -5,6 +5,7 @@ import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import {
   RelatorioFinanceiroDTO,
   RelatorioFinanceiroFormatoExportacao,
+  RelatorioNfseFiltros,
   RelatorioNfseFormatoExportacao,
   RelatorioNfseResponseDTO
 } from '../models/relatorio';
@@ -20,20 +21,20 @@ export class RelatorioService {
 
   relatorioNfse(
     competencia: string,
-    notaAnteriorEmitida?: boolean | null
+    filtros: RelatorioNfseFiltros = {}
   ): Observable<RelatorioNfseResponseDTO[]> {
     return this.http.get<RelatorioNfseResponseDTO[]>(this.nfseUrl, {
-      params: this.nfseParams(competencia, notaAnteriorEmitida)
+      params: this.nfseParams(competencia, filtros)
     });
   }
 
   exportarRelatorioNfse(
     competencia: string,
     formato: RelatorioNfseFormatoExportacao,
-    notaAnteriorEmitida?: boolean | null
+    filtros: RelatorioNfseFiltros = {}
   ): Observable<HttpResponse<Blob>> {
     return this.http.get(this.nfseUrl, {
-      params: this.nfseParams(competencia, notaAnteriorEmitida).set('formato', formato),
+      params: this.nfseParams(competencia, filtros).set('formato', formato),
       observe: 'response',
       responseType: 'blob'
     });
@@ -64,11 +65,17 @@ export class RelatorioService {
     });
   }
 
-  private nfseParams(competencia: string, notaAnteriorEmitida?: boolean | null): HttpParams {
+  private nfseParams(competencia: string, filtros: RelatorioNfseFiltros): HttpParams {
     let params = new HttpParams().set('competencia', competencia);
 
-    if (notaAnteriorEmitida !== null && notaAnteriorEmitida !== undefined) {
-      params = params.set('notaAnteriorEmitida', String(notaAnteriorEmitida));
+    if (filtros.notaAnteriorEmitida !== null && filtros.notaAnteriorEmitida !== undefined) {
+      params = params.set('notaAnteriorEmitida', String(filtros.notaAnteriorEmitida));
+    }
+    if (filtros.cpfNaNota !== null && filtros.cpfNaNota !== undefined) {
+      params = params.set('cpfNaNota', String(filtros.cpfNaNota));
+    }
+    if (filtros.tomadorId !== null && filtros.tomadorId !== undefined) {
+      params = params.set('tomadorId', String(filtros.tomadorId));
     }
 
     return params;

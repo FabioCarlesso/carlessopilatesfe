@@ -211,7 +211,7 @@ export class BuscaGlobalComponent implements OnInit {
           tipo: 'paciente' as const,
           id: paciente.id,
           nome: paciente.nome,
-          detalhe: paciente.cpf
+          detalhe: paciente.cpf ?? ''
         })),
         falhou: false
       })),

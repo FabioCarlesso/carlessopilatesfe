@@ -1,0 +1,21 @@
+/* Seção "Nota fiscal" (#287): o mesmo checkbox e a mesma dica do cadastro de
+   bloqueio de agenda. */
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+}
+
+.form-group--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-group--checkbox input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  /* `--text-brand`: único token de marca com variante no tema escuro (ver design-system). */
+  accent-color: var(--text-brand);
+}

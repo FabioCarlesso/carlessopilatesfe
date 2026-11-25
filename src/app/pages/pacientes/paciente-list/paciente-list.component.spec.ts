@@ -3,6 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PacienteListComponent } from './paciente-list.component';
+import { AuthService } from '../../../core/services/auth.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { Page, PacienteResponseDTO } from '../../../core/models/paciente';
 
@@ -15,7 +16,11 @@ const mockPaciente: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 const mockPage: Page<PacienteResponseDTO> = {
@@ -37,7 +42,10 @@ describe('PacienteListComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PacienteListComponent, RouterTestingModule],
-      providers: [{ provide: PacienteService, useValue: serviceSpy }]
+      providers: [
+        { provide: PacienteService, useValue: serviceSpy },
+        { provide: AuthService, useValue: { hasAnyRole: () => true } }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PacienteListComponent);
@@ -814,5 +822,10 @@ describe('PacienteListComponent', () => {
 
       expect(el().querySelector('.empty-state--filtrado')).toBeNull();
     });
+  });
+
+  it('should link to the invoice tomadores for billing roles', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/tomadores"]');
+    expect(link?.textContent?.trim()).toBe('Tomadores da nota');
   });
 });

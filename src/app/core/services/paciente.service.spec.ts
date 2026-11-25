@@ -12,7 +12,11 @@ const mockPaciente: PacienteResponseDTO = {
   telefone: '(11) 99999-9999',
   dataNascimento: '1990-05-15',
   endereco: null,
-  ativo: true
+  ativo: true,
+  cpfNaNota: false,
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 const mockPage: Page<PacienteResponseDTO> = {
@@ -151,6 +155,21 @@ describe('PacienteService', () => {
       const req = httpMock.expectOne('/api/pacientes/1/ativar');
       expect(req.request.method).toBe('PATCH');
       req.flush(null);
+    });
+  });
+
+  describe('vincularTomador', () => {
+    it('should PATCH /api/pacientes/:id/tomador with the id, or null to unlink', () => {
+      service.vincularTomador(1, 3).subscribe();
+      const vincular = httpMock.expectOne('/api/pacientes/1/tomador');
+      expect(vincular.request.method).toBe('PATCH');
+      expect(vincular.request.body).toEqual({ tomadorId: 3 });
+      vincular.flush(mockPaciente);
+
+      service.vincularTomador(1, null).subscribe();
+      const desvincular = httpMock.expectOne('/api/pacientes/1/tomador');
+      expect(desvincular.request.body).toEqual({ tomadorId: null });
+      desvincular.flush(mockPaciente);
     });
   });
 

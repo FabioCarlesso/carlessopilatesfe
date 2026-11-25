@@ -35,11 +35,11 @@
         </div>
         <div class="detail-item">
           <span class="label">E-mail</span>
-          <span>{{ paciente.email }}</span>
+          <span>{{ paciente.email || '-' }}</span>
         </div>
         <div class="detail-item">
           <span class="label">CPF</span>
-          <span>{{ paciente.cpf }}</span>
+          <span>{{ paciente.cpf || '-' }}</span>
         </div>
         <div class="detail-item">
           <span class="label">Telefone</span>
@@ -49,6 +49,32 @@
           <span class="label">Data de Nascimento</span>
           <span>{{ paciente.dataNascimento ? (paciente.dataNascimento | date:'dd/MM/yyyy') : '-' }}</span>
         </div>
+      </div>
+    </section>
+    <section class="detail-section">
+      <h2>Nota fiscal</h2>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="label">CPF/CNPJ na nota</span>
+          <span>{{ paciente.cpfNaNota ? 'Sim' : 'Não' }}</span>
+        </div>
+        @if (paciente.tomadorId && paciente.tomadorCpfCnpj) {
+          <div class="detail-item">
+            <span class="label">Tomador</span>
+            <span>
+              <a [routerLink]="['/tomadores', paciente.tomadorId]">{{ paciente.tomadorNome }}</a> — {{ documentoTomador(paciente.tomadorCpfCnpj) }}
+              @if (!paciente.cpfNaNota) {
+                <span class="field-hint">(não usado enquanto "CPF na nota" estiver desmarcado)</span>
+              }
+            </span>
+          </div>
+        }
+        @if (paciente.cpfNaNota && !paciente.tomadorId && !paciente.cpf) {
+          <div class="detail-item">
+            <span class="label">Pendência</span>
+            <span class="badge badge--warning">Sem CPF cadastrado</span>
+          </div>
+        }
       </div>
     </section>
     @if (paciente.endereco) {

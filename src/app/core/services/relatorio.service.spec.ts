@@ -6,6 +6,7 @@ import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 
 const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
   {
+    pacienteId: 1,
     nome: 'Ana Silva',
     cpfCnpj: '123.456.789-00',
     valorPago: 250,
@@ -13,7 +14,11 @@ const mockRelatorioNfse: RelatorioNfseResponseDTO[] = [
     descricaoServico: 'Aulas de Pilates - Competência 04/2026',
     notaAnteriorEmitida: false,
     dataPagamento: '2026-04-10',
-    observacoes: 'Plano mensal'
+    observacoes: 'Plano mensal',
+    cpfNaNota: true,
+    pendencia: null,
+    pacienteNome: 'Paciente Teste',
+    tomadorId: null
   }
 ];
 
@@ -43,15 +48,26 @@ describe('RelatorioService', () => {
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.has('notaAnteriorEmitida')).toBeFalse();
+    expect(req.request.params.has('cpfNaNota')).toBeFalse();
     req.flush(mockRelatorioNfse);
   });
 
   it('should include notaAnteriorEmitida when filter is informed', () => {
-    service.relatorioNfse('04/2026', false).subscribe();
+    service.relatorioNfse('04/2026', { notaAnteriorEmitida: false }).subscribe();
 
     const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.get('notaAnteriorEmitida')).toBe('false');
+    expect(req.request.params.has('cpfNaNota')).toBeFalse();
+    req.flush(mockRelatorioNfse);
+  });
+
+  it('should include cpfNaNota when filter is informed and skip null filters', () => {
+    service.relatorioNfse('04/2026', { notaAnteriorEmitida: null, cpfNaNota: true }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
+    expect(req.request.params.get('cpfNaNota')).toBe('true');
+    expect(req.request.params.has('notaAnteriorEmitida')).toBeFalse();
     req.flush(mockRelatorioNfse);
   });
 
@@ -60,13 +76,14 @@ describe('RelatorioService', () => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
 
-    service.exportarRelatorioNfse('04/2026', 'XLSX', true)
+    service.exportarRelatorioNfse('04/2026', 'XLSX', { notaAnteriorEmitida: true, cpfNaNota: false })
       .subscribe(response => expect(response.body).toBe(blob));
 
     const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/nfse');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('competencia')).toBe('04/2026');
     expect(req.request.params.get('notaAnteriorEmitida')).toBe('true');
+    expect(req.request.params.get('cpfNaNota')).toBe('false');
     expect(req.request.params.get('formato')).toBe('XLSX');
     expect(req.request.responseType).toBe('blob');
     req.flush(blob);

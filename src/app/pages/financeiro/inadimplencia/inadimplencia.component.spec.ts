@@ -76,7 +76,11 @@ const ana: PacienteResponseDTO = {
   telefone: '',
   dataNascimento: '1990-01-01',
   endereco: null,
-  ativo: false
+  ativo: false,
+  cpfNaNota: false,
+  tomadorId: null,
+  tomadorNome: null,
+  tomadorCpfCnpj: null
 };
 
 function pagina(content: PagamentoResponseDTO[], meta: Partial<Page<PagamentoResponseDTO>['page']> = {}) {
