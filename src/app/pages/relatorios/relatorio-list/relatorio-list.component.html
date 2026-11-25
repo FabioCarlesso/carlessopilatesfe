@@ -10,6 +10,13 @@
         Acompanhe receita, ocupação, evasão de pacientes e aulas por profissional mês a mês.
       </span>
     </a>
+
+    <a routerLink="/relatorios/aulas-sem-evolucao" class="relatorio-card">
+      <span class="relatorio-card__title">Aulas sem Evolução</span>
+      <span class="relatorio-card__description">
+        Liste as aulas realizadas sem evolução registrada, por profissional, para completar o prontuário.
+      </span>
+    </a>
   }
 
   @if (authService.hasAnyRole(papeis.relatorioPacientes)) {

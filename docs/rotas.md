@@ -70,6 +70,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/relatorios/recebimentos` | Recebimentos do período por data de pagamento, com totais por forma de pagamento (_fiscal_) |
 | `/relatorios/ocupacao` | Ocupação da grade semanal: alunos e vagas por dia, horário e profissional, com a lista de espera (`ADMIN` e `RECEPCAO`) |
 | `/relatorios/indicadores` | Indicadores históricos: receita, ocupação e evasão mês a mês, e ranking de aulas por profissional (`ADMIN`) |
+| `/relatorios/aulas-sem-evolucao` | Aulas realizadas sem evolução registrada no período, por profissional, com atalho para as sessões do paciente e exportação XLSX (`ADMIN`) |
 | `/financeiro/inadimplencia` | Gestão de inadimplência: lista global paginada de pagamentos com dias em atraso, filtros e contatos de cobrança (`ADMIN`) |
 | `/admin` | Hub da seção administrativa (`ADMIN`) |
 | `/admin/usuarios` | Listagem administrativa de usuários (`ADMIN`) |

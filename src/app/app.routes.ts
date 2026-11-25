@@ -353,6 +353,15 @@ export const routes: Routes = [
         .then(m => m.IndicadoresComponent)
   },
   {
+    // Aulas realizadas sem evolução (issue #293): controle do prontuário. A
+    // API (carlessopilatesapi#234) só o libera para `ADMIN`.
+    path: 'relatorios/aulas-sem-evolucao',
+    canActivate: [roleGuard(PAPEIS.admin)],
+    loadComponent: () =>
+      import('./pages/relatorios/aulas-sem-evolucao-relatorio/aulas-sem-evolucao-relatorio.component')
+        .then(m => m.AulasSemEvolucaoRelatorioComponent)
+  },
+  {
     // Gestão de inadimplência (issue #127): lista global de pagamentos e
     // contatos de cobrança. A API só a expõe para `ADMIN`.
     path: 'financeiro/inadimplencia',
