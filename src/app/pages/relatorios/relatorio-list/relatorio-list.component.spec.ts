@@ -124,4 +124,15 @@ describe('RelatorioListComponent', () => {
     comPapeis(['FINANCEIRO']);
     expect(renderizar().querySelector('a[href="/relatorios/frequencia"]')).toBeNull();
   });
+
+  it('should render the classes without evolution report only for ADMIN, as the API allows', () => {
+    const link = renderizar().querySelector('a[href="/relatorios/aulas-sem-evolucao"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Aulas sem Evolução');
+
+    comPapeis(['RECEPCAO']);
+    expect(renderizar().querySelector('a[href="/relatorios/aulas-sem-evolucao"]')).toBeNull();
+    comPapeis(['FINANCEIRO']);
+    expect(renderizar().querySelector('a[href="/relatorios/aulas-sem-evolucao"]')).toBeNull();
+  });
 });

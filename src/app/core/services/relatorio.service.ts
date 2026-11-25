@@ -20,6 +20,10 @@ import {
   RelatorioRecebimentosFormatoExportacao
 } from '../models/relatorio-recebimentos';
 import { RelatorioFrequenciaDTO, RelatorioFrequenciaFiltros } from '../models/relatorio-frequencia';
+import {
+  RelatorioAulasSemEvolucaoDTO,
+  RelatorioAulasSemEvolucaoFiltros
+} from '../models/relatorio-aulas-sem-evolucao';
 
 @Injectable({
   providedIn: 'root'
@@ -30,6 +34,7 @@ export class RelatorioService {
   private readonly pacientesUrl = '/api/api/relatorios/pacientes';
   private readonly recebimentosUrl = '/api/api/relatorios/recebimentos';
   private readonly frequenciaUrl = '/api/api/relatorios/frequencia';
+  private readonly aulasSemEvolucaoUrl = '/api/api/relatorios/aulas-sem-evolucao';
 
   constructor(private http: HttpClient) {}
 
@@ -226,4 +231,40 @@ export class RelatorioService {
   }
 
   // --- fim: frequência ---
+
+  // --- Aulas realizadas sem evolução (carlessopilatesapi#234), só ADMIN ---
+
+  relatorioAulasSemEvolucao(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioAulasSemEvolucaoFiltros = {}
+  ): Observable<RelatorioAulasSemEvolucaoDTO> {
+    return this.http.get<RelatorioAulasSemEvolucaoDTO>(this.aulasSemEvolucaoUrl, {
+      params: this.aulasSemEvolucaoParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  exportarRelatorioAulasSemEvolucao(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioAulasSemEvolucaoFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.aulasSemEvolucaoUrl}/xlsx`, {
+      params: this.aulasSemEvolucaoParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private aulasSemEvolucaoParams(inicio: string, fim: string, filtros: RelatorioAulasSemEvolucaoFiltros): HttpParams {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    return params;
+  }
+
+  // --- fim: aulas sem evolução ---
 }

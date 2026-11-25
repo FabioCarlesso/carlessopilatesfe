@@ -10,6 +10,7 @@ import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimp
 import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-relatorio/financeiro-relatorio.component';
 import { RecebimentosRelatorioComponent } from './pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component';
 import { FrequenciaRelatorioComponent } from './pages/relatorios/frequencia-relatorio/frequencia-relatorio.component';
+import { AulasSemEvolucaoRelatorioComponent } from './pages/relatorios/aulas-sem-evolucao-relatorio/aulas-sem-evolucao-relatorio.component';
 import { PacienteFinanceiroComponent } from './pages/pacientes/paciente-financeiro/paciente-financeiro.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
@@ -81,6 +82,7 @@ describe('app routes', () => {
       'relatorios/financeiro',
       'relatorios/recebimentos',
       'relatorios/indicadores',
+      'relatorios/aulas-sem-evolucao',
       'financeiro/inadimplencia',
       'admin',
       'admin/usuarios',
@@ -297,6 +299,27 @@ describe('app routes', () => {
       localStorage.clear();
     }
     expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(FrequenciaRelatorioComponent);
+  });
+
+  it('should open the classes without evolution report to ADMIN only and lazy load it', async () => {
+    TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
+    const route = routes.find(r => r.path === 'relatorios/aulas-sem-evolucao')!;
+    const guard = route.canActivate![0] as CanActivateFn;
+    const ativar = (roles: UserRole[]) => {
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+    };
+
+    try {
+      expect(ativar(['ADMIN'])).toBeTrue();
+      expect(ativar(['RECEPCAO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['FINANCEIRO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['PROFISSIONAL'])).toBeInstanceOf(UrlTree);
+    } finally {
+      localStorage.clear();
+    }
+    expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(AulasSemEvolucaoRelatorioComponent);
   });
 
   it('should guard the patient financial history with the billing roles and lazy load it', async () => {
