@@ -19,6 +19,7 @@ import {
   RelatorioRecebimentosFiltros,
   RelatorioRecebimentosFormatoExportacao
 } from '../models/relatorio-recebimentos';
+import { RelatorioFrequenciaDTO, RelatorioFrequenciaFiltros } from '../models/relatorio-frequencia';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +29,7 @@ export class RelatorioService {
   private readonly financeiroUrl = '/api/api/relatorios/financeiro';
   private readonly pacientesUrl = '/api/api/relatorios/pacientes';
   private readonly recebimentosUrl = '/api/api/relatorios/recebimentos';
+  private readonly frequenciaUrl = '/api/api/relatorios/frequencia';
 
   constructor(private http: HttpClient) {}
 
@@ -180,4 +182,48 @@ export class RelatorioService {
   }
 
   // --- fim: recebimentos ---
+
+  // --- Frequência e faltas por paciente (carlessopilatesapi#233) ---
+
+  /** Previstas, realizadas e faltas por paciente no período. O `403` é tratado pela tela. */
+  relatorioFrequencia(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioFrequenciaFiltros = {}
+  ): Observable<RelatorioFrequenciaDTO> {
+    return this.http.get<RelatorioFrequenciaDTO>(this.frequenciaUrl, {
+      params: this.frequenciaParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true)
+    });
+  }
+
+  /** A API só exporta em Excel (`/xlsx`). */
+  exportarRelatorioFrequencia(
+    inicio: string,
+    fim: string,
+    filtros: RelatorioFrequenciaFiltros = {}
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.frequenciaUrl}/xlsx`, {
+      params: this.frequenciaParams(inicio, fim, filtros),
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private frequenciaParams(inicio: string, fim: string, filtros: RelatorioFrequenciaFiltros): HttpParams {
+    let params = new HttpParams().set('inicio', inicio).set('fim', fim);
+    if (filtros.profissionalId !== null && filtros.profissionalId !== undefined) {
+      params = params.set('profissionalId', String(filtros.profissionalId));
+    }
+    if (filtros.pacienteId !== null && filtros.pacienteId !== undefined) {
+      params = params.set('pacienteId', String(filtros.pacienteId));
+    }
+    if (filtros.taxaMaxima !== null && filtros.taxaMaxima !== undefined) {
+      params = params.set('taxaMaxima', String(filtros.taxaMaxima));
+    }
+    return params;
+  }
+
+  // --- fim: frequência ---
 }

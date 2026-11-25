@@ -293,6 +293,15 @@ export const routes: Routes = [
         .then(m => m.PacientesRelatorioComponent)
   },
   {
+    // Frequência e faltas por paciente (issue #292). A API o libera para
+    // `ADMIN` e `RECEPCAO` (carlessopilatesapi#233): acompanhamento da recepção.
+    path: 'relatorios/frequencia',
+    canActivate: [roleGuard(PAPEIS.relatorioFrequencia)],
+    loadComponent: () =>
+      import('./pages/relatorios/frequencia-relatorio/frequencia-relatorio.component')
+        .then(m => m.FrequenciaRelatorioComponent)
+  },
+  {
     path: 'relatorios/pagamento-profissional',
     canActivate: [roleGuard(PAPEIS.fiscal)],
     loadComponent: () =>

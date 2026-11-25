@@ -26,6 +26,8 @@ export const PAPEIS = {
   fiscal: ['ADMIN', 'FINANCEIRO'],
   // Relatório de pacientes (carlessopilatesapi#230): é da recepção, não do financeiro.
   relatorioPacientes: ['ADMIN', 'RECEPCAO'],
+  // Frequência e faltas por paciente (carlessopilatesapi#233): acompanhamento da recepção.
+  relatorioFrequencia: ['ADMIN', 'RECEPCAO'],
   // Quem abre o hub `/relatorios`: a união de `fiscal` e `relatorioPacientes`.
   relatorios: ['ADMIN', 'RECEPCAO', 'FINANCEIRO'],
   admin: ['ADMIN']
