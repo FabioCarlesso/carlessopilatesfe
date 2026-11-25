@@ -8,6 +8,12 @@
   flex-wrap: wrap;
 }
 
+.cabecalho-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .page-subtitle {
   margin-top: var(--sp-2);
   color: var(--text-secondary);
@@ -540,3 +546,7 @@
     display: none;
   }
 }
+
+/* A folha impressa (issue #291) tem estilo global em
+   `src/styles/_agenda-impressao.scss`: ele não cabe no orçamento de 8 kB do
+   componente, e a regra que esconde a navbar já precisaria ser global. */

@@ -13,7 +13,7 @@ import { ListaEsperaService } from '../../../core/services/lista-espera.service'
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
-import { AgendaComponent } from './agenda.component';
+import { AgendaComponent, CLASSE_BODY_IMPRIMIVEL, ID_ESTILO_PAGINA } from './agenda.component';
 
 /** Quarta-feira, 20/05/2026 — o dia âncora de todos os cenários. */
 const HOJE = new Date(2026, 4, 20, 9, 0);
@@ -815,6 +815,109 @@ describe('AgendaComponent', () => {
 
       expect(todos('.calendario-grade .evento').length).toBe(1);
       expect(todos('.calendario-celula .celula-bloqueio').length).toBe(1);
+    });
+  });
+  describe('print (issue #291)', () => {
+    function botaoImprimir(): HTMLButtonElement {
+      return todos('.page-header button').find(b => b.textContent?.trim() === 'Imprimir') as HTMLButtonElement;
+    }
+
+    function linhasDaGrade(): string[][] {
+      return todos('.impressao-grade tbody tr').map(tr =>
+        Array.from(tr.querySelectorAll('th, td')).map(c => (c.textContent ?? '').replace(/\s+/g, ' ').trim()));
+    }
+
+    it('should open the browser print dialog only when the button is clicked', async () => {
+      await setup();
+      const print = spyOn(window, 'print');
+      expect(print).not.toHaveBeenCalled();
+
+      botaoImprimir().click();
+
+      expect(print).toHaveBeenCalledTimes(1);
+      expect(texto('.impressao-meta')).toContain('Gerado em');
+    });
+
+    it('should not print while the period failed to load', async () => {
+      await setup({ erroSessoes: new HttpErrorResponse({ status: 500 }) });
+      const print = spyOn(window, 'print');
+
+      expect(botaoImprimir().disabled).toBeTrue();
+      component.imprimir();
+      expect(print).not.toHaveBeenCalled();
+    });
+
+    it('should mark the body and inject the A4 page rule of the view, cleaning up on destroy', async () => {
+      await setup();
+      const estilo = () => document.getElementById(ID_ESTILO_PAGINA);
+
+      expect(document.body.classList).toContain(CLASSE_BODY_IMPRIMIVEL);
+      expect(estilo()?.textContent).toContain('A4 landscape');
+
+      clicar('.calendario-visoes button:nth-child(2)');
+      expect(estilo()?.textContent).toContain('A4 portrait');
+
+      fixture.destroy();
+      expect(document.body.classList).not.toContain(CLASSE_BODY_IMPRIMIVEL);
+      expect(estilo()).toBeNull();
+    });
+
+    it('should print the week as a time x day grid, with the professional and cancelled marks', async () => {
+      await setup();
+
+      expect(texto('.impressao-titulo')).toContain('Agenda semanal');
+      expect(texto('.impressao-titulo')).toContain(component.grade.titulo);
+      expect(texto('.impressao-meta')).toContain('Todos os profissionais');
+      expect(todos('.impressao-grade thead th').length).toBe(8);
+
+      const linhas = linhasDaGrade();
+      expect(linhas.map(l => l[0])).toEqual(['09:00', '14:00', 'Sem horário']);
+      // Colunas: horário, dom(17) … sáb(23). Ana na quarta às 14h, Bruno na
+      // quinta sem horário e a sessão cancelada de Célia na sexta às 9h.
+      expect(linhas[1][4]).toContain('Ana Silva');
+      expect(linhas[1][4]).toContain('Carla Fisio');
+      expect(linhas[2][5]).toContain('Bruno Costa');
+      expect(linhas[0][6]).toContain('Célia Dias');
+      expect(linhas[0][6]).toContain('Cancelada');
+      expect(todos('.impressao-grade .impressao-cancelado').length).toBe(1);
+    });
+
+    it('should print only the selected professional', async () => {
+      await setup();
+      component.filtro.profissionalId = 5;
+      component.aplicarFiltros();
+      fixture.detectChanges();
+
+      expect(texto('.impressao-meta')).toContain('Diego Pilates');
+      const pacientes = todos('.impressao-grade .impressao-paciente').map(e => e.textContent?.trim());
+      expect(pacientes).toEqual(['Célia Dias']);
+      // Com um profissional só, repetir o nome dele em cada célula seria ruído.
+      expect(todos('.impressao-grade .impressao-detalhe').map(e => e.textContent?.trim())).toEqual(['Cancelada']);
+    });
+
+    it('should print the day as a list in time order', async () => {
+      await setup({
+        sessoes: [
+          sessaoDoDia,
+          sessao({ id: 9, dataHora: '2026-05-20T08:00', pacienteId: 40, nomePaciente: 'Davi Lima' })
+        ],
+        aulas: []
+      });
+
+      clicar('.calendario-visoes button:nth-child(2)');
+
+      expect(texto('.impressao-titulo')).toContain('Agenda do dia');
+      expect(todos('.impressao-grade').length).toBe(0);
+      const linhas = todos('.impressao-lista tbody tr').map(tr => tr.querySelectorAll('td')[1].textContent?.trim());
+      expect(linhas).toEqual(['Davi Lima', 'Ana Silva']);
+    });
+
+    it('should keep the sheet out of the screen', async () => {
+      await setup();
+      const folha = (fixture.nativeElement as HTMLElement).querySelector('.agenda-impressao') as HTMLElement;
+
+      expect(folha.getAttribute('aria-hidden')).toBe('true');
+      expect(getComputedStyle(folha).display).toBe('none');
     });
   });
 });

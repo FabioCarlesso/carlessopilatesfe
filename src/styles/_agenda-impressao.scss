@@ -1,0 +1,165 @@
+/* ---------------------------------------------------------------------------
+   Agenda impressa (issue #291)
+   A folha fica sempre no DOM e só aparece no papel. As cores saem da paleta
+   fixa (`--c-tempestade`, `--c-branco`, `--c-linha`…), e não dos tokens de
+   superfície/texto, porque estes viram escuros no `[data-theme="dark"]` e a
+   folha sairia preta. A orientação do A4 não está aqui: `@page` não aceita
+   seletor, então o componente injeta a regra da vista num `<style>` do `head`.
+   O arquivo é global porque a navbar e o resto da casca ficam fora do
+   componente, e porque o SCSS da agenda já estava no limite de 8 kB do
+   orçamento de estilo por componente.
+   --------------------------------------------------------------------------- */
+.agenda-impressao {
+  display: none;
+}
+
+@media print {
+  /* Tudo o que é tela — cabeçalho, barra, filtros, legenda, grade, lista,
+     painel e diálogo — sai do papel; fica só a folha. Os filhos diretos do
+     componente são os blocos de controle de fluxo do template. */
+  app-agenda > :not(.agenda-impressao) {
+    display: none !important;
+  }
+
+  .agenda-impressao {
+    display: block;
+    color: var(--c-tempestade);
+    background-color: var(--c-branco);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-normal);
+  }
+
+  .impressao-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--sp-4);
+    padding-bottom: var(--sp-2);
+    margin-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--c-tempestade);
+  }
+
+  .impressao-estudio {
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-caps);
+    text-transform: uppercase;
+    color: var(--c-grafite);
+  }
+
+  .impressao-titulo {
+    font-size: var(--fs-h3);
+    font-weight: 600;
+  }
+
+  .impressao-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-4);
+    font-size: var(--fs-micro);
+
+    dt {
+      display: inline;
+      color: var(--c-grafite);
+
+      &::after {
+        content: ': ';
+      }
+    }
+
+    dd {
+      display: inline;
+      font-weight: 600;
+    }
+  }
+
+  .impressao-grade,
+  .impressao-lista {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    th,
+    td {
+      border: 1px solid var(--c-linha);
+      padding: var(--sp-1);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    thead th {
+      background-color: var(--c-linha-suave);
+      font-weight: 600;
+    }
+
+    /* Uma linha de horário não se parte entre duas folhas. */
+    tr {
+      break-inside: avoid;
+    }
+  }
+
+  .impressao-coluna-hora {
+    width: 56px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .impressao-evento + .impressao-evento {
+    margin-top: var(--sp-1);
+    padding-top: var(--sp-1);
+    border-top: 1px dotted var(--c-linha);
+  }
+
+  .impressao-paciente {
+    display: block;
+    font-weight: 600;
+  }
+
+  .impressao-detalhe {
+    display: block;
+    color: var(--c-grafite);
+  }
+
+  /* Cancelado continua na folha (o filtro de situação é de quem imprime), mas
+     riscado e escrito, para a cor não ser o único sinal. */
+  .impressao-cancelado {
+    text-decoration: line-through;
+    color: var(--c-grafite);
+  }
+
+  .impressao-bloqueio {
+    display: block;
+    font-weight: 400;
+    color: var(--c-grafite);
+  }
+
+  p.impressao-bloqueio {
+    margin-bottom: var(--sp-2);
+  }
+
+  .impressao-vazio {
+    color: var(--c-grafite);
+  }
+}
+
+// Casca da aplicação na impressão da agenda. A classe é posta no `body` pela
+// agenda enquanto ela está aberta, então o Ctrl+P do navegador também cai
+// aqui, e nenhuma outra tela é afetada. A navbar, a notificação global e a
+// ajuda de atalhos ficam fora do componente. O fundo vira branco para o tema
+// escuro não sair impresso.
+@media print {
+  body.agenda-imprimivel {
+    background-color: var(--c-branco);
+
+    .navbar,
+    .notificacao-global,
+    app-atalhos-ajuda {
+      display: none !important;
+    }
+
+    main {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
