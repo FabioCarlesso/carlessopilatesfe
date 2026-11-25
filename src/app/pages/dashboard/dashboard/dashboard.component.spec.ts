@@ -216,13 +216,13 @@ describe('DashboardComponent', () => {
     expect(el.querySelector('.alert-danger')?.textContent).toContain('Erro ao carregar indicadores do sistema.');
   });
 
-  it('should render reports action when user reaches the fiscal area', () => {
+  it('should render reports action when user reaches the reports hub', () => {
     const el = fixture.nativeElement as HTMLElement;
-    expect(authServiceSpy.hasAnyRole).toHaveBeenCalledWith(PAPEIS.fiscal);
+    expect(authServiceSpy.hasAnyRole).toHaveBeenCalledWith(PAPEIS.relatorios);
     expect(el.querySelector('a[href="/relatorios"]')?.textContent).toContain('Relatórios');
   });
 
-  it('should hide reports action when user has no fiscal role', () => {
+  it('should hide reports action when user has no role for the reports hub', () => {
     authServiceSpy.isAdmin.and.returnValue(false);
     authServiceSpy.hasAnyRole.and.returnValue(false);
     const userFixture = TestBed.createComponent(DashboardComponent);

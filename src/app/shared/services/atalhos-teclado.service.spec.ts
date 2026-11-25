@@ -294,7 +294,7 @@ describe('AtalhosTecladoService', () => {
         .atalhosDisponiveis()
         .flatMap(atalho => (atalho.acao.tipo === 'navegar' ? [atalho.acao.rota] : []));
 
-      expect(rotas).toEqual(['/inicio', '/agenda', '/lista-espera', '/pacientes', '/pacientes/novo', '/lista-espera/nova']);
+      expect(rotas).toEqual(['/inicio', '/agenda', '/lista-espera', '/pacientes', '/relatorios', '/pacientes/novo', '/lista-espera/nova']);
     });
 
     it('deve ficar inativo sem sessão', () => {
