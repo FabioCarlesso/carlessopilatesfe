@@ -6,7 +6,13 @@
   <!-- A fila é lida a partir da agenda: é aqui que se vê o horário lotado e é
   daqui que sai o cancelamento que abre a vaga. A entrada não vai para a navbar
   porque ela já está no limite de uma linha em 1025px (issue #219). -->
-  <a routerLink="/lista-espera" class="btn btn-outline">Lista de espera</a>
+  <div class="cabecalho-acoes">
+    <!-- Imprime o período e os filtros da tela (issue #291): a folha já está no
+    DOM, escondida pelo CSS de tela, e o botão só abre o diálogo do navegador. -->
+    <button type="button" class="btn btn-secondary" [disabled]="loading || !!erro"
+      (click)="imprimir()">Imprimir</button>
+    <a routerLink="/lista-espera" class="btn btn-outline">Lista de espera</a>
+  </div>
 </div>
 
 <!-- `role="alert"` porque a falha de carga também **apaga a grade** e esvazia o
@@ -291,6 +297,106 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
       </div>
     }
   </div>
+
+  <!-- Folha impressa (issue #291). Fica sempre no DOM e só aparece no
+  `@media print`, onde todo o resto da tela some — assim o Ctrl+P do navegador
+  imprime o mesmo que o botão. `aria-hidden` porque na tela ela nunca é
+  exibida e o leitor de tela já tem a grade e a lista. -->
+  <section class="agenda-impressao" [class.impressao-semana]="visao === 'semanal'"
+    [class.impressao-dia]="visao === 'diaria'" aria-hidden="true">
+    <header class="impressao-cabecalho">
+      <div>
+        <p class="impressao-estudio">Carlesso Pilates</p>
+        <h2 class="impressao-titulo">{{ tituloDaImpressao }} · {{ grade.titulo }}</h2>
+      </div>
+      <dl class="impressao-meta">
+        <div><dt>Profissional</dt><dd>{{ profissionalDaImpressao }}</dd></div>
+        @if (outrosFiltrosDaImpressao) {
+          <div><dt>Filtros</dt><dd>{{ outrosFiltrosDaImpressao }}</dd></div>
+        }
+        <div><dt>Gerado em</dt><dd>{{ geradoEm }}</dd></div>
+      </dl>
+    </header>
+
+    @if (visao === 'semanal') {
+      @if (linhasImpressao.length > 0) {
+        <table class="impressao-grade">
+          <thead>
+            <tr>
+              <th class="impressao-coluna-hora">Horário</th>
+              @for (dia of diasImpressao; track dia.dia) {
+                <th>
+                  {{ diasSemana[$index].abreviado }} {{ dia.numero }}
+                  @if (marcaBloqueio(dia)) {
+                    <span class="impressao-bloqueio">{{ marcaBloqueio(dia) }}</span>
+                  }
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of linhasImpressao; track linha.horario) {
+              <tr>
+                <th class="impressao-coluna-hora" scope="row">{{ linha.horario }}</th>
+                @for (celula of linha.celulas; track $index) {
+                  <td>
+                    @for (evento of celula; track evento.chave) {
+                      <div class="impressao-evento" [class.impressao-cancelado]="evento.status === 'CANCELADA'">
+                        <span class="impressao-paciente">{{ evento.paciente }}</span>
+                        @if (filtro.profissionalId === 'todos' && evento.profissional) {
+                          <span class="impressao-detalhe">{{ evento.profissional }}</span>
+                        }
+                        @if (evento.status === 'CANCELADA') {
+                          <span class="impressao-detalhe">{{ evento.statusLabel }}</span>
+                        }
+                      </div>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="impressao-vazio">Nenhuma sessão ou aula neste período.</p>
+      }
+    } @else {
+      @for (dia of diasImpressao; track dia.dia) {
+        @if (rotuloBloqueios(dia)) {
+          <p class="impressao-bloqueio">{{ rotuloBloqueios(dia) }}</p>
+        }
+        @if (dia.eventos.length > 0) {
+          <table class="impressao-lista">
+            <thead>
+              <tr>
+                <th class="impressao-coluna-hora">Horário</th>
+                <th>Paciente</th>
+                <th>Atendimento</th>
+                <th>Profissional</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (evento of eventosDoDiaImpresso(dia); track evento.chave) {
+                <tr [class.impressao-cancelado]="evento.status === 'CANCELADA'">
+                  <td class="impressao-coluna-hora">{{ evento.horario || 'Sem horário' }}</td>
+                  <td>{{ evento.paciente }}</td>
+                  <td>
+                    {{ evento.rotulo }}
+                    @if (evento.status === 'CANCELADA') {
+                      ({{ evento.statusLabel }})
+                    }
+                  </td>
+                  <td>{{ evento.profissional || 'Não atribuído' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="impressao-vazio">Nenhuma sessão ou aula neste dia.</p>
+        }
+      }
+    }
+  </section>
 }
 
 @if (acaoPendente) {
