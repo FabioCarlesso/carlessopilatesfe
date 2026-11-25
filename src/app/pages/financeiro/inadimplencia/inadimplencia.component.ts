@@ -33,12 +33,16 @@ import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-d
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
-import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { extrairMensagemErro, extrairMensagemErroBlob } from '../../../shared/utils/api-error';
+import { baixarBlob } from '../../../shared/utils/file-download';
 import { hojeIso } from '../../../shared/utils/calendario';
 import {
+  AtalhoInadimplencia,
   CAMPO_DIAS_ATRASO,
+  atalhoDoFiltro,
   descreverAtraso,
   diasEmAtraso,
+  filtroDoAtalho,
   formatarDataHora,
   sortDaInadimplencia,
   validarFaixaVencimento
@@ -99,6 +103,9 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
  *
  * Cada pagamento abre um diálogo de cobrança com o histórico de contatos e,
  * enquanto não estiver `PAGO`, o registro de um novo contato.
+ *
+ * A issue #290 acrescentou os atalhos de filtro (vencidas, vencem em 7 dias e
+ * todas em aberto) e a exportação em Excel do último filtro aplicado.
  */
 @Component({
   selector: 'app-inadimplencia',
@@ -142,6 +149,18 @@ export class InadimplenciaComponent implements OnInit {
   filtro: FiltroUI = filtroPadrao();
   /** Erro de validação dos filtros, mostrado no próprio painel. */
   erroFiltro: string | null = null;
+
+  readonly atalhos: readonly { id: AtalhoInadimplencia; rotulo: string }[] = [
+    { id: 'vencidas', rotulo: 'Vencidas' },
+    { id: 'vencem7dias', rotulo: 'Vencem em 7 dias' },
+    { id: 'emAberto', rotulo: 'Todas em aberto' }
+  ];
+  /** Atalho que descreve o filtro aplicado, para o `aria-pressed`. */
+  atalhoAtivo: AtalhoInadimplencia | null = 'emAberto';
+
+  exportando = false;
+  /** Falha da exportação; separada de `erro` para não esconder a lista na tela. */
+  erroExportacao: string | null = null;
   /**
    * Filtro que de fato produziu a lista. Separado de `filtro`, que o
    * `[(ngModel)]` move a cada clique: paginar ou reordenar não pode aplicar
@@ -255,8 +274,60 @@ export class InadimplenciaComponent implements OnInit {
       vencimentoAte: this.filtro.vencimentoAte || undefined,
       pacienteId: this.pacienteSelecionado?.id
     };
+    this.atalhoAtivo = atalhoDoFiltro(this.filtroAplicado);
     this.currentPage = 0;
     this.carregar();
+  }
+
+  /**
+   * Preenche status e faixa de vencimento do atalho, a partir do dia local, e
+   * já busca. O paciente escolhido continua: "vencidas da Ana" é uma consulta
+   * legítima.
+   */
+  aplicarAtalho(atalho: AtalhoInadimplencia): void {
+    const { status, vencimentoDe, vencimentoAte } = filtroDoAtalho(atalho, hojeIso());
+    this.filtro = {
+      status: Object.fromEntries(STATUS_PAGAMENTO_OPCOES.map(s => [s, status.includes(s)])) as Record<
+        StatusPagamento,
+        boolean
+      >,
+      vencimentoDe: vencimentoDe ?? '',
+      vencimentoAte: vencimentoAte ?? ''
+    };
+    this.buscar();
+  }
+
+  /**
+   * Exporta em Excel o **último filtro aplicado** e a ordenação da tabela, sem
+   * paginação: a planilha traz as mesmas linhas da lista somando todas as
+   * páginas, e não o que ainda está sendo editado no painel. O `400` de teto
+   * (mais de 5000 pagamentos) chega com o corpo em `Blob`, lido por
+   * `extrairMensagemErroBlob` para mostrar o `detail` da API.
+   */
+  exportar(): void {
+    if (this.exportando) return;
+    this.exportando = true;
+    this.erroExportacao = null;
+    this.service
+      .exportar(this.filtroAplicado, sortDaInadimplencia(this.ordenacao))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: response => {
+          try {
+            baixarBlob(response, `cobrancas-${hojeIso()}.xlsx`);
+          } catch {
+            this.erroExportacao = 'Erro ao exportar as cobranças em Excel.';
+          } finally {
+            this.exportando = false;
+          }
+        },
+        error: (err: unknown) => {
+          void extrairMensagemErroBlob(err, 'Erro ao exportar as cobranças em Excel.').then(mensagem => {
+            this.erroExportacao = mensagem;
+            this.exportando = false;
+          });
+        }
+      });
   }
 
   limparFiltros(): void {

@@ -22,6 +22,15 @@
   color: var(--text-secondary);
 }
 
+/* Atalhos de filtro (issue #290). O ativo troca de variante global
+   (`btn-primary`) e leva `aria-pressed`; aqui só o espaçamento externo. */
+.atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
 /* `align-items: start`, e não `end` como nas outras listagens: as sugestões da
    busca de paciente crescem para baixo e não podem empurrar os vizinhos. */
 .filtros {

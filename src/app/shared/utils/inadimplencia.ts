@@ -1,6 +1,7 @@
 import { Ordenacao, toSortParam } from '../../core/models/ordenacao';
-import { PagamentoResponseDTO } from '../../core/models/plano';
-import { diasEntre, hojeIso } from './calendario';
+import { PagamentoFiltro } from '../../core/models/inadimplencia';
+import { PagamentoResponseDTO, StatusPagamento } from '../../core/models/plano';
+import { diasEntre, hojeIso, somarDias } from './calendario';
 
 /**
  * Regras puras da tela de inadimplência (issue #127): dias em atraso,
@@ -79,4 +80,50 @@ export function formatarDataHora(valor: string | null | undefined): string {
   if (!match) return valor;
   const [, ano, mes, dia, hora, minuto] = match;
   return `${dia}/${mes}/${ano} às ${hora}:${minuto}`;
+}
+
+/** Atalhos de filtro da tela (issue #290). */
+export type AtalhoInadimplencia = 'vencidas' | 'vencem7dias' | 'emAberto';
+
+/** Janela, em dias a partir de hoje, do atalho "Vencem em 7 dias". */
+export const DIAS_RENOVACAO_SEMANA = 7;
+
+/** Status e faixa de vencimento de um atalho; o paciente filtrado é preservado pela tela. */
+export type FiltroDoAtalho = Required<Pick<PagamentoFiltro, 'status'>> & Pick<PagamentoFiltro, 'vencimentoDe' | 'vencimentoAte'>;
+
+/**
+ * Converte o atalho em filtro, sempre a partir do dia **local** (`hoje`):
+ *
+ * - **Vencidas**: pendentes e vencidos com vencimento até ontem. Inclui o
+ *   `PENDENTE` já vencido que o scheduler ainda não marcou como `VENCIDO` — a
+ *   mesma regra dos dias em atraso da API.
+ * - **Vencem em 7 dias**: `PENDENTE` com vencimento de hoje a hoje + 7, as
+ *   renovações da semana.
+ * - **Todas em aberto**: pendentes e vencidos, sem faixa (o padrão da tela).
+ */
+export function filtroDoAtalho(atalho: AtalhoInadimplencia, hoje: string = hojeIso()): FiltroDoAtalho {
+  switch (atalho) {
+    case 'vencidas':
+      return { status: ['PENDENTE', 'VENCIDO'], vencimentoAte: somarDias(hoje, -1) };
+    case 'vencem7dias':
+      return { status: ['PENDENTE'], vencimentoDe: hoje, vencimentoAte: somarDias(hoje, DIAS_RENOVACAO_SEMANA) };
+    case 'emAberto':
+      return { status: ['PENDENTE', 'VENCIDO'] };
+  }
+}
+
+/** Qual atalho, se algum, descreve o filtro aplicado (ignora o paciente). */
+export function atalhoDoFiltro(filtro: PagamentoFiltro, hoje: string = hojeIso()): AtalhoInadimplencia | null {
+  const atalhos: AtalhoInadimplencia[] = ['vencidas', 'vencem7dias', 'emAberto'];
+  return atalhos.find(atalho => mesmoFiltro(filtroDoAtalho(atalho, hoje), filtro)) ?? null;
+}
+
+function mesmoFiltro(atalho: FiltroDoAtalho, filtro: PagamentoFiltro): boolean {
+  const status: readonly StatusPagamento[] = filtro.status ?? [];
+  return (
+    status.length === atalho.status.length &&
+    atalho.status.every(s => status.includes(s)) &&
+    (filtro.vencimentoDe || undefined) === atalho.vencimentoDe &&
+    (filtro.vencimentoAte || undefined) === atalho.vencimentoAte
+  );
 }

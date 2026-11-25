@@ -1,5 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ehConflitoConcorrencia, extrairMensagemErro, MENSAGEM_CONFLITO_CONCORRENCIA } from './api-error';
+import {
+  ehConflitoConcorrencia,
+  extrairMensagemErro,
+  extrairMensagemErroBlob,
+  MENSAGEM_CONFLITO_CONCORRENCIA
+} from './api-error';
 
 describe('extrairMensagemErro', () => {
   const fallback = 'Erro genérico.';
@@ -81,5 +86,33 @@ describe('ehConflitoConcorrencia', () => {
   it('should make extrairMensagemErro return the reload guidance', () => {
     const err = problema(409, 'https://carlessopilates.com.br/problemas/concurrent-modification');
     expect(extrairMensagemErro(err, 'Erro genérico.')).toBe(MENSAGEM_CONFLITO_CONCORRENCIA);
+  });
+});
+
+describe('extrairMensagemErroBlob', () => {
+  const fallback = 'Erro ao exportar.';
+  const blobJson = (corpo: unknown) => new Blob([JSON.stringify(corpo)], { type: 'application/problem+json' });
+
+  it('should read the detail of a JSON error delivered as Blob', async () => {
+    const err = new HttpErrorResponse({ status: 400, error: blobJson({ detail: 'Restrinja os filtros.' }) });
+    expect(await extrairMensagemErroBlob(err, fallback)).toBe('Restrinja os filtros.');
+  });
+
+  it('should keep the authorization message for 403 with a Blob body', async () => {
+    const err = new HttpErrorResponse({ status: 403, error: blobJson({ detail: 'Forbidden' }) });
+    expect(await extrairMensagemErroBlob(err, fallback)).toContain('sessão expirou');
+  });
+
+  it('should fall back when the Blob is not JSON or is empty', async () => {
+    const naoJson = new HttpErrorResponse({ status: 500, error: new Blob(['<html>erro</html>']) });
+    const vazio = new HttpErrorResponse({ status: 500, error: new Blob([]) });
+    expect(await extrairMensagemErroBlob(naoJson, fallback)).toBe(fallback);
+    expect(await extrairMensagemErroBlob(vazio, fallback)).toBe(fallback);
+  });
+
+  it('should behave like extrairMensagemErro when the body is not a Blob', async () => {
+    const err = new HttpErrorResponse({ status: 400, error: { detail: 'Faixa inválida.' } });
+    expect(await extrairMensagemErroBlob(err, fallback)).toBe('Faixa inválida.');
+    expect(await extrairMensagemErroBlob(new Error('x'), fallback)).toBe(fallback);
   });
 });

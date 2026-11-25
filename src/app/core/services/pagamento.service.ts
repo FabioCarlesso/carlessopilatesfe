@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Page } from '../models/common';
 import {
@@ -62,7 +62,29 @@ export class PagamentoService {
     size = 10,
     sort: string | readonly string[] = 'dataVencimento,asc'
   ): Observable<Page<PagamentoResponseDTO>> {
-    let params = new HttpParams().set('page', page).set('size', size);
+    const params = this.paramsDoFiltro(filtro, sort).set('page', page).set('size', size);
+    return this.http.get<Page<PagamentoResponseDTO>>(`${this.apiUrl}/pagamentos`, { params });
+  }
+
+  /**
+   * Exporta em XLSX (carlessopilatesapi#232, só `ADMIN`) as mesmas linhas da
+   * listagem global com o mesmo filtro e a mesma ordenação, sem paginação. Acima
+   * de 5000 pagamentos a API recusa com `400` (o `detail` pede para restringir
+   * os filtros); o corpo desse erro chega como `Blob`.
+   */
+  exportar(
+    filtro: PagamentoFiltro = {},
+    sort: string | readonly string[] = 'dataVencimento,asc'
+  ): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.apiUrl}/pagamentos/xlsx`, {
+      params: this.paramsDoFiltro(filtro, sort),
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  private paramsDoFiltro(filtro: PagamentoFiltro, sort: string | readonly string[]): HttpParams {
+    let params = new HttpParams();
     for (const criterio of typeof sort === 'string' ? [sort] : sort) {
       params = params.append('sort', criterio);
     }
@@ -72,8 +94,7 @@ export class PagamentoService {
     if (filtro.vencimentoDe) params = params.set('vencimentoDe', filtro.vencimentoDe);
     if (filtro.vencimentoAte) params = params.set('vencimentoAte', filtro.vencimentoAte);
     if (filtro.pacienteId != null) params = params.set('pacienteId', filtro.pacienteId);
-
-    return this.http.get<Page<PagamentoResponseDTO>>(`${this.apiUrl}/pagamentos`, { params });
+    return params;
   }
 
   /** Contatos de cobrança do pagamento, do mais recente para o mais antigo. */

@@ -1,7 +1,9 @@
 import {
   CAMPO_DIAS_ATRASO,
+  atalhoDoFiltro,
   descreverAtraso,
   diasEmAtraso,
+  filtroDoAtalho,
   formatarDataHora,
   sortDaInadimplencia,
   validarFaixaVencimento
@@ -111,5 +113,42 @@ describe('inadimplencia utils', () => {
       expect(formatarDataHora(undefined)).toBe('');
       expect(formatarDataHora('ontem')).toBe('ontem');
     });
+  });
+});
+
+describe('atalhos da inadimplência', () => {
+  const hoje = '2026-10-12';
+
+  it('should map "vencidas" to open payments due until yesterday', () => {
+    expect(filtroDoAtalho('vencidas', hoje)).toEqual({ status: ['PENDENTE', 'VENCIDO'], vencimentoAte: '2026-10-11' });
+  });
+
+  it('should map "vencem7dias" to pending payments due from today to today + 7', () => {
+    expect(filtroDoAtalho('vencem7dias', hoje)).toEqual({
+      status: ['PENDENTE'],
+      vencimentoDe: '2026-10-12',
+      vencimentoAte: '2026-10-19'
+    });
+  });
+
+  it('should cross month and year boundaries using the local day', () => {
+    expect(filtroDoAtalho('vencem7dias', '2026-12-28').vencimentoAte).toBe('2027-01-04');
+    expect(filtroDoAtalho('vencidas', '2026-11-01').vencimentoAte).toBe('2026-10-31');
+  });
+
+  it('should map "emAberto" to pending and overdue without a due-date range', () => {
+    expect(filtroDoAtalho('emAberto', hoje)).toEqual({ status: ['PENDENTE', 'VENCIDO'] });
+  });
+
+  it('should recognize the shortcut of an applied filter, ignoring status order and the patient', () => {
+    expect(atalhoDoFiltro({ status: ['VENCIDO', 'PENDENTE'], vencimentoAte: '2026-10-11', pacienteId: 3 }, hoje)).toBe('vencidas');
+    expect(atalhoDoFiltro({ status: ['PENDENTE'], vencimentoDe: hoje, vencimentoAte: '2026-10-19' }, hoje)).toBe('vencem7dias');
+    expect(atalhoDoFiltro({ status: ['PENDENTE', 'VENCIDO'], vencimentoDe: '', vencimentoAte: '' }, hoje)).toBe('emAberto');
+  });
+
+  it('should return null for a filter that matches no shortcut', () => {
+    expect(atalhoDoFiltro({ status: ['PAGO'] }, hoje)).toBeNull();
+    expect(atalhoDoFiltro({ status: ['PENDENTE'], vencimentoDe: hoje, vencimentoAte: '2026-10-20' }, hoje)).toBeNull();
+    expect(atalhoDoFiltro({}, hoje)).toBeNull();
   });
 });
