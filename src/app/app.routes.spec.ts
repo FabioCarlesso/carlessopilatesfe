@@ -9,6 +9,7 @@ import { visitanteGuard } from './core/guards/visitante.guard';
 import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
 import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-relatorio/financeiro-relatorio.component';
 import { RecebimentosRelatorioComponent } from './pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component';
+import { FrequenciaRelatorioComponent } from './pages/relatorios/frequencia-relatorio/frequencia-relatorio.component';
 import { OcupacaoRelatorioComponent } from './pages/relatorios/ocupacao-relatorio/ocupacao-relatorio.component';
 import { PacienteFinanceiroComponent } from './pages/pacientes/paciente-financeiro/paciente-financeiro.component';
 
@@ -75,6 +76,7 @@ describe('app routes', () => {
       'aulas/pagamento/:pagamentoId',
       'relatorios',
       'relatorios/pacientes',
+      'relatorios/frequencia',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
       'relatorios/financeiro',
@@ -276,6 +278,27 @@ describe('app routes', () => {
       localStorage.clear();
     }
     expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(RecebimentosRelatorioComponent);
+  });
+
+  it('should open the attendance report to ADMIN and RECEPCAO only and lazy load it', async () => {
+    TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
+    const route = routes.find(r => r.path === 'relatorios/frequencia')!;
+    const guard = route.canActivate![0] as CanActivateFn;
+    const ativar = (roles: UserRole[]) => {
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+    };
+
+    try {
+      expect(ativar(['ADMIN'])).toBeTrue();
+      expect(ativar(['RECEPCAO'])).toBeTrue();
+      expect(ativar(['FINANCEIRO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['PROFISSIONAL'])).toBeInstanceOf(UrlTree);
+    } finally {
+      localStorage.clear();
+    }
+    expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(FrequenciaRelatorioComponent);
   });
 
   it('should open the grade occupation to ADMIN and RECEPCAO only and lazy load it', async () => {

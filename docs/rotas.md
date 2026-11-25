@@ -63,6 +63,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/profissionais/:id/agenda` | Agenda semanal do profissional: aulas e sessões do período, contadores e comissão (somente leitura, `ADMIN`) |
 | `/relatorios`           | Seção de relatórios (`ADMIN`, `RECEPCAO` e `FINANCEIRO`; cada card aparece só para quem acessa o relatório) |
 | `/relatorios/pacientes` | Relatório de pacientes por situação, plano ativo e pendências de cadastro, com exportação PDF/XLSX (`ADMIN` e `RECEPCAO`) |
+| `/relatorios/frequencia` | Frequência e faltas por paciente no período, com taxa de presença e exportação XLSX (`ADMIN` e `RECEPCAO`) |
 | `/relatorios/pagamento-profissional` | Relatório de pagamento de profissional (_fiscal_) |
 | `/relatorios/nfse` | Relatório de emissão de NFSEs (_fiscal_) |
 | `/relatorios/financeiro` | Relatório financeiro consolidado do estúdio: receita, repasses, inadimplência e resultado líquido (_fiscal_) |

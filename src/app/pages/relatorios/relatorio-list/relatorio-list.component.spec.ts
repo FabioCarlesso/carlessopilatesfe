@@ -115,6 +115,16 @@ describe('RelatorioListComponent', () => {
     expect(renderizar().querySelector('a[href="/relatorios/recebimentos"]')).toBeNull();
   });
 
+  it('should render the attendance report link for RECEPCAO and hide it from the financeiro', () => {
+    comPapeis(['RECEPCAO']);
+    const link = renderizar().querySelector('a[href="/relatorios/frequencia"]');
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Frequência e Faltas');
+
+    comPapeis(['FINANCEIRO']);
+    expect(renderizar().querySelector('a[href="/relatorios/frequencia"]')).toBeNull();
+  });
+
   it('should show the grade occupation to ADMIN and RECEPCAO and hide it from the financeiro', () => {
     const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/relatorios/ocupacao"]');
     expect(link).toBeTruthy();
