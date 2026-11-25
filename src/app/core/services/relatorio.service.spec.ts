@@ -212,4 +212,29 @@ describe('RelatorioService', () => {
       });
     }
   });
+
+  describe('ocupação da grade', () => {
+    it('should GET /api/api/relatorios/ocupacao without params when no filter is given', () => {
+      service.relatorioOcupacao().subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush({});
+    });
+
+    it('should send semana and profissionalId and skip null filters', () => {
+      service.relatorioOcupacao({ semana: '2026-11-25', profissionalId: 5 }).subscribe();
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(req.request.params.get('semana')).toBe('2026-11-25');
+      expect(req.request.params.get('profissionalId')).toBe('5');
+      req.flush({});
+
+      service.relatorioOcupacao({ semana: null, profissionalId: null }).subscribe();
+      const semFiltro = httpMock.expectOne(r => r.url === '/api/api/relatorios/ocupacao');
+      expect(semFiltro.request.params.keys()).toEqual([]);
+      semFiltro.flush({});
+    });
+  });
 });

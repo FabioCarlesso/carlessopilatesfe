@@ -325,6 +325,15 @@ export const routes: Routes = [
         .then(m => m.RecebimentosRelatorioComponent)
   },
   {
+    // Ocupação da grade semanal (issue #294): da recepção, como o relatório de
+    // pacientes; a API (carlessopilatesapi#235) libera ADMIN e RECEPCAO.
+    path: 'relatorios/ocupacao',
+    canActivate: [roleGuard(PAPEIS.relatorioPacientes)],
+    loadComponent: () =>
+      import('./pages/relatorios/ocupacao-relatorio/ocupacao-relatorio.component')
+        .then(m => m.OcupacaoRelatorioComponent)
+  },
+  {
     // Indicadores históricos (issue #130). A API só expõe as séries e o
     // ranking para `ADMIN` (carlessopilatesapi#202); o restante do hub de
     // relatórios é do financeiro.

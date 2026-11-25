@@ -19,6 +19,13 @@
         Liste pacientes por situação, sem plano ativo, com cadastro incompleto ou aniversariantes do mês.
       </span>
     </a>
+
+    <a routerLink="/relatorios/ocupacao" class="relatorio-card">
+      <span class="relatorio-card__title">Ocupação da Grade</span>
+      <span class="relatorio-card__description">
+        Veja alunos e vagas de cada horário da semana por profissional, com a lista de espera.
+      </span>
+    </a>
   }
 
   @if (authService.hasAnyRole(papeis.fiscal)) {

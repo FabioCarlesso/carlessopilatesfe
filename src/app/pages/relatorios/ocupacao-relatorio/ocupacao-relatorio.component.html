@@ -1,0 +1,171 @@
+<div class="page-header">
+  <h1>Ocupação da Grade</h1>
+  <a routerLink="/relatorios" class="btn btn-outline">Voltar</a>
+</div>
+
+<p class="page-subtitle">
+  Alunos e vagas de cada horário da semana, por profissional, com a lista de espera.
+  A grade mostra só os horários que têm aula na semana.
+</p>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
+}
+
+<form class="form-card relatorio-form" [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="semana">Semana de</label>
+      <input id="semana" type="date" formControlName="semana" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label for="profissionalId">Profissional</label>
+      <select id="profissionalId" formControlName="profissionalId" class="form-control">
+        <option [ngValue]="null">Todos os profissionais</option>
+        @for (profissional of profissionais; track profissional.id) {
+          <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+        }
+      </select>
+      @if (erroProfissionais) {
+        <div class="field-hint">{{ erroProfissionais }}</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" [disabled]="loading">Consultar</button>
+    <button type="button" class="btn btn-secondary" data-nav="anterior" (click)="navegar(-1)" [disabled]="loading">
+      ← Semana anterior
+    </button>
+    <button type="button" class="btn btn-secondary" data-nav="atual" (click)="semanaAtual()" [disabled]="loading">
+      Esta semana
+    </button>
+    <button type="button" class="btn btn-secondary" data-nav="proxima" (click)="navegar(1)" [disabled]="loading">
+      Próxima semana →
+    </button>
+  </div>
+</form>
+
+@if (loading) {
+  <app-carregando mensagem="Carregando..." />
+}
+
+@if (relatorio && grade) {
+  <section class="relatorio-resultado" aria-label="Ocupação da grade semanal">
+    <p class="periodo">
+      Semana de <strong>{{ periodo(relatorio) }}</strong>
+      @if (relatorio.filtros.profissionalNome) {
+        · {{ relatorio.filtros.profissionalNome }}
+      }
+      · capacidade de {{ relatorio.capacidadePorHorario }} alunos por horário
+    </p>
+
+    <div class="summary-grid">
+      <div class="summary-item" data-card="aulas">
+        <span class="label">Aulas</span>
+        <strong>{{ relatorio.totais.aulas }}</strong>
+        <span class="detalhe">na semana</span>
+      </div>
+      <div class="summary-item" data-card="ocupacao">
+        <span class="label">Ocupação</span>
+        <strong>{{ relatorio.totais.ocupacao }}</strong>
+        <span class="detalhe">aulas com profissional</span>
+      </div>
+      <div class="summary-item" data-card="vagas">
+        <span class="label">Vagas</span>
+        <strong>{{ relatorio.totais.vagas }}</strong>
+        <span class="detalhe">de {{ relatorio.totais.capacidade }} de capacidade</span>
+      </div>
+      <div class="summary-item" data-card="sem-profissional">
+        <span class="label">Sem profissional</span>
+        <strong>{{ relatorio.totais.semProfissional }}</strong>
+        <span class="detalhe">não contam vaga</span>
+      </div>
+    </div>
+
+    @if (grade.linhas.length === 0) {
+      <div class="empty-state">Nenhuma aula na semana com os filtros informados.</div>
+    } @else {
+      <ul class="legenda" aria-label="Legenda das cores">
+        @for (f of legenda; track f) {
+          <li><span class="amostra" [attr.data-faixa]="f" aria-hidden="true"></span>{{ faixaLabel[f] }}</li>
+        }
+        <li><span class="item__espera" aria-hidden="true">espera</span>Lista de espera para o horário</li>
+      </ul>
+
+      <p class="table-scroll-hint">
+        Arraste a grade para o lado para ver todos os dias <span aria-hidden="true">→</span>
+      </p>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Grade horário por dia">
+        <table class="table table-sticky-first-col grade">
+          <thead>
+            <tr>
+              <th scope="col">Horário</th>
+              @for (dia of grade.dias; track dia.data) {
+                <th scope="col">{{ dia.rotulo }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of grade.linhas; track linha.rotulo) {
+              <tr>
+                <th scope="row">{{ linha.rotulo }}</th>
+                @for (itens of linha.itensPorDia; track $index) {
+                  <td>
+                    @for (item of itens; track $index) {
+                      <button
+                        type="button"
+                        class="item"
+                        [attr.data-faixa]="faixa(item)"
+                        [class.item--espera]="destacarEspera(item)"
+                        [class.item--selecionado]="selecionada === item"
+                        [attr.aria-pressed]="selecionada === item"
+                        [attr.aria-label]="rotuloItem(item)"
+                        (click)="selecionar(item)">
+                        <span class="item__prof">{{ item.profissional?.nome ?? 'Sem profissional' }}</span>
+                        <span class="item__ocupacao">{{ resumoItem(item) }}</span>
+                        @if (item.listaEspera > 0) {
+                          <span class="item__espera" aria-hidden="true">espera {{ item.listaEspera }}</span>
+                        }
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (selecionada; as item) {
+      <aside class="detalhe-horario form-card" aria-live="polite" aria-label="Alunos do horário">
+        <div class="detalhe-horario__topo">
+          <h2>
+            {{ item.data | date:'EEEE, dd/MM' }} ·
+            {{ item.horario ? item.horario.slice(0, 5) : 'Sem horário' }} ·
+            {{ item.profissional?.nome ?? 'Sem profissional' }}
+          </h2>
+          <button type="button" class="btn btn-outline btn-sm" (click)="fecharDetalhe()">Fechar</button>
+        </div>
+        <p class="detalhe-horario__resumo">
+          {{ faixaLabel[faixa(item)] }} ·
+          @if (item.capacidade !== null && item.vagas !== null) {
+            {{ item.ocupacao }} de {{ item.capacidade }} alunos, {{ item.vagas }} vaga(s)
+          } @else {
+            {{ item.ocupacao }} aluno(s), sem contagem de vagas
+          }
+          · {{ item.listaEspera }} na lista de espera
+        </p>
+        <ul class="detalhe-horario__alunos">
+          @for (aluno of item.alunos; track aluno.id) {
+            <li><a [routerLink]="['/pacientes', aluno.id]">{{ aluno.nome }}</a></li>
+          } @empty {
+            <li>Nenhum aluno.</li>
+          }
+        </ul>
+      </aside>
+    }
+  </section>
+}
