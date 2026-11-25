@@ -72,6 +72,7 @@ describe('app routes', () => {
       'aulas/paciente/:pacienteId',
       'aulas/pagamento/:pagamentoId',
       'relatorios',
+      'relatorios/pacientes',
       'relatorios/pagamento-profissional',
       'relatorios/nfse',
       'relatorios/financeiro',

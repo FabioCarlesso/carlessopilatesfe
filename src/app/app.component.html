@@ -55,7 +55,7 @@
               >Profissionais</a>
             </li>
           }
-          @if (authService.hasAnyRole(papeis.fiscal)) {
+          @if (authService.hasAnyRole(papeis.relatorios)) {
             <li>
               <a
                 routerLink="/relatorios"
