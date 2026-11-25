@@ -42,7 +42,7 @@ export const ATALHOS: readonly AtalhoTeclado[] = [
   { teclas: ['g', 'e'], descricao: 'Ir para a lista de espera', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/lista-espera' }, papeis: PAPEIS.agenda },
   { teclas: ['g', 'p'], descricao: 'Ir para pacientes', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/pacientes' }, papeis: PAPEIS.equipe },
   { teclas: ['g', 'f'], descricao: 'Ir para profissionais', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/profissionais' }, papeis: PAPEIS.admin },
-  { teclas: ['g', 'r'], descricao: 'Ir para relatórios', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/relatorios' }, papeis: PAPEIS.fiscal },
+  { teclas: ['g', 'r'], descricao: 'Ir para relatórios', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/relatorios' }, papeis: PAPEIS.relatorios },
   { teclas: ['g', 'm'], descricao: 'Ir para a administração', grupo: 'Navegação', acao: { tipo: 'navegar', rota: '/admin' }, papeis: PAPEIS.admin },
   { teclas: ['n', 'p'], descricao: 'Novo paciente', grupo: 'Cadastro', acao: { tipo: 'navegar', rota: '/pacientes/novo' }, papeis: PAPEIS.equipe },
   { teclas: ['n', 'e'], descricao: 'Nova inscrição na lista de espera', grupo: 'Cadastro', acao: { tipo: 'navegar', rota: '/lista-espera/nova' }, papeis: PAPEIS.agenda }

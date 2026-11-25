@@ -166,4 +166,50 @@ describe('RelatorioService', () => {
       });
     }
   });
+
+  describe('relatório de pacientes', () => {
+    it('should GET /api/api/relatorios/pacientes sem parâmetros quando não há filtro', () => {
+      service.relatorioPacientes().subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/pacientes');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush({});
+    });
+
+    it('should send every informed filter and skip the false booleans', () => {
+      service.relatorioPacientes({
+        situacao: 'TODOS',
+        semPlanoAtivo: false,
+        cadastroIncompleto: true,
+        mesNascimento: 12,
+        profissionalId: 5
+      }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/api/relatorios/pacientes');
+      expect(req.request.params.get('situacao')).toBe('TODOS');
+      expect(req.request.params.has('semPlanoAtivo')).toBeFalse();
+      expect(req.request.params.get('cadastroIncompleto')).toBe('true');
+      expect(req.request.params.get('mesNascimento')).toBe('12');
+      expect(req.request.params.get('profissionalId')).toBe('5');
+      req.flush({});
+    });
+
+    for (const formato of ['pdf', 'xlsx'] as const) {
+      it(`should export the patients report as ${formato} blob through its own route`, () => {
+        const blob = new Blob([formato]);
+        service.exportarRelatorioPacientes(formato, { situacao: 'INATIVOS', semPlanoAtivo: true })
+          .subscribe(response => expect(response.body).toBe(blob));
+
+        const req = httpMock.expectOne(r => r.url === `/api/api/relatorios/pacientes/${formato}`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('situacao')).toBe('INATIVOS');
+        expect(req.request.params.get('semPlanoAtivo')).toBe('true');
+        expect(req.request.responseType).toBe('blob');
+        expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+        req.flush(blob);
+      });
+    }
+  });
 });
