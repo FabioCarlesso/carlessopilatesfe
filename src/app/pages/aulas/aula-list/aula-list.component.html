@@ -56,8 +56,8 @@
   @if (aulasSemProfissional > 0) {
     <div class="alert alert-warning" role="status">
       {{ aulasSemProfissional === 1 ? '1 aula deste pagamento ficou' : aulasSemProfissional + ' aulas deste pagamento ficaram' }}
-      sem profissional: o horário estava lotado ou fora da disponibilidade do fisioterapeuta padrão.
-      Escolha o profissional na coluna Profissional e clique em Atribuir.
+      sem profissional: o horário estava lotado, fora da disponibilidade do fisioterapeuta padrão, ou a aula
+      é de feriado e o paciente não tem padrão. Escolha o profissional na coluna Profissional e clique em Atribuir.
     </div>
   }
   @if (temAulaPendente) {
@@ -100,10 +100,10 @@
               }
             </td>
             <td data-label="Profissional">
-              @if (aula.realizada) {
+              @if (!aceitaAtribuicao(aula)) {
                 <span>{{ aula.profissionalNome || '-' }}</span>
               }
-              @if (!aula.realizada) {
+              @if (aceitaAtribuicao(aula)) {
                 <select class="form-control form-control-sm"
                   [class.is-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro"
                   [attr.aria-label]="rotuloSelectProfissional(aula)"

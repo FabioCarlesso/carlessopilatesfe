@@ -84,8 +84,7 @@
    e-mail sem ponto de quebra empurrando as vizinhas) e, no celular, um nome
    longo na coluna congelada ocupava quase todo o viewport. Agora ela segue o
    padrão das outras tabelas largas (`.table { min-width }` + rolagem no
-   `.table-responsive`): cabe inteira nos 1088px úteis do `.container` no
-   desktop e rola abaixo disso, com a coluna do nome congelada mas limitada e
+   `.table-responsive`): rola na horizontal, com a coluna do nome congelada mas limitada e
    quebra controlada dentro de cada célula. Só posicionamento e largura: o
    interior da célula (padding, altura) continua o da `.table` global. */
 .tabela-pacientes {
@@ -112,10 +111,20 @@
 
 .coluna-plano {
   min-width: 160px;
+  max-width: 200px;
 }
 
+.coluna-profissional {
+  min-width: 140px;
+  max-width: 180px;
+  overflow-wrap: anywhere;
+}
+
+/* Sem teto, o layout automático dá à célula a largura de todas as badges numa
+   linha só (o `max-content` do flex) e alarga a tabela ainda mais. */
 .coluna-pendencias {
   min-width: 180px;
+  max-width: 220px;
 }
 
 /* As badges são `nowrap`: quebram entre si, nunca no meio do rótulo. A margem
@@ -139,10 +148,10 @@
   }
 }
 
-/* O aviso global de rolagem só aparece até 768px; esta tabela rola até a
-   largura do `.container` (1120px), então o aviso acompanha. */
-@media (max-width: 1120px) {
-  .table-scroll-hint {
-    display: block;
-  }
+/* O aviso global de rolagem só aparece até 768px. Esta tabela rola em
+   qualquer largura: nas larguras mínimas, as nove colunas, com o padding da
+   `.table`, somam ~1300px, mais que os 1088px úteis do `.container`
+   (max-width 1120px). Então o aviso aparece sempre. */
+.table-scroll-hint {
+  display: block;
 }

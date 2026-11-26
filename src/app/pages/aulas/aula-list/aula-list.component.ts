@@ -214,7 +214,16 @@ export class AulaListComponent implements OnInit, OnDestroy {
    */
   get aulasSemProfissional(): number {
     if ((this.pagamento?.aulasSemProfissional ?? 0) <= 0) return 0;
-    return this.aulas.filter(aula => !aula.realizada && (aula.profissionalId ?? null) === null).length;
+    return this.aulas.filter(aula => this.aceitaAtribuicao(aula) && (aula.profissionalId ?? null) === null).length;
+  }
+
+  /**
+   * A aula pendente e a de feriado aceitam a atribuição. A de feriado é
+   * realizada sem atendimento: o profissional só define quem recebe o repasse,
+   * e a API não confere vaga nela (carlessopilatesapi#244).
+   */
+  aceitaAtribuicao(aula: AulaResponseDTO): boolean {
+    return !aula.realizada || aula.feriado === true;
   }
 
   /** Há aula pendente, e com ela o select de profissional por aula. */

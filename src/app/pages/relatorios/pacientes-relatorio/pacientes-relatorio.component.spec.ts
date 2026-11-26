@@ -204,6 +204,30 @@ describe('PacientesRelatorioComponent', () => {
     expect(linha).toContain('35 anos');
   });
 
+  // carlessopilatesapi#245: o filtro casa pelo padrão ou pelas próximas aulas,
+  // então a coluna mostra os dois quando diferem.
+  it('should show the default physiotherapist, and the next classes one when it differs', () => {
+    const [ana, bruno] = relatorio.pacientes;
+    serviceSpy.relatorioPacientes.and.returnValue(of({
+      ...relatorio,
+      pacientes: [
+        { ...ana, profissionalPadrao: { id: 6, nome: 'Bruno Costa' } },
+        { ...bruno, profissional: { id: 5, nome: 'Paula Mendes' }, profissionalPadrao: null },
+        { ...ana, id: 9, profissionalPadrao: { id: 5, nome: 'Paula Mendes' } }
+      ]
+    }));
+    component.consultar();
+    fixture.detectChanges();
+
+    const colunas = Array.from(el().querySelectorAll('tbody .coluna-profissional'))
+      .map(td => Array.from(td.querySelectorAll('span')).map(span => normalizarEspacos(span.textContent).trim()));
+    expect(colunas).toEqual([
+      ['Bruno Costa', 'Próximas aulas: Paula Mendes'],
+      ['Paula Mendes', 'Próximas aulas, sem padrão'],
+      ['Paula Mendes']
+    ]);
+  });
+
   it('should show an empty state when no patient matches', () => {
     serviceSpy.relatorioPacientes.and.returnValue(of({
       ...relatorio,

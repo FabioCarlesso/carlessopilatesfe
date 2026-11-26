@@ -924,6 +924,23 @@ describe('AulaListComponent', () => {
       expect(component.aulasSemProfissional).toBe(0);
     });
 
+    // carlessopilatesapi#244: a aula de feriado é realizada, mas o profissional
+    // só define o repasse, então ela aceita a atribuição e entra no aviso.
+    it('should let a holiday class without a professional be assigned, unlike a regular done class', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 1 }, [
+        { ...mockAula, id: 1, realizada: true, feriado: true },
+        { ...mockAula, id: 2, realizada: true, feriado: false, profissionalNome: 'Paula Mendes', profissionalId: 5 }
+      ]);
+
+      expect(component.aulasSemProfissional).toBe(1);
+      const linhas = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>;
+      expect(linhas[0].querySelector('td[data-label="Profissional"] select')).not.toBeNull();
+      expect(linhas[1].querySelector('td[data-label="Profissional"] select')).toBeNull();
+      expect(linhas[1].querySelector('td[data-label="Profissional"]')?.textContent?.trim()).toBe('Paula Mendes');
+      // Sem as ações da aula pendente: a de feriado não é remarcada nem realizada de novo.
+      expect(linhas[0].querySelector('.acoes')).toBeNull();
+    });
+
     // Pagamento anterior ao fisioterapeuta padrão: todas as aulas nasceram sem
     // profissional, e isso não é sobra de lotação.
     it('should not warn when the API does not report classes without a professional', () => {
