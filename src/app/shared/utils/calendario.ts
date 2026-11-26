@@ -112,6 +112,12 @@ export interface CalendarioEvento {
   status: CalendarioStatus;
   statusLabel: string;
   /**
+   * Aula que caiu num feriado de dia inteiro (issue #299): continua `REALIZADA`
+   * — conta repasse e não é falta —, mas não foi dada, e a tela a distingue com
+   * a badge "Feriado". Sempre `false` na sessão.
+   */
+  feriado: boolean;
+  /**
    * Tipo da sessão, `null` na aula — que não tem tipo na API. É o que a agenda
    * do estúdio filtra; o `titulo` não serve, porque lá ele é o nome do paciente.
    */
@@ -288,6 +294,7 @@ function eventoDaSessao(sessao: SessaoResponseDTO, comPaciente: boolean): Calend
     rotulo: rotular(CALENDARIO_ORIGEM_LABEL.SESSAO, tipo),
     status: sessao.status,
     statusLabel: CALENDARIO_STATUS_LABEL[sessao.status] ?? sessao.status,
+    feriado: false,
     tipo: sessao.tipo,
     profissional: sessao.nomeProfissional,
     profissionalId: sessao.profissionalId,
@@ -298,7 +305,11 @@ function eventoDaSessao(sessao: SessaoResponseDTO, comPaciente: boolean): Calend
   return { ...base, descricao: descrever(base) };
 }
 
+/** Situação por extenso da aula de feriado, para a descrição e o painel. */
+export const AULA_FERIADO_STATUS_LABEL = 'Realizada (feriado)';
+
 function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEvento {
+  const feriado = aula.feriado === true;
   const base = {
     chave: `aula-${aula.id}`,
     origem: 'AULA' as const,
@@ -311,7 +322,10 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
     titulo: comPaciente ? aula.pacienteNome : CALENDARIO_ORIGEM_LABEL.AULA,
     rotulo: rotular(CALENDARIO_ORIGEM_LABEL.AULA, CALENDARIO_ORIGEM_LABEL.AULA),
     status: (aula.realizada ? 'REALIZADA' : 'AGENDADA') as CalendarioStatus,
-    statusLabel: aula.realizada ? CALENDARIO_STATUS_LABEL.REALIZADA : CALENDARIO_STATUS_LABEL.AGENDADA,
+    statusLabel: feriado
+      ? AULA_FERIADO_STATUS_LABEL
+      : aula.realizada ? CALENDARIO_STATUS_LABEL.REALIZADA : CALENDARIO_STATUS_LABEL.AGENDADA,
+    feriado,
     tipo: null,
     profissional: aula.profissionalNome ?? null,
     profissionalId: aula.profissionalId ?? null,

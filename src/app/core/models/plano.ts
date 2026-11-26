@@ -65,6 +65,12 @@ export interface AulaResponseDTO {
   realizada: boolean;
   profissionalId?: number | null;
   profissionalNome?: string | null;
+  /**
+   * Aula que caiu num bloqueio de feriado de dia inteiro (issue #299,
+   * carlessopilatesapi#244): vem com `realizada = true` e conta repasse, mas não
+   * foi dada. Opcional para tolerar a API anterior — ausente equivale a `false`.
+   */
+  feriado?: boolean;
 }
 
 export const DIAS_SEMANA_LABEL: Record<DiaSemana, string> = {

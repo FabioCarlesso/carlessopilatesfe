@@ -8,10 +8,12 @@
 
 <!-- O bloqueio é informativo de propósito: a API não impede a geração de aulas
 do pagamento nem o agendamento de sessões no período. Dizer isso aqui evita a
-leitura de que cadastrar um feriado limpa a agenda sozinho. -->
+leitura de que cadastrar um bloqueio limpa a agenda sozinho. A exceção é o
+feriado de dia inteiro (issue #299), que conta as aulas do dia como realizadas. -->
 <p class="bloqueio-intro">
   O bloqueio é um aviso: ele aparece na agenda e no formulário de sessão, mas não impede
-  o agendamento nem a geração automática de aulas.
+  o agendamento nem a geração automática de aulas. O <strong>feriado de dia inteiro</strong>
+  conta as aulas do dia como realizadas, com repasse ao profissional e sem falta.
 </p>
 
 @if (erro) {
@@ -53,6 +55,7 @@ corrente porque feriado se confere para o ano inteiro de uma vez. -->
       <thead>
         <tr>
           <th>Período</th>
+          <th>Tipo</th>
           <th>Horário</th>
           <th>Motivo</th>
           <th>Ações</th>
@@ -62,6 +65,9 @@ corrente porque feriado se confere para o ano inteiro de uma vez. -->
         @for (bloqueio of bloqueios; track bloqueio.id) {
           <tr>
             <td>{{ periodoDoBloqueio(bloqueio) }}</td>
+            <td class="coluna-tipo">
+              <span class="badge" [class.badge--info]="bloqueio.tipo === 'FERIADO'">{{ rotuloTipo(bloqueio) }}</span>
+            </td>
             <td>{{ faixaHoraria(bloqueio) }}</td>
             <td>{{ bloqueio.motivo }}</td>
             <td class="acoes">

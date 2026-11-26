@@ -1,4 +1,4 @@
-import { BloqueioAgendaResponseDTO } from '../../core/models/bloqueio-agenda';
+import { BloqueioAgendaResponseDTO, TIPO_BLOQUEIO_LABEL, TipoBloqueio } from '../../core/models/bloqueio-agenda';
 import { minutosDoDia, normalizarHora } from './hora';
 
 /**
@@ -21,6 +21,16 @@ import { minutosDoDia, normalizarHora } from './hora';
  */
 export function ehDiaInteiro(bloqueio: BloqueioAgendaResponseDTO): boolean {
   return normalizarHora(bloqueio.horaInicio) === null || normalizarHora(bloqueio.horaFim) === null;
+}
+
+/** Tipo do bloqueio; ausente (API anterior à #244 ou bloqueio antigo) vale `OUTRO`. */
+export function tipoDoBloqueio(bloqueio: BloqueioAgendaResponseDTO): TipoBloqueio {
+  return bloqueio.tipo ?? 'OUTRO';
+}
+
+/** "Feriado" ou "Outro". */
+export function rotuloTipoBloqueio(bloqueio: BloqueioAgendaResponseDTO): string {
+  return TIPO_BLOQUEIO_LABEL[tipoDoBloqueio(bloqueio)] ?? tipoDoBloqueio(bloqueio);
 }
 
 /**
@@ -120,8 +130,11 @@ export function formatarPeriodo(bloqueio: BloqueioAgendaResponseDTO): string {
 /**
  * Frase completa do bloqueio: "Natal — 25/12/2026, dia inteiro". É o que a
  * agenda usa no `title` do marcador e o formulário de sessão no aviso, para que
- * as duas telas não descrevam o mesmo bloqueio de formas diferentes.
+ * as duas telas não descrevam o mesmo bloqueio de formas diferentes. O feriado
+ * ganha o tipo junto do motivo — "Natal (feriado) — ..." —, porque é o único
+ * bloqueio que muda as aulas (issue #299).
  */
 export function descreverBloqueio(bloqueio: BloqueioAgendaResponseDTO): string {
-  return `${bloqueio.motivo} — ${formatarPeriodo(bloqueio)}, ${formatarFaixaHoraria(bloqueio).toLowerCase()}`;
+  const motivo = tipoDoBloqueio(bloqueio) === 'FERIADO' ? `${bloqueio.motivo} (feriado)` : bloqueio.motivo;
+  return `${motivo} — ${formatarPeriodo(bloqueio)}, ${formatarFaixaHoraria(bloqueio).toLowerCase()}`;
 }

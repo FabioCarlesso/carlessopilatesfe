@@ -1,10 +1,24 @@
 /**
+ * Tipo do bloqueio (issue #299, carlessopilatesapi#244). Só o `FERIADO` de dia
+ * inteiro tem efeito nas aulas: a API as marca como realizadas, com
+ * `feriado = true`, gerando repasse e sem contar falta. `OUTRO` (manutenção,
+ * evento) continua só informativo.
+ */
+export type TipoBloqueio = 'FERIADO' | 'OUTRO';
+
+export const TIPO_BLOQUEIO_LABEL: Record<TipoBloqueio, string> = {
+  FERIADO: 'Feriado',
+  OUTRO: 'Outro'
+};
+
+/**
  * Bloqueio de agenda (issue #135): feriado, manutenção ou evento em que o
  * estúdio não funciona.
  *
- * O bloqueio é **informativo**. A API não impede a geração de aulas do
- * pagamento nem o agendamento de sessões no período bloqueado — ele avisa a
- * agenda e o formulário de sessão, e a decisão continua com a recepção.
+ * O bloqueio do tipo `OUTRO` é **informativo**: a API não impede a geração de
+ * aulas do pagamento nem o agendamento de sessões no período bloqueado — ele
+ * avisa a agenda e o formulário de sessão, e a decisão continua com a recepção.
+ * O `FERIADO` de dia inteiro marca as aulas do dia como realizadas (issue #299).
  */
 export interface BloqueioAgendaResponseDTO {
   id: number;
@@ -23,6 +37,11 @@ export interface BloqueioAgendaResponseDTO {
   /** Derivado pela API: verdadeiro quando não há faixa de horário. */
   diaInteiro: boolean;
   motivo: string;
+  /**
+   * Opcional só para tolerar a API anterior à carlessopilatesapi#244 (e os
+   * bloqueios antigos): ausente vale `OUTRO`.
+   */
+  tipo?: TipoBloqueio;
   dataCriacao: string;
   dataAtualizacao: string | null;
 }
@@ -38,6 +57,8 @@ export interface BloqueioAgendaRequestDTO {
   horaInicio: string | null;
   horaFim: string | null;
   motivo: string;
+  /** Opcional na API: ausente vale `OUTRO`. O formulário sempre envia. */
+  tipo?: TipoBloqueio;
 }
 
 /** Mesmo `@Size` do DTO da API. */

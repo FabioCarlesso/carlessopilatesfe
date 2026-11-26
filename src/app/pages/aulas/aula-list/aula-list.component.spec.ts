@@ -682,6 +682,26 @@ describe('AulaListComponent', () => {
       });
     });
 
+    describe('feriado (issue #299)', () => {
+      function statusDasLinhas(): string[][] {
+        return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tbody td[data-label="Status"]'))
+          .map(td => Array.from(td.querySelectorAll('.badge')).map(b => b.textContent?.trim() ?? ''));
+      }
+
+      it('should add the holiday badge next to the done status, only on holiday classes', () => {
+        serviceSpy.listarPorPaciente.and.returnValue(of([
+          { ...mockAula, id: 1, realizada: true, feriado: true, profissionalId: 5, profissionalNome: 'Paula Mendes' },
+          { ...mockAula, id: 2, realizada: true, feriado: false, profissionalId: 5, profissionalNome: 'Paula Mendes' },
+          { ...mockAula, id: 3 }
+        ]));
+        component.carregar();
+        fixture.detectChanges();
+
+        expect(statusDasLinhas()).toEqual([['Realizada', 'Feriado'], ['Realizada'], ['Pendente']]);
+        expect(fixture.nativeElement.querySelector('.badge-feriado').classList).toContain('badge--info');
+      });
+    });
+
     describe('atribuir profissional (issue #266)', () => {
       function botaoAtribuir(): HTMLButtonElement | null {
         return fixture.nativeElement.querySelector('.atribuir-btn');

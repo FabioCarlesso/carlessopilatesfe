@@ -99,6 +99,7 @@ describe('BloqueioFormComponent', () => {
       component.salvar();
 
       expect(serviceSpy.criar).toHaveBeenCalledWith({
+        tipo: 'OUTRO',
         dataInicio: '2026-12-25',
         dataFim: '2026-12-25',
         horaInicio: null,
@@ -147,6 +148,7 @@ describe('BloqueioFormComponent', () => {
       component.salvar();
 
       expect(serviceSpy.criar).toHaveBeenCalledWith({
+        tipo: 'OUTRO',
         dataInicio: '2026-06-01',
         dataFim: '2026-06-03',
         horaInicio: '08:00',
@@ -249,6 +251,41 @@ describe('BloqueioFormComponent', () => {
     });
   });
 
+  describe('tipo do bloqueio (issue #299)', () => {
+    beforeEach(async () => setup());
+
+    it('should default to OUTRO and explain that the block is only a warning', () => {
+      expect(component.campo('tipo')?.value).toBe('OUTRO');
+      expect(component.feriado).toBeFalse();
+      expect(texto('#tipoHint')).toContain('só um aviso');
+    });
+
+    it('should explain the effect of a holiday on the classes', () => {
+      component.form.patchValue({ tipo: 'FERIADO' });
+      fixture.detectChanges();
+
+      expect(component.feriado).toBeTrue();
+      expect(texto('#tipoHint')).toContain('conta as aulas do dia como realizadas');
+      expect(texto('#tipoHint')).toContain('não contam como falta');
+    });
+
+    it('should offer the two types in Portuguese', () => {
+      const opcoes = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('#tipo option'))
+        .map(opcao => opcao.textContent?.trim());
+
+      expect(opcoes).toEqual(['Feriado', 'Outro']);
+    });
+
+    it('should create a holiday sending the type', () => {
+      spyOn(router, 'navigate');
+      component.form.patchValue({ tipo: 'FERIADO', dataInicio: '2026-12-25', dataFim: '2026-12-25', motivo: 'Natal' });
+
+      component.salvar();
+
+      expect(serviceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({ tipo: 'FERIADO' }));
+    });
+  });
+
   describe('edição', () => {
     it('should load a full-day block with the checkbox marked', async () => {
       await setup({ id: '1' });
@@ -265,6 +302,23 @@ describe('BloqueioFormComponent', () => {
 
     // O `<input type="time">` só aceita `HH:mm`; a API manda os segundos quando
     // eles não são zero.
+    it('should load the holiday type and keep it on update', async () => {
+      await setup({ id: '1' }, { ...natal, tipo: 'FERIADO' });
+      spyOn(router, 'navigate');
+
+      expect(component.campo('tipo')?.value).toBe('FERIADO');
+
+      component.salvar();
+
+      expect(serviceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ tipo: 'FERIADO' }));
+    });
+
+    it('should treat a block without type (older API) as OUTRO', async () => {
+      await setup({ id: '1' });
+
+      expect(component.campo('tipo')?.value).toBe('OUTRO');
+    });
+
     it('should load a ranged block with the hours normalized to HH:mm', async () => {
       await setup({ id: '2' }, manutencao);
       fixture.detectChanges();
@@ -283,6 +337,7 @@ describe('BloqueioFormComponent', () => {
       component.salvar();
 
       expect(serviceSpy.atualizar).toHaveBeenCalledWith(2, {
+        tipo: 'OUTRO',
         dataInicio: '2026-06-01',
         dataFim: '2026-06-03',
         horaInicio: '08:00',
@@ -302,6 +357,7 @@ describe('BloqueioFormComponent', () => {
       component.salvar();
 
       expect(serviceSpy.atualizar).toHaveBeenCalledWith(2, {
+        tipo: 'OUTRO',
         dataInicio: '2026-06-01',
         dataFim: '2026-06-03',
         horaInicio: null,

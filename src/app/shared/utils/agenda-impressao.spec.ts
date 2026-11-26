@@ -18,6 +18,7 @@ function evento(dados: Partial<CalendarioEvento> & { chave: string; dia: string 
     rotulo: 'Aula',
     status: 'AGENDADA',
     statusLabel: 'Agendada',
+    feriado: false,
     tipo: null,
     profissional: 'Paula',
     profissionalId: 5,

@@ -17,6 +17,27 @@
 
 @if (!loading && !parametroInvalido && !cargaFalhou) {
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card">
+    <h2 class="form-section-title">Tipo</h2>
+    <div class="form-group">
+      <label for="tipo">Tipo do bloqueio *</label>
+      <select id="tipo" formControlName="tipo" class="form-control" aria-describedby="tipoHint">
+        @for (tipo of tipos; track tipo[0]) {
+          <option [ngValue]="tipo[0]">{{ tipo[1] }}</option>
+        }
+      </select>
+      <!-- A diferença entre os dois tipos tem efeito financeiro: a dica muda
+      com a escolha para que ninguém marque um feriado sem saber o que ele faz. -->
+      <div id="tipoHint" class="field-hint">
+        @if (feriado) {
+          Feriado de dia inteiro conta as aulas do dia como realizadas: elas geram repasse ao
+          profissional e não contam como falta. Com faixa de horário, o feriado é só um aviso.
+        } @else {
+          Manutenção, evento ou outro motivo: o bloqueio é só um aviso na agenda e no formulário
+          de sessão, e não muda as aulas.
+        }
+      </div>
+    </div>
+
     <h2 class="form-section-title">Período</h2>
     <div class="form-row">
       <div class="form-group">

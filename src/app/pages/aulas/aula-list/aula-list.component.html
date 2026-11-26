@@ -77,6 +77,11 @@
               <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
                 {{ aula.realizada ? 'Realizada' : 'Pendente' }}
               </span>
+              <!-- Aula de feriado (issue #299): realizada para a API — repasse,
+              sem falta —, mas não dada. A badge a separa da realizada comum. -->
+              @if (aula.feriado) {
+                <span class="badge badge--info badge-feriado">Feriado</span>
+              }
             </td>
             <td data-label="Profissional">
               @if (aula.realizada) {
