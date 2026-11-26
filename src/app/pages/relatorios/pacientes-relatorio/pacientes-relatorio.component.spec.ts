@@ -306,6 +306,11 @@ describe('PacientesRelatorioComponent', () => {
   }
 
   it('should export the filters of the table, not a filter changed without querying', () => {
+    // Sem os stubs, o clique de download é real: o Chrome dos testes gravava o
+    // Blob falso em ~/Downloads a cada execução.
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio');
+    spyOn(window.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click');
     component.form.patchValue({ situacao: 'ATIVOS', cadastroIncompleto: true });
     component.consultar();
     component.form.patchValue({ situacao: 'INATIVOS', mesNascimento: 12 });

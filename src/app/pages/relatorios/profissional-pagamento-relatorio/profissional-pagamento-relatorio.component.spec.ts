@@ -207,6 +207,7 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
   it('should export PDF and reset loading state', () => {
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-pdf');
     spyOn(window.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click');
     component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
 
     component.exportarPdf();
@@ -220,6 +221,7 @@ describe('ProfissionalPagamentoRelatorioComponent', () => {
   it('should export Excel and reset loading state', () => {
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-xlsx');
     spyOn(window.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click');
     component.form.setValue({ profissionalId: 1, inicio: '2026-04-01', fim: '2026-04-30' });
 
     component.exportarExcel();

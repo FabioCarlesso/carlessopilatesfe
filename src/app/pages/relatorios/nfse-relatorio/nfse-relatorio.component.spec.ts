@@ -156,6 +156,8 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should export XLSX and reset loading state', () => {
+    // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+    spyOn(HTMLAnchorElement.prototype, 'click');
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-xlsx');
     spyOn(window.URL, 'revokeObjectURL');
     component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: true, cpfNaNota: null, tomadorId: null });
@@ -168,6 +170,8 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should export CSV and reset loading state', () => {
+    // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+    spyOn(HTMLAnchorElement.prototype, 'click');
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-csv');
     spyOn(window.URL, 'revokeObjectURL');
     component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: null, tomadorId: null });
@@ -201,6 +205,8 @@ describe('NfseRelatorioComponent', () => {
   });
 
   it('should send the cpfNaNota filter to the report and to the export', () => {
+    // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+    spyOn(HTMLAnchorElement.prototype, 'click');
     spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio-csv');
     spyOn(window.URL, 'revokeObjectURL');
     component.form.setValue({ competencia: '04/2026', notaAnteriorEmitida: null, cpfNaNota: true, tomadorId: null });

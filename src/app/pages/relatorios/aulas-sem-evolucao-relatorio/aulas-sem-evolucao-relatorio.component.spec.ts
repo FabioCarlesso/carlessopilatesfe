@@ -263,6 +263,10 @@ describe('AulasSemEvolucaoRelatorioComponent', () => {
     });
 
     it('should export the last successful query, not unsubmitted form edits', () => {
+      // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+      spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio');
+      spyOn(window.URL, 'revokeObjectURL');
+      spyOn(HTMLAnchorElement.prototype, 'click');
       consultar({ inicio: '2026-10-01', fim: '2026-11-30', profissionalId: 5 });
       component.form.patchValue({ profissionalId: null, inicio: '2026-09-01' });
 

@@ -732,6 +732,10 @@ describe('InadimplenciaComponent', () => {
     }
 
     it('should export the applied filter and sort, not the one still being edited', () => {
+      // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+      spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio');
+      spyOn(window.URL, 'revokeObjectURL');
+      spyOn(HTMLAnchorElement.prototype, 'click');
       criar();
       component.filtro.status = { PENDENTE: true, VENCIDO: false, PAGO: false };
       component.filtro.vencimentoDe = '2026-10-12';
