@@ -78,16 +78,71 @@
   font-size: var(--fs-caption);
 }
 
+/* Tabela larga (issue #298): nove colunas, várias com conteúdo em duas linhas.
+   Sem largura mínima, o layout automático espremia a tabela no container
+   abaixo de ~1120px (nome quebrando palavra a palavra, plano em três linhas,
+   e-mail sem ponto de quebra empurrando as vizinhas) e, no celular, um nome
+   longo na coluna congelada ocupava quase todo o viewport. Agora ela segue o
+   padrão das outras tabelas largas (`.table { min-width }` + rolagem no
+   `.table-responsive`): cabe inteira nos 1088px úteis do `.container` no
+   desktop e rola abaixo disso, com a coluna do nome congelada mas limitada e
+   quebra controlada dentro de cada célula. Só posicionamento e largura: o
+   interior da célula (padding, altura) continua o da `.table` global. */
+.tabela-pacientes {
+  min-width: 1040px;
+}
+
+/* Coluna congelada: limitada para sobrar área de rolagem a 375px. */
+.coluna-nome {
+  min-width: 140px;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
+
+/* E-mail não tem espaço onde quebrar: sem `anywhere` ele alarga a coluna. */
+.coluna-contato {
+  min-width: 180px;
+  max-width: 240px;
+  overflow-wrap: anywhere;
+}
+
+.coluna-data {
+  white-space: nowrap;
+}
+
+.coluna-plano {
+  min-width: 160px;
+}
+
 .coluna-pendencias {
   min-width: 180px;
+}
 
-  .badge {
-    margin: 0 var(--sp-1) var(--sp-1) 0;
-  }
+/* As badges são `nowrap`: quebram entre si, nunca no meio do rótulo. A margem
+   vertical afasta da borda da linha a pilha de badges de quem tem várias
+   pendências, já que a célula global não tem padding vertical. */
+.pendencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0;
 }
 
 @media (max-width: 768px) {
   .form-actions {
     flex-direction: column;
+  }
+
+  .coluna-nome {
+    min-width: 120px;
+    max-width: 150px;
+  }
+}
+
+/* O aviso global de rolagem só aparece até 768px; esta tabela rola até a
+   largura do `.container` (1120px), então o aviso acompanha. */
+@media (max-width: 1120px) {
+  .table-scroll-hint {
+    display: block;
   }
 }

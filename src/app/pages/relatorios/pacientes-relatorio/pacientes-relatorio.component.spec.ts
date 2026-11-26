@@ -175,6 +175,26 @@ describe('PacientesRelatorioComponent', () => {
     expect(linhas[0].querySelectorAll('.coluna-pendencias .badge').length).toBe(0);
   });
 
+  it('should keep the wide table scrollable with the name column frozen (issue #298)', () => {
+    const regiao = el().querySelector('.table-responsive');
+    const tabela = regiao?.querySelector('table');
+
+    expect(regiao?.getAttribute('tabindex')).toBe('0');
+    expect(tabela?.classList).toContain('table-sticky-first-col');
+    expect(tabela?.classList).toContain('tabela-pacientes');
+    expect(el().querySelector('.table-scroll-hint')).not.toBeNull();
+    expect(el().querySelectorAll('thead th').length).toBe(9);
+    expect(el().querySelectorAll('tbody tr')[0].querySelector('td')?.classList).toContain('coluna-nome');
+  });
+
+  it('should group the pendency badges in a wrapping container only when there are pendencies', () => {
+    const linhas = el().querySelectorAll('tbody tr');
+
+    expect(linhas[1].querySelectorAll('.coluna-pendencias .pendencias .badge').length).toBe(4);
+    expect(linhas[0].querySelector('.coluna-pendencias .pendencias')).toBeNull();
+    expect(linhas[0].querySelector('.coluna-pendencias')?.textContent?.trim()).toBe('-');
+  });
+
   it('should describe the active plan in Portuguese', () => {
     const linha = normalizarEspacos(el().querySelectorAll('tbody tr')[0].textContent);
 
