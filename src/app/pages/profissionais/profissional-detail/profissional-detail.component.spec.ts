@@ -6,6 +6,7 @@ import { ProfissionalDetailComponent } from './profissional-detail.component';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { DisponibilidadeProfissionalService } from '../../../core/services/disponibilidade-profissional.service';
+import { PacienteService } from '../../../core/services/paciente.service';
 
 const mockProfissional: ProfissionalResponseDTO = {
   version: 0,
@@ -26,6 +27,7 @@ describe('ProfissionalDetailComponent', () => {
   let fixture: ComponentFixture<ProfissionalDetailComponent>;
   let serviceSpy: jasmine.SpyObj<ProfissionalService>;
   let disponibilidadeSpy: jasmine.SpyObj<DisponibilidadeProfissionalService>;
+  let pacienteSpy: jasmine.SpyObj<PacienteService>;
   let router: Router;
 
   /** Valor exibido no `detail-item` de um rótulo, sem depender da ordem do grid. */
@@ -40,12 +42,15 @@ describe('ProfissionalDetailComponent', () => {
     serviceSpy.buscar.and.returnValue(of(mockProfissional));
     disponibilidadeSpy = jasmine.createSpyObj('DisponibilidadeProfissionalService', ['listar']);
     disponibilidadeSpy.listar.and.returnValue(of([]));
+    pacienteSpy = jasmine.createSpyObj('PacienteService', ['listar']);
+    pacienteSpy.listar.and.returnValue(of({ content: [], page: { size: 10, number: 0, totalElements: 0, totalPages: 0 } }));
 
     await TestBed.configureTestingModule({
       imports: [ProfissionalDetailComponent, RouterTestingModule],
       providers: [
         { provide: ProfissionalService, useValue: serviceSpy },
         { provide: DisponibilidadeProfissionalService, useValue: disponibilidadeSpy },
+        { provide: PacienteService, useValue: pacienteSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
       ]
     }).compileComponents();
@@ -156,7 +161,7 @@ describe('ProfissionalDetailComponent', () => {
     }
 
     it('should open on the data tab without loading the availability', () => {
-      expect(abas().map(a => a.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+      expect(abas().map(a => a.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false']);
       expect(fixture.nativeElement.querySelector('#painel-dados')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('app-profissional-disponibilidade')).toBeNull();
       expect(disponibilidadeSpy.listar).not.toHaveBeenCalled();
@@ -189,7 +194,19 @@ describe('ProfissionalDetailComponent', () => {
 
       abas()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
       fixture.detectChanges();
-      expect(component.aba).toBe('disponibilidade');
+      expect(component.aba).toBe('pacientes');
+    });
+
+    // Aba "Pacientes" (issue #300): montada só quando escolhida.
+    it('should list the patients of the professional only when its tab is clicked', () => {
+      expect(pacienteSpy.listar).not.toHaveBeenCalled();
+
+      abas()[2].click();
+      fixture.detectChanges();
+
+      expect(component.aba).toBe('pacientes');
+      expect(fixture.nativeElement.querySelector('#painel-pacientes app-profissional-pacientes')).not.toBeNull();
+      expect(pacienteSpy.listar).toHaveBeenCalledWith(0, 10, { profissionalId: 1 });
     });
 
     it('should ignore other keys', () => {

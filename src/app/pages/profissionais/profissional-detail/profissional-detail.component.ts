@@ -7,13 +7,17 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { ProfissionalDisponibilidadeComponent } from '../profissional-disponibilidade/profissional-disponibilidade.component';
+import { ProfissionalPacientesComponent } from '../profissional-pacientes/profissional-pacientes.component';
 
-export type AbaProfissional = 'dados' | 'disponibilidade';
-const ABAS: readonly AbaProfissional[] = ['dados', 'disponibilidade'];
+export type AbaProfissional = 'dados' | 'disponibilidade' | 'pacientes';
+const ABAS: readonly AbaProfissional[] = ['dados', 'disponibilidade', 'pacientes'];
 
 @Component({
   selector: 'app-profissional-detail',
-  imports: [DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent, ProfissionalDisponibilidadeComponent],
+  imports: [
+    DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent,
+    ProfissionalDisponibilidadeComponent, ProfissionalPacientesComponent
+  ],
   templateUrl: './profissional-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profissional-detail.component.scss'
@@ -26,9 +30,9 @@ export class ProfissionalDetailComponent implements OnInit {
   confirmarInativar = false;
   acaoEmAndamento = false;
   /**
-   * Aba visível (issue #134). A de disponibilidade só é montada quando
-   * escolhida: a grade custa um `GET` próprio, que quem abre o detalhe para
-   * editar ou inativar o cadastro não precisa pagar.
+   * Aba visível (issue #134). A de disponibilidade e a de pacientes (issue
+   * #300) só são montadas quando escolhidas: cada uma custa um `GET` próprio,
+   * que quem abre o detalhe para editar ou inativar o cadastro não precisa pagar.
    */
   aba: AbaProfissional = 'dados';
 

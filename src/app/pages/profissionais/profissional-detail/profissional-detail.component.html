@@ -36,11 +36,21 @@
       [attr.tabindex]="aba === 'disponibilidade' ? 0 : -1"
       (click)="selecionarAba('disponibilidade')"
       (keydown)="navegarAbas($event)">Disponibilidade</button>
+    <button type="button" role="tab" id="aba-pacientes" class="aba"
+      [attr.aria-controls]="aba === 'pacientes' ? 'painel-pacientes' : null"
+      [attr.aria-selected]="aba === 'pacientes'"
+      [attr.tabindex]="aba === 'pacientes' ? 0 : -1"
+      (click)="selecionarAba('pacientes')"
+      (keydown)="navegarAbas($event)">Pacientes</button>
   </div>
 
   @if (aba === 'disponibilidade') {
     <div class="detail-card" role="tabpanel" id="painel-disponibilidade" aria-labelledby="aba-disponibilidade">
       <app-profissional-disponibilidade [profissionalId]="profissional.id" [ativo]="profissional.ativo" />
+    </div>
+  } @else if (aba === 'pacientes') {
+    <div class="detail-card" role="tabpanel" id="painel-pacientes" aria-labelledby="aba-pacientes">
+      <app-profissional-pacientes [profissionalId]="profissional.id" />
     </div>
   } @else {
     <div class="detail-card" role="tabpanel" id="painel-dados" aria-labelledby="aba-dados">

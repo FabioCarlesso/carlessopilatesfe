@@ -436,6 +436,15 @@ describe('AgendaComponent', () => {
         .toEqual(['Sessão: Pilates', '20 de maio de 2026 às 14:00', 'Agendada', 'Carla Fisio']);
     });
 
+    it('should say that choosing the professional of a class does not change the default (issue #300)', async () => {
+      await setup({ sessoes: [], aulas: [aula({ id: 3, data: '2026-05-21' })] });
+
+      clicar('.calendario-grade .evento');
+
+      expect(texto('#profissionalDaAcaoDica')).toContain('o fisioterapeuta padrão do paciente não muda');
+      expect(document.getElementById('profissionalDaAcao')?.getAttribute('aria-describedby')).toBe('profissionalDaAcaoDica');
+    });
+
     it('should close the detail panel', async () => {
       await setup();
       abrirPrimeiroEvento();

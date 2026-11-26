@@ -44,6 +44,19 @@ export interface PagamentoResponseDTO {
    * em pagamento ainda não confirmado e nos confirmados antes da #215 da API.
    */
   formaPagamento?: FormaPagamento | null;
+  /**
+   * Tamanho do pacote (4/8/12 aulas por mês × meses do tipo) e quantas das
+   * aulas do pagamento já estão realizadas, feriados inclusive
+   * (carlessopilatesapi#243). Opcionais para tolerar a API anterior.
+   */
+  aulasPacote?: number;
+  aulasRealizadas?: number;
+  /**
+   * Aulas ainda não realizadas que ficaram sem profissional ao serem geradas —
+   * horário lotado ou fora da disponibilidade do fisioterapeuta padrão
+   * (issue #300, carlessopilatesapi#245). Maior que zero pede atribuição manual.
+   */
+  aulasSemProfissional?: number;
 }
 
 export interface PagamentoRequestDTO {

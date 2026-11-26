@@ -75,6 +75,14 @@ describe('PacienteService', () => {
       req.flush(mockPage);
     });
 
+    it('should filter by default professional (issue #300)', () => {
+      service.listar(0, 10, { profissionalId: 3 }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === '/api/pacientes');
+      expect(req.request.params.get('profissionalId')).toBe('3');
+      req.flush(mockPage);
+    });
+
     it('should pass filter params when provided', () => {
       service.listar(0, 10, {
         nome: 'Ana',
@@ -170,6 +178,21 @@ describe('PacienteService', () => {
       const desvincular = httpMock.expectOne('/api/pacientes/1/tomador');
       expect(desvincular.request.body).toEqual({ tomadorId: null });
       desvincular.flush(mockPaciente);
+    });
+  });
+
+  describe('definirProfissionalPadrao (issue #300)', () => {
+    it('should PATCH /api/pacientes/:id/profissional-padrao with the id, or null to remove', () => {
+      service.definirProfissionalPadrao(1, 7).subscribe();
+      const definir = httpMock.expectOne('/api/pacientes/1/profissional-padrao');
+      expect(definir.request.method).toBe('PATCH');
+      expect(definir.request.body).toEqual({ profissionalId: 7 });
+      definir.flush(mockPaciente);
+
+      service.definirProfissionalPadrao(1, null).subscribe();
+      const remover = httpMock.expectOne('/api/pacientes/1/profissional-padrao');
+      expect(remover.request.body).toEqual({ profissionalId: null });
+      remover.flush(mockPaciente);
     });
   });
 

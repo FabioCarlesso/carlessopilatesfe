@@ -25,6 +25,13 @@ export interface PacienteResponseDTO {
   tomadorNome: string | null;
   /** Só dígitos (11 ou 14). */
   tomadorCpfCnpj: string | null;
+  /**
+   * Fisioterapeuta padrão (issue #300, carlessopilatesapi#245): usado pela API
+   * nas aulas geradas pelos pagamentos. Opcionais para tolerar a API anterior;
+   * ausente ou nulo = sem padrão.
+   */
+  profissionalPadraoId?: number | null;
+  profissionalPadraoNome?: string | null;
   /** Versão do registro para o locking otimista: devolva-a no próximo update. */
   version: number;
 }
@@ -38,7 +45,18 @@ export interface PacienteNotaFiscalDTO {
   cpfNaNota?: boolean;
 }
 
-export interface PacienteRequestDTO extends PacienteNotaFiscalDTO {
+/**
+ * Fisioterapeuta padrão no cadastro (issue #300); nulo ou ausente = sem padrão.
+ * Na edição ele **não** vai no `PUT`, que é parcial (nulo mantém o atual): trocar
+ * ou remover o padrão é só por `PATCH /pacientes/{id}/profissional-padrao` (ver
+ * `PacienteService.definirProfissionalPadrao`), como o tomador. Profissional
+ * inativo ou inexistente volta `400`/`404` com mensagem.
+ */
+export interface PacienteProfissionalPadraoDTO {
+  profissionalPadraoId?: number | null;
+}
+
+export interface PacienteRequestDTO extends PacienteNotaFiscalDTO, PacienteProfissionalPadraoDTO {
   /** Tomador vinculado já no cadastro. */
   tomadorId?: number | null;
   nome: string;

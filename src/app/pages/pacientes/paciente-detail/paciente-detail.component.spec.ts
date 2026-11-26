@@ -130,6 +130,33 @@ describe('PacienteDetailComponent', () => {
     });
   });
 
+  describe('fisioterapeuta padrão (issue #300)', () => {
+    const comPadrao: PacienteResponseDTO = { ...mockPacienteAtivo, profissionalPadraoId: 3, profissionalPadraoNome: 'Carla Fisio' };
+
+    function campoPadrao(): HTMLElement {
+      return (fixture.nativeElement as HTMLElement).querySelector('[data-campo="profissional-padrao"]') as HTMLElement;
+    }
+
+    it('should link the default professional for the admin', () => {
+      setup(comPadrao, ['ADMIN']);
+      const link = campoPadrao().querySelector('a');
+      expect(link?.textContent?.trim()).toBe('Carla Fisio');
+      expect(link?.getAttribute('href')).toBe('/profissionais/3');
+    });
+
+    // A rota do profissional é só do ADMIN: o link levaria os demais ao 403.
+    it('should show the name without link for the other roles', () => {
+      setup(comPadrao, ['RECEPCAO']);
+      expect(campoPadrao().querySelector('a')).toBeNull();
+      expect(campoPadrao().textContent).toContain('Carla Fisio');
+    });
+
+    it('should say when there is no default', () => {
+      setup(mockPacienteAtivo, ['ADMIN']);
+      expect(campoPadrao().textContent).toContain('Sem padrão');
+    });
+  });
+
   describe('with active patient', () => {
     beforeEach(() => setup(mockPacienteAtivo));
 

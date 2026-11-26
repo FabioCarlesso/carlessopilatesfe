@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { TomadorService } from '../../../core/services/tomador.service';
+import { ProfissionalService } from '../../../core/services/profissional.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
@@ -25,6 +26,14 @@ export interface TomadorOpcao {
   nome: string;
   cpfCnpj: string;
   /** Vinculado ao paciente mas inativado depois: aparece para não sumir da tela. */
+  inativo?: boolean;
+}
+
+/** Opção do seletor de fisioterapeuta padrão (issue #300). */
+export interface ProfissionalOpcao {
+  id: number;
+  nome: string;
+  /** Padrão gravado no paciente mas inativado depois: aparece para não sumir da tela. */
   inativo?: boolean;
 }
 
@@ -51,6 +60,13 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
   private tomadorOriginal: number | null = null;
   private tomadoresAtivos: TomadorOpcao[] = [];
   private vinculado: TomadorOpcao | null = null;
+  private profissionaisAtivos: ProfissionalOpcao[] = [];
+  /** Padrão gravado no paciente, para continuar visível se não estiver entre os ativos. */
+  private padraoGravado: ProfissionalOpcao | null = null;
+  /** Padrão ao carregar: na edição ele só muda por `PATCH .../profissional-padrao`, e só se a escolha mudou. */
+  private padraoOriginal: number | null = null;
+  /** Falha ao listar os profissionais: o seletor fica só com "Sem padrão". */
+  erroProfissionais = false;
 
   constructor(
     private fb: FormBuilder,
@@ -58,8 +74,18 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     private route: ActivatedRoute,
     private router: Router,
     private host: ElementRef<HTMLElement>,
-    private tomadorService: TomadorService
+    private tomadorService: TomadorService,
+    private profissionalService: ProfissionalService
   ) {}
+
+  /** Profissionais ativos, mais o padrão gravado se ele foi inativado depois. */
+  get profissionais(): ProfissionalOpcao[] {
+    const gravado = this.padraoGravado;
+    if (gravado && !this.profissionaisAtivos.some(p => p.id === gravado.id)) {
+      return [...this.profissionaisAtivos, { ...gravado, inativo: true }];
+    }
+    return this.profissionaisAtivos;
+  }
 
   /** Tomadores ativos, mais o vinculado ao paciente se ele foi inativado depois do vínculo. */
   get tomadores(): TomadorOpcao[] {
@@ -87,6 +113,7 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
       cpf: ['', [cpfValidator]],
       telefone: [''],
       dataNascimento: [''],
+      profissionalPadraoId: [null as number | null],
       endereco: this.fb.group({
         logradouro: [''],
         numero: [''],
@@ -101,6 +128,7 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
       })
     });
     this.carregarTomadores();
+    this.carregarProfissionais();
 
     const rawId = this.route.snapshot.paramMap.get('id');
     if (rawId === null) return;
@@ -119,6 +147,11 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
         this.form.patchValue(p);
         this.form.get('notaFiscal')?.patchValue({ cpfNaNota: p.cpfNaNota ?? false, tomadorId: p.tomadorId ?? null });
         this.tomadorOriginal = p.tomadorId ?? null;
+        this.padraoOriginal = p.profissionalPadraoId ?? null;
+        this.form.patchValue({ profissionalPadraoId: this.padraoOriginal });
+        if (p.profissionalPadraoId != null) {
+          this.padraoGravado = { id: p.profissionalPadraoId, nome: p.profissionalPadraoNome ?? '' };
+        }
         if (p.tomadorId != null && p.tomadorCpfCnpj != null) {
           this.vinculado = { id: p.tomadorId, nome: p.tomadorNome ?? '', cpfCnpj: p.tomadorCpfCnpj };
         }
@@ -157,6 +190,7 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     const cpf = somenteDigitos(valor.cpf) || undefined;
     const cpfNaNota = !!valor.notaFiscal.cpfNaNota;
     const tomadorId: number | null = valor.notaFiscal.tomadorId ?? null;
+    const profissionalPadraoId: number | null = valor.profissionalPadraoId ?? null;
 
     const obs: Observable<unknown> = this.isEdit && this.pacienteId !== null
       ? this.service.atualizar(this.pacienteId, {
@@ -168,7 +202,10 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           endereco: valor.endereco,
           cpfNaNota,
           version: this.version
-        }).pipe(switchMap(salvo => this.atualizarTomador(salvo, cpfNaNota, tomadorId)))
+        }).pipe(
+          switchMap(salvo => this.atualizarTomador(salvo, cpfNaNota, tomadorId)),
+          switchMap(salvo => this.atualizarProfissionalPadrao(salvo, profissionalPadraoId))
+        )
       : this.service.cadastrar({
           nome: valor.nome,
           email,
@@ -177,7 +214,8 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
           dataNascimento: valor.dataNascimento,
           endereco: { ...valor.endereco, cep: somenteDigitos(valor.endereco.cep) },
           cpfNaNota,
-          tomadorId: cpfNaNota ? tomadorId : null
+          tomadorId: cpfNaNota ? tomadorId : null,
+          profissionalPadraoId
         });
 
     obs.subscribe({
@@ -205,6 +243,20 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     return this.service.vincularTomador(this.pacienteId, tomadorId);
   }
 
+  /**
+   * Depois do PUT (que é parcial e não limpa o padrão com `null`), troca ou
+   * remove o fisioterapeuta padrão só se a escolha mudou. Assim um padrão que foi
+   * inativado depois continua gravado ao salvar outros campos, sem o `400` que a
+   * API daria para um padrão inativo.
+   */
+  private atualizarProfissionalPadrao(
+    salvo: PacienteResponseDTO,
+    profissionalPadraoId: number | null
+  ): Observable<PacienteResponseDTO> {
+    if (this.pacienteId === null || profissionalPadraoId === this.padraoOriginal) return of(salvo);
+    return this.service.definirProfissionalPadrao(this.pacienteId, profissionalPadraoId);
+  }
+
   private carregarTomadores(): void {
     // Lista curta (responsáveis e empresas): uma página basta. Sem a lista, o seletor
     // fica só com "O próprio paciente" e o restante do formulário segue funcionando.
@@ -218,13 +270,29 @@ export class PacienteFormComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private carregarProfissionais(): void {
+    // Só os ativos: a API recusa padrão inativo. A equipe é pequena, uma página
+    // basta. Sem a lista, o seletor fica só com "Sem padrão" e o resto do
+    // formulário segue funcionando.
+    this.profissionalService.listar(0, 100, { ativo: true }).subscribe({
+      next: pagina => {
+        this.profissionaisAtivos = pagina.content.map(p => ({ id: p.id, nome: p.nome }));
+        this.erroProfissionais = false;
+      },
+      error: () => {
+        this.profissionaisAtivos = [];
+        this.erroProfissionais = true;
+      }
+    });
+  }
+
   /**
-   * `400`, `409` (CPF ou e-mail de outro paciente) e `422` (tomador inativo) trazem
+   * `400`, `404` (fisioterapeuta padrão inexistente), `409` (CPF ou e-mail de outro paciente) e `422` (tomador inativo) trazem
    * a mensagem da API, que diz o que corrigir.
    */
   private mensagemErro(err: unknown): string {
     if (ehConflitoConcorrencia(err)) return MENSAGEM_CONFLITO_CONCORRENCIA;
-    if (err instanceof HttpErrorResponse && [400, 409, 422].includes(err.status)) {
+    if (err instanceof HttpErrorResponse && [400, 404, 409, 422].includes(err.status)) {
       return extrairMensagemErro(err, 'Erro ao salvar paciente.');
     }
     return 'Erro ao salvar paciente.';

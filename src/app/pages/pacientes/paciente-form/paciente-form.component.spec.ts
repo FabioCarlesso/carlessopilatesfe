@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { PacienteFormComponent } from './paciente-form.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { TomadorService } from '../../../core/services/tomador.service';
+import { ProfissionalService } from '../../../core/services/profissional.service';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 
@@ -36,6 +37,17 @@ const tomadorServiceStub = {
   })
 };
 
+/** Dois profissionais ativos (3 e 4). O 8, padrão do paciente importado, foi inativado. */
+const profissionalServiceStub = {
+  listar: jasmine.createSpy('listar').and.callFake(() => of({
+    content: [
+      { id: 3, nome: 'Carla Fisio', ativo: true },
+      { id: 4, nome: 'Diego Pilates', ativo: true }
+    ],
+    page: { size: 100, number: 0, totalElements: 2, totalPages: 1 }
+  }))
+};
+
 describe('PacienteFormComponent', () => {
   describe('in create mode (no id in route)', () => {
     let component: PacienteFormComponent;
@@ -44,13 +56,14 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar', 'vincularTomador']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['cadastrar', 'buscar', 'atualizar', 'vincularTomador', 'definirProfissionalPadrao']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
           { provide: TomadorService, useValue: tomadorServiceStub },
+          { provide: ProfissionalService, useValue: profissionalServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } }
         ]
       }).compileComponents();
@@ -184,6 +197,50 @@ describe('PacienteFormComponent', () => {
       expect(payload.cpfNaNota).toBeFalse();
     });
 
+    describe('fisioterapeuta padrão (issue #300)', () => {
+      it('should list only active professionals, after the "no default" option', () => {
+        expect(profissionalServiceStub.listar).toHaveBeenCalledWith(0, 100, { ativo: true });
+        const select = (fixture.nativeElement as HTMLElement).querySelector('#profissionalPadraoId') as HTMLSelectElement;
+        expect(Array.from(select.options).map(o => o.text.trim())).toEqual(['Sem padrão', 'Carla Fisio', 'Diego Pilates']);
+        expect(component.form.get('profissionalPadraoId')?.value).toBeNull();
+      });
+
+      it('should explain that changing a single class does not change the default', () => {
+        const dica = (fixture.nativeElement as HTMLElement).querySelector('#profissionalPadraoId-hint')?.textContent;
+        expect(dica).toContain('não muda o padrão');
+      });
+
+      it('should send the chosen default in the POST', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva', profissionalPadraoId: 4 });
+
+        component.salvar();
+
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ profissionalPadraoId: 4 }));
+        expect(serviceSpy.definirProfissionalPadrao).not.toHaveBeenCalled();
+      });
+
+      it('should send null when there is no default', () => {
+        serviceSpy.cadastrar.and.returnValue(of(mockPaciente));
+        component.form.patchValue({ nome: 'Ana Silva' });
+
+        component.salvar();
+
+        expect(serviceSpy.cadastrar).toHaveBeenCalledWith(jasmine.objectContaining({ profissionalPadraoId: null }));
+      });
+
+      it('should show the API message when the default professional is not found (404)', () => {
+        serviceSpy.cadastrar.and.returnValue(throwError(() => new HttpErrorResponse({
+          status: 404, error: { detail: 'Profissional não encontrado' }
+        })));
+        component.form.patchValue({ nome: 'Ana Silva', profissionalPadraoId: 4 });
+
+        component.salvar();
+
+        expect(component.erro).toBe('Profissional não encontrado');
+      });
+    });
+
     describe('nota fiscal (#287)', () => {
       it('should show the tomador select only when the checkbox is checked', () => {
         const el = fixture.nativeElement as HTMLElement;
@@ -299,7 +356,7 @@ describe('PacienteFormComponent', () => {
     let router: Router;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador', 'definirProfissionalPadrao']);
       serviceSpy.buscar.and.returnValue(of(mockPaciente));
 
       await TestBed.configureTestingModule({
@@ -307,6 +364,7 @@ describe('PacienteFormComponent', () => {
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
           { provide: TomadorService, useValue: tomadorServiceStub },
+          { provide: ProfissionalService, useValue: profissionalServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
         ]
       }).compileComponents();
@@ -430,11 +488,13 @@ describe('PacienteFormComponent', () => {
       tomadorId: 5,
       tomadorNome: 'Responsável Antigo',
       tomadorCpfCnpj: '52998224725',
+      profissionalPadraoId: 8,
+      profissionalPadraoNome: 'Helena Antiga',
       version: 3
     };
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador', 'definirProfissionalPadrao']);
       serviceSpy.buscar.and.returnValue(of(semDocumentos));
 
       await TestBed.configureTestingModule({
@@ -442,6 +502,7 @@ describe('PacienteFormComponent', () => {
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
           { provide: TomadorService, useValue: tomadorServiceStub },
+          { provide: ProfissionalService, useValue: profissionalServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '2' } } } }
         ]
       }).compileComponents();
@@ -488,6 +549,57 @@ describe('PacienteFormComponent', () => {
       expect(serviceSpy.vincularTomador).toHaveBeenCalledWith(2, 9);
     });
 
+    it('should load the default professional, keeping it in the list even after it was inactivated', () => {
+      expect(component.form.get('profissionalPadraoId')?.value).toBe(8);
+      const select = (fixture.nativeElement as HTMLElement).querySelector('#profissionalPadraoId') as HTMLSelectElement;
+      expect(Array.from(select.options).map(o => o.text.trim())).toContain('Helena Antiga (inativo)');
+    });
+
+    // O PUT é parcial (nulo mantém o atual): o padrão só muda pelo PATCH, e só
+    // quando a escolha mudou — um padrão inativado continua gravado sem o 400.
+    it('should not send the default in the PUT nor PATCH it when unchanged', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+
+      component.salvar();
+
+      expect('profissionalPadraoId' in serviceSpy.atualizar.calls.mostRecent().args[1]).toBeFalse();
+      expect(serviceSpy.definirProfissionalPadrao).not.toHaveBeenCalled();
+    });
+
+    it('should PATCH the new default after the PUT when the choice changed', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.definirProfissionalPadrao.and.returnValue(of({ ...semDocumentos, profissionalPadraoId: 3 }));
+      component.form.get('profissionalPadraoId')?.setValue(3);
+
+      component.salvar();
+
+      expect(serviceSpy.definirProfissionalPadrao).toHaveBeenCalledWith(2, 3);
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/pacientes']);
+    });
+
+    it('should remove the default with an explicit null', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.definirProfissionalPadrao.and.returnValue(of({ ...semDocumentos, profissionalPadraoId: null }));
+      component.form.get('profissionalPadraoId')?.setValue(null);
+
+      component.salvar();
+
+      expect(serviceSpy.definirProfissionalPadrao).toHaveBeenCalledWith(2, null);
+    });
+
+    it('should show the API message when the new default is inactive (400)', () => {
+      serviceSpy.atualizar.and.returnValue(of(semDocumentos));
+      serviceSpy.definirProfissionalPadrao.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400, error: { detail: 'Profissional inativo não pode ser o padrão' }
+      })));
+      component.form.get('profissionalPadraoId')?.setValue(4);
+
+      component.salvar();
+
+      expect(component.erro).toBe('Profissional inativo não pode ser o padrão');
+      expect(component.salvando).toBeFalse();
+    });
+
     it('should unlink the tomador when "the patient himself" is chosen', () => {
       serviceSpy.atualizar.and.returnValue(of(semDocumentos));
       serviceSpy.vincularTomador.and.returnValue(of({ ...semDocumentos, tomadorId: null }));
@@ -531,13 +643,14 @@ describe('PacienteFormComponent', () => {
     let serviceSpy: jasmine.SpyObj<PacienteService>;
 
     beforeEach(async () => {
-      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador']);
+      serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'cadastrar', 'atualizar', 'vincularTomador', 'definirProfissionalPadrao']);
 
       await TestBed.configureTestingModule({
         imports: [PacienteFormComponent, RouterTestingModule],
         providers: [
           { provide: PacienteService, useValue: serviceSpy },
           { provide: TomadorService, useValue: tomadorServiceStub },
+          { provide: ProfissionalService, useValue: profissionalServiceStub },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } }
         ]
       }).compileComponents();

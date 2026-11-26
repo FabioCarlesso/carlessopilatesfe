@@ -50,6 +50,22 @@
 }
 
 @if (aulas.length > 0) {
+  @if (resumoPacote; as resumo) {
+    <p class="pacote-resumo">{{ resumo }} no pacote deste pagamento.</p>
+  }
+  @if (aulasSemProfissional > 0) {
+    <div class="alert alert-warning" role="status">
+      {{ aulasSemProfissional === 1 ? '1 aula deste pagamento ficou' : aulasSemProfissional + ' aulas deste pagamento ficaram' }}
+      sem profissional: o horário estava lotado ou fora da disponibilidade do fisioterapeuta padrão.
+      Escolha o profissional na coluna Profissional e clique em Atribuir.
+    </div>
+  }
+  @if (temAulaPendente) {
+    <p class="aviso-troca-profissional">
+      Trocar o profissional de uma aula vale só para ela, numa folga ou ausência: o fisioterapeuta padrão
+      do paciente não muda.
+    </p>
+  }
   <div class="table-wrap" [attr.tabindex]="modoCard ? null : 0"
     [attr.role]="modoCard ? null : 'region'" [attr.aria-label]="modoCard ? null : 'Lista de aulas'">
     <table class="table">

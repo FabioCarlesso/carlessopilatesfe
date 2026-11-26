@@ -881,6 +881,63 @@ describe('AulaListComponent', () => {
       expect(subtitle.textContent?.trim()).toBe('Pagamento #1 · Ana Silva');
     });
 
+    function recarregar(pagamento: PagamentoResponseDTO, aulas: AulaResponseDTO[]): void {
+      pagamentoServiceSpy.buscar.and.returnValue(of(pagamento));
+      serviceSpy.listarPorPagamento.and.returnValue(of(aulas));
+      component.ngOnInit();
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+    }
+
+    // Pacote do pagamento (carlessopilatesapi#243): realizadas contadas na lista.
+    it('should show how many classes of the package were done', () => {
+      recarregar({ ...mockPagamento, aulasPacote: 8, aulasRealizadas: 1 }, [
+        { ...mockAula, id: 1, realizada: true, profissionalId: 5 },
+        { ...mockAula, id: 2, realizada: true, feriado: true, profissionalId: 5 },
+        { ...mockAula, id: 3 }
+      ]);
+
+      expect(fixture.nativeElement.querySelector('.pacote-resumo')?.textContent?.trim())
+        .toBe('2 de 8 aulas realizadas no pacote deste pagamento.');
+    });
+
+    it('should not show the package summary with the older API', () => {
+      expect(component.resumoPacote).toBeNull();
+      expect(fixture.nativeElement.querySelector('.pacote-resumo')).toBeNull();
+    });
+
+    // Issue #300: aula gerada sem profissional por lotação ou indisponibilidade.
+    it('should warn about the classes generated without a professional, counting the list', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 2 }, [
+        { ...mockAula, id: 1 },
+        { ...mockAula, id: 2 },
+        { ...mockAula, id: 3, profissionalId: 5, profissionalNome: 'Paula Mendes' }
+      ]);
+
+      const aviso = fixture.nativeElement.querySelector('.alert-warning') as HTMLElement;
+      expect(aviso.textContent).toContain('2 aulas deste pagamento ficaram sem profissional');
+
+      // Atribuir na própria tela faz o aviso diminuir sem buscar o pagamento de novo.
+      component.aulas = component.aulas.map(aula => aula.id === 1 ? { ...aula, profissionalId: 5 } : aula);
+      expect(component.aulasSemProfissional).toBe(1);
+      component.aulas = component.aulas.map(aula => ({ ...aula, profissionalId: 5 }));
+      expect(component.aulasSemProfissional).toBe(0);
+    });
+
+    // Pagamento anterior ao fisioterapeuta padrão: todas as aulas nasceram sem
+    // profissional, e isso não é sobra de lotação.
+    it('should not warn when the API does not report classes without a professional', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 0 }, [{ ...mockAula, id: 1 }]);
+
+      expect(component.aulasSemProfissional).toBe(0);
+      expect(fixture.nativeElement.querySelector('.alert-warning')).toBeNull();
+    });
+
+    it('should explain that changing the professional of a class does not change the default', () => {
+      expect(fixture.nativeElement.querySelector('.aviso-troca-profissional')?.textContent)
+        .toContain('o fisioterapeuta padrão do paciente não muda');
+    });
+
     it('should set erro when buscar payment fails', () => {
       pagamentoServiceSpy.buscar.and.returnValue(throwError(() => new Error('fail')));
       component.ngOnInit();

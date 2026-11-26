@@ -1,0 +1,58 @@
+<section class="detail-section" aria-labelledby="pacientes-titulo">
+  <h2 id="pacientes-titulo">Pacientes</h2>
+  <p class="pacientes-intro">
+    Pacientes com este profissional como fisioterapeuta padrão. As aulas geradas pelos pagamentos deles
+    já saem com este profissional; trocar o de uma aula específica não muda a lista.
+  </p>
+
+  @if (erro) {
+    <div class="alert alert-danger" role="alert">{{ erro }}</div>
+  }
+  @if (loading) {
+    <app-carregando />
+  }
+
+  @if (!loading && !erro && pacientes.length === 0) {
+    <app-empty-state
+      mensagem="Nenhum paciente com este fisioterapeuta padrão."
+      texto="O padrão é escolhido no cadastro do paciente." />
+  }
+
+  @if (!loading && pacientes.length > 0) {
+    <p class="pacientes-total" role="status">
+      {{ totalElementos }} {{ totalElementos === 1 ? 'paciente' : 'pacientes' }}
+    </p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Pacientes do profissional">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (paciente of pacientes; track paciente.id) {
+            <tr>
+              <td><a [routerLink]="['/pacientes', paciente.id]">{{ paciente.nome }}</a></td>
+              <td>{{ paciente.telefone || '-' }}</td>
+              <td>
+                <span class="status-badge" [class.inactive]="!paciente.ativo">
+                  {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPaginas > 1) {
+      <div class="pagination" role="navigation" aria-label="Paginação dos pacientes do profissional">
+        <button type="button" [disabled]="pagina === 0" (click)="anterior()">Anterior</button>
+        <span class="pagina-atual" aria-live="polite">Página {{ pagina + 1 }} de {{ totalPaginas }}</span>
+        <button type="button" [disabled]="pagina >= totalPaginas - 1" (click)="proxima()">Próxima</button>
+      </div>
+    }
+  }
+</section>

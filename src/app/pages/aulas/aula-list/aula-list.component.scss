@@ -49,6 +49,20 @@ select.form-control-sm {
   color: var(--text-light);
 }
 
+// Pacote do pagamento e aviso de que a troca de profissional é por aula
+// (issues #243 e #300): texto de apoio acima da tabela.
+.pacote-resumo {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.aviso-troca-profissional {
+  margin: 0 0 var(--sp-3);
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
 // Aula sem horário (legado ou plano sem horário) fica discreta na coluna, para
 // não competir com as que têm.
 .sem-horario {
