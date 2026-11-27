@@ -15,7 +15,7 @@
   </div>
   <div class="acoes">
     @if (pacienteId) {
-      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Sessões</a>
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-secondary">Atendimentos</a>
     }
     @if (pacienteId) {
       <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
@@ -102,7 +102,7 @@ sem filtro ativo — e mudar para string vazia não anuncia nada. -->
     mensagem="Nenhuma evolução registrada."
     texto="A evolução é registrada a partir de cada sessão do paciente.">
     @if (pacienteId) {
-      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-primary">Ver sessões</a>
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes']" class="btn btn-primary">Ver atendimentos</a>
     }
   </app-empty-state>
 }

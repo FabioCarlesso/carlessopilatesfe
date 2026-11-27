@@ -9,6 +9,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { PacienteSessaoListComponent } from './paciente-sessao-list.component';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { conflitoConcorrencia } from '../../../../testing/conflito';
@@ -173,10 +174,10 @@ describe('PacienteSessaoListComponent', () => {
     expect(component.erro).toBeNull();
     expect(component.loading).toBeFalse();
     const vazio: HTMLElement | null = fixture.nativeElement.querySelector('.empty-state');
-    expect(vazio?.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhuma sessão cadastrada.');
+    expect(vazio?.querySelector('.empty-state__mensagem')?.textContent?.trim()).toBe('Nenhum atendimento cadastrado.');
     // Sem registros, o estado vazio oferece o CTA de criação (issue #146).
     const cta = vazio?.querySelector('.empty-state__acoes a');
-    expect(cta?.textContent?.trim()).toBe('Nova Sessão');
+    expect(cta?.textContent?.trim()).toBe('Novo atendimento');
     expect(cta?.getAttribute('href')).toBe('/pacientes/10/sessoes/nova');
     expect(fixture.nativeElement.querySelector('.alert-danger')).toBeNull();
   });
@@ -386,6 +387,14 @@ describe('PacienteSessaoListComponent', () => {
       expect(textosDosBotoes()).toContain('Reagendar');
     });
 
+    it('should not offer Reagendar nor Cancelar for a session linked to an aula', async () => {
+      await setup([{ ...mockSessaoAgendada, aulaId: 7 }]);
+
+      expect(textosDosBotoes()).not.toContain('Reagendar');
+      expect(textosDosBotoes()).not.toContain('Cancelar');
+      expect(textosDosBotoes()).toContain('Realizar');
+    });
+
     it('should not offer Reagendar for sessions already realizada or cancelada', async () => {
       await setup([mockSessaoRealizada, mockSessaoCancelada]);
 
@@ -584,5 +593,38 @@ describe('PacienteSessaoListComponent', () => {
       }
       document.body.removeChild(fixture.nativeElement);
     }
+  });
+
+  describe('atendimentos vinculados a aula (issue #303)', () => {
+    const vinculada: SessaoResponseDTO = { ...mockSessaoRealizada, id: 4, aulaId: 77 };
+
+    it('should title the screen "Atendimentos"', async () => {
+      await setup([mockSessaoAgendada]);
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('h1')?.textContent?.trim()).toBe('Atendimentos');
+      expect(el.querySelector('.page-header .btn-primary')?.textContent?.trim()).toBe('Novo atendimento');
+    });
+
+    it('should tell the session linked to a class and link to its atendimento for the clinical roles', async () => {
+      await setup([vinculada, mockSessaoAgendada]);
+      spyOn(TestBed.inject(AuthService), 'hasAnyRole').and.returnValue(true);
+      fixture.detectChanges();
+
+      const cards = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('.sessao-card'));
+      expect(cards[0].querySelector('.badge-aula')?.textContent?.trim()).toBe('Da aula');
+      expect(cards[1].querySelector('.badge-aula')).toBeNull();
+      const link = cards[0].querySelector<HTMLAnchorElement>('a[href="/aulas/77/atendimento"]');
+      expect(link?.textContent?.trim()).toBe('Atendimento da aula');
+      expect(cards[1].querySelector('a[href*="/atendimento"]')).toBeNull();
+    });
+
+    it('should hide the atendimento link from RECEPCAO but keep the badge', async () => {
+      await setup([vinculada]);
+
+      const card = fixture.nativeElement.querySelector('.sessao-card') as HTMLElement;
+      expect(card.querySelector('.badge-aula')).not.toBeNull();
+      expect(card.querySelector('a[href*="/atendimento"]')).toBeNull();
+    });
   });
 });

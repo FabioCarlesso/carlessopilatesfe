@@ -11,8 +11,12 @@ import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-rela
 import { RecebimentosRelatorioComponent } from './pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component';
 import { FrequenciaRelatorioComponent } from './pages/relatorios/frequencia-relatorio/frequencia-relatorio.component';
 import { AulasSemEvolucaoRelatorioComponent } from './pages/relatorios/aulas-sem-evolucao-relatorio/aulas-sem-evolucao-relatorio.component';
+import { AulaAtendimentoComponent } from './pages/aulas/aula-atendimento/aula-atendimento.component';
 import { OcupacaoRelatorioComponent } from './pages/relatorios/ocupacao-relatorio/ocupacao-relatorio.component';
 import { PacienteFinanceiroComponent } from './pages/pacientes/paciente-financeiro/paciente-financeiro.component';
+import { PlanoListComponent } from './pages/planos/plano-list/plano-list.component';
+import { PagamentoListComponent } from './pages/pagamentos/pagamento-list/pagamento-list.component';
+import { PacienteNfseEmitidaListComponent } from './pages/pacientes/paciente-nfse-emitida-list/paciente-nfse-emitida-list.component';
 
 function getAllPaths(routeList: Routes, prefix = ''): string[] {
   const result: string[] = [];
@@ -75,6 +79,7 @@ describe('app routes', () => {
       'pagamentos/paciente/:pacienteId',
       'aulas/paciente/:pacienteId',
       'aulas/pagamento/:pagamentoId',
+      'aulas/:aulaId/atendimento',
       'relatorios',
       'relatorios/pacientes',
       'relatorios/frequencia',
@@ -324,6 +329,27 @@ describe('app routes', () => {
     expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(AulasSemEvolucaoRelatorioComponent);
   });
 
+  it('should open the class atendimento to ADMIN and PROFISSIONAL only and lazy load it (issue #303)', async () => {
+    TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
+    const route = routes.find(r => r.path === 'aulas/:aulaId/atendimento')!;
+    const guard = route.canActivate![0] as CanActivateFn;
+    const ativar = (roles: UserRole[]) => {
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+    };
+
+    try {
+      expect(ativar(['ADMIN'])).toBeTrue();
+      expect(ativar(['PROFISSIONAL'])).toBeTrue();
+      expect(ativar(['RECEPCAO'])).toBeInstanceOf(UrlTree);
+      expect(ativar(['FINANCEIRO'])).toBeInstanceOf(UrlTree);
+    } finally {
+      localStorage.clear();
+    }
+    expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(AulaAtendimentoComponent);
+  });
+
   it('should open the grade occupation to ADMIN and RECEPCAO only and lazy load it', async () => {
     TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] });
     const route = routes.find(r => r.path === 'relatorios/ocupacao')!;
@@ -350,6 +376,51 @@ describe('app routes', () => {
     expect(route).toBeTruthy();
     expect(route!.canActivate?.length).toBe(1);
     expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(PacienteFinanceiroComponent);
+  });
+
+  describe('financeiro do paciente e subtelas (issue #302)', () => {
+    function ativar(path: string, roles: UserRole[]): unknown {
+      const guard = routes.find(r => r.path === path)!.canActivate![0] as CanActivateFn;
+      localStorage.setItem('accessToken', 'token');
+      localStorage.setItem('currentUser', JSON.stringify({ id: 1, name: 'U', email: 'u@x.com', roles }));
+      try {
+        return TestBed.runInInjectionContext(() => guard({} as never, {} as never));
+      } finally {
+        localStorage.clear();
+      }
+    }
+
+    beforeEach(() => TestBed.configureTestingModule({ imports: [RouterTestingModule, HttpClientTestingModule] }));
+
+    it('should open the unified screen to ADMIN, RECEPCAO and FINANCEIRO, as before', () => {
+      const path = 'pacientes/:pacienteId/financeiro';
+      expect(ativar(path, ['ADMIN'])).toBeTrue();
+      expect(ativar(path, ['RECEPCAO'])).toBeTrue();
+      expect(ativar(path, ['FINANCEIRO'])).toBeTrue();
+      expect(ativar(path, ['PROFISSIONAL'])).toBeInstanceOf(UrlTree);
+    });
+
+    // As rotas antigas não redirecionam: continuam servindo as próprias telas,
+    // agora como subtelas do financeiro, com os mesmos papéis de antes.
+    it('should keep the plan and payment lists reachable by the billing roles', async () => {
+      for (const path of ['planos/paciente/:pacienteId', 'pagamentos/paciente/:pacienteId']) {
+        expect(ativar(path, ['RECEPCAO'])).withContext(path).toBeTrue();
+        expect(ativar(path, ['FINANCEIRO'])).withContext(path).toBeTrue();
+        expect(ativar(path, ['PROFISSIONAL'])).withContext(path).toBeInstanceOf(UrlTree);
+      }
+      const carregar = (path: string) => (routes.find(r => r.path === path)!.loadComponent as () => Promise<unknown>)();
+      expect(await carregar('planos/paciente/:pacienteId')).toBe(PlanoListComponent);
+      expect(await carregar('pagamentos/paciente/:pacienteId')).toBe(PagamentoListComponent);
+    });
+
+    it('should keep the NFSE list reachable by the fiscal roles only', async () => {
+      const path = 'pacientes/:pacienteId/nfse-emitidas';
+      expect(ativar(path, ['FINANCEIRO'])).toBeTrue();
+      expect(ativar(path, ['RECEPCAO'])).toBeInstanceOf(UrlTree);
+      const route = routes.find(r => r.path === path)!;
+      expect(route.redirectTo).toBeUndefined();
+      expect(await (route.loadComponent as () => Promise<unknown>)()).toBe(PacienteNfseEmitidaListComponent);
+    });
   });
 
   it('should protect every admin route with a canActivate guard on the parent', () => {

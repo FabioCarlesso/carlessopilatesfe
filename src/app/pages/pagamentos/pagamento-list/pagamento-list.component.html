@@ -2,6 +2,7 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: pacienteNome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Financeiro', link: ['/pacientes', pacienteId, 'financeiro'] },
   { label: 'Pagamentos' }
 ]"></app-breadcrumb>
 }
@@ -15,7 +16,7 @@
   </div>
   <div class="acoes">
     <a [routerLink]="['/pagamentos/novo', pacienteId]" class="btn btn-primary">Novo Pagamento</a>
-    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    <a [routerLink]="['/pacientes', pacienteId, 'financeiro']" class="btn btn-outline">Voltar ao financeiro</a>
   </div>
 </div>
 
@@ -90,27 +91,9 @@
 }
 
 @if (pagarId !== null) {
-  <app-confirmar-dialog
-    titulo="Confirmar Pagamento"
-    variante="primaria"
-    [processando]="acaoEmAndamento"
-    [fecharAoClicarFora]="false"
-    (confirmar)="confirmarPagar()"
-    (cancelar)="cancelarPagar()">
-    <form [formGroup]="pagarForm">
-      <div class="form-group">
-        <label for="dataPagamento">Data do Pagamento *</label>
-        <input id="dataPagamento" formControlName="dataPagamento" type="date" class="form-control" />
-      </div>
-      <div class="form-group">
-        <label for="formaPagamento">Forma de Pagamento</label>
-        <select id="formaPagamento" formControlName="formaPagamento" class="form-control">
-          <option [ngValue]="null">Não informada</option>
-          @for (forma of formasPagamento; track forma) {
-            <option [ngValue]="forma">{{ formaPagamentoLabel[forma] }}</option>
-          }
-        </select>
-      </div>
-    </form>
-  </app-confirmar-dialog>
+  <app-pagar-pagamento-dialog
+    [pagamentoId]="pagarId"
+    (pago)="aoConfirmarPagamento()"
+    (falhou)="aoFalharPagamento()"
+    (cancelar)="cancelarPagar()" />
 }

@@ -263,6 +263,22 @@ describe('PacienteSessaoFormComponent', () => {
     });
   });
 
+  describe('sessão vinculada a uma aula (carlessopilatesapi#246)', () => {
+    beforeEach(async () => setup({ pacienteId: '10', id: '1' }, { ...mockSessao, aulaId: 7 }));
+
+    it('should lock dataHora and explain that the aula drives it', () => {
+      expect(component.vinculadaAAula).toBeTrue();
+      expect(component.form.get('dataHora')?.disabled).toBeTrue();
+      expect(fixture.nativeElement.querySelector('#dataHoraAula')?.textContent).toContain('remarque a aula');
+    });
+
+    it('should still send the current dataHora on save, which the API accepts', () => {
+      sessaoServiceSpy.atualizar.and.returnValue(of({ ...mockSessao, aulaId: 7 }));
+      component.salvar();
+      expect(sessaoServiceSpy.atualizar.calls.mostRecent().args[1].dataHora).toBe(mockSessao.dataHora);
+    });
+  });
+
   describe('edit mode (with id param)', () => {
     beforeEach(async () => setup({ pacienteId: '10', id: '1' }));
 

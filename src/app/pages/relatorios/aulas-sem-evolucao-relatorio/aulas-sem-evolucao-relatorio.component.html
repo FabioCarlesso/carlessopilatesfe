@@ -5,7 +5,8 @@
 
 <p class="page-subtitle">
   Aulas <strong>realizadas</strong> no período cujo paciente não tem, na mesma data, sessão com evolução registrada.
-  Use para completar o prontuário: <strong>Registrar evolução</strong> abre as sessões do paciente.
+  Use para completar o prontuário: <strong>Registrar evolução</strong> abre o atendimento da aula, já com paciente,
+  data, horário e profissional preenchidos.
 </p>
 
 @if (erro) {
@@ -114,8 +115,8 @@
                   {{ aula.profissionalNome ?? semProfissional }}
                 </td>
                 <td class="nowrap">
-                  <a class="btn btn-sm btn-outline" [routerLink]="['/pacientes', aula.pacienteId, 'sessoes']"
-                    [attr.aria-label]="'Registrar evolução de ' + aula.pacienteNome">
+                  <a class="btn btn-sm btn-outline" [routerLink]="['/aulas', aula.aulaId, 'atendimento']"
+                    [attr.aria-label]="'Registrar evolução da aula de ' + aula.pacienteNome + ' em ' + (aula.data | date:'dd/MM/yyyy')">
                     Registrar evolução
                   </a>
                 </td>

@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { Page } from '../../../core/models/common';
 import { ContatoCobrancaDTO } from '../../../core/models/inadimplencia';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
@@ -193,7 +193,8 @@ describe('InadimplenciaComponent', () => {
 
       const linha = todos('.table tbody tr')[0];
       expect(linha.querySelector('a[href="/pacientes/10"]')).toBeTruthy();
-      const financeiro = linha.querySelector('a[href="/pagamentos/paciente/10"]');
+      // O financeiro unificado do paciente (issue #302), com a mesma ação de cobrança.
+      const financeiro = linha.querySelector('a[href="/pacientes/10/financeiro"]');
       expect(financeiro?.textContent?.trim()).toBe('Financeiro');
       expect(financeiro?.getAttribute('aria-label')).toBe('Financeiro de Ana Silva');
     });
@@ -446,8 +447,10 @@ describe('InadimplenciaComponent', () => {
     });
   });
 
+  // O diálogo em si (formulário, histórico, 422/404) é testado no spec do
+  // `app-cobranca-dialog`, compartilhado com o financeiro do paciente (#302).
   describe('cobrança', () => {
-    it('should open the dialog with the payment summary and its contact history', () => {
+    it('should open the dialog with the payment summary, its days overdue and its contact history', () => {
       criar();
 
       abrirCobranca(0);
@@ -456,82 +459,15 @@ describe('InadimplenciaComponent', () => {
       expect(texto('.dialog-title')).toBe('Cobrança — Ana Silva');
       expect(normalizarEspacos(texto('.cobranca-resumo'))).toContain('R$ 250,00 · vencimento 12/09/2026');
       expect(texto('.cobranca-resumo')).toContain('30 dias em atraso');
-      const itens = todos('.cobranca-contato');
-      expect(itens.length).toBe(2);
-      expect(itens[0].querySelector('.cobranca-contato-data')?.textContent?.trim()).toBe('10/10/2026');
-      expect(itens[0].querySelector('.cobranca-contato-observacao')?.textContent?.trim())
-        .toBe('Ligação: prometeu pagar na sexta.');
-      expect(itens[0].querySelector('.cobranca-contato-registro')?.textContent?.trim())
-        .toBe('Registrado por admin@carlesso.com em 10/10/2026 às 14:03');
+      expect(todos('.cobranca-contato').length).toBe(2);
+      expect(component.cobranca?.id).toBe(1);
     });
 
     it('should prefill the contact date with today', () => {
       criar();
       abrirCobranca(0);
 
-      expect(component.cobrancaForm.getRawValue()).toEqual({ dataContato: '2026-10-12', observacao: '' });
-      expect((el().querySelector('#dataContato') as HTMLInputElement).max).toBe('2026-10-12');
-    });
-
-    it('should register a contact with a trimmed note and reload the history', () => {
-      criar();
-      abrirCobranca(0);
-      pagamentoSpy.listarCobrancas.calls.reset();
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: '  Ligação sem resposta.  ' });
-
-      (el().querySelector('.dialog .btn-primary') as HTMLButtonElement).click();
-      fixture.detectChanges();
-
-      expect(pagamentoSpy.registrarCobranca).toHaveBeenCalledOnceWith(1, {
-        dataContato: '2026-10-11',
-        observacao: 'Ligação sem resposta.'
-      });
-      expect(pagamentoSpy.listarCobrancas).toHaveBeenCalledOnceWith(1);
-      expect(texto('.dialog .alert-success')).toBe('Contato de cobrança registrado.');
-      expect(component.campoCobranca('observacao').value).toBe('');
-    });
-
-    it('should not submit an empty, blank or too long note', () => {
-      criar();
-      abrirCobranca(0);
-
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: '   ' });
-      component.registrarContato();
-      fixture.detectChanges();
-      expect(texto('.cobranca-form .invalid-feedback')).toBe('Descreva o contato.');
-
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'x'.repeat(501) });
-      component.registrarContato();
-      fixture.detectChanges();
-      expect(texto('.cobranca-form .invalid-feedback')).toBe('A observação deve ter no máximo 500 caracteres.');
-
-      expect(pagamentoSpy.registrarCobranca).not.toHaveBeenCalled();
-    });
-
-    it('should not submit a future or missing contact date', () => {
-      criar();
-      abrirCobranca(0);
-
-      component.cobrancaForm.setValue({ dataContato: '2026-10-13', observacao: 'Ligação.' });
-      component.registrarContato();
-      fixture.detectChanges();
-      expect(texto('.cobranca-form .invalid-feedback')).toBe('A data do contato não pode ser futura.');
-
-      component.cobrancaForm.setValue({ dataContato: '', observacao: 'Ligação.' });
-      component.registrarContato();
-      fixture.detectChanges();
-      expect(texto('.cobranca-form .invalid-feedback')).toBe('Informe a data do contato.');
-
-      expect(pagamentoSpy.registrarCobranca).not.toHaveBeenCalled();
-    });
-
-    it('should show the note length counter', () => {
-      criar();
-      abrirCobranca(0);
-      component.campoCobranca('observacao').setValue('Ligação');
-      fixture.detectChanges();
-
-      expect(texto('#observacaoCobrancaHint')).toBe('7/500 caracteres.');
+      expect((el().querySelector('#dataContato') as HTMLInputElement).value).toBe('2026-10-12');
     });
 
     it('should only show the history for a paid payment', () => {
@@ -540,110 +476,38 @@ describe('InadimplenciaComponent', () => {
       abrirCobranca(2);
 
       expect(el().querySelector('.cobranca-form')).toBeNull();
-      expect(el().querySelector('.dialog .btn-primary')).toBeNull();
       expect(texto('.cobranca-aviso')).toContain('Pagamento quitado');
-      expect(todos('.cobranca-contato').length).toBe(2);
-      component.registrarContato();
-      expect(pagamentoSpy.registrarCobranca).not.toHaveBeenCalled();
+    });
+
+    it('should close the dialog', () => {
+      criar();
+      abrirCobranca(0);
+
+      (el().querySelector('.dialog .btn-outline') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(component.cobranca).toBeNull();
+      expect(el().querySelector('.dialog')).toBeNull();
     });
 
     // O pagamento foi quitado depois da carga da lista.
-    it('should turn the dialog read-only and reload the list on 422', () => {
+    it('should reload the list when the dialog says it is outdated', () => {
       criar();
       abrirCobranca(0);
       pagamentoSpy.listarTodos.calls.reset();
       pagamentoSpy.registrarCobranca.and.returnValue(throwError(() => erroHttp(422, { erro: 'Pagamento já está pago.' })));
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'Ligação.' });
+      (el().querySelector('#observacaoCobranca') as HTMLTextAreaElement).value = 'Ligação.';
+      el().querySelector('#observacaoCobranca')!.dispatchEvent(new Event('input'));
 
-      component.registrarContato();
+      (el().querySelector('.dialog .btn-primary') as HTMLButtonElement).click();
       fixture.detectChanges();
 
       expect(texto('.dialog .alert-danger')).toBe('Pagamento já está pago.');
-      expect(component.cobranca?.status).toBe('PAGO');
       expect(el().querySelector('.cobranca-form')).toBeNull();
       expect(pagamentoSpy.listarTodos).toHaveBeenCalledTimes(1);
     });
-
-    it('should fall back to a specific message on 422 without a body', () => {
-      criar();
-      abrirCobranca(0);
-      pagamentoSpy.registrarCobranca.and.returnValue(throwError(() => erroHttp(422)));
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'Ligação.' });
-
-      component.registrarContato();
-
-      expect(component.erroCobranca).toBe('Este pagamento já foi quitado e não aceita novos contatos de cobrança.');
-    });
-
-    it('should reload the list when the payment no longer exists', () => {
-      criar();
-      abrirCobranca(0);
-      pagamentoSpy.listarTodos.calls.reset();
-      pagamentoSpy.registrarCobranca.and.returnValue(throwError(() => erroHttp(404)));
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'Ligação.' });
-
-      component.registrarContato();
-
-      expect(component.erroCobranca).toBe('Pagamento não encontrado.');
-      expect(pagamentoSpy.listarTodos).toHaveBeenCalledTimes(1);
-    });
-
-    it('should show the API validation message and keep the note on 400', () => {
-      criar();
-      abrirCobranca(0);
-      pagamentoSpy.registrarCobranca.and.returnValue(
-        throwError(() => erroHttp(400, { observacao: 'A observação é obrigatória.' })));
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'Ligação.' });
-
-      component.registrarContato();
-      fixture.detectChanges();
-
-      expect(texto('.dialog .alert-danger')).toBe('A observação é obrigatória.');
-      expect(component.campoCobranca('observacao').value).toBe('Ligação.');
-      expect(component.registrando).toBeFalse();
-    });
-
-    it('should show empty and failed history states', () => {
-      pagamentoSpy.listarCobrancas.and.returnValue(of([]));
-      criar();
-      abrirCobranca(0);
-      expect(texto('.cobranca-historico-status')).toBe('Nenhum contato registrado para este pagamento.');
-
-      component.fecharCobranca();
-      pagamentoSpy.listarCobrancas.and.returnValue(throwError(() => erroHttp(500)));
-      fixture.detectChanges();
-      abrirCobranca(1);
-      expect(texto('.cobranca-historico-status')).toBe('Não foi possível carregar os contatos de cobrança.');
-    });
-
-    it('should drop a late history response after the dialog is closed', () => {
-      const atrasado = new Subject<ContatoCobrancaDTO[]>();
-      pagamentoSpy.listarCobrancas.and.returnValue(atrasado as Observable<ContatoCobrancaDTO[]>);
-      criar();
-      abrirCobranca(0);
-      expect(texto('.cobranca-historico-status')).toBe('Carregando contatos...');
-
-      (el().querySelector('.dialog .btn-outline') as HTMLButtonElement).click();
-      fixture.detectChanges();
-      atrasado.next(contatos);
-
-      expect(el().querySelector('.dialog')).toBeNull();
-      expect(component.contatos).toEqual([]);
-    });
-
-    it('should not close the dialog while a contact is being registered', () => {
-      pagamentoSpy.registrarCobranca.and.returnValue(new Subject<ContatoCobrancaDTO>());
-      criar();
-      abrirCobranca(0);
-      component.cobrancaForm.setValue({ dataContato: '2026-10-11', observacao: 'Ligação.' });
-
-      component.registrarContato();
-      component.fecharCobranca();
-
-      expect(component.registrando).toBeTrue();
-      expect(component.cobranca).not.toBeNull();
-    });
   });
+
   describe('atalhos', () => {
     /** Aplica o atalho com o relógio fixo em {@link HOJE}. */
     function aplicar(indice: number): void {

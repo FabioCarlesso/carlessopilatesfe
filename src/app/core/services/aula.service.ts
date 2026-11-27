@@ -1,9 +1,23 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { AtendimentoRequestDTO, AtendimentoResponseDTO } from '../models/atendimento';
+import { EvolucaoSessaoResponseDTO } from '../models/evolucao-sessao';
 import { AulaResponseDTO } from '../models/plano';
+import { SessaoApiResponseDTO, sessaoDaApi } from './sessao.service';
 import { Page } from '../models/common';
 import { buscarTodasAsPaginas, paramsPaginaHistorico } from '../models/paginacao';
+
+/** O atendimento como a API o devolve: a sessão vem com `data` e `horario` separados. */
+interface AtendimentoApiResponseDTO {
+  aula: AulaResponseDTO;
+  sessao: SessaoApiResponseDTO;
+  evolucao: EvolucaoSessaoResponseDTO | null;
+}
+
+function atendimentoDaApi(dto: AtendimentoApiResponseDTO): AtendimentoResponseDTO {
+  return { aula: dto.aula, sessao: sessaoDaApi(dto.sessao), evolucao: dto.evolucao ?? null };
+}
 
 @Injectable({ providedIn: 'root' })
 export class AulaService {
@@ -77,5 +91,31 @@ export class AulaService {
   remarcar(aulaId: number, data: string, horario?: string | null): Observable<AulaResponseDTO> {
     const corpo = horario ? { data, horario } : { data };
     return this.http.patch<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/remarcar`, corpo);
+  }
+
+  buscar(aulaId: number): Observable<AulaResponseDTO> {
+    return this.http.get<AulaResponseDTO>(`${this.apiUrl}/aulas/${aulaId}`);
+  }
+
+  /**
+   * Atendimento da aula (issue #303): aula, sessão vinculada e evolução. A API
+   * responde `404` quando a aula ainda não tem atendimento — quem chama trata
+   * esse caso como "sem atendimento", e não como erro.
+   */
+  buscarAtendimento(aulaId: number): Observable<AtendimentoResponseDTO> {
+    return this.http.get<AtendimentoApiResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/atendimento`)
+      .pipe(map(atendimento => atendimentoDaApi(atendimento)));
+  }
+
+  /**
+   * Registra o atendimento numa chamada só: cria (ou reaproveita) a sessão
+   * vinculada, marca a aula como realizada se ainda não estiver e grava a
+   * evolução, se veio e a sessão ainda não tem. É idempotente: reenviar sem
+   * evolução devolve o mesmo atendimento. Uma evolução já existente é editada
+   * por `PUT /evolucoes-sessao/{id}`, e não por aqui (`409`).
+   */
+  registrarAtendimento(aulaId: number, dto: AtendimentoRequestDTO = {}): Observable<AtendimentoResponseDTO> {
+    return this.http.post<AtendimentoApiResponseDTO>(`${this.apiUrl}/aulas/${aulaId}/atendimento`, dto)
+      .pipe(map(atendimento => atendimentoDaApi(atendimento)));
   }
 }

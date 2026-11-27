@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PAPEIS } from '../../../core/models/auth';
 import { AulaService } from '../../../core/services/aula.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { AulaResponseDTO, PagamentoResponseDTO } from '../../../core/models/plano';
@@ -15,6 +17,15 @@ import { normalizarHora } from '../../../shared/utils/hora';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import {
+  aceitaAtendimento,
+  rotuloAcaoAtendimento,
+  SITUACAO_ATENDIMENTO_CLASSE,
+  SITUACAO_ATENDIMENTO_DESCRICAO,
+  SITUACAO_ATENDIMENTO_LABEL,
+  SituacaoAtendimento,
+  situacaoAtendimento
+} from '../../../shared/utils/atendimento';
 
 /**
  * Largura a partir da qual a tabela vira cards (mesmo valor do media query do
@@ -68,6 +79,9 @@ export class AulaListComponent implements OnInit, OnDestroy {
   /** Pagamento da rota por pagamento, para o pacote e o aviso de aulas sem profissional. */
   pagamento: PagamentoResponseDTO | null = null;
   modoCard = false;
+  readonly situacaoLabel = SITUACAO_ATENDIMENTO_LABEL;
+  readonly situacaoDescricao = SITUACAO_ATENDIMENTO_DESCRICAO;
+  readonly situacaoClasse = SITUACAO_ATENDIMENTO_CLASSE;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   private atribuicaoTimer: ReturnType<typeof setTimeout> | null = null;
   private cardModeQuery: MediaQueryList | null = null;
@@ -81,6 +95,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
     private service: AulaService,
     private pagamentoService: PagamentoService,
     private profissionalService: ProfissionalService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private destroyRef: DestroyRef
@@ -229,6 +244,31 @@ export class AulaListComponent implements OnInit, OnDestroy {
   /** Há aula pendente, e com ela o select de profissional por aula. */
   get temAulaPendente(): boolean {
     return this.aulas.some(aula => !aula.realizada);
+  }
+
+  /**
+   * "Atender / Evoluir" (issue #303): leva ao atendimento da aula, que realiza
+   * e evolui numa tela só. Não aparece na aula de feriado, que a API recusa, nem
+   * para quem não registra atendimento — a recepção continua com o "Marcar como
+   * Realizada" desta tela.
+   */
+  podeAtender(aula: AulaResponseDTO): boolean {
+    return aceitaAtendimento(aula) && this.authService.hasAnyRole(PAPEIS.clinica);
+  }
+
+  rotuloAtender(aula: AulaResponseDTO): string {
+    return rotuloAcaoAtendimento(aula);
+  }
+
+  /** Nome acessível do link da linha, com a data e o horário da aula, como o select de profissional. */
+  rotuloAcessivelAtender(aula: AulaResponseDTO): string {
+    const data = formatDate(aula.data, 'dd/MM/yyyy', 'en-US');
+    const horario = this.horarioDaAula(aula);
+    return `${this.rotuloAtender(aula)}: aula de ${data}${horario ? ` às ${horario}` : ''}`;
+  }
+
+  situacaoDaAula(aula: AulaResponseDTO): SituacaoAtendimento | null {
+    return situacaoAtendimento(aula);
   }
 
   trackByAula(_: number, aula: AulaResponseDTO): number {

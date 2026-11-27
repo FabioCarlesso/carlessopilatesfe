@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1>Agenda</h1>
-    <p class="page-subtitle">Aulas e sessões de todos os pacientes</p>
+    <p class="page-subtitle">Aulas e atendimentos de todos os pacientes</p>
   </div>
   <!-- A fila é lida a partir da agenda: é aqui que se vê o horário lotado e é
   daqui que sai o cancelamento que abre a vaga. A entrada não vai para a navbar
@@ -124,6 +124,12 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
         <span [class]="item.classes" aria-hidden="true"></span>{{ item.rotulo }}
       </li>
     }
+    <!-- Marcas do atendimento da aula (issue #303), as mesmas do chip. -->
+    @for (item of legendaAtendimento; track item.rotulo) {
+      <li class="legenda-item">
+        <span class="evento-atendimento legenda-atendimento" aria-hidden="true">{{ item.marca }}</span>{{ item.rotulo }}
+      </li>
+    }
   </ul>
 
   @if (eventoSelecionado; as evento) {
@@ -165,6 +171,14 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
           <span class="label">Profissional</span>
           <span>{{ evento.profissional || 'Não atribuído' }}</span>
         </div>
+        @if (evento.atendimento; as situacao) {
+          <div class="detail-item">
+            <span class="label">Atendimento</span>
+            <span>
+              <span [class]="situacaoClasse[situacao]" [title]="situacaoDescricao[situacao]">{{ situacaoLabel[situacao] }}</span>
+            </span>
+          </div>
+        }
       </div>
 
       @if (erroAcao) {
@@ -194,6 +208,10 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
       }
 
       <div class="detalhe-acoes">
+        <!-- Atendimento da aula (issue #303): realiza e evolui numa tela só. -->
+        @if (podeAtender) {
+          <a [routerLink]="['/aulas', evento.id, 'atendimento']" class="btn btn-primary btn-sm">{{ rotuloAtender }}</a>
+        }
         @if (podeRealizar) {
           <button type="button" class="btn btn-primary btn-sm"
             [disabled]="acaoEmAndamento" (click)="solicitarAcao('realizar')">Marcar como realizada</button>
@@ -259,6 +277,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
                   @if (evento.feriado) {
                     <span class="evento-feriado" aria-hidden="true">Feriado</span>
                   }
+                  @if (evento.atendimento && situacaoMarca[evento.atendimento]; as marca) {
+                    <span class="evento-atendimento" aria-hidden="true">{{ marca }}</span>
+                  }
                 </button>
               }
             </div>
@@ -297,6 +318,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
               <span class="agenda-status">{{ evento.statusLabel }}</span>
               @if (evento.feriado) {
                 <span class="badge badge--info badge-feriado">Feriado</span>
+              }
+              @if (evento.atendimento; as situacao) {
+                <span [class]="situacaoClasse[situacao]">{{ situacaoLabel[situacao] }}</span>
               }
               @if (evento.profissional) {
                 <span class="agenda-profissional">{{ evento.profissional }}</span>
@@ -407,6 +431,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
                     }
                     @if (evento.feriado) {
                       <span class="impressao-feriado">(Feriado)</span>
+                    }
+                    @if (evento.atendimento && situacaoMarca[evento.atendimento]) {
+                      <span class="impressao-atendimento">({{ situacaoLabel[evento.atendimento] }})</span>
                     }
                   </td>
                   <td>{{ evento.profissional || 'Não atribuído' }}</td>

@@ -212,7 +212,31 @@ describe('calendario', () => {
 
   // Agenda do estúdio (issue #125): as mesmas duas coleções, mas de pacientes
   // diferentes — o nome de cada um passa a identificar o evento.
+  describe('mapearEventos (calendário do paciente)', () => {
+    it('should hide the session linked to an aula of the period', () => {
+      const eventos = mapearEventos(
+        [sessao({ id: 1, dataHora: '2026-05-20T08:00', aulaId: 10 }), sessao({ id: 2, dataHora: '2026-05-20T09:00' })],
+        [aula({ id: 10, data: '2026-05-20' })]
+      );
+
+      expect(eventos.map(e => `${e.origem}:${e.id}`).sort()).toEqual(['AULA:10', 'SESSAO:2']);
+    });
+  });
+
   describe('mapearEventosComPaciente', () => {
+    it('should hide the session linked to an aula of the period, keeping avulsas and orphans', () => {
+      const eventos = mapearEventosComPaciente(
+        [
+          sessao({ id: 1, dataHora: '2026-05-20T08:00', aulaId: 10 }),
+          sessao({ id: 2, dataHora: '2026-05-20T09:00' }),
+          sessao({ id: 3, dataHora: '2026-05-21T08:00', aulaId: 99 })
+        ],
+        [aula({ id: 10, data: '2026-05-20' })]
+      );
+
+      expect(eventos.map(e => `${e.origem}:${e.id}`).sort()).toEqual(['AULA:10', 'SESSAO:2', 'SESSAO:3']);
+    });
+
     it('should title the event with the patient and keep the type in the label', () => {
       const [evento] = mapearEventosComPaciente(
         [sessao({ id: 7, dataHora: '2026-05-20T14:00', pacienteId: 42, nomePaciente: 'Bruno Costa' })],

@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,19 +8,17 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import {
   FORMA_PAGAMENTO_LABEL,
-  FORMA_PAGAMENTO_OPCOES,
   PagamentoResponseDTO,
   STATUS_PAGAMENTO_LABEL
 } from '../../../core/models/plano';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
-import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
-import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { PagarPagamentoDialogComponent } from '../../../shared/components/pagar-pagamento-dialog/pagar-pagamento-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-pagamento-list',
-  imports: [NgClass, CurrencyPipe, DatePipe, ReactiveFormsModule, RouterLink, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
+  imports: [NgClass, CurrencyPipe, DatePipe, RouterLink, PagarPagamentoDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './pagamento-list.component.html',
   styleUrl: './pagamento-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,33 +30,24 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
   loading = false;
   erro: string | null = null;
   sucesso: string | null = null;
+  /** Pagamento com o diálogo de confirmação aberto; `null` com ele fechado. */
   pagarId: number | null = null;
-  pagarForm!: FormGroup;
-  acaoEmAndamento = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly statusLabel = STATUS_PAGAMENTO_LABEL;
   readonly formaPagamentoLabel = FORMA_PAGAMENTO_LABEL;
-  readonly formasPagamento = FORMA_PAGAMENTO_OPCOES;
   readonly papeis = PAPEIS;
 
   constructor(
     private service: PagamentoService,
     public authService: AuthService,
     private route: ActivatedRoute,
-    private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private destroyRef: DestroyRef,
-    private host: ElementRef<HTMLElement>
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit(): void {
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    // A forma é opcional, como na API: sem ela o pagamento é confirmado com `formaPagamento: null`.
-    this.pagarForm = this.fb.group({
-      dataPagamento: ['', Validators.required],
-      formaPagamento: [null]
-    });
     if (this.pacienteId === null) {
       this.erro = 'Identificador inválido.';
       return;
@@ -113,36 +101,22 @@ export class PagamentoListComponent implements OnInit, OnDestroy {
 
   abrirPagar(id: number): void {
     this.pagarId = id;
-    this.pagarForm.reset();
   }
 
   cancelarPagar(): void {
-    if (this.acaoEmAndamento) return;
     this.pagarId = null;
   }
 
-  confirmarPagar(): void {
-    if (this.pagarId === null || this.acaoEmAndamento) return;
-    if (this.pagarForm.invalid) {
-      this.pagarForm.markAllAsTouched();
-      focarPrimeiroInvalido(this.pagarForm, this.host);
-      return;
-    }
-    const { dataPagamento, formaPagamento } = this.pagarForm.value;
-    this.acaoEmAndamento = true;
-    this.service.pagar(this.pagarId, dataPagamento, formaPagamento).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.acaoEmAndamento = false;
-        this.pagarId = null;
-        this.exibirSucesso('Pagamento confirmado com sucesso.');
-        this.carregar();
-      },
-      error: () => {
-        this.erro = 'Erro ao confirmar pagamento.';
-        this.acaoEmAndamento = false;
-        this.pagarId = null;
-        this.cdr.markForCheck();
-      }
-    });
+  /** O formulário e a chamada à API moram no `app-pagar-pagamento-dialog` (issue #302). */
+  aoConfirmarPagamento(): void {
+    this.pagarId = null;
+    this.exibirSucesso('Pagamento confirmado com sucesso.');
+    this.carregar();
+  }
+
+  aoFalharPagamento(): void {
+    this.erro = 'Erro ao confirmar pagamento.';
+    this.pagarId = null;
+    this.cdr.markForCheck();
   }
 }

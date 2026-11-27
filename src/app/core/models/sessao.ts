@@ -37,6 +37,11 @@ export interface SessaoResponseDTO {
   dataAtualizacao: string | null;
   /** Versão do registro para o locking otimista: devolva-a no próximo update. */
   version: number;
+  /**
+   * Aula da agenda que a sessão registra (issue #303, carlessopilatesapi#246);
+   * `null` na sessão avulsa e ausente na API anterior.
+   */
+  aulaId?: number | null;
 }
 
 export const SESSAO_STATUS_LABEL: Record<SessaoStatus, string> = {

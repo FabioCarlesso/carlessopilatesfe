@@ -224,8 +224,9 @@ export const routes: Routes = [
         .then(m => m.PacienteNfseEmitidaListComponent)
   },
   {
-    // Histórico financeiro consolidado (issue #118). A rota é de quem lê planos e
-    // pagamentos; aulas e NFSE aparecem só para quem também acessa essas áreas.
+    // Financeiro do paciente (issues #118 e #302). A rota é de quem lê planos e
+    // pagamentos; NFSE, cobrança e aulas aparecem só para quem acessa essas áreas.
+    // As listas de planos, pagamentos e NFSEs continuam como subtelas dela.
     path: 'pacientes/:pacienteId/financeiro',
     canActivate: [roleGuard(PAPEIS.cobranca)],
     loadComponent: () =>
@@ -274,6 +275,15 @@ export const routes: Routes = [
     canActivate: [roleGuard(PAPEIS.agenda, PAPEIS.cobranca)],
     loadComponent: () =>
       import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
+  },
+  {
+    // Atendimento da aula (issue #303): realiza e evolui numa tela só. Escreve
+    // na agenda e no prontuário, e a API (carlessopilatesapi#246) só o libera
+    // para `ADMIN` e `PROFISSIONAL` — a recepção realiza pela lista de aulas.
+    path: 'aulas/:aulaId/atendimento',
+    canActivate: [roleGuard(PAPEIS.clinica)],
+    loadComponent: () =>
+      import('./pages/aulas/aula-atendimento/aula-atendimento.component').then(m => m.AulaAtendimentoComponent)
   },
   {
     // O hub abre para a recepção por causa do relatório de pacientes (#288);

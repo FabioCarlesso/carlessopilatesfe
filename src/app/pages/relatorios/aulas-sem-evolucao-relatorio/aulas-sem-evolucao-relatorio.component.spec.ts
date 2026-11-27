@@ -156,7 +156,7 @@ describe('AulasSemEvolucaoRelatorioComponent', () => {
     ]);
   });
 
-  it('should link "Registrar evolução" to the sessions of the patient of the row', () => {
+  it('should link "Registrar evolução" to the atendimento of the class of the row', () => {
     const acoes = Array.from(el().querySelectorAll<HTMLAnchorElement>('tbody a.btn'));
 
     expect(acoes.map(a => normalizarEspacos(a.textContent).trim())).toEqual([
@@ -165,10 +165,11 @@ describe('AulasSemEvolucaoRelatorioComponent', () => {
       'Registrar evolução'
     ]);
     expect(acoes.map(a => a.getAttribute('href'))).toEqual([
-      '/pacientes/7/sessoes',
-      '/pacientes/8/sessoes',
-      '/pacientes/7/sessoes'
+      '/aulas/11/atendimento',
+      '/aulas/12/atendimento',
+      '/aulas/13/atendimento'
     ]);
+    expect(acoes[0].getAttribute('aria-label')).toBe('Registrar evolução da aula de Ana Souza em 05/10/2026');
   });
 
   it('should send the professional filter', () => {

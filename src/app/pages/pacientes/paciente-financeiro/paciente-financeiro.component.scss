@@ -1,11 +1,16 @@
 .page-subtitle { margin-top: var(--sp-2); color: var(--text-secondary); }
 
-// Pagamentos ocupam a largura toda; plano, aulas e NFSE dividem a linha de baixo.
+// Plano e pacote dividem a primeira linha; pagamentos, notas e histórico ocupam
+// a largura toda. Abaixo de ~600px tudo vira uma coluna só.
 .financeiro-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: var(--sp-5);
 }
+
+// Sem isto, a largura mínima das tabelas alargaria a coluna do grid em vez de
+// rolar dentro do `.table-wrap`.
+.financeiro-bloco { min-width: 0; }
 
 .financeiro-bloco--largo { grid-column: 1 / -1; }
 
@@ -25,11 +30,51 @@
   }
 }
 
+.financeiro-bloco__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.plano-ativo + .financeiro-bloco__acoes,
+.empty-state + .financeiro-bloco__acoes {
+  margin-top: var(--sp-4);
+}
+
+.financeiro-dica {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
 .financeiro-subtitulo {
   font-size: var(--fs-body);
   font-weight: 500;
   color: var(--text-secondary);
   margin: var(--sp-5) 0 var(--sp-2);
+
+  &--primeiro { margin-top: 0; }
+}
+
+.pacote__situacao {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.pacote__contagem {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-primary);
+
+  strong { font-size: var(--fs-h3); }
+}
+
+.pacote__detalhes { margin-top: var(--sp-4); }
+
+// Cor e fundo do `.badge--warning` global (issue #300); só o posicionamento é daqui.
+.aviso-sem-profissional {
+  display: table;
+  margin-top: var(--sp-2);
 }
 
 .totais {
@@ -77,7 +122,11 @@
 
 .total--vencido .total__valor { color: var(--c-danger-text); }
 
-.table { min-width: 720px; }
+// Largura mínima para o scroll horizontal ficar contido no `.table-wrap` em
+// vez de estourar a página no celular.
+.tabela-vigentes { min-width: 960px; }
+.tabela-anteriores,
+.tabela-nfse { min-width: 600px; }
 .table td { white-space: nowrap; }
 
 // Pagamento vencido: fundo de perigo na linha inteira, além do badge "Vencido"
@@ -87,7 +136,7 @@
   color: var(--c-danger-text);
 }
 
-.planos-anteriores {
+.planos-encerrados {
   list-style: none;
   margin: 0;
   padding: 0;

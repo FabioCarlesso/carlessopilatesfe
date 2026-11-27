@@ -1,217 +1,390 @@
-@if (pacienteId) {
+@if (pacienteId(); as id) {
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
-  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
-  { label: 'Histórico financeiro' }
+  { label: paciente()?.nome || 'Paciente', link: ['/pacientes', id] },
+  { label: 'Financeiro' }
 ]"></app-breadcrumb>
 }
 
 <div class="page-header">
   <div>
-    <h1>Histórico Financeiro</h1>
-    @if (paciente) {
-      <p class="page-subtitle">{{ paciente.nome }}</p>
+    <h1>Financeiro do Paciente</h1>
+    @if (paciente(); as p) {
+      <p class="page-subtitle">{{ p.nome }}</p>
     }
   </div>
-  @if (pacienteId) {
+  @if (pacienteId(); as id) {
     <div class="acoes">
-      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+      <a [routerLink]="['/pacientes', id]" class="btn btn-outline">Voltar</a>
     </div>
   }
 </div>
 
-@if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+@if (erro(); as mensagem) {
+  <div class="alert alert-danger">{{ mensagem }}</div>
 }
-@if (carregandoPaciente) {
+@if (carregandoPaciente()) {
   <app-carregando />
 }
 
-@if (paciente) {
+@if (paciente(); as paciente) {
   <div class="financeiro-grid">
+    <!-- Plano ativo -->
+    <section class="card financeiro-bloco" aria-labelledby="titulo-plano">
+      <div class="financeiro-bloco__cabecalho">
+        <h2 id="titulo-plano">Plano ativo</h2>
+        <a [routerLink]="['/planos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar planos</a>
+      </div>
+
+      @if (erroPlanos(); as mensagem) {
+        <div class="alert alert-danger">{{ mensagem }}</div>
+      }
+      @if (carregandoPlanos()) {
+        <app-carregando mensagem="Carregando planos..." />
+      }
+
+      @if (!carregandoPlanos() && !erroPlanos()) {
+        @if (planoAtivo(); as plano) {
+          <div class="detail-grid plano-ativo">
+            <div class="detail-item">
+              <span class="label">Tipo</span>
+              <span>{{ tipoLabel[plano.tipo] }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Frequência</span>
+              <span>{{ frequenciaLabel[plano.frequenciaSemanal] }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Dias</span>
+              <span>{{ diasDoPlano(plano) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Horário</span>
+              <span>{{ horarioDoPlano(plano) ?? 'Sem horário' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Valor</span>
+              <span>{{ plano.valor | currency:'BRL' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Início</span>
+              <span>{{ plano.dataInicio | localDate }}</span>
+            </div>
+          </div>
+          <div class="financeiro-bloco__acoes">
+            <a [routerLink]="['/planos/novo', paciente.id]" class="btn btn-sm btn-secondary"
+              aria-describedby="dica-trocar-plano">Trocar plano</a>
+          </div>
+          <p id="dica-trocar-plano" class="financeiro-dica">
+            Planos não têm edição: trocar cria um novo plano e inativa o atual.
+          </p>
+        } @else {
+          <div class="empty-state">Nenhum plano ativo.</div>
+          <div class="financeiro-bloco__acoes">
+            <a [routerLink]="['/planos/novo', paciente.id]" class="btn btn-sm btn-primary">Novo plano</a>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- Pacote atual -->
+    <section class="card financeiro-bloco" aria-labelledby="titulo-pacote">
+      <div class="financeiro-bloco__cabecalho">
+        <h2 id="titulo-pacote">Pacote atual</h2>
+        @if (podeVerAulas && pacote(); as atual) {
+          <a [routerLink]="['/aulas/pagamento', atual.pagamento.id]" class="btn btn-sm btn-outline">Ver aulas do pacote</a>
+        }
+      </div>
+
+      @if (carregandoPagamentos()) {
+        <app-carregando mensagem="Carregando pacote..." />
+      } @else if (erroPagamentos()) {
+        <div class="alert alert-danger">Erro ao carregar o pacote.</div>
+      } @else if (pacote(); as atual) {
+        <p class="pacote__situacao" [attr.data-situacao]="atual.situacao">{{ tituloPacote[atual.situacao] }}</p>
+        @if (contagemPacote(); as contagem) {
+          <p class="pacote__contagem">
+            <strong>{{ contagem.realizadas }} de {{ contagem.total }}</strong>
+            {{ contagem.total === 1 ? 'aula realizada' : 'aulas realizadas' }} no pacote
+          </p>
+          <app-grafico-proporcao
+            titulo="Aulas do pacote realizadas e a realizar"
+            textoVazio="Nenhuma aula no pacote."
+            [segmentos]="segmentosPacote()" />
+        }
+        <div class="detail-grid pacote__detalhes">
+          <div class="detail-item">
+            <span class="label">Período</span>
+            <span>{{ atual.pagamento.periodoInicio | localDate }} – {{ atual.pagamento.periodoFim | localDate }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Última aula do pacote</span>
+            <span class="pacote__ultima-aula">{{ atual.pagamento.periodoFim | localDate }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Pagamento</span>
+            <span><span [class]="classeBadge(atual.pagamento.status)">{{ statusLabel[atual.pagamento.status] }}</span></span>
+          </div>
+        </div>
+        @if ((atual.pagamento.aulasSemProfissional ?? 0) > 0) {
+          <p class="badge badge--warning aviso-sem-profissional">
+            {{ atual.pagamento.aulasSemProfissional }}
+            {{ atual.pagamento.aulasSemProfissional === 1 ? 'aula sem profissional' : 'aulas sem profissional' }}
+          </p>
+        }
+      } @else {
+        <div class="empty-state">Nenhum pacote: o paciente ainda não tem pagamentos.</div>
+      }
+    </section>
+
     <!-- Pagamentos -->
     <section class="card financeiro-bloco financeiro-bloco--largo" aria-labelledby="titulo-pagamentos">
       <div class="financeiro-bloco__cabecalho">
         <h2 id="titulo-pagamentos">Pagamentos</h2>
-        <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar pagamentos</a>
+        <div class="financeiro-bloco__acoes">
+          <a [routerLink]="['/pagamentos/novo', paciente.id]" class="btn btn-sm btn-primary">Novo pagamento</a>
+          <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar pagamentos</a>
+        </div>
       </div>
 
-      @if (erroPagamentos) {
-        <div class="alert alert-danger">{{ erroPagamentos }}</div>
+      @if (sucesso(); as mensagem) {
+        <div class="alert alert-success" role="status">{{ mensagem }}</div>
       }
-      @if (carregandoPagamentos) {
+      @if (erroAcao(); as mensagem) {
+        <div class="alert alert-danger" role="alert">{{ mensagem }}</div>
+      }
+      @if (erroPagamentos(); as mensagem) {
+        <div class="alert alert-danger">{{ mensagem }}</div>
+      }
+      @if (carregandoPagamentos()) {
         <app-carregando mensagem="Carregando pagamentos..." />
       }
 
-      @if (resumo && !carregandoPagamentos) {
-        @if (temVencidos) {
-          <div class="alert alert-danger" role="alert">
-            {{ resumo.porSituacao.VENCIDO.quantidade === 1 ? '1 pagamento vencido' : resumo.porSituacao.VENCIDO.quantidade + ' pagamentos vencidos' }}
-            somando {{ resumo.porSituacao.VENCIDO.valor | currency:'BRL' }}.
-          </div>
-        }
-
-        <div class="totais">
-          @for (situacao of situacoes; track situacao) {
-            <div [class]="'total total--' + situacao.toLowerCase()" [attr.data-situacao]="situacao">
-              <span class="total__rotulo">{{ statusLabel[situacao] }}</span>
-              <span class="total__valor">{{ resumo.porSituacao[situacao].valor | currency:'BRL' }}</span>
-              <span class="total__qtd">
-                {{ resumo.porSituacao[situacao].quantidade === 1 ? '1 pagamento' : resumo.porSituacao[situacao].quantidade + ' pagamentos' }}
-              </span>
+      @if (resumo(); as resumo) {
+        @if (!carregandoPagamentos()) {
+          @if (quantidadeVencidos() > 0) {
+            <div class="alert alert-danger" role="alert">
+              {{ quantidadeVencidos() === 1 ? '1 pagamento vencido' : quantidadeVencidos() + ' pagamentos vencidos' }}
+              somando {{ resumo.porSituacao.VENCIDO.valor | currency:'BRL' }}.
             </div>
           }
-          <div class="total total--ano" data-situacao="ANO">
-            <span class="total__rotulo">Pago em {{ resumo.ano }}</span>
-            <span class="total__valor">{{ resumo.pagoNoAno | currency:'BRL' }}</span>
-            <span class="total__qtd">pela data do pagamento</span>
-          </div>
-        </div>
 
-        @if (pagamentos.length === 0) {
-          <div class="empty-state">Nenhum pagamento registrado.</div>
-        } @else {
-          <div class="table-wrap" tabindex="0" role="region" aria-label="Pagamentos do paciente">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Situação</th>
-                  <th>Valor</th>
-                  <th>Período</th>
-                  <th>Vencimento</th>
-                  <th>Pago em</th>
-                  <th>Atraso</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (linha of pagamentos; track linha.pagamento.id) {
-                  <tr [class.linha-vencida]="linha.situacao === 'VENCIDO'">
-                    <td><span [class]="classeBadge(linha.situacao)">{{ statusLabel[linha.situacao] }}</span></td>
-                    <td>{{ linha.pagamento.valor | currency:'BRL' }}</td>
-                    <td>{{ linha.pagamento.periodoInicio | localDate }} – {{ linha.pagamento.periodoFim | localDate }}</td>
-                    <td>{{ linha.pagamento.dataVencimento | localDate }}</td>
-                    <td>{{ linha.pagamento.dataPagamento ? (linha.pagamento.dataPagamento | localDate) : '—' }}</td>
-                    <td>{{ linha.atraso }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      }
-    </section>
-
-    <!-- Planos -->
-    <section class="card financeiro-bloco" aria-labelledby="titulo-planos">
-      <div class="financeiro-bloco__cabecalho">
-        <h2 id="titulo-planos">Plano</h2>
-        <a [routerLink]="['/planos/paciente', paciente.id]" class="btn btn-sm btn-outline">Gerenciar planos</a>
-      </div>
-
-      @if (erroPlanos) {
-        <div class="alert alert-danger">{{ erroPlanos }}</div>
-      }
-      @if (carregandoPlanos) {
-        <app-carregando mensagem="Carregando planos..." />
-      }
-
-      @if (!carregandoPlanos && !erroPlanos) {
-        @if (planoAtivo) {
-          <div class="detail-grid plano-ativo">
-            <div class="detail-item">
-              <span class="label">Plano ativo</span>
-              <span>{{ tipoLabel[planoAtivo.tipo] }} · {{ frequenciaLabel[planoAtivo.frequenciaSemanal] }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Valor</span>
-              <span>{{ planoAtivo.valor | currency:'BRL' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Início</span>
-              <span>{{ planoAtivo.dataInicio | localDate }}</span>
-            </div>
-          </div>
-        } @else {
-          <div class="empty-state">Nenhum plano ativo.</div>
-        }
-
-        @if (planosAnteriores.length > 0) {
-          <h3 class="financeiro-subtitulo">Planos anteriores</h3>
-          <ul class="planos-anteriores">
-            @for (plano of planosAnteriores; track plano.id) {
-              <li>
-                <span>{{ tipoLabel[plano.tipo] }} · {{ frequenciaLabel[plano.frequenciaSemanal] }}</span>
-                <span>{{ plano.valor | currency:'BRL' }}</span>
-                <span class="texto-secundario">desde {{ plano.dataInicio | localDate }}</span>
-              </li>
+          <div class="totais">
+            @for (situacao of situacoes; track situacao) {
+              <div [class]="'total total--' + situacao.toLowerCase()" [attr.data-situacao]="situacao">
+                <span class="total__rotulo">{{ statusLabel[situacao] }}</span>
+                <span class="total__valor">{{ resumo.porSituacao[situacao].valor | currency:'BRL' }}</span>
+                <span class="total__qtd">
+                  {{ resumo.porSituacao[situacao].quantidade === 1 ? '1 pagamento' : resumo.porSituacao[situacao].quantidade + ' pagamentos' }}
+                </span>
+              </div>
             }
-          </ul>
+            <div class="total total--ano" data-situacao="ANO">
+              <span class="total__rotulo">Pago em {{ resumo.ano }}</span>
+              <span class="total__valor">{{ resumo.pagoNoAno | currency:'BRL' }}</span>
+              <span class="total__qtd">pela data do pagamento</span>
+            </div>
+          </div>
+
+          <h3 class="financeiro-subtitulo">Em aberto e vigentes</h3>
+          @if (pagamentosVigentes().length === 0) {
+            <div class="empty-state">Nenhum pagamento em aberto ou vigente.</div>
+          } @else {
+            <div class="table-wrap" tabindex="0" role="region" aria-label="Pagamentos em aberto e vigentes">
+              <table class="table tabela-vigentes">
+                <thead>
+                  <tr>
+                    <th>Situação</th>
+                    <th>Valor</th>
+                    <th>Período</th>
+                    <th>Vencimento</th>
+                    <th>Pago em</th>
+                    <th>Atraso</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (linha of pagamentosVigentes(); track linha.pagamento.id) {
+                    <tr [class.linha-vencida]="linha.situacao === 'VENCIDO'" [attr.data-pagamento]="linha.pagamento.id">
+                      <td><span [class]="classeBadge(linha.situacao)">{{ statusLabel[linha.situacao] }}</span></td>
+                      <td>{{ linha.pagamento.valor | currency:'BRL' }}</td>
+                      <td>{{ linha.pagamento.periodoInicio | localDate }} – {{ linha.pagamento.periodoFim | localDate }}</td>
+                      <td>{{ linha.pagamento.dataVencimento | localDate }}</td>
+                      <td>{{ linha.pagamento.dataPagamento ? (linha.pagamento.dataPagamento | localDate) : '—' }}</td>
+                      <td>{{ linha.atraso }}</td>
+                      <td>
+                        <div class="acoes">
+                          @if (linha.pagamento.status === 'PENDENTE') {
+                            <button type="button" class="btn btn-sm btn-secondary acao-pagar"
+                              [attr.aria-label]="'Confirmar pagamento com vencimento em ' + (linha.pagamento.dataVencimento | localDate)"
+                              (click)="abrirPagar(linha)">
+                              Confirmar pagamento
+                            </button>
+                          }
+                          @if (podeCobrar && linha.situacao !== 'PAGO') {
+                            <button type="button" class="btn btn-sm btn-outline acao-cobranca"
+                              [attr.aria-label]="'Cobrança do pagamento com vencimento em ' + (linha.pagamento.dataVencimento | localDate)"
+                              (click)="abrirCobranca(linha)">
+                              Cobrança
+                            </button>
+                          }
+                          @if (podeVerAulas) {
+                            <a [routerLink]="['/aulas/pagamento', linha.pagamento.id]" class="btn btn-sm btn-outline acao-aulas"
+                              [attr.aria-label]="'Aulas do pagamento com vencimento em ' + (linha.pagamento.dataVencimento | localDate)">
+                              Ver aulas
+                            </a>
+                          }
+                        </div>
+                        @if ((linha.pagamento.aulasSemProfissional ?? 0) > 0) {
+                          <span class="badge badge--warning aviso-sem-profissional">
+                            {{ linha.pagamento.aulasSemProfissional }}
+                            {{ linha.pagamento.aulasSemProfissional === 1 ? 'aula sem profissional' : 'aulas sem profissional' }}
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         }
       }
     </section>
 
-    <!-- Aulas -->
-    @if (podeVerAulas) {
-      <section class="card financeiro-bloco" aria-labelledby="titulo-aulas">
-        <div class="financeiro-bloco__cabecalho">
-          <h2 id="titulo-aulas">Aulas</h2>
-          <a [routerLink]="['/aulas/paciente', paciente.id]" class="btn btn-sm btn-outline">Ver aulas</a>
-        </div>
-
-        @if (erroAulas) {
-          <div class="alert alert-danger">{{ erroAulas }}</div>
-        }
-        @if (carregandoAulas) {
-          <app-carregando mensagem="Carregando aulas..." />
-        }
-        @if (aulas && !carregandoAulas) {
-          <app-grafico-proporcao
-            titulo="Aulas realizadas e pendentes"
-            textoVazio="Nenhuma aula gerada."
-            [segmentos]="segmentosAulas" />
-        }
-      </section>
-    }
-
-    <!-- NFSE -->
+    <!-- Notas fiscais -->
     @if (podeVerNfse) {
-      <section class="card financeiro-bloco" aria-labelledby="titulo-nfse">
+      <section class="card financeiro-bloco financeiro-bloco--largo" aria-labelledby="titulo-nfse">
         <div class="financeiro-bloco__cabecalho">
-          <h2 id="titulo-nfse">Última NFSE</h2>
-          <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="btn btn-sm btn-outline">Ver NFSEs</a>
+          <h2 id="titulo-nfse">Notas fiscais</h2>
+          <div class="financeiro-bloco__acoes">
+            <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas', 'nova']" class="btn btn-sm btn-primary">Registrar NFSE</a>
+            <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="btn btn-sm btn-outline">Ver todas as NFSEs</a>
+          </div>
         </div>
 
-        @if (erroNfse) {
-          <div class="alert alert-danger">{{ erroNfse }}</div>
+        @if (erroNfse(); as mensagem) {
+          <div class="alert alert-danger">{{ mensagem }}</div>
         }
-        @if (carregandoNfse) {
+        @if (carregandoNfse()) {
           <app-carregando mensagem="Carregando NFSEs..." />
         }
-        @if (nfsesCarregadas && !carregandoNfse) {
-          @if (ultimaNfse) {
-            <div class="detail-grid ultima-nfse">
-              <div class="detail-item">
-                <span class="label">Competência</span>
-                <span>{{ ultimaNfse.competencia }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Emitida em</span>
-                <span>{{ ultimaNfse.dataEmissao | localDate }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Número</span>
-                <span>{{ ultimaNfse.numeroNota || '—' }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="label">Valor</span>
-                <span>{{ ultimaNfse.valor !== null ? (ultimaNfse.valor | currency:'BRL') : '—' }}</span>
-              </div>
-            </div>
-          } @else {
+        @if (nfses(); as notas) {
+          @if (notas.length === 0) {
             <div class="empty-state">Nenhuma NFSE registrada.</div>
+          } @else {
+            <div class="table-wrap" tabindex="0" role="region" aria-label="NFSEs emitidas do paciente">
+              <table class="table tabela-nfse">
+                <thead>
+                  <tr>
+                    <th>Competência</th>
+                    <th>Emitida em</th>
+                    <th>Número</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (nota of nfsesRecentes(); track nota.id) {
+                    <tr>
+                      <td>{{ nota.competencia }}</td>
+                      <td>{{ nota.dataEmissao | localDate }}</td>
+                      <td>{{ nota.numeroNota || '—' }}</td>
+                      <td>{{ nota.valor !== null ? (nota.valor | currency:'BRL') : '—' }}</td>
+                      <td>
+                        <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas', nota.id, 'editar']"
+                          class="btn btn-sm btn-outline"
+                          [attr.aria-label]="'Editar NFSE da competência ' + nota.competencia">Editar</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            @if (notas.length > nfsesRecentes().length) {
+              <p class="financeiro-dica nfse-contagem">
+                Mostrando as {{ nfsesRecentes().length }} mais recentes de {{ notas.length }} NFSEs.
+              </p>
+            }
           }
         }
       </section>
     }
+
+    <!-- Histórico -->
+    <section class="card financeiro-bloco financeiro-bloco--largo" aria-labelledby="titulo-historico">
+      <div class="financeiro-bloco__cabecalho">
+        <h2 id="titulo-historico">Histórico</h2>
+      </div>
+
+      <h3 class="financeiro-subtitulo financeiro-subtitulo--primeiro">Pagamentos anteriores</h3>
+      @if (carregandoPagamentos()) {
+        <app-carregando mensagem="Carregando pagamentos..." />
+      } @else if (erroPagamentos()) {
+        <div class="alert alert-danger">Erro ao carregar os pagamentos anteriores.</div>
+      } @else if (pagamentosAnteriores().length === 0) {
+        <div class="empty-state">Nenhum pagamento anterior.</div>
+      } @else {
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Pagamentos anteriores">
+          <table class="table tabela-anteriores">
+            <thead>
+              <tr>
+                <th>Valor</th>
+                <th>Período</th>
+                <th>Vencimento</th>
+                <th>Pago em</th>
+                <th>Forma</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (linha of pagamentosAnteriores(); track linha.pagamento.id) {
+                <tr [attr.data-pagamento]="linha.pagamento.id">
+                  <td>{{ linha.pagamento.valor | currency:'BRL' }}</td>
+                  <td>{{ linha.pagamento.periodoInicio | localDate }} – {{ linha.pagamento.periodoFim | localDate }}</td>
+                  <td>{{ linha.pagamento.dataVencimento | localDate }}</td>
+                  <td>{{ linha.pagamento.dataPagamento ? (linha.pagamento.dataPagamento | localDate) : '—' }}</td>
+                  <td>{{ linha.pagamento.formaPagamento ? formaPagamentoLabel[linha.pagamento.formaPagamento] : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <h3 class="financeiro-subtitulo">Planos encerrados</h3>
+      @if (carregandoPlanos()) {
+        <app-carregando mensagem="Carregando planos..." />
+      } @else if (erroPlanos()) {
+        <div class="alert alert-danger">Erro ao carregar os planos encerrados.</div>
+      } @else if (planosEncerrados().length === 0) {
+        <div class="empty-state">Nenhum plano encerrado.</div>
+      } @else {
+        <ul class="planos-encerrados">
+          @for (plano of planosEncerrados(); track plano.id) {
+            <li>
+              <span>{{ tipoLabel[plano.tipo] }} · {{ frequenciaLabel[plano.frequenciaSemanal] }}</span>
+              <span>{{ diasDoPlano(plano) }}</span>
+              <span>{{ plano.valor | currency:'BRL' }}</span>
+              <span class="texto-secundario">desde {{ plano.dataInicio | localDate }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </div>
+
+  @if (pagarId(); as id) {
+    <app-pagar-pagamento-dialog
+      [pagamentoId]="id"
+      (pago)="aoConfirmarPagamento()"
+      (falhou)="aoFalharPagamento()"
+      (cancelar)="fecharPagar()" />
+  }
+  @if (cobranca(); as linha) {
+    <app-cobranca-dialog
+      [pagamento]="linha.pagamento"
+      [diasAtraso]="linha.diasAtraso"
+      (fechar)="fecharCobranca()"
+      (listaDesatualizada)="recarregarPagamentos()" />
+  }
 }

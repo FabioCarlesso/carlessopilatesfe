@@ -1,5 +1,6 @@
 import { AulaResponseDTO } from '../../core/models/plano';
 import { normalizarHora } from './hora';
+import { SITUACAO_ATENDIMENTO_LABEL, SituacaoAtendimento, situacaoAtendimento } from './atendimento';
 import {
   SessaoResponseDTO,
   SessaoStatus,
@@ -138,6 +139,12 @@ export interface CalendarioEvento {
   descricao: string;
   /** Destino do clique, já no formato do `routerLink`. */
   link: (string | number)[];
+  /**
+   * Situação do atendimento da aula (issue #303): sem atendimento, realizada
+   * sem evolução ou evoluída. `null`/ausente na sessão, na aula de feriado e
+   * com a API anterior à carlessopilatesapi#246.
+   */
+  atendimento?: SituacaoAtendimento | null;
 }
 
 export interface CalendarioDia {
@@ -273,6 +280,8 @@ function descrever(evento: Omit<CalendarioEvento, 'descricao'>): string {
   partes.push(evento.horario ? `às ${evento.horario}` : 'sem horário definido');
   partes.push(evento.statusLabel.toLowerCase());
   if (evento.profissional) partes.push(`com ${evento.profissional}`);
+  // A badge do atendimento é `aria-hidden` no chip: a situação entra na frase.
+  if (evento.atendimento) partes.push(SITUACAO_ATENDIMENTO_LABEL[evento.atendimento].toLowerCase());
   return `${formatarDiaExtenso(evento.dia)}, ${partes.join(', ')}`;
 }
 
@@ -331,7 +340,8 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
     profissionalId: aula.profissionalId ?? null,
     pacienteId: aula.pacienteId,
     paciente: comPaciente ? aula.pacienteNome : null,
-    link: ['/aulas', 'paciente', aula.pacienteId]
+    link: ['/aulas', 'paciente', aula.pacienteId],
+    atendimento: situacaoAtendimento(aula)
   };
   return { ...base, descricao: descrever(base) };
 }
@@ -347,9 +357,20 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
  * aula, que não tem tela individual, cai na listagem de aulas do paciente,
  * onde a presença é confirmada.
  */
+/**
+ * A sessão vinculada a uma aula do período é o atendimento dessa aula
+ * (carlessopilatesapi#246): a aula já aparece, com a situação do atendimento, e
+ * mostrar as duas duplicaria o compromisso na grade e nos contadores. Sem a
+ * aula no período (filtrada ou de paciente inativo), a sessão continua visível.
+ */
+function semAtendimentoDeAula(sessoes: SessaoResponseDTO[], aulas: AulaResponseDTO[]): SessaoResponseDTO[] {
+  const aulasNoPeriodo = new Set(aulas.map(aula => aula.id));
+  return sessoes.filter(sessao => sessao.aulaId == null || !aulasNoPeriodo.has(sessao.aulaId));
+}
+
 export function mapearEventos(sessoes: SessaoResponseDTO[], aulas: AulaResponseDTO[]): CalendarioEvento[] {
   return ordenarEventos([
-    ...sessoes.map(sessao => eventoDaSessao(sessao, false)),
+    ...semAtendimentoDeAula(sessoes, aulas).map(sessao => eventoDaSessao(sessao, false)),
     ...aulas.map(aula => eventoDaAula(aula, false))
   ]);
 }
@@ -366,7 +387,7 @@ export function mapearEventosComPaciente(
   aulas: AulaResponseDTO[]
 ): CalendarioEvento[] {
   return ordenarEventos([
-    ...sessoes.map(sessao => eventoDaSessao(sessao, true)),
+    ...semAtendimentoDeAula(sessoes, aulas).map(sessao => eventoDaSessao(sessao, true)),
     ...aulas.map(aula => eventoDaAula(aula, true))
   ]);
 }
