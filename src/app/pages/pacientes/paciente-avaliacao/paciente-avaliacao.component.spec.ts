@@ -14,6 +14,7 @@ import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliac
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.service';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
+import { PontoDorService } from '../../../core/services/ponto-dor.service';
 import { PacienteAnamneseComponent } from '../paciente-anamnese/paciente-anamnese.component';
 import {
   PacienteAvaliacaoFisioterapeuticaComponent
@@ -80,6 +81,7 @@ describe('PacienteAvaliacaoComponent', () => {
   let avaliacaoSpy: jasmine.SpyObj<AvaliacaoFisioterapeuticaService>;
   let planoSpy: jasmine.SpyObj<PlanoTratamentoService>;
   let reavaliacaoSpy: jasmine.SpyObj<ReavaliacaoService>;
+  let pontoDorSpy: jasmine.SpyObj<PontoDorService>;
   let queryParams: BehaviorSubject<ParamMap>;
   let navigate: jasmine.Spy;
 
@@ -100,6 +102,10 @@ describe('PacienteAvaliacaoComponent', () => {
     reavaliacaoSpy.listarPorPaciente.and.returnValue(of(cenario.reavaliacoes ?? []));
     reavaliacaoSpy.buscar.and.callFake((id: number) => of((cenario.reavaliacoes ?? []).find(r => r.id === id)!));
 
+    pontoDorSpy = jasmine.createSpyObj('PontoDorService', ['listar', 'salvar', 'historicoDoPaciente']);
+    pontoDorSpy.listar.and.returnValue(of([]));
+    pontoDorSpy.historicoDoPaciente.and.returnValue(of([]));
+
     queryParams = new BehaviorSubject(convertToParamMap(cenario.query ?? {}));
 
     TestBed.configureTestingModule({
@@ -110,6 +116,7 @@ describe('PacienteAvaliacaoComponent', () => {
         { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoSpy },
         { provide: PlanoTratamentoService, useValue: planoSpy },
         { provide: ReavaliacaoService, useValue: reavaliacaoSpy },
+        { provide: PontoDorService, useValue: pontoDorSpy },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -416,6 +423,25 @@ describe('PacienteAvaliacaoComponent', () => {
       setup();
       expect(el().querySelector('app-empty-state')?.textContent).toContain('Nenhuma avaliação registrada.');
       expect(el().querySelector('.timeline')).toBeNull();
+    });
+
+    it('should compare the pain map of the records, only when there is a record (issue #307)', () => {
+      setup();
+      expect(el().querySelector('app-comparativo-mapa-dor')).toBeNull();
+      expect(pontoDorSpy.historicoDoPaciente).not.toHaveBeenCalled();
+
+      TestBed.resetTestingModule();
+      setup({ ...completo, avaliacoes: [mockAvaliacao(5, '2026-03-01')] });
+      expect(el().querySelector('app-comparativo-mapa-dor')).not.toBeNull();
+      expect(pontoDorSpy.historicoDoPaciente).toHaveBeenCalledOnceWith(1);
+    });
+
+    it('should reload the pain map comparison after a record is saved in the flow', () => {
+      setup({ ...completo, avaliacoes: [mockAvaliacao(5, '2026-03-01')], query: { etapa: 'avaliacao' } });
+      const avaliacao = fixture.debugElement.query(By.css('app-paciente-avaliacao-fisioterapeutica'));
+      avaliacao.componentInstance.salvo.emit(mockAvaliacao(5, '2026-03-02'));
+      fixture.detectChanges();
+      expect(pontoDorSpy.historicoDoPaciente).toHaveBeenCalledTimes(2);
     });
 
     it('should list the initial assessment and the reassessments in chronological order', () => {

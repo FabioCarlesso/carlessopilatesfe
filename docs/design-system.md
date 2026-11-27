@@ -76,6 +76,10 @@ Partes de um todo — pagamentos por status, aulas realizadas × agendadas, paci
 
 A cor vem da **variante**, nunca de um literal: `marca` (`--text-brand`), `sucesso` (`--c-success-text`), `alerta` (`--c-warning-text`), `perigo` (`--c-danger-text`) e `neutro` (`--text-muted`) — todos com versão no tema escuro, onde `--c-success`/`--c-danger` ficariam em ~2:1 sobre `--bg-elev`. O trilho vazio é `--border-default`. O desenho é `aria-hidden`: o `figure` tem o `titulo` como nome acessível, e a legenda em `<ul>` escreve rótulo, valor e percentual de cada parte, inclusive as zeradas, porque cor sozinha não é informação (WCAG 1.4.1). Com total zero o trilho continua visível, sem fatia, e a frase de `textoVazio` explica o vazio. Na barra, um vão de 2px entre as partes deixa o trilho aparecer na fronteira, para partes vizinhas continuarem separáveis sem depender da cor.
 
+### Mapa corporal de dor
+
+O desenho do `app-mapa-corporal` (issue #307) tem cores próprias e fica claro nos dois temas, como a foto do simetrógrafo: o contêiner usa `--c-branco` e o SVG não muda com o tema. Por isso o ponto usa `--c-danger` — que não é clareado no tema escuro — com borda `--c-branco`, e a intensidade aparece no **tamanho** (raio de 6 a 12 unidades do `viewBox`, sem intensidade = 8) e na **opacidade** do vermelho (`color-mix` de 55% a 100% por faixa: leve 0–3, moderada 4–6, intensa 7–10). A cor não é o único sinal: a intensidade está também no `aria-label` do ponto e na lista textual. Como o ponto fica sobre esse fundo claro fixo, ele redefine `--focus-ring-color` para `--c-horizonte`. Os pontos são botões posicionados em porcentagem sobre o desenho, com área de toque ampliada por um pseudo-elemento; em `≤768px` as vistas ficam em duas colunas.
+
 ### Estado de carregamento
 
 Todo carregamento usa o componente compartilhado `app-carregando` (`shared/components/carregando/`, issue #147) — não escreva `<div class="loading">Texto</div>` à mão. O elemento raiz é `role="status"` com `aria-live="polite"`, para o leitor de tela anunciar o estado, e mantém a classe global `.loading` (padding e `--text-muted`). Duas variantes:

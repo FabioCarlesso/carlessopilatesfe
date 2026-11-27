@@ -1,0 +1,110 @@
+<div class="mapa" role="group" [attr.aria-label]="rotulo">
+  @if (!somenteLeitura) {
+    <p class="mapa__dica" [id]="idBase + '-dica'">
+      Clique no desenho para marcar um ponto de dor e no ponto para definir a intensidade ou removê-lo.
+      Pelo teclado: no desenho, Enter adiciona um ponto no centro; no ponto, as setas o movem
+      (Shift para passos maiores), Enter abre a edição e Delete o remove.
+    </p>
+    <p class="mapa__contagem" [id]="idBase + '-contagem'">{{ lista.length }} de {{ maximo }} pontos</p>
+  }
+  @if (aviso) {
+    <div class="alert alert-warning mapa__aviso" role="status">{{ aviso }}</div>
+  }
+
+  <div class="mapa__figuras">
+    @for (figura of figuras; track figura.vista + figura.versao) {
+      <figure class="figura" [attr.data-vista]="figura.vista" [attr.data-versao]="figura.versao">
+        @if (somenteLeitura) {
+          <div class="desenho">
+            <img class="desenho__img" [src]="urlDesenho(figura)" alt="" draggable="false" />
+            @for (item of pontosDaFigura(figura); track item.indice) {
+              <span class="ponto ponto--{{ faixa(item.ponto) }}" aria-hidden="true"
+                [style.left.%]="item.ponto.x * 100" [style.top.%]="item.ponto.y * 100"
+                [style.width.%]="diametro(item.ponto)"></span>
+            }
+          </div>
+        } @else {
+          <div class="desenho desenho--edicao" tabindex="0" role="group"
+            [attr.aria-label]="'Desenho ' + vistaLabel[figura.vista] + ': adicionar ponto de dor'"
+            [attr.aria-describedby]="idBase + '-dica ' + idBase + '-contagem'"
+            (click)="aoClicarDesenho($event, figura)" (keydown)="aoTeclarDesenho($event, figura)">
+            <img class="desenho__img" [src]="urlDesenho(figura)" alt="" draggable="false" />
+            @for (item of pontosDaFigura(figura); track item.indice) {
+              <button type="button" class="ponto ponto--{{ faixa(item.ponto) }}" [id]="idBase + '-ponto-' + item.indice"
+                [class.ponto--selecionado]="selecionado === item.indice"
+                [style.left.%]="item.ponto.x * 100" [style.top.%]="item.ponto.y * 100"
+                [style.width.%]="diametro(item.ponto)"
+                [attr.aria-label]="descricao(item.ponto, item.indice)"
+                [attr.aria-expanded]="selecionado === item.indice"
+                [attr.aria-controls]="selecionado === item.indice ? idBase + '-editor' : null"
+                (click)="$event.stopPropagation(); selecionar(item.indice)"
+                (keydown)="$event.stopPropagation(); aoTeclarPonto($event, item.indice)"></button>
+            }
+          </div>
+        }
+        <figcaption class="figura__legenda">
+          {{ vistaLabel[figura.vista] }}@if (versaoNaLegenda(figura)) { <span> (desenho v{{ figura.versao }})</span> }
+        </figcaption>
+      </figure>
+    }
+  </div>
+
+  @if (!somenteLeitura && selecionado !== null && lista[selecionado]; as ponto) {
+    <div class="editor-ponto" [id]="idBase + '-editor'" role="group" [attr.aria-labelledby]="idBase + '-editor-titulo'">
+      <p class="editor-ponto__titulo" [id]="idBase + '-editor-titulo'">
+        Ponto {{ selecionado + 1 }} · {{ vistaLabel[ponto.vista] }} · {{ regiao(ponto) }}
+      </p>
+      <div class="editor-ponto__campos">
+        <div class="form-group">
+          <label [for]="idBase + '-intensidade'">Intensidade (0 a 10)</label>
+          <select [id]="idBase + '-intensidade'" class="form-control" #intensidade
+            (change)="definirIntensidade(intensidade.value)">
+            <option value="" [selected]="ponto.intensidade === null">Não informada</option>
+            @for (n of escala; track n) {
+              <option [value]="n" [selected]="ponto.intensidade === n">{{ n }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label [for]="idBase + '-observacao'">Observação</label>
+          <input [id]="idBase + '-observacao'" type="text" class="form-control" #observacao
+            [maxLength]="maxObservacao" [value]="ponto.observacao ?? ''"
+            (input)="definirObservacao(observacao.value)" (keydown)="aoTeclarObservacao($event)" />
+        </div>
+      </div>
+      <div class="editor-ponto__acoes">
+        <button type="button" class="btn btn-outline btn-sm" (click)="fecharEditor()">Concluir</button>
+        <button type="button" class="btn btn-danger btn-sm" (click)="remover(selecionado)">Remover ponto</button>
+      </div>
+    </div>
+  }
+
+  <div class="lista-pontos">
+    @if (pontosVisiveis.length === 0) {
+      <p class="lista-pontos__vazia">{{ mensagemVazia }}</p>
+    } @else {
+      <ol class="lista-pontos__itens" [attr.aria-label]="'Pontos de dor — ' + rotulo">
+        @for (item of pontosVisiveis; track item.indice) {
+          <li class="lista-pontos__item">
+            <span class="lista-pontos__texto">
+              <strong>{{ item.indice + 1 }}.</strong>
+              {{ vistaLabel[item.ponto.vista] }} · {{ regiao(item.ponto) }} ·
+              {{ item.ponto.intensidade === null ? 'intensidade não informada' : 'intensidade ' + item.ponto.intensidade + '/10' }}
+              @if (item.ponto.observacao) {
+                · <em>{{ item.ponto.observacao }}</em>
+              }
+            </span>
+            @if (!somenteLeitura) {
+              <span class="lista-pontos__acoes">
+                <button type="button" class="btn btn-outline btn-sm" (click)="selecionar(item.indice)"
+                  [attr.aria-label]="'Editar ponto ' + (item.indice + 1)">Editar</button>
+                <button type="button" class="btn btn-outline btn-sm" (click)="remover(item.indice)"
+                  [attr.aria-label]="'Remover ponto ' + (item.indice + 1)">Remover</button>
+              </span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</div>

@@ -15,6 +15,7 @@ import { PlanoTratamentoService } from '../../../core/services/plano-tratamento.
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { ComparativoMapaDorComponent } from '../../../shared/components/comparativo-mapa-dor/comparativo-mapa-dor.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import {
@@ -60,6 +61,7 @@ import { PacienteReavaliacaoFormComponent } from '../paciente-reavaliacao-form/p
     LocalDatePipe,
     BreadcrumbComponent,
     CarregandoComponent,
+    ComparativoMapaDorComponent,
     EmptyStateComponent,
     PacienteAnamneseComponent,
     PacienteAvaliacaoFisioterapeuticaComponent,

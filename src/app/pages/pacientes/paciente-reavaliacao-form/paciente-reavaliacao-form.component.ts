@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { forkJoin, of } from 'rxjs';
+import { concatMap, forkJoin, map, of } from 'rxjs';
 import {
   ReavaliacaoRequestDTO,
   ReavaliacaoResponseDTO,
@@ -16,6 +16,9 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
+import { PontoDorService } from '../../../core/services/ponto-dor.service';
+import { MapaDorRegistro } from '../../../shared/utils/mapa-dor-registro';
 
 /** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
 type CampoTexto =
@@ -31,7 +34,7 @@ type CampoTexto =
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, MapaCorporalComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-form.component.scss'
@@ -58,6 +61,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
   erro: string | null = null;
   sucesso: string | null = null;
   parametroInvalido = false;
+  /** Seção "Mapa de dor" (issue #307): gravada com `PUT .../pontos-dor` depois do registro. */
+  mapaDor!: MapaDorRegistro;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -67,10 +72,12 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private destroyRef: DestroyRef,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private pontoDorService: PontoDorService
   ) {}
 
   ngOnInit(): void {
+    this.mapaDor = new MapaDorRegistro(this.pontoDorService, 'REAVALIACAO', this.destroyRef);
     this.form = this.fb.group({
       dataReavaliacao: ['', Validators.required],
       comparativoAvaliacaoAnterior: [''],
@@ -133,6 +140,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
               return;
             }
             this.reavaliacao = reavaliacao;
+            this.mapaDor.carregar(reavaliacao.id);
             const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = reavaliacao;
             this.form.patchValue({
               ...formFields,
@@ -210,9 +218,14 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
       ? this.reavaliacaoService.criar(createDto)
       : this.reavaliacaoService.atualizar(reavaliacaoAtual.id, { ...updateDto, version: reavaliacaoAtual.version });
 
-    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: response => {
-        if (criando && !this.embutido) {
+    // Os pontos do mapa de dor só são gravados com o id do registro: no cadastro, depois do `POST`.
+    obs.pipe(
+      concatMap(response => this.mapaDor.gravar(response.id).pipe(map(erroMapa => ({ response, erroMapa })))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: ({ response, erroMapa }) => {
+        // Com falha no mapa, a tela fica no registro já salvo (em edição) para o mapa ser reenviado.
+        if (criando && !this.embutido && !erroMapa) {
           this.router.navigate(['/pacientes', this.pacienteId, 'reavaliacoes']);
         } else {
           this.reavaliacaoId = response.id;
@@ -236,6 +249,11 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
           this.sucesso = criando ? 'Reavaliação cadastrada com sucesso.' : 'Reavaliação atualizada com sucesso.';
           this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
           this.salvando = false;
+        }
+        if (erroMapa) {
+          this.sucesso = null;
+          this.erro = `Reavaliação salva, mas o mapa de dor não foi gravado: ${erroMapa}`;
+          return;
         }
         this.salvo.emit(response);
       },

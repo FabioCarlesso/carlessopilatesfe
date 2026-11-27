@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { forkJoin } from 'rxjs';
+import { concatMap, forkJoin, map } from 'rxjs';
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
@@ -12,10 +12,13 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
+import { PontoDorService } from '../../../core/services/ponto-dor.service';
+import { MapaDorRegistro } from '../../../shared/utils/mapa-dor-registro';
 
 @Component({
   selector: 'app-paciente-avaliacao-fisioterapeutica',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, MapaCorporalComponent],
   templateUrl: './paciente-avaliacao-fisioterapeutica.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-fisioterapeutica.component.scss'
@@ -38,6 +41,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
   erro: string | null = null;
   sucesso: string | null = null;
   parametroInvalido = false;
+  /** Seção "Mapa de dor" (issue #307): gravada com `PUT .../pontos-dor` depois do registro. */
+  mapaDor!: MapaDorRegistro;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -46,10 +51,12 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
     private avaliacaoService: AvaliacaoFisioterapeuticaService,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef,
-    private host: ElementRef<HTMLElement>
+    private host: ElementRef<HTMLElement>,
+    private pontoDorService: PontoDorService
   ) {}
 
   ngOnInit(): void {
+    this.mapaDor = new MapaDorRegistro(this.pontoDorService, 'AVALIACAO', this.destroyRef);
     this.form = this.fb.group({
       dataAvaliacao: ['', Validators.required],
       queixaFuncional: ['', [Validators.required, Validators.pattern(/\S/)]],
@@ -98,6 +105,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
         if (this.avaliacao) {
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = this.avaliacao;
           this.form.patchValue(formFields);
+          this.mapaDor.carregar(this.avaliacao.id);
         } else {
           // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
           setTimeout(() => focarPrimeiroCampo(this.host));
@@ -151,11 +159,21 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
       ? this.avaliacaoService.criar({ pacienteId: this.pacienteId, ...dto })
       : this.avaliacaoService.atualizar(avaliacaoAtual.id, { ...dto, version: avaliacaoAtual.version });
 
-    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: response => {
+    // Os pontos do mapa de dor só são gravados com o id do registro: no cadastro, depois do `POST`.
+    obs.pipe(
+      concatMap(response => this.mapaDor.gravar(response.id).pipe(map(erroMapa => ({ response, erroMapa })))),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: ({ response, erroMapa }) => {
         this.avaliacao = response;
         const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
         this.form.patchValue(formFields);
+        if (erroMapa) {
+          // O registro foi salvo e a tela já o edita; sem avisar o fluxo, para o mapa poder ser reenviado.
+          this.erro = `Avaliação fisioterapêutica salva, mas o mapa de dor não foi gravado: ${erroMapa}`;
+          this.salvando = false;
+          return;
+        }
         if (this.successTimer !== null) {
           clearTimeout(this.successTimer);
         }

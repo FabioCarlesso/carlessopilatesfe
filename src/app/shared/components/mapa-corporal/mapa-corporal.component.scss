@@ -1,0 +1,155 @@
+.mapa__dica,
+.mapa__contagem,
+.lista-pontos__vazia {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.mapa__contagem {
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa__figuras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--sp-4);
+  margin: var(--sp-3) 0;
+}
+
+.figura {
+  margin: 0;
+  max-width: 220px;
+}
+
+.figura__legenda {
+  margin-top: var(--sp-1);
+  text-align: center;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* O desenho tem cores próprias e fundo claro nos dois temas, como a foto do simetrógrafo. */
+.desenho {
+  position: relative;
+  aspect-ratio: 240 / 520;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background-color: var(--c-branco);
+  overflow: hidden;
+  user-select: none;
+
+  &--edicao {
+    cursor: crosshair;
+  }
+}
+
+.desenho__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/*
+ * Ponto vermelho: o tamanho (largura em % do desenho, vinda do componente) e a
+ * opacidade crescem com a intensidade. O vermelho é `--c-danger`, que não muda no
+ * tema escuro — o desenho continua claro —, com borda branca para destacar do traço.
+ */
+.ponto {
+  position: absolute;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--c-branco);
+  border-radius: var(--r-pill);
+  background-color: var(--c-danger);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--shadow-1);
+  /* O anel de foco fica sobre o desenho, que é claro nos dois temas. */
+  --focus-ring-color: var(--c-horizonte);
+
+  &--sem { background-color: color-mix(in srgb, var(--c-danger) 70%, transparent); }
+  &--leve { background-color: color-mix(in srgb, var(--c-danger) 55%, transparent); }
+  &--moderada { background-color: color-mix(in srgb, var(--c-danger) 80%, transparent); }
+
+  &--selecionado {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: 1px;
+  }
+}
+
+button.ponto {
+  cursor: pointer;
+
+  /* Alvo de toque maior que o ponto desenhado. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+}
+
+.editor-ponto {
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background-color: var(--bg-sunken);
+}
+
+.editor-ponto__titulo {
+  margin: 0 0 var(--sp-3);
+  font-weight: 500;
+}
+
+.editor-ponto__campos {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 3fr);
+  gap: var(--sp-3);
+}
+
+.editor-ponto__acoes,
+.lista-pontos__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.editor-ponto__acoes {
+  margin-top: var(--sp-3);
+}
+
+.lista-pontos__itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-pontos__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--fs-body-sm);
+}
+
+@media (max-width: 768px) {
+  .mapa__figuras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .figura {
+    max-width: none;
+  }
+
+  .editor-ponto__campos {
+    grid-template-columns: 1fr;
+  }
+
+  .lista-pontos__acoes .btn {
+    min-height: 44px;
+  }
+}

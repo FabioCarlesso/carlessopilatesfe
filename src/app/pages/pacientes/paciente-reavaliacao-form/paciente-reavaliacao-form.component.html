@@ -87,6 +87,16 @@
       <label for="observacoesGerais">Observações gerais</label>
       <textarea id="observacoesGerais" formControlName="observacoesGerais" class="form-control" rows="2"></textarea>
     </div>
+    <h2 id="mapa-dor-titulo" class="form-section-title">Mapa de dor</h2>
+    <div class="mapa-dor">
+      @if (mapaDor.carregando) {
+        <app-carregando mensagem="Carregando mapa de dor..." />
+      } @else if (mapaDor.erroCarga) {
+        <div class="alert alert-warning" role="status">{{ mapaDor.erroCarga }} O mapa de dor não será alterado ao salvar.</div>
+      } @else {
+        <app-mapa-corporal [pontos]="mapaDor.pontos" (pontosChange)="mapaDor.alterar($event)" rotulo="Mapa de dor da reavaliação" />
+      }
+    </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary" [disabled]="salvando">
         {{ salvando ? 'Salvando...' : (embutido ? 'Salvar e continuar' : (modoEdicao ? 'Atualizar' : 'Cadastrar')) }}

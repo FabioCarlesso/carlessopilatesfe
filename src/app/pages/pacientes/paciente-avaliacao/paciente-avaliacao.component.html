@@ -208,4 +208,8 @@
       </ol>
     }
   </section>
+
+  @if (linhaDoTempo.length > 0) {
+    <app-comparativo-mapa-dor [pacienteId]="pacienteId" [gatilho]="linhaDoTempo" />
+  }
 }
