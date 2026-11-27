@@ -37,8 +37,8 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:pacienteId/avaliacao` | Fluxo único de avaliação (issue #305): stepper da anamnese ao plano de tratamento, com a etapa pendente derivada dos registros, e linha do tempo da avaliação inicial e das reavaliações. `?etapa=` (`anamnese`, `avaliacao`, `postural`, `plano`, `reavaliacao`) guarda a etapa aberta; `?fluxo=reavaliacao` abre o fluxo de reavaliação e `?reavaliacao=:id` a reavaliação em andamento. As telas avulsas abaixo continuam valendo (_clínica_) |
 | `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | Cadastro e edição da avaliação fisioterapêutica do paciente (_clínica_) |
-| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Listagem das análises posturais da avaliação fisioterapêutica do paciente (_clínica_) |
-| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova` | Nova análise postural: seleção de vista e upload de foto comprimida (_clínica_) |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Análise Postural: todas as análises do paciente — soltas e vinculadas a avaliação ou reavaliação —, com vincular/alterar/remover o vínculo; não exige avaliação (_clínica_) |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova` | Nova análise postural: vínculo opcional (pré-selecionável por `?avaliacaoFisioterapeuticaId=` ou `?reavaliacaoId=`), seleção de vista e upload de foto comprimida (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/:id/marcar` | Editor de marcação postural (grade, prumo, marcação guiada e zoom) e resultados: medidas calculadas, observações e conclusão (_clínica_) |
 | `/pacientes/:pacienteId/sessoes` | Atendimentos (sessões de pilates/fisioterapia) do paciente, avulsos ou vinculados a uma aula, com link para o atendimento da aula (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de atendimento avulso (_agenda_) |

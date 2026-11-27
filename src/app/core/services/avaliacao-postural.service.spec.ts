@@ -5,7 +5,9 @@ import { AvaliacaoPosturalFotoResponseDTO, AvaliacaoPosturalResponseDTO } from '
 
 const mockAnalise: AvaliacaoPosturalResponseDTO = {
   id: 10,
+  pacienteId: 1,
   avaliacaoFisioterapeuticaId: 5,
+  reavaliacaoId: null,
   vista: 'FRENTE',
   status: 'RASCUNHO',
   linhaPrumoX: null,
@@ -48,12 +50,40 @@ describe('AvaliacaoPosturalService', () => {
   });
 
   it('should POST to /api/avaliacoes-posturais with request body', () => {
-    service.criar({ avaliacaoFisioterapeuticaId: 5, vista: 'FRENTE' }).subscribe(a => expect(a).toEqual(mockAnalise));
+    const dto = { pacienteId: 1, avaliacaoFisioterapeuticaId: 5, reavaliacaoId: null, vista: 'FRENTE' as const };
+    service.criar(dto).subscribe(a => expect(a).toEqual(mockAnalise));
 
     const req = httpMock.expectOne('/api/avaliacoes-posturais');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ avaliacaoFisioterapeuticaId: 5, vista: 'FRENTE' });
+    expect(req.request.body).toEqual(dto);
     req.flush(mockAnalise);
+  });
+
+  it('should POST a loose analysis with only pacienteId and vista', () => {
+    service.criar({ pacienteId: 1, vista: 'COSTAS' }).subscribe();
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais');
+    expect(req.request.body).toEqual({ pacienteId: 1, vista: 'COSTAS' });
+    req.flush({ ...mockAnalise, avaliacaoFisioterapeuticaId: null });
+  });
+
+  it('should GET /api/avaliacoes-posturais/paciente/:id', () => {
+    service.listarPorPaciente(1).subscribe(a => expect(a).toEqual([mockAnalise]));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/paciente/1');
+    expect(req.request.method).toBe('GET');
+    req.flush([mockAnalise]);
+  });
+
+  it('should PATCH /api/avaliacoes-posturais/:id/vinculo with the link body', () => {
+    const atualizada = { ...mockAnalise, avaliacaoFisioterapeuticaId: null, reavaliacaoId: 7 };
+    service.atualizarVinculo(10, { avaliacaoFisioterapeuticaId: null, reavaliacaoId: 7 })
+      .subscribe(a => expect(a).toEqual(atualizada));
+
+    const req = httpMock.expectOne('/api/avaliacoes-posturais/10/vinculo');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ avaliacaoFisioterapeuticaId: null, reavaliacaoId: 7 });
+    req.flush(atualizada);
   });
 
   it('should GET /api/avaliacoes-posturais/avaliacao-fisioterapeutica/:id', () => {

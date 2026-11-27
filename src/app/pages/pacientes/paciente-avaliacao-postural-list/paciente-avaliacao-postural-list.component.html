@@ -2,21 +2,20 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
-  { label: 'Avaliação Fisioterapêutica', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica'] },
   { label: 'Análise Postural' }
 ]"></app-breadcrumb>
 }
 
 <div class="page-header">
   <div>
-    <h1>Postural</h1>
+    <h1>Análise Postural</h1>
     @if (paciente) {
       <p class="page-subtitle">{{ paciente.nome }}</p>
     }
   </div>
   <div class="acoes">
     @if (pacienteId !== null) {
-      <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-outline">Voltar</a>
+      <a [routerLink]="['/pacientes', pacienteId]" [queryParams]="{ aba: 'clinico' }" class="btn btn-outline">Voltar</a>
     }
   </div>
 </div>
@@ -33,83 +32,84 @@
 
 @if (!loading && !parametroInvalido) {
   <div>
-    @if (avaliacaoFisioterapeuticaId === null) {
-      <div class="card sem-avaliacao">
-        <p>É necessário cadastrar a avaliação fisioterapêutica do paciente antes de iniciar uma análise postural.</p>
-        @if (pacienteId !== null) {
-          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-primary">
-            Cadastrar avaliação fisioterapêutica
-          </a>
-        }
-      </div>
-    }
-    @if (avaliacaoFisioterapeuticaId !== null) {
-      <div class="lista-header">
-        <h2 class="form-section-title">Análises desta avaliação</h2>
+    <div class="lista-header">
+      <h2 class="form-section-title">Análises do paciente</h2>
+      @if (pacienteId !== null) {
+        <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
+          + Nova análise
+        </a>
+      }
+    </div>
+    @if (analises.length === 0) {
+      <app-empty-state mensagem="Nenhuma análise postural registrada ainda.">
         @if (pacienteId !== null) {
           <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
             + Nova análise
           </a>
         }
-      </div>
-      @if (analises.length === 0) {
-        <app-empty-state mensagem="Nenhuma análise postural registrada ainda.">
-          @if (pacienteId !== null) {
-            <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']" class="btn btn-primary">
-              + Nova análise
-            </a>
-          }
-        </app-empty-state>
-      }
-      @if (analises.length > 0) {
-        <ul class="analises-list">
-          @for (analise of analises; track analise) {
-            <li class="analise-item">
-              <div class="analise-info">
-                <span class="vista">{{ vistaLabel[analise.vista] }}</span>
-                <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
-                  {{ statusLabel[analise.status] }}
-                </span>
-                <span class="data">{{ analise.dataCriacao | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-              <div class="analise-acoes">
-                @if (analise.temFoto && pacienteId !== null) {
-                  <a
-                    [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', analise.id, 'marcar']"
-                    class="btn btn-primary btn-sm">
-                    {{ analise.status === 'CONCLUIDA' ? 'Ver marcação' : 'Marcar pontos' }}
-                  </a>
-                }
-                @if (analise.temFoto) {
-                  <button
-                    type="button"
-                    class="btn btn-outline btn-sm"
-                    (click)="alternarFoto(analise)">
-                    {{ fotoAbertaId === analise.id ? 'Ocultar foto' : 'Ver foto' }}
-                  </button>
-                }
+      </app-empty-state>
+    }
+    @if (analises.length > 0) {
+      <ul class="analises-list">
+        @for (analise of analises; track analise) {
+          <li class="analise-item">
+            <div class="analise-info">
+              <span class="vista">{{ vistaLabel[analise.vista] }}</span>
+              <span class="badge" [class.badge--success]="analise.status === 'CONCLUIDA'" [class.badge--warning]="analise.status === 'RASCUNHO'">
+                {{ statusLabel[analise.status] }}
+              </span>
+              <span class="data">{{ analise.dataCriacao | date:'dd/MM/yyyy HH:mm' }}</span>
+              @if (ehSolta(analise)) {
+                <span class="badge" title="Análise sem vínculo com avaliação ou reavaliação">{{ rotuloSemVinculo }}</span>
+              } @else {
+                <span class="vinculo">{{ rotuloVinculo(analise) }}</span>
+              }
+            </div>
+            <div class="analise-acoes">
+              @if (analise.temFoto && pacienteId !== null) {
+                <a
+                  [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', analise.id, 'marcar']"
+                  class="btn btn-primary btn-sm">
+                  {{ analise.status === 'CONCLUIDA' ? 'Ver marcação' : 'Marcar pontos' }}
+                </a>
+              }
+              @if (analise.temFoto) {
                 <button
                   type="button"
-                  class="btn btn-danger btn-sm"
-                  [disabled]="acaoEmAndamentoId !== null"
-                  (click)="confirmarCancelar(analise.id)">
-                  Cancelar análise
+                  class="btn btn-outline btn-sm"
+                  (click)="alternarFoto(analise)">
+                  {{ fotoAbertaId === analise.id ? 'Ocultar foto' : 'Ver foto' }}
                 </button>
-              </div>
-              @if (fotoAbertaId === analise.id) {
-                <div class="foto-preview">
-                  @if (carregandoFotoId === analise.id) {
-                    <span>Carregando foto...</span>
-                  }
-                  @if (fotoUrl(analise.id)) {
-                    <img [src]="fotoUrl(analise.id)" [alt]="'Foto da análise postural - ' + vistaLabel[analise.vista]" />
-                  }
-                </div>
               }
-            </li>
-          }
-        </ul>
-      }
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                [disabled]="acaoEmAndamentoId !== null"
+                [attr.aria-label]="(ehSolta(analise) ? 'Vincular' : 'Alterar vínculo da') + ' análise ' + vistaLabel[analise.vista] + ' de ' + (analise.dataCriacao | date:'dd/MM/yyyy')"
+                (click)="abrirVinculo(analise)">
+                {{ ehSolta(analise) ? 'Vincular' : 'Alterar vínculo' }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                [disabled]="acaoEmAndamentoId !== null"
+                (click)="confirmarCancelar(analise.id)">
+                Cancelar análise
+              </button>
+            </div>
+            @if (fotoAbertaId === analise.id) {
+              <div class="foto-preview">
+                @if (carregandoFotoId === analise.id) {
+                  <span>Carregando foto...</span>
+                }
+                @if (fotoUrl(analise.id)) {
+                  <img [src]="fotoUrl(analise.id)" [alt]="'Foto da análise postural - ' + vistaLabel[analise.vista]" />
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
     }
   </div>
 }
@@ -122,5 +122,47 @@
     (confirmar)="executarCancelamento()"
     (cancelar)="fecharConfirmacaoCancelar()">
     <p>Confirma o cancelamento da análise <strong>{{ vistaEmConfirmacao() }}</strong>? Essa ação não pode ser desfeita pela tela e a vista ficará disponível para uma nova análise.</p>
+  </app-confirmar-dialog>
+}
+
+@if (analiseEmVinculo; as analise) {
+  <app-confirmar-dialog
+    [titulo]="ehSolta(analise) ? 'Vincular análise' : 'Alterar vínculo'"
+    textoConfirmar="Salvar vínculo"
+    [processando]="salvandoVinculo"
+    [confirmarDesabilitado]="vinculoInalterado()"
+    [fecharAoClicarFora]="false"
+    (confirmar)="salvarVinculo()"
+    (cancelar)="fecharVinculo()">
+    <p>Análise <strong>{{ vistaLabel[analise.vista] }}</strong> de {{ analise.dataCriacao | date:'dd/MM/yyyy' }}.</p>
+    <div class="form-group">
+      <label for="vinculoAnalise">Vínculo</label>
+      <select
+        id="vinculoAnalise"
+        class="form-control"
+        aria-describedby="vinculoAnaliseDica"
+        [disabled]="salvandoVinculo"
+        [(ngModel)]="vinculoSelecionado">
+        <option [ngValue]="chaveSemVinculo">Sem vínculo (análise solta)</option>
+        @for (opcao of opcoesVinculo; track opcao.chave) {
+          <option [ngValue]="opcao.chave" [disabled]="vistaOcupadaNoVinculo(opcao.chave)">
+            {{ opcao.label }}{{ vistaOcupadaNoVinculo(opcao.chave) ? ' (já tem análise desta vista)' : '' }}
+          </option>
+        }
+      </select>
+      <div id="vinculoAnaliseDica" class="field-hint">
+        @if (opcoesVinculo.length === 0 && !opcoesVinculoIncompletas) {
+          O paciente ainda não tem avaliação nem reavaliação; a análise pode continuar solta.
+        } @else {
+          Cada avaliação ou reavaliação aceita uma análise por vista.
+        }
+      </div>
+    </div>
+    @if (opcoesVinculoIncompletas) {
+      <div class="alert alert-warning" role="status">Não foi possível carregar todas as avaliações e reavaliações do paciente.</div>
+    }
+    @if (vinculoErro) {
+      <div class="alert alert-danger" role="alert">{{ vinculoErro }}</div>
+    }
   </app-confirmar-dialog>
 }

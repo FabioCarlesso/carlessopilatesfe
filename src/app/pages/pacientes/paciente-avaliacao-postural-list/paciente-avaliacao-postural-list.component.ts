@@ -3,7 +3,8 @@ import { Component, DestroyRef, OnDestroy, OnInit, ChangeDetectionStrategy } fro
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { forkJoin } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 import {
   AvaliacaoPosturalResponseDTO,
   STATUS_AVALIACAO_POSTURAL_LABEL,
@@ -13,6 +14,16 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
 import { AvaliacaoPosturalService } from '../../../core/services/avaliacao-postural.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
+import {
+  CHAVE_SEM_VINCULO,
+  OpcaoVinculoPostural,
+  ROTULO_SEM_VINCULO,
+  chaveDaAnalise,
+  montarOpcoesVinculo,
+  rotuloDoVinculo,
+  vinculoDaChave
+} from '../../../shared/utils/vinculo-postural';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
@@ -21,7 +32,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 
 @Component({
   selector: 'app-paciente-avaliacao-postural-list',
-  imports: [RouterLink, DatePipe, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
+  imports: [RouterLink, DatePipe, FormsModule, ConfirmarDialogComponent, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
   templateUrl: './paciente-avaliacao-postural-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-postural-list.component.scss'
@@ -29,7 +40,6 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy {
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
-  avaliacaoFisioterapeuticaId: number | null = null;
   analises: AvaliacaoPosturalResponseDTO[] = [];
   loading = false;
   erro: string | null = null;
@@ -39,16 +49,26 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
   carregandoFotoId: number | null = null;
   confirmarCancelarId: number | null = null;
   acaoEmAndamentoId: number | null = null;
+  /** Avaliações e reavaliações do paciente: rotulam o vínculo na lista e alimentam o seletor do diálogo. */
+  opcoesVinculo: OpcaoVinculoPostural[] = [];
+  opcoesVinculoIncompletas = false;
+  analiseEmVinculo: AvaliacaoPosturalResponseDTO | null = null;
+  vinculoSelecionado = CHAVE_SEM_VINCULO;
+  vinculoErro: string | null = null;
+  salvandoVinculo = false;
   private readonly fotoUrls = new Map<number, string>();
   private successTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly vistaLabel = VISTA_POSTURAL_LABEL;
   readonly statusLabel = STATUS_AVALIACAO_POSTURAL_LABEL;
+  readonly chaveSemVinculo = CHAVE_SEM_VINCULO;
+  readonly rotuloSemVinculo = ROTULO_SEM_VINCULO;
 
   constructor(
     private pacienteService: PacienteService,
     private avaliacaoFisioterapeuticaService: AvaliacaoFisioterapeuticaService,
     private posturalService: AvaliacaoPosturalService,
+    private reavaliacaoService: ReavaliacaoService,
     private route: ActivatedRoute,
     private destroyRef: DestroyRef
   ) {}
@@ -76,39 +96,98 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
     this.loading = true;
     this.erro = null;
 
+    // Avaliações e reavaliações só rotulam o vínculo: se falharem, a lista de análises
+    // continua de pé e o vínculo aparece sem a data.
     forkJoin({
       paciente: this.pacienteService.buscar(this.pacienteId),
-      avaliacoes: this.avaliacaoFisioterapeuticaService.listarPorPaciente(this.pacienteId)
+      analises: this.posturalService.listarPorPaciente(this.pacienteId),
+      avaliacoes: this.opcional(this.avaliacaoFisioterapeuticaService.listarPorPaciente(this.pacienteId)),
+      reavaliacoes: this.opcional(this.reavaliacaoService.listarPorPaciente(this.pacienteId))
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ paciente, avaliacoes }) => {
+      next: ({ paciente, analises, avaliacoes, reavaliacoes }) => {
         this.paciente = paciente;
-        this.avaliacaoFisioterapeuticaId = avaliacoes[0]?.id ?? null;
-        if (this.avaliacaoFisioterapeuticaId === null) {
-          this.loading = false;
-          return;
-        }
-        this.carregarAnalises(this.avaliacaoFisioterapeuticaId);
+        this.analises = analises;
+        this.opcoesVinculo = montarOpcoesVinculo(avaliacoes ?? [], reavaliacoes ?? []);
+        this.opcoesVinculoIncompletas = avaliacoes === null || reavaliacoes === null;
+        this.loading = false;
       },
       error: () => {
-        this.erro = 'Erro ao carregar dados do paciente.';
+        this.erro = 'Erro ao carregar as análises posturais do paciente.';
         this.loading = false;
       }
     });
   }
 
-  private carregarAnalises(avaliacaoFisioterapeuticaId: number): void {
-    this.posturalService.listarPorAvaliacaoFisioterapeutica(avaliacaoFisioterapeuticaId)
+  private opcional<T>(fonte: Observable<T[]>): Observable<T[] | null> {
+    return fonte.pipe(catchError(() => of(null)));
+  }
+
+  rotuloVinculo(analise: AvaliacaoPosturalResponseDTO): string {
+    return rotuloDoVinculo(analise, this.opcoesVinculo);
+  }
+
+  ehSolta(analise: AvaliacaoPosturalResponseDTO): boolean {
+    return chaveDaAnalise(analise) === CHAVE_SEM_VINCULO;
+  }
+
+  abrirVinculo(analise: AvaliacaoPosturalResponseDTO): void {
+    if (this.acaoEmAndamentoId !== null) return;
+    this.analiseEmVinculo = analise;
+    this.vinculoSelecionado = chaveDaAnalise(analise);
+    this.vinculoErro = null;
+  }
+
+  fecharVinculo(): void {
+    if (this.salvandoVinculo) return;
+    this.analiseEmVinculo = null;
+    this.vinculoErro = null;
+  }
+
+  vinculoInalterado(): boolean {
+    return this.analiseEmVinculo === null || this.vinculoSelecionado === chaveDaAnalise(this.analiseEmVinculo);
+  }
+
+  /**
+   * A API aceita no máximo uma análise ativa por vista em cada avaliação ou reavaliação
+   * (a solta fica de fora da regra); a opção que já tem outra análise da mesma vista
+   * aparece desabilitada, e o `409` da API continua tratado se a lista estiver defasada.
+   */
+  vistaOcupadaNoVinculo(chave: string): boolean {
+    const analise = this.analiseEmVinculo;
+    if (analise === null || chave === CHAVE_SEM_VINCULO) return false;
+    return this.analises.some(a => a.id !== analise.id && a.vista === analise.vista && chaveDaAnalise(a) === chave);
+  }
+
+  salvarVinculo(): void {
+    const analise = this.analiseEmVinculo;
+    if (analise === null || this.salvandoVinculo || this.vinculoInalterado()) return;
+
+    const removendo = this.vinculoSelecionado === CHAVE_SEM_VINCULO;
+    this.salvandoVinculo = true;
+    this.vinculoErro = null;
+
+    this.posturalService.atualizarVinculo(analise.id, vinculoDaChave(this.vinculoSelecionado))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: analises => {
-          this.analises = analises;
-          this.loading = false;
+        next: atualizada => {
+          this.analises = this.analises.map(a => (a.id === atualizada.id ? atualizada : a));
+          this.salvandoVinculo = false;
+          this.analiseEmVinculo = null;
+          this.mostrarSucesso(removendo ? 'Vínculo removido: a análise ficou solta.' : 'Vínculo da análise atualizado.');
         },
-        error: () => {
-          this.erro = 'Erro ao carregar análises posturais.';
-          this.loading = false;
+        error: err => {
+          this.vinculoErro = extrairMensagemErro(err, 'Erro ao atualizar o vínculo da análise.');
+          this.salvandoVinculo = false;
         }
       });
+  }
+
+  private mostrarSucesso(mensagem: string): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+    }
+    this.sucesso = mensagem;
+    this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
   }
 
   alternarFoto(analise: AvaliacaoPosturalResponseDTO): void {
@@ -153,7 +232,7 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
   }
 
   confirmarCancelar(id: number): void {
-    if (this.acaoEmAndamentoId !== null) return;
+    if (this.acaoEmAndamentoId !== null || this.salvandoVinculo) return;
     this.confirmarCancelarId = id;
   }
 
@@ -181,11 +260,7 @@ export class PacienteAvaliacaoPosturalListComponent implements OnInit, OnDestroy
           this.analises = this.analises.filter(a => a.id !== id);
           this.descartarFoto(id);
           this.acaoEmAndamentoId = null;
-          if (this.successTimer !== null) {
-            clearTimeout(this.successTimer);
-          }
-          this.sucesso = 'Análise cancelada com sucesso.';
-          this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
+          this.mostrarSucesso('Análise cancelada com sucesso.');
         },
         error: err => {
           this.erro = extrairMensagemErro(err, 'Erro ao cancelar a análise.');

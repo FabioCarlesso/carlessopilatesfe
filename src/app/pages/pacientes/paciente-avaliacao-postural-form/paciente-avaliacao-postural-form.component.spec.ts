@@ -5,6 +5,7 @@ import { PacienteAvaliacaoPosturalFormComponent } from './paciente-avaliacao-pos
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
 import { AvaliacaoPosturalResponseDTO } from '../../../core/models/avaliacao-postural';
+import { ReavaliacaoResponseDTO } from '../../../core/models/reavaliacao';
 import { ImageCompressorService } from '../../../shared/services/image-compressor.service';
 import { pagina } from '../../../../testing/pagina';
 
@@ -20,12 +21,24 @@ const mockPaciente = { id: 1, nome: 'Maria Souza' } as PacienteResponseDTO;
 
 const mockAvaliacaoFisio = {
   id: 5,
-  pacienteId: 1
+  pacienteId: 1,
+  dataAvaliacao: '2026-07-10'
 } as AvaliacaoFisioterapeuticaResponseDTO;
+
+const mockReavaliacao = {
+  id: 7,
+  pacienteId: 1,
+  dataReavaliacao: '2026-10-01'
+} as ReavaliacaoResponseDTO;
+
+const URL_AVALIACOES = '/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000';
+const URL_REAVALIACOES = '/api/reavaliacoes/paciente/1?page=0&size=2000';
 
 const mockAnaliseFrente: AvaliacaoPosturalResponseDTO = {
   id: 10,
+  pacienteId: 1,
   avaliacaoFisioterapeuticaId: 5,
+  reavaliacaoId: null,
   vista: 'FRENTE',
   status: 'RASCUNHO',
   linhaPrumoX: null,
@@ -55,14 +68,19 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
   let router: Router;
   let compressorSpy: jasmine.SpyObj<ImageCompressorService>;
 
-  function criarComponente(pacienteId: string | null = '1') {
+  function criarComponente(pacienteId: string | null = '1', query: Record<string, string> = {}) {
     compressorSpy = jasmine.createSpyObj('ImageCompressorService', ['comprimir']);
     TestBed.configureTestingModule({
       imports: [PacienteAvaliacaoPosturalFormComponent, HttpClientTestingModule],
       providers: [
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: convertToParamMap(pacienteId ? { pacienteId } : {}) } }
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap(pacienteId ? { pacienteId } : {}),
+              queryParamMap: convertToParamMap(query)
+            }
+          }
         },
         { provide: ImageCompressorService, useValue: compressorSpy }
       ]
@@ -77,11 +95,22 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
     compressorSpy.comprimir.and.resolveTo(criarArquivoComprimidoFake());
   }
 
-  function carregarComAnalisesExistentes(analises: AvaliacaoPosturalResponseDTO[] = []) {
+  function carregarComAnalisesExistentes(
+    analises: AvaliacaoPosturalResponseDTO[] = [],
+    avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[] = [mockAvaliacaoFisio],
+    reavaliacoes: ReavaliacaoResponseDTO[] = [mockReavaliacao]
+  ) {
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([mockAvaliacaoFisio]));
-    httpMock.expectOne('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5').flush(analises);
+    httpMock.expectOne('/api/avaliacoes-posturais/paciente/1').flush(analises);
+    httpMock.expectOne(URL_AVALIACOES).flush(pagina(avaliacoes));
+    httpMock.expectOne(URL_REAVALIACOES).flush(pagina(reavaliacoes));
+  }
+
+  async function prepararEnvio(vista: 'FRENTE' | 'COSTAS' = 'FRENTE'): Promise<void> {
+    mockarCompressao();
+    component.selecionarVista(vista);
+    await component.processarArquivo(criarArquivoOriginal());
   }
 
   afterEach(() => httpMock.verify());
@@ -99,33 +128,132 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
     expect(component.erro).toBe('Identificador inválido.');
   });
 
-  it('should show a message when there is no avaliação fisioterapêutica yet', () => {
+  it('should open the form for a patient without avaliação and create a loose analysis', async () => {
     criarComponente();
+    carregarComAnalisesExistentes([], [], []);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).not.toContain('É necessário cadastrar a avaliação fisioterapêutica');
+    expect(el.querySelector('form')).not.toBeNull();
+    expect(Array.from(el.querySelectorAll('#vinculo option')).map(o => o.textContent?.trim()))
+      .toEqual(['Sem vínculo (análise solta)']);
+    expect(el.querySelector('#vinculoDica')?.textContent).toContain('O paciente ainda não tem avaliação nem reavaliação');
+
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    await prepararEnvio();
+    component.continuar();
+
+    const criarReq = httpMock.expectOne('/api/avaliacoes-posturais');
+    expect(criarReq.request.body).toEqual({ pacienteId: 1, avaliacaoFisioterapeuticaId: null, reavaliacaoId: null, vista: 'FRENTE' });
+    criarReq.flush({ ...mockAnaliseFrente, avaliacaoFisioterapeuticaId: null });
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(mockFoto);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/pacientes', 1, 'avaliacao-fisioterapeutica', 'postural']);
+  });
+
+  it('should list avaliações and reavaliações in the link selector, newest first', () => {
+    criarComponente();
+    carregarComAnalisesExistentes();
+    fixture.detectChanges();
+
+    const opcoes = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('#vinculo option'))
+      .map(o => o.textContent?.trim());
+    expect(opcoes).toEqual(['Sem vínculo (análise solta)', 'Reavaliação de 01/10/2026', 'Avaliação de 10/07/2026']);
+    expect(component.campo('vinculo')?.value).toBe('');
+  });
+
+  it('should create the analysis linked to the chosen reavaliação', async () => {
+    criarComponente();
+    carregarComAnalisesExistentes();
+    spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.form.patchValue({ vinculo: 'reavaliacao:7' });
+    await prepararEnvio();
+    component.continuar();
+
+    const criarReq = httpMock.expectOne('/api/avaliacoes-posturais');
+    expect(criarReq.request.body).toEqual({ pacienteId: 1, avaliacaoFisioterapeuticaId: null, reavaliacaoId: 7, vista: 'FRENTE' });
+    criarReq.flush({ ...mockAnaliseFrente, avaliacaoFisioterapeuticaId: null, reavaliacaoId: 7 });
+
+    expect(component.campo('vinculo')?.disabled).toBe(true);
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(mockFoto);
+  });
+
+  it('should pre-select the avaliação passed in the query string', async () => {
+    criarComponente('1', { avaliacaoFisioterapeuticaId: '5' });
+    carregarComAnalisesExistentes();
+    spyOn(router, 'navigate').and.resolveTo(true);
+
+    expect(component.campo('vinculo')?.value).toBe('avaliacao:5');
+
+    await prepararEnvio('COSTAS');
+    component.continuar();
+    const criarReq = httpMock.expectOne('/api/avaliacoes-posturais');
+    expect(criarReq.request.body).toEqual({ pacienteId: 1, avaliacaoFisioterapeuticaId: 5, reavaliacaoId: null, vista: 'COSTAS' });
+    criarReq.flush(mockAnaliseFrente);
+    httpMock.expectOne('/api/avaliacoes-posturais/10/foto').flush(mockFoto);
+  });
+
+  it('should pre-select the reavaliação passed in the query string', () => {
+    criarComponente('1', { reavaliacaoId: '7' });
+    carregarComAnalisesExistentes();
+
+    expect(component.campo('vinculo')?.value).toBe('reavaliacao:7');
+  });
+
+  it('should ignore a query-string link that is not one of the patient records', () => {
+    criarComponente('1', { avaliacaoFisioterapeuticaId: '99', reavaliacaoId: 'abc' });
+    carregarComAnalisesExistentes();
+
+    expect(component.campo('vinculo')?.value).toBe('');
+    expect(component.opcoesVinculo.length).toBe(2);
+  });
+
+  it('should keep the query-string link with a generic label when the lookups fail', () => {
+    criarComponente('1', { avaliacaoFisioterapeuticaId: '5' });
     fixture.detectChanges();
     httpMock.expectOne('/api/pacientes/1').flush(mockPaciente);
-    httpMock.expectOne('/api/avaliacoes-fisioterapeuticas/paciente/1?page=0&size=2000').flush(pagina([]));
+    httpMock.expectOne('/api/avaliacoes-posturais/paciente/1').flush([]);
+    httpMock.expectOne(URL_AVALIACOES).flush('erro', { status: 500, statusText: 'Erro' });
+    httpMock.expectOne(URL_REAVALIACOES).flush(pagina([mockReavaliacao]));
+    fixture.detectChanges();
 
-    expect(component.avaliacaoFisioterapeuticaId).toBeNull();
-    httpMock.expectNone('/api/avaliacoes-posturais/avaliacao-fisioterapeutica/5');
+    expect(component.erro).toBeNull();
+    expect(component.opcoesVinculoIncompletas).toBe(true);
+    expect(component.campo('vinculo')?.value).toBe('avaliacao:5');
+    expect(component.opcoesVinculo[0].label).toBe('Avaliação fisioterapêutica');
+    expect((fixture.nativeElement as HTMLElement).querySelector('#vinculoDica')?.textContent)
+      .toContain('Não foi possível carregar todas as avaliações e reavaliações');
   });
 
-  it('should mark existing vistas as unavailable', () => {
+  it('should show an error when loading the patient data fails', () => {
     criarComponente();
-    carregarComAnalisesExistentes([mockAnaliseFrente]);
+    fixture.detectChanges();
+    httpMock.expectOne('/api/avaliacoes-posturais/paciente/1').flush([]);
+    httpMock.expectOne(URL_AVALIACOES).flush(pagina([]));
+    httpMock.expectOne(URL_REAVALIACOES).flush(pagina([]));
+    httpMock.expectOne('/api/pacientes/1').flush('erro', { status: 500, statusText: 'Erro' });
 
-    expect(component.vistaIndisponivel('FRENTE')).toBe(true);
-    expect(component.vistaIndisponivel('COSTAS')).toBe(false);
+    expect(component.erro).toBe('Erro ao carregar dados do paciente.');
+    expect(component.loading).toBe(false);
   });
 
-  it('should not select an unavailable vista', () => {
+  it('should show the API detail on a 422 when creating the analysis', async () => {
     criarComponente();
-    carregarComAnalisesExistentes([mockAnaliseFrente]);
+    carregarComAnalisesExistentes();
+    component.form.patchValue({ vinculo: 'avaliacao:5' });
+    await prepararEnvio('COSTAS');
+    component.continuar();
 
-    component.selecionarVista('FRENTE');
-    expect(component.campo('vista')?.value).toBeNull();
+    httpMock.expectOne('/api/avaliacoes-posturais').flush(
+      { detail: 'A avaliação informada é de outro paciente.' },
+      { status: 422, statusText: 'Unprocessable Entity' }
+    );
 
-    component.selecionarVista('COSTAS');
-    expect(component.campo('vista')?.value).toBe('COSTAS');
+    expect(component.erro).toBe('A avaliação informada é de outro paciente.');
+    expect(component.analiseCriadaId).toBeNull();
+    expect(component.campo('vinculo')?.disabled).toBe(false);
   });
 
   it('should compress the selected file and generate a preview', async () => {
@@ -272,7 +400,7 @@ describe('PacienteAvaliacaoPosturalFormComponent', () => {
 
     const criarReq = httpMock.expectOne('/api/avaliacoes-posturais');
     expect(criarReq.request.method).toBe('POST');
-    expect(criarReq.request.body).toEqual({ avaliacaoFisioterapeuticaId: 5, vista: 'FRENTE' });
+    expect(criarReq.request.body).toEqual({ pacienteId: 1, avaliacaoFisioterapeuticaId: null, reavaliacaoId: null, vista: 'FRENTE' });
     criarReq.flush(mockAnaliseFrente);
 
     const fotoReq = httpMock.expectOne('/api/avaliacoes-posturais/10/foto');

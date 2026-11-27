@@ -93,14 +93,31 @@ export interface MetricasPosturaisDTO {
   desvioPrumoCm: number | null;
 }
 
+/**
+ * Criação da análise (carlessopilatesapi#247). A análise pertence sempre ao paciente
+ * e tem no máximo UM vínculo: a avaliação fisioterapêutica, a reavaliação ou nenhum
+ * (análise "solta"). Os dois vínculos juntos respondem `400`; vínculo com registro de
+ * outro paciente, `422`.
+ */
 export interface AvaliacaoPosturalRequestDTO {
-  avaliacaoFisioterapeuticaId: number;
+  pacienteId: number;
+  avaliacaoFisioterapeuticaId?: number | null;
+  reavaliacaoId?: number | null;
   vista: VistaPostural;
+}
+
+/** Corpo de `PATCH /avaliacoes-posturais/{id}/vinculo`: os dois nulos tornam a análise solta. */
+export interface AvaliacaoPosturalVinculoDTO {
+  avaliacaoFisioterapeuticaId: number | null;
+  reavaliacaoId: number | null;
 }
 
 export interface AvaliacaoPosturalResponseDTO {
   id: number;
-  avaliacaoFisioterapeuticaId: number;
+  /** Opcionais para conviver com a resposta da API anterior à #247, que não os trazia. */
+  pacienteId?: number;
+  avaliacaoFisioterapeuticaId: number | null;
+  reavaliacaoId?: number | null;
   vista: VistaPostural;
   status: StatusAvaliacaoPostural;
   linhaPrumoX: number | null;

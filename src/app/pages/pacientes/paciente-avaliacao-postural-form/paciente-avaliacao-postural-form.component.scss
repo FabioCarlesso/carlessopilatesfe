@@ -3,13 +3,6 @@
   color: var(--text-secondary);
 }
 
-.sem-avaliacao {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  align-items: flex-start;
-}
-
 .field-hint {
   color: var(--text-muted);
   font-size: var(--fs-micro);

@@ -5,7 +5,8 @@ import {
   AvaliacaoPosturalFotoResponseDTO,
   AvaliacaoPosturalRequestDTO,
   AvaliacaoPosturalResponseDTO,
-  AvaliacaoPosturalUpdateDTO
+  AvaliacaoPosturalUpdateDTO,
+  AvaliacaoPosturalVinculoDTO
 } from '../models/avaliacao-postural';
 
 @Injectable({
@@ -24,6 +25,16 @@ export class AvaliacaoPosturalService {
     return this.http.get<AvaliacaoPosturalResponseDTO[]>(
       `${this.apiUrl}/avaliacao-fisioterapeutica/${avaliacaoFisioterapeuticaId}`
     );
+  }
+
+  /** Todas as análises ativas do paciente — soltas, de avaliações e de reavaliações —, da mais recente à mais antiga. */
+  listarPorPaciente(pacienteId: number): Observable<AvaliacaoPosturalResponseDTO[]> {
+    return this.http.get<AvaliacaoPosturalResponseDTO[]>(`${this.apiUrl}/paciente/${pacienteId}`);
+  }
+
+  /** Vincula, troca ou remove (os dois nulos) o vínculo da análise; a API devolve a análise atualizada. */
+  atualizarVinculo(id: number, dto: AvaliacaoPosturalVinculoDTO): Observable<AvaliacaoPosturalResponseDTO> {
+    return this.http.patch<AvaliacaoPosturalResponseDTO>(`${this.apiUrl}/${id}/vinculo`, dto);
   }
 
   buscarPorId(id: number): Observable<AvaliacaoPosturalResponseDTO> {
