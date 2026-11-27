@@ -23,7 +23,8 @@ interface SessaoApiUpdateDTO {
   version?: number | null;
 }
 
-interface SessaoApiResponseDTO {
+/** Sessão como a API a devolve (`data` e `horario` separados); também vem dentro do atendimento da aula. */
+export interface SessaoApiResponseDTO {
   id: number;
   pacienteId: number;
   nomePaciente: string;
@@ -40,6 +41,31 @@ interface SessaoApiResponseDTO {
   dataCriacao: string;
   dataAtualizacao: string | null;
   version: number;
+  aulaId?: number | null;
+}
+
+/**
+ * Traduz a sessão da API para o modelo da tela (`dataHora` única). Exportada
+ * porque o atendimento da aula (`/aulas/{id}/atendimento`) devolve a sessão no
+ * mesmo formato da API.
+ */
+export function sessaoDaApi(dto: SessaoApiResponseDTO): SessaoResponseDTO {
+  return {
+    id: dto.id,
+    pacienteId: dto.pacienteId,
+    nomePaciente: dto.nomePaciente,
+    dataHora: dto.horario ? `${dto.data}T${dto.horario.slice(0, 5)}` : `${dto.data}T00:00`,
+    tipo: dto.tipo,
+    duracao: dto.duracaoMinutos ?? null,
+    profissionalId: dto.profissionalId,
+    nomeProfissional: dto.nomeProfissional,
+    status: dto.status,
+    observacoes: dto.observacoes,
+    dataCriacao: dto.dataCriacao,
+    dataAtualizacao: dto.dataAtualizacao,
+    version: dto.version,
+    aulaId: dto.aulaId ?? null
+  };
 }
 
 @Injectable({
@@ -131,30 +157,12 @@ export class SessaoService {
   }
 
   private fromApi(dto: SessaoApiResponseDTO): SessaoResponseDTO {
-    return {
-      id: dto.id,
-      pacienteId: dto.pacienteId,
-      nomePaciente: dto.nomePaciente,
-      dataHora: this.joinDataHora(dto.data, dto.horario),
-      tipo: dto.tipo,
-      duracao: dto.duracaoMinutos ?? null,
-      profissionalId: dto.profissionalId,
-      nomeProfissional: dto.nomeProfissional,
-      status: dto.status,
-      observacoes: dto.observacoes,
-      dataCriacao: dto.dataCriacao,
-      dataAtualizacao: dto.dataAtualizacao,
-      version: dto.version
-    };
+    return sessaoDaApi(dto);
   }
 
   private splitDataHora(dataHora: string): { data: string; horario: string } {
     const [data, time = '00:00'] = dataHora.split('T');
     const horario = time.length <= 5 ? `${time}:00` : time.slice(0, 8);
     return { data, horario };
-  }
-
-  private joinDataHora(data: string, horario: string | null): string {
-    return horario ? `${data}T${horario.slice(0, 5)}` : `${data}T00:00`;
   }
 }

@@ -17,7 +17,8 @@ const mockSessao: SessaoResponseDTO = {
   status: 'AGENDADA',
   observacoes: null,
   dataCriacao: '2026-05-01T09:00:00',
-  dataAtualizacao: null
+  dataAtualizacao: null,
+  aulaId: null
 };
 
 const mockSessaoApi = {
@@ -187,6 +188,12 @@ describe('SessaoService', () => {
     });
 
     httpMock.expectOne('/api/sessoes/1').flush({ ...mockSessaoApi, horario: null, duracaoMinutos: null });
+  });
+
+  it('should keep the class linked to the session (issue #303)', () => {
+    service.buscar(1).subscribe(s => expect(s.aulaId).toBe(42));
+
+    httpMock.expectOne('/api/sessoes/1').flush({ ...mockSessaoApi, aulaId: 42 });
   });
 
   it('should PATCH /api/sessoes/:id/realizar', () => {

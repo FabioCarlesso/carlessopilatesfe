@@ -342,4 +342,19 @@ describe('PacienteEvolucaoSessaoComponent', () => {
     expect(component.erro).toBe('Erro ao carregar dados da evolução.');
     expect(component.loading).toBeFalse();
   });
+
+  it('should link a session linked to a class to the atendimento of the class (issue #303)', async () => {
+    await setup({ pacienteId: '10', sessaoId: '5' }, mockEvolucao, { ...mockSessao, aulaId: 77 });
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('a[href="/aulas/77/atendimento"]')?.textContent?.trim()).toBe('Atendimento da aula');
+    expect(el.querySelector('h1')?.textContent?.trim()).toBe('Evolução do Atendimento');
+    expect(Array.from(el.querySelectorAll('app-breadcrumb a')).map(a => a.textContent?.trim())).toContain('Atendimentos');
+  });
+
+  it('should not link an avulsa session to a class', async () => {
+    await setup();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('a[href*="/atendimento"]')).toBeNull();
+  });
 });

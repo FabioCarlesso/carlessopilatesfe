@@ -400,7 +400,7 @@ describe('PacienteEvolucaoListComponent', () => {
       .toBe('Nenhuma evolução registrada.');
     // Evolução nasce da sessão: o CTA leva para a lista de sessões (issue #146).
     const cta: HTMLAnchorElement = fixture.nativeElement.querySelector('.empty-state__acoes a');
-    expect(cta.textContent?.trim()).toBe('Ver sessões');
+    expect(cta.textContent?.trim()).toBe('Ver atendimentos');
     expect(cta.getAttribute('href')).toBe('/pacientes/10/sessoes');
   });
 

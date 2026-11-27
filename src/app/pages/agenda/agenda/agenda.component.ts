@@ -19,7 +19,9 @@ import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO, SessaoTipo, SESSAO_TIPO_LABEL } from '../../../core/models/sessao';
+import { PAPEIS } from '../../../core/models/auth';
 import { AulaService } from '../../../core/services/aula.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
 import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -45,6 +47,13 @@ import {
   navegarPeriodo
 } from '../../../shared/utils/calendario';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import {
+  rotuloAcaoPorSituacao,
+  SITUACAO_ATENDIMENTO_CLASSE,
+  SITUACAO_ATENDIMENTO_DESCRICAO,
+  SITUACAO_ATENDIMENTO_LABEL,
+  SITUACAO_ATENDIMENTO_MARCA
+} from '../../../shared/utils/atendimento';
 import {
   formatarGeradoEm,
   LinhaImpressao,
@@ -231,6 +240,16 @@ export class AgendaComponent implements OnInit, OnDestroy {
     classes: `evento-marca ${this.classeOrigem[item.origem]} ${this.classeStatus[item.status]}`
   }));
 
+  /** Indicador do atendimento da aula (issue #303): badge na lista e no painel, marca curta no chip. */
+  readonly situacaoLabel = SITUACAO_ATENDIMENTO_LABEL;
+  readonly situacaoDescricao = SITUACAO_ATENDIMENTO_DESCRICAO;
+  readonly situacaoClasse = SITUACAO_ATENDIMENTO_CLASSE;
+  readonly situacaoMarca = SITUACAO_ATENDIMENTO_MARCA;
+  readonly legendaAtendimento = [
+    { marca: SITUACAO_ATENDIMENTO_MARCA.EVOLUIDA, rotulo: 'Aula evoluída' },
+    { marca: SITUACAO_ATENDIMENTO_MARCA.SEM_EVOLUCAO, rotulo: 'Aula realizada sem evolução' }
+  ];
+
   /**
    * Elemento que abriu o painel, para devolver o foco ao fechar — mesmo
    * contrato do `ConfirmarDialogComponent`. Sem isso o Tab seguinte recomeça do
@@ -256,6 +275,7 @@ export class AgendaComponent implements OnInit, OnDestroy {
     private profissionalService: ProfissionalService,
     private bloqueioService: BloqueioAgendaService,
     private listaEsperaService: ListaEsperaService,
+    private authService: AuthService,
     private destroyRef: DestroyRef,
     private cdr: ChangeDetectorRef
   ) {}
@@ -587,6 +607,20 @@ export class AgendaComponent implements OnInit, OnDestroy {
 
   get podeCancelar(): boolean {
     return this.eventoSelecionado?.origem === 'SESSAO' && this.eventoSelecionado.status === 'AGENDADA';
+  }
+
+  /**
+   * "Atender / Evoluir" (issue #303): só na aula que não é de feriado — a API
+   * recusa o atendimento dela — e só para quem registra atendimento (`ADMIN` e
+   * `PROFISSIONAL`); a recepção continua com o "Marcar como realizada".
+   */
+  get podeAtender(): boolean {
+    const evento = this.eventoSelecionado;
+    return evento?.origem === 'AULA' && !evento.feriado && this.authService.hasAnyRole(PAPEIS.clinica);
+  }
+
+  get rotuloAtender(): string {
+    return rotuloAcaoPorSituacao(this.eventoSelecionado?.atendimento);
   }
 
   /** A conclusão da aula exige um profissional; a da sessão, não. */

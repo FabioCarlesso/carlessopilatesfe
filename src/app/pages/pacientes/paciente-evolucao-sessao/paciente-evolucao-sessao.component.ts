@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { catchError, forkJoin, of, throwError } from 'rxjs';
@@ -20,10 +20,16 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { EvolucaoCamposComponent } from '../../../shared/components/evolucao-campos/evolucao-campos.component';
+import {
+  camposDoFormularioEvolucao,
+  criarFormularioEvolucao,
+  preencherFormularioEvolucao
+} from '../../../shared/utils/evolucao-form';
 
 @Component({
   selector: 'app-paciente-evolucao-sessao',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, EvolucaoCamposComponent],
   templateUrl: './paciente-evolucao-sessao.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-evolucao-sessao.component.scss'
@@ -55,18 +61,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      dataHoraRegistro: [this.toDateTimeLocal(new Date()), Validators.required],
-      observacoesFisioterapeuta: [''],
-      exerciciosRealizados: [''],
-      equipamentosUtilizados: [''],
-      cargasMolas: [''],
-      dorAntes: [null, [Validators.min(0), Validators.max(10)]],
-      dorDepois: [null, [Validators.min(0), Validators.max(10)]],
-      respostaPaciente: [''],
-      intercorrencias: [''],
-      orientacoes: ['']
-    });
+    this.form = criarFormularioEvolucao(this.fb);
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     this.sessaoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'sessaoId');
@@ -159,42 +154,14 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
     this.erro = null;
     this.sucesso = null;
 
-    const valor = this.form.value;
-    const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
-    const dor = (v: number | string | null | undefined): number | null =>
-      v !== null && v !== undefined && v !== '' ? Number(v) : null;
-
-    const dto: EvolucaoSessaoUpdateDTO = {
-      dataHoraRegistro: valor.dataHoraRegistro,
-      exerciciosRealizados: opt(valor.exerciciosRealizados),
-      equipamentosUtilizados: opt(valor.equipamentosUtilizados),
-      cargasMolas: opt(valor.cargasMolas),
-      dorAntes: dor(valor.dorAntes),
-      dorDepois: dor(valor.dorDepois),
-      respostaPaciente: opt(valor.respostaPaciente),
-      intercorrencias: opt(valor.intercorrencias),
-      orientacoes: opt(valor.orientacoes),
-      observacoesFisioterapeuta: opt(valor.observacoesFisioterapeuta)
-    };
+    const campos = camposDoFormularioEvolucao(this.form);
 
     const evolucaoAtual = this.evolucao;
     const criando = evolucaoAtual === null;
-    const createDto: EvolucaoSessaoRequestDTO = {
-      sessaoId: this.sessaoId,
-      dataHoraRegistro: valor.dataHoraRegistro,
-      exerciciosRealizados: dto.exerciciosRealizados,
-      equipamentosUtilizados: dto.equipamentosUtilizados,
-      cargasMolas: dto.cargasMolas,
-      dorAntes: dto.dorAntes,
-      dorDepois: dto.dorDepois,
-      respostaPaciente: dto.respostaPaciente,
-      intercorrencias: dto.intercorrencias,
-      orientacoes: dto.orientacoes,
-      observacoesFisioterapeuta: dto.observacoesFisioterapeuta
-    };
+    const createDto: EvolucaoSessaoRequestDTO = { ...campos, sessaoId: this.sessaoId };
     const obs = criando
       ? this.evolucaoSessaoService.criar(createDto)
-      : this.evolucaoSessaoService.atualizar(evolucaoAtual.id, { ...dto, version: evolucaoAtual.version });
+      : this.evolucaoSessaoService.atualizar(evolucaoAtual.id, { ...campos, version: evolucaoAtual.version } satisfies EvolucaoSessaoUpdateDTO);
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
@@ -214,34 +181,7 @@ export class PacienteEvolucaoSessaoComponent implements OnInit, OnDestroy {
     });
   }
 
-  campo(nome: string) {
-    return this.form.get(nome);
-  }
-
   private preencherFormulario(evolucao: EvolucaoSessaoResponseDTO): void {
-    const { id, sessaoId, dataCriacao, dataAtualizacao, ...formFields } = evolucao;
-    this.form.patchValue({
-      ...formFields,
-      dataHoraRegistro: this.toDateTimeLocal(formFields.dataHoraRegistro),
-      exerciciosRealizados: formFields.exerciciosRealizados ?? '',
-      equipamentosUtilizados: formFields.equipamentosUtilizados ?? '',
-      cargasMolas: formFields.cargasMolas ?? '',
-      respostaPaciente: formFields.respostaPaciente ?? '',
-      intercorrencias: formFields.intercorrencias ?? '',
-      orientacoes: formFields.orientacoes ?? '',
-      observacoesFisioterapeuta: formFields.observacoesFisioterapeuta ?? ''
-    });
-  }
-
-  private toDateTimeLocal(value: string | Date): string {
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-
-    const pad = (n: number): string => n.toString().padStart(2, '0');
-    return [
-      date.getFullYear(),
-      pad(date.getMonth() + 1),
-      pad(date.getDate())
-    ].join('-') + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    preencherFormularioEvolucao(this.form, evolucao);
   }
 }

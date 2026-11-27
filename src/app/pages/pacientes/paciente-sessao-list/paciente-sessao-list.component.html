@@ -2,20 +2,20 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
-  { label: 'Sessões' }
+  { label: 'Atendimentos' }
 ]"></app-breadcrumb>
 }
 
 <div class="page-header">
   <div>
-    <h1>Sessões</h1>
+    <h1>Atendimentos</h1>
     @if (paciente) {
       <p class="page-subtitle">{{ paciente.nome }}</p>
     }
   </div>
   <div class="acoes">
     @if (pacienteId) {
-      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Novo atendimento</a>
     }
     @if (pacienteId && authService.hasAnyRole(papeis.clinica)) {
       <a [routerLink]="['/pacientes', pacienteId, 'evolucoes']" class="btn btn-secondary">Histórico de Evoluções</a>
@@ -40,9 +40,9 @@
 }
 
 @if (!loading && sessoes.length === 0 && !erro) {
-  <app-empty-state mensagem="Nenhuma sessão cadastrada.">
+  <app-empty-state mensagem="Nenhum atendimento cadastrado.">
     @if (pacienteId) {
-      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Nova Sessão</a>
+      <a [routerLink]="['/pacientes', pacienteId, 'sessoes', 'nova']" class="btn btn-primary">Novo atendimento</a>
     }
   </app-empty-state>
 }
@@ -65,10 +65,20 @@
             @if (sessao.nomeProfissional) {
               <span class="sessao-profissional">{{ sessao.nomeProfissional }}</span>
             }
+            <!-- Sessão que registra uma aula da agenda (issue #303); sem
+            `aulaId` é um atendimento avulso. -->
+            @if (sessao.aulaId) {
+              <span class="badge badge--info badge-aula">Da aula</span>
+            }
           </div>
           <div class="sessao-acoes">
             <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'editar']"
             class="btn btn-secondary btn-sm">Editar</a>
+            @if (sessao.aulaId && authService.hasAnyRole(papeis.clinica)) {
+              <a [routerLink]="['/aulas', sessao.aulaId, 'atendimento']"
+                class="btn btn-secondary btn-sm"
+                [attr.aria-label]="'Atendimento da aula de ' + (sessao.dataHora | date:'dd/MM/yyyy HH:mm')">Atendimento da aula</a>
+            }
             @if (authService.hasAnyRole(papeis.clinica)) {
               <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
               class="btn btn-secondary btn-sm">Evolução</a>
@@ -106,7 +116,7 @@
 @if (confirmarAcaoId !== null) {
   <app-confirmar-dialog
     titulo="Confirmar ação"
-    [mensagem]="'Confirma ' + acaoLabel() + ' esta sessão?'"
+    [mensagem]="'Confirma ' + acaoLabel() + ' este atendimento?'"
     variante="perigo"
     [processando]="acaoEmAndamentoId !== null"
     (confirmar)="executarAcao()"
@@ -125,7 +135,7 @@
 
 @if (reagendarId !== null) {
   <app-confirmar-dialog
-    titulo="Reagendar sessão"
+    titulo="Reagendar atendimento"
     textoConfirmar="Reagendar"
     variante="primaria"
     [processando]="acaoEmAndamentoId !== null"

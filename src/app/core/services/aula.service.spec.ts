@@ -152,4 +152,64 @@ describe('AulaService', () => {
       req.flush({ ...mockAula, profissionalId: null });
     });
   });
+
+  describe('atendimento (issue #303)', () => {
+    const sessaoApi = {
+      id: 30,
+      pacienteId: 10,
+      nomePaciente: 'Ana Silva',
+      profissionalId: 7,
+      nomeProfissional: 'Camila',
+      tipo: 'PILATES',
+      status: 'REALIZADA',
+      data: '2026-05-05',
+      horario: '08:00:00',
+      duracaoMinutos: 60,
+      observacoes: null,
+      dataCriacao: '2026-05-05T09:00:00',
+      dataAtualizacao: null,
+      version: 0,
+      aulaId: 1
+    };
+    const aulaRealizada: AulaResponseDTO = { ...mockAula, realizada: true, sessaoId: 30, temEvolucao: false };
+
+    it('should GET /api/aulas/:id', () => {
+      service.buscar(1).subscribe(aula => expect(aula).toEqual(mockAula));
+      const req = httpMock.expectOne('/api/aulas/1');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockAula);
+    });
+
+    it('should GET /api/aulas/:id/atendimento and map the session to the screen model', () => {
+      service.buscarAtendimento(1).subscribe(atendimento => {
+        expect(atendimento.aula).toEqual(aulaRealizada);
+        expect(atendimento.sessao.dataHora).toBe('2026-05-05T08:00');
+        expect(atendimento.sessao.aulaId).toBe(1);
+        expect(atendimento.sessao.duracao).toBe(60);
+        expect(atendimento.evolucao).toBeNull();
+      });
+      const req = httpMock.expectOne('/api/aulas/1/atendimento');
+      expect(req.request.method).toBe('GET');
+      req.flush({ aula: aulaRealizada, sessao: sessaoApi });
+    });
+
+    it('should POST /api/aulas/:id/atendimento with the body', () => {
+      const dto = { profissionalId: 7, evolucao: { dorAntes: 3, exerciciosRealizados: 'Ponte' } };
+      service.registrarAtendimento(1, dto).subscribe(atendimento => {
+        expect(atendimento.sessao.id).toBe(30);
+        expect(atendimento.evolucao?.id).toBe(90);
+      });
+      const req = httpMock.expectOne('/api/aulas/1/atendimento');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(dto);
+      req.flush({ aula: aulaRealizada, sessao: sessaoApi, evolucao: { id: 90 } });
+    });
+
+    it('should POST an empty body by default', () => {
+      service.registrarAtendimento(1).subscribe();
+      const req = httpMock.expectOne('/api/aulas/1/atendimento');
+      expect(req.request.body).toEqual({});
+      req.flush({ aula: aulaRealizada, sessao: sessaoApi, evolucao: null });
+    });
+  });
 });

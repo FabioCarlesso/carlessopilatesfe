@@ -407,6 +407,23 @@
   margin-left: var(--sp-1);
 }
 
+/* Atendimento da aula (issue #303): no chip, só a marca da aula já realizada —
+   evoluída (✓) ou sem evolução (!) —, porque "sem atendimento" seria a marca de
+   toda aula futura. Herda a cor do chip, como a do feriado; a situação completa
+   está no `aria-label`, e a legenda explica as duas marcas. */
+.evento-atendimento {
+  flex: none;
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.legenda-atendimento {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 14px;
+  color: var(--text-brand);
+}
+
 /* Cancelada continua legível, mas riscada: a cor sozinha não é sinal suficiente
    (WCAG 1.4.1). */
 .evento-cancelada .evento-titulo,

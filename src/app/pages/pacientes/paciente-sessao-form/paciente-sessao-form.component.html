@@ -2,14 +2,14 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
-  { label: 'Sessões', link: ['/pacientes', pacienteId, 'sessoes'] },
+  { label: 'Atendimentos', link: ['/pacientes', pacienteId, 'sessoes'] },
   { label: modoEdicao ? 'Editar' : 'Nova' }
 ]"></app-breadcrumb>
 }
 
 <div class="page-header">
   <div>
-    <h1>{{ modoEdicao ? 'Editar' : 'Nova' }} Sessão</h1>
+    <h1>{{ modoEdicao ? 'Editar atendimento' : 'Novo atendimento' }}</h1>
     @if (paciente) {
       <p class="page-subtitle">{{ paciente.nome }}</p>
     }
@@ -65,7 +65,7 @@
             }
           </select>
           <div id="statusHint" class="field-hint">
-            Alterado pelas ações Realizar e Cancelar na listagem de sessões.
+            Alterado pelas ações Realizar e Cancelar na listagem de atendimentos.
           </div>
         </div>
       }

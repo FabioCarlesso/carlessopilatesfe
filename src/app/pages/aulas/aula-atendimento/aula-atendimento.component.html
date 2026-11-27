@@ -1,0 +1,165 @@
+@if (aula) {
+<app-breadcrumb [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: aula.pacienteNome || 'Paciente', link: ['/pacientes', aula.pacienteId] },
+  { label: 'Aulas', link: ['/aulas/paciente', aula.pacienteId] },
+  { label: 'Atendimento' }
+]"></app-breadcrumb>
+}
+
+<div class="page-header">
+  <div>
+    <h1>Atendimento</h1>
+    @if (aula) {
+      <p class="page-subtitle">
+        {{ aula.pacienteNome }} — {{ aula.data | date:'dd/MM/yyyy (EEE)' }}{{ horario ? ' às ' + horario : '' }}
+      </p>
+    }
+  </div>
+  <div class="acoes">
+    @if (aula) {
+      <a [routerLink]="['/aulas/paciente', aula.pacienteId]" class="btn btn-outline">Aulas do paciente</a>
+    }
+    <a routerLink="/agenda" class="btn btn-outline">Agenda</a>
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger" role="alert">
+    {{ erro }}
+    @if (podeRecarregar) {
+      <button type="button" class="btn btn-outline btn-sm recarregar" (click)="carregar()">Recarregar</button>
+    }
+  </div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <app-carregando mensagem="Carregando atendimento..." />
+}
+
+@if (!loading && aula) {
+  <section class="detail-card resumo" aria-labelledby="resumo-aula-titulo">
+    <h2 id="resumo-aula-titulo" class="form-section-title">Aula</h2>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="label">Paciente</span>
+        <a [routerLink]="['/pacientes', aula.pacienteId]">{{ aula.pacienteNome }}</a>
+      </div>
+      <div class="detail-item">
+        <span class="label">Data</span>
+        <span>{{ aula.data | date:'dd/MM/yyyy (EEE)' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Horário</span>
+        <span>{{ horario || 'Sem horário' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Profissional da aula</span>
+        <span>{{ aula.profissionalNome || 'Não atribuído' }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">Situação</span>
+        <span class="situacao">
+          {{ aula.realizada ? 'Realizada' : 'Pendente' }}
+          @if (feriado) {
+            <span class="badge badge--info">Feriado</span>
+          }
+          @if (situacao; as s) {
+            <span [class]="situacaoClasse[s]" [title]="situacaoDescricao[s]">{{ situacaoLabel[s] }}</span>
+          }
+        </span>
+      </div>
+      @if (atendimento) {
+        <div class="detail-item">
+          <span class="label">Sessão do atendimento</span>
+          <span>
+            {{ tipoLabel[atendimento.sessao.tipo] }} · {{ statusLabel[atendimento.sessao.status] }}{{
+              atendimento.sessao.nomeProfissional ? ' · ' + atendimento.sessao.nomeProfissional : '' }}
+          </span>
+        </div>
+      }
+      @if (evolucao) {
+        <div class="detail-item">
+          <span class="label">Evolução registrada</span>
+          <span>
+            {{ evolucao.dataHoraRegistro | date:'dd/MM/yyyy HH:mm' }}
+            @if (evolucao.profissionalNome) {
+              por {{ evolucao.profissionalNome }}
+            }
+          </span>
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (feriado) {
+    <!-- A aula de feriado conta como realizada para o repasse, mas ninguém
+    compareceu: a API recusa o atendimento (422), e a tela nem o oferece. -->
+    <div class="alert alert-warning" role="status">
+      Aula de feriado: conta como realizada para o repasse, mas não houve atendimento — não há o que realizar
+      nem evoluir.
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="salvar()" class="form-card atendimento-form" novalidate>
+      @if (!atendimento) {
+        <!-- Só antes do atendimento: depois dele a sessão já existe, com o
+        profissional e o tipo gravados, e a API ignoraria os dois. -->
+        <div class="registro" [formGroup]="registroForm">
+          <h2 class="form-section-title">Atendimento</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="profissionalId">Profissional que atendeu{{ exigeProfissional ? ' *' : '' }}</label>
+              <select id="profissionalId" class="form-control" formControlName="profissionalId"
+                aria-describedby="profissionalIdDica"
+                [attr.aria-invalid]="profissionalInvalido() || null"
+                [class.is-invalid]="profissionalInvalido()">
+                <option [ngValue]="null">{{ exigeProfissional ? 'Selecione…' : 'Sem profissional' }}</option>
+                @for (profissional of opcoesProfissional; track profissional.id) {
+                  <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
+                }
+              </select>
+              @if (profissionalInvalido()) {
+                <div class="invalid-feedback" role="alert">Selecione o profissional para realizar a aula.</div>
+              }
+              <p id="profissionalIdDica" class="field-hint">
+                @if (aula.realizada) {
+                  A aula já foi realizada: o profissional vale só para o atendimento, e o repasse da aula não muda.
+                } @else {
+                  Vale só para esta aula: o fisioterapeuta padrão do paciente não muda.
+                }
+              </p>
+            </div>
+            <div class="form-group">
+              <label for="tipo">Tipo</label>
+              <select id="tipo" class="form-control" formControlName="tipo">
+                @for (tipo of tipos; track tipo) {
+                  <option [ngValue]="tipo">{{ tipoLabel[tipo] }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      }
+
+      <h2 class="form-section-title">Evolução</h2>
+      @if (atendimento && !evolucao) {
+        <p class="field-hint">A aula já foi atendida; falta registrar a evolução.</p>
+      }
+      <app-evolucao-campos [form]="form" />
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="salvando">{{ rotuloSalvar }}</button>
+        @if (!atendimento) {
+          <button type="button" class="btn btn-secondary" [disabled]="salvando" (click)="realizarSemEvolucao()">
+            {{ rotuloSemEvolucao }}
+          </button>
+        }
+        @if (atendimento) {
+          <a [routerLink]="['/pacientes', aula.pacienteId, 'sessoes']" class="btn btn-outline">Atendimentos do paciente</a>
+        }
+      </div>
+    </form>
+  }
+}

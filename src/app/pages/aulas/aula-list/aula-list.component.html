@@ -98,6 +98,11 @@
               @if (aula.feriado) {
                 <span class="badge badge--info badge-feriado">Feriado</span>
               }
+              <!-- Atendimento da aula (issue #303): sem atendimento, realizada
+              sem evolução ou evoluída. -->
+              @if (situacaoDaAula(aula); as situacao) {
+                <span [class]="situacaoClasse[situacao]" [title]="situacaoDescricao[situacao]">{{ situacaoLabel[situacao] }}</span>
+              }
             </td>
             <td data-label="Profissional">
               @if (!aceitaAtribuicao(aula)) {
@@ -140,17 +145,27 @@
               }
             </td>
             <td class="acoes-cell">
-              @if (!aula.realizada) {
+              @if (!aula.realizada || podeAtender(aula)) {
                 <div class="acoes" aria-label="Ações da aula">
-                  <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
-                    [disabled]="profissionais.length === 0 || acaoEmAndamento">
-                    Marcar como Realizada
-                  </button>
-                  <button class="btn btn-outline btn-sm" (click)="solicitarRemarcar(aula)"
-                    [disabled]="acaoEmAndamento">
-                    Remarcar
-                  </button>
+                  @if (podeAtender(aula)) {
+                    <a class="btn btn-primary btn-sm atender-btn" [routerLink]="['/aulas', aula.id, 'atendimento']"
+                      [attr.aria-label]="rotuloAcessivelAtender(aula)">
+                      {{ rotuloAtender(aula) }}
+                    </a>
+                  }
+                  @if (!aula.realizada) {
+                    <button class="btn btn-secondary btn-sm" (click)="solicitarRealizar(aula.id)"
+                      [disabled]="profissionais.length === 0 || acaoEmAndamento">
+                      Marcar como Realizada
+                    </button>
+                    <button class="btn btn-outline btn-sm" (click)="solicitarRemarcar(aula)"
+                      [disabled]="acaoEmAndamento">
+                      Remarcar
+                    </button>
+                  }
                 </div>
+              }
+              @if (!aula.realizada) {
                 @if (profissionais.length === 0) {
                   <div class="field-hint">
                     Cadastre um profissional ativo para confirmar aulas.

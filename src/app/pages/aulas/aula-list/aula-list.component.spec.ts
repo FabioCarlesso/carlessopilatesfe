@@ -10,6 +10,8 @@ import { AulaListComponent } from './aula-list.component';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models/auth';
 import { AulaResponseDTO, PagamentoResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { provideLocalePtBr } from '../../../../testing/locale';
@@ -702,6 +704,67 @@ describe('AulaListComponent', () => {
       });
     });
 
+    describe('atendimento (issue #303)', () => {
+      const aulas: AulaResponseDTO[] = [
+        { ...mockAula, id: 1, data: '2026-05-05', horario: '08:00:00', sessaoId: null, temEvolucao: false },
+        { ...mockAula, id: 2, data: '2026-05-06', realizada: true, profissionalId: 5, sessaoId: 30, temEvolucao: false },
+        { ...mockAula, id: 3, data: '2026-05-07', realizada: true, profissionalId: 5, sessaoId: 31, temEvolucao: true },
+        { ...mockAula, id: 4, data: '2026-05-08', realizada: true, feriado: true, sessaoId: null, temEvolucao: false }
+      ];
+
+      function carregarComo(papeis: UserRole[]): void {
+        spyOn(TestBed.inject(AuthService), 'hasAnyRole')
+          .and.callFake((aceitos: readonly UserRole[]) => aceitos.some(papel => papeis.includes(papel)));
+        serviceSpy.listarPorPaciente.and.returnValue(of(aulas));
+        component.carregar();
+        fixture.detectChanges();
+      }
+
+      function linksAtender(): HTMLAnchorElement[] {
+        return Array.from(fixture.nativeElement.querySelectorAll('tbody a.atender-btn'));
+      }
+
+      it('should show the atendimento state of each class, except the holiday one', () => {
+        carregarComo([]);
+
+        const badges = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tbody td[data-label="Status"]'))
+          .map(td => td.querySelector('.badge-atendimento')?.textContent?.trim() ?? null);
+        expect(badges).toEqual(['Sem atendimento', 'Sem evolução', 'Evoluída', null]);
+        const evoluida = fixture.nativeElement.querySelectorAll('.badge-atendimento')[2] as HTMLElement;
+        expect(evoluida.classList).toContain('badge--success');
+        expect(evoluida.getAttribute('title')).toBe('Atendimento com evolução registrada');
+      });
+
+      it('should link every non-holiday class to its atendimento for PROFISSIONAL', () => {
+        carregarComo(['PROFISSIONAL']);
+
+        const links = linksAtender();
+        expect(links.map(a => a.textContent?.trim())).toEqual(['Atender', 'Evoluir', 'Ver atendimento']);
+        expect(links.map(a => a.getAttribute('href'))).toEqual([
+          '/aulas/1/atendimento', '/aulas/2/atendimento', '/aulas/3/atendimento'
+        ]);
+        expect(links[0].getAttribute('aria-label')).toBe('Atender: aula de 05/05/2026 às 08:00');
+        expect(links[1].getAttribute('aria-label')).toBe('Evoluir: aula de 06/05/2026');
+      });
+
+      it('should keep the pending actions next to the atendimento link', () => {
+        carregarComo(['ADMIN']);
+
+        const acoes = fixture.nativeElement.querySelector('tbody tr .acoes') as HTMLElement;
+        expect(Array.from(acoes.children).map(e => e.textContent?.trim()))
+          .toEqual(['Atender', 'Marcar como Realizada', 'Remarcar']);
+      });
+
+      it('should not offer the atendimento to RECEPCAO', () => {
+        carregarComo(['RECEPCAO']);
+
+        expect(linksAtender().length).toBe(0);
+        // A aula realizada da recepção continua sem ações.
+        const linhas = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>;
+        expect(linhas[1].querySelector('.acoes')).toBeNull();
+      });
+    });
+
     describe('atribuir profissional (issue #266)', () => {
       function botaoAtribuir(): HTMLButtonElement | null {
         return fixture.nativeElement.querySelector('.atribuir-btn');
@@ -985,7 +1048,7 @@ describe('AulaListComponent', () => {
     const pagamentoServiceSpy = jasmine.createSpyObj('PagamentoService', ['buscar']);
     const profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef);
+    const component = new AulaListComponent(serviceSpy, pagamentoServiceSpy, profissionalServiceSpy, { hasAnyRole: () => false } as unknown as AuthService, invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef);
 
     component.ngOnInit();
 

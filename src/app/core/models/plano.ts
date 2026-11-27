@@ -84,6 +84,14 @@ export interface AulaResponseDTO {
    * foi dada. Opcional para tolerar a API anterior — ausente equivale a `false`.
    */
   feriado?: boolean;
+  /**
+   * Sessão do atendimento vinculada à aula (issue #303, carlessopilatesapi#246);
+   * `null` enquanto a aula não tem atendimento. Opcional para tolerar a API
+   * anterior, que não a envia.
+   */
+  sessaoId?: number | null;
+  /** Se a sessão do atendimento já tem evolução; `false` sem sessão. Opcional pelo mesmo motivo. */
+  temEvolucao?: boolean;
 }
 
 export const DIAS_SEMANA_LABEL: Record<DiaSemana, string> = {

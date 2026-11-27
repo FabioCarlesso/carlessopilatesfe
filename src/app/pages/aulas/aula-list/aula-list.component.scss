@@ -5,6 +5,9 @@
 // Ao lado da "Realizada": só o espaçamento externo; cor e fundo vêm do
 // `.badge--info` global (issue #299).
 .badge-feriado { margin-left: var(--sp-1); }
+// Situação do atendimento (issue #303): mesmo espaçamento; a cor vem das
+// variantes globais (`--warning` sem evolução, `--success` evoluída).
+.badge-atendimento { margin-left: var(--sp-1); }
 
 // Só no `select`, e não no `:host`: a regra é resquício de quando esta tela era
 // toda branca (fundos `--white`, trocados por tokens na issue #164) e, no host,

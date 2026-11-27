@@ -360,7 +360,7 @@ describe('PacienteDetailComponent', () => {
       expect(vistos).toEqual([
         'Anamnese', 'Avaliação Fisioterapêutica', 'Análise Postural', 'Plano de Tratamento', 'Reavaliações',
         'Histórico de Evoluções',
-        'Aulas', 'Sessões', 'Calendário',
+        'Aulas', 'Atendimentos', 'Calendário',
         'Financeiro do paciente', 'Planos', 'Pagamentos', 'NFSEs Emitidas'
       ]);
       expect(el().querySelector('.links-section')).toBeNull();
@@ -463,7 +463,7 @@ describe('PacienteDetailComponent', () => {
         setup({ roles: ['RECEPCAO'] });
         expect(rotulosDasAbas()).toEqual(['Agenda', 'Financeiro']);
         expect(abaSelecionada()).toBe('Agenda');
-        expect(atalhos()).toEqual(['Aulas', 'Sessões', 'Calendário']);
+        expect(atalhos()).toEqual(['Aulas', 'Atendimentos', 'Calendário']);
         irParaUrl('financeiro');
         expect(atalhos()).toEqual(['Financeiro do paciente', 'Planos', 'Pagamentos']);
       });

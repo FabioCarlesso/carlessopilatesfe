@@ -7,7 +7,9 @@ import { ListaEsperaResponseDTO } from '../../../core/models/lista-espera';
 import { AulaResponseDTO } from '../../../core/models/plano';
 import { ProfissionalPage, ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
+import { UserRole } from '../../../core/models/auth';
 import { AulaService } from '../../../core/services/aula.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { BloqueioAgendaService } from '../../../core/services/bloqueio-agenda.service';
 import { ListaEsperaService } from '../../../core/services/lista-espera.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
@@ -134,7 +136,9 @@ describe('AgendaComponent', () => {
     erroProfissionais?: HttpErrorResponse;
     erroBloqueios?: HttpErrorResponse;
     profissionais?: ProfissionalResponseDTO[];
+    papeis?: UserRole[];
   } = {}) {
+    const papeis = opcoes.papeis ?? [];
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', ['listarPorPeriodo', 'realizar', 'cancelar']);
     aulaServiceSpy = jasmine.createSpyObj('AulaService', ['listarPorPeriodo', 'realizar']);
     profissionalServiceSpy = jasmine.createSpyObj('ProfissionalService', ['listar']);
@@ -165,7 +169,11 @@ describe('AgendaComponent', () => {
         { provide: AulaService, useValue: aulaServiceSpy },
         { provide: ProfissionalService, useValue: profissionalServiceSpy },
         { provide: BloqueioAgendaService, useValue: bloqueioServiceSpy },
-        { provide: ListaEsperaService, useValue: listaEsperaServiceSpy }
+        { provide: ListaEsperaService, useValue: listaEsperaServiceSpy },
+        {
+          provide: AuthService,
+          useValue: { hasAnyRole: (aceitos: readonly UserRole[]) => aceitos.some(papel => papeis.includes(papel)) }
+        }
       ]
     }).compileComponents();
 
@@ -873,6 +881,97 @@ describe('AgendaComponent', () => {
       await setup({ bloqueios: [{ ...bloqueioDaQuinta, tipo: 'FERIADO' }] });
 
       expect(component.rotuloBloqueios(component.grade.dias[4])).toContain('Feriado municipal (feriado)');
+    });
+  });
+
+  describe('atendimento da aula (issue #303)', () => {
+    const aulaSemAtendimento = aula({ id: 21, data: '2026-05-20', horario: '08:00:00', sessaoId: null, temEvolucao: false });
+    const aulaSemEvolucao = aula({ id: 22, data: '2026-05-21', horario: '09:00:00', realizada: true, sessaoId: 40, temEvolucao: false });
+    const aulaEvoluida = aula({ id: 23, data: '2026-05-22', horario: '10:00:00', realizada: true, sessaoId: 41, temEvolucao: true });
+    const aulaDeFeriado = aula({ id: 24, data: '2026-05-19', realizada: true, feriado: true, sessaoId: null, temEvolucao: false });
+    const aulas = [aulaSemAtendimento, aulaSemEvolucao, aulaEvoluida, aulaDeFeriado];
+
+    function abrir(aulaId: number): void {
+      const indice = component.eventos.filter(e => e.origem === 'AULA')
+        .findIndex(e => e.id === aulaId);
+      expect(indice).toBeGreaterThanOrEqual(0);
+      todos('.calendario-grade .evento-aula')[indice].click();
+      fixture.detectChanges();
+    }
+
+    function linkAtender(): HTMLAnchorElement | null {
+      return (fixture.nativeElement as HTMLElement).querySelector('.detalhe-acoes a[href*="/atendimento"]');
+    }
+
+    it('should mark only the done classes in the chip and describe every state in its name', async () => {
+      await setup({ sessoes: [], aulas });
+
+      const chips = todos('.calendario-grade .evento-aula');
+      // Ordem do período: feriado (19), sem atendimento (20), sem evolução (21), evoluída (22).
+      expect(chips.map(chip => chip.querySelector('.evento-atendimento')?.textContent?.trim() ?? null))
+        .toEqual([null, null, '!', '✓']);
+      expect(chips[0].getAttribute('aria-label')).not.toContain('atendimento');
+      expect(chips[1].getAttribute('aria-label')).toContain('sem atendimento');
+      expect(chips[2].getAttribute('aria-label')).toContain('sem evolução');
+      expect(chips[3].getAttribute('aria-label')).toContain('evoluída');
+      expect(todos('.legenda-atendimento').map(e => e.textContent?.trim())).toEqual(['✓', '!']);
+    });
+
+    it('should show the atendimento badge in the list', async () => {
+      await setup({ sessoes: [], aulas });
+
+      const badges = todos('.calendario-lista .badge-atendimento');
+      expect(badges.map(b => b.textContent?.trim())).toEqual(['Sem atendimento', 'Sem evolução', 'Evoluída']);
+      expect(badges[1].classList).toContain('badge--warning');
+      expect(badges[2].classList).toContain('badge--success');
+    });
+
+    it('should print the atendimento of the done classes in the day list', async () => {
+      await setup({ sessoes: [], aulas: [aulaSemEvolucao] });
+      component.referencia = '2026-05-21';
+      clicar('.calendario-visoes button:nth-child(2)');
+
+      expect(todos('.impressao-lista .impressao-atendimento').map(e => e.textContent?.trim()))
+        .toEqual(['(Sem evolução)']);
+    });
+
+    it('should offer the atendimento of the class to ADMIN and PROFISSIONAL, labelled by what is missing', async () => {
+      await setup({ sessoes: [], aulas, papeis: ['PROFISSIONAL'] });
+
+      abrir(21);
+      expect(linkAtender()?.textContent?.trim()).toBe('Atender');
+      expect(linkAtender()?.getAttribute('href')).toBe('/aulas/21/atendimento');
+      expect(texto('.detalhe-painel .badge-atendimento')).toBe('Sem atendimento');
+
+      abrir(22);
+      expect(linkAtender()?.textContent?.trim()).toBe('Evoluir');
+
+      abrir(23);
+      expect(linkAtender()?.textContent?.trim()).toBe('Ver atendimento');
+      expect(linkAtender()?.getAttribute('href')).toBe('/aulas/23/atendimento');
+    });
+
+    it('should not offer the atendimento on a holiday class', async () => {
+      await setup({ sessoes: [], aulas, papeis: ['ADMIN'] });
+
+      abrir(24);
+      expect(linkAtender()).toBeNull();
+      expect(todos('.detalhe-painel .badge-atendimento').length).toBe(0);
+    });
+
+    it('should not offer the atendimento to RECEPCAO, who keeps "Marcar como realizada"', async () => {
+      await setup({ sessoes: [], aulas, papeis: ['RECEPCAO'] });
+
+      abrir(21);
+      expect(linkAtender()).toBeNull();
+      expect(texto('.detalhe-acoes .btn-primary')).toBe('Marcar como realizada');
+    });
+
+    it('should not offer the atendimento on a session', async () => {
+      await setup({ papeis: ['ADMIN'] });
+
+      clicar('.calendario-grade .evento-sessao');
+      expect(linkAtender()).toBeNull();
     });
   });
 

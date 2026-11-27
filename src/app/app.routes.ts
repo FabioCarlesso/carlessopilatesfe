@@ -277,6 +277,15 @@ export const routes: Routes = [
       import('./pages/aulas/aula-list/aula-list.component').then(m => m.AulaListComponent)
   },
   {
+    // Atendimento da aula (issue #303): realiza e evolui numa tela só. Escreve
+    // na agenda e no prontuário, e a API (carlessopilatesapi#246) só o libera
+    // para `ADMIN` e `PROFISSIONAL` — a recepção realiza pela lista de aulas.
+    path: 'aulas/:aulaId/atendimento',
+    canActivate: [roleGuard(PAPEIS.clinica)],
+    loadComponent: () =>
+      import('./pages/aulas/aula-atendimento/aula-atendimento.component').then(m => m.AulaAtendimentoComponent)
+  },
+  {
     // O hub abre para a recepção por causa do relatório de pacientes (#288);
     // cada card respeita o papel da própria tela.
     path: 'relatorios',

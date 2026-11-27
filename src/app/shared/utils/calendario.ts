@@ -1,5 +1,6 @@
 import { AulaResponseDTO } from '../../core/models/plano';
 import { normalizarHora } from './hora';
+import { SITUACAO_ATENDIMENTO_LABEL, SituacaoAtendimento, situacaoAtendimento } from './atendimento';
 import {
   SessaoResponseDTO,
   SessaoStatus,
@@ -138,6 +139,12 @@ export interface CalendarioEvento {
   descricao: string;
   /** Destino do clique, já no formato do `routerLink`. */
   link: (string | number)[];
+  /**
+   * Situação do atendimento da aula (issue #303): sem atendimento, realizada
+   * sem evolução ou evoluída. `null`/ausente na sessão, na aula de feriado e
+   * com a API anterior à carlessopilatesapi#246.
+   */
+  atendimento?: SituacaoAtendimento | null;
 }
 
 export interface CalendarioDia {
@@ -273,6 +280,8 @@ function descrever(evento: Omit<CalendarioEvento, 'descricao'>): string {
   partes.push(evento.horario ? `às ${evento.horario}` : 'sem horário definido');
   partes.push(evento.statusLabel.toLowerCase());
   if (evento.profissional) partes.push(`com ${evento.profissional}`);
+  // A badge do atendimento é `aria-hidden` no chip: a situação entra na frase.
+  if (evento.atendimento) partes.push(SITUACAO_ATENDIMENTO_LABEL[evento.atendimento].toLowerCase());
   return `${formatarDiaExtenso(evento.dia)}, ${partes.join(', ')}`;
 }
 
@@ -331,7 +340,8 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
     profissionalId: aula.profissionalId ?? null,
     pacienteId: aula.pacienteId,
     paciente: comPaciente ? aula.pacienteNome : null,
-    link: ['/aulas', 'paciente', aula.pacienteId]
+    link: ['/aulas', 'paciente', aula.pacienteId],
+    atendimento: situacaoAtendimento(aula)
   };
   return { ...base, descricao: descrever(base) };
 }
