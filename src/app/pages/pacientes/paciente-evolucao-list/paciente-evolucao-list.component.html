@@ -23,8 +23,15 @@
   </div>
 </div>
 
+@if (pacienteId) {
+  <app-exportar-prontuario class="prontuario-pdf" [pacienteId]="pacienteId" [cartao]="true" />
+}
+
 @if (erro) {
   <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (erroPdf) {
+  <div class="alert alert-danger" role="alert">{{ erroPdf }}</div>
 }
 @if (loading) {
   <app-carregando />
@@ -227,6 +234,14 @@ Some quando há menos de duas sessões com dor informada. -->
           <div class="evolucao-acoes">
             <a [routerLink]="['/pacientes', pacienteId, 'sessoes', item.sessaoId, 'evolucao']"
             class="btn btn-secondary btn-sm">{{ item.evolucao ? 'Editar evolução' : 'Registrar evolução' }}</a>
+            @if (item.evolucao; as evolucao) {
+              <button type="button" class="btn btn-outline btn-sm evolucao-pdf"
+                [disabled]="baixandoPdfId !== null"
+                [attr.aria-label]="'Baixar em PDF a evolução de ' + (item.dataHora | date:'dd/MM/yyyy')"
+                (click)="baixarPdf(evolucao.id)">
+                {{ baixandoPdfId === evolucao.id ? 'Gerando PDF...' : 'PDF' }}
+              </button>
+            }
           </div>
         </div>
         @if (item.evolucao && item.temCorpo) {

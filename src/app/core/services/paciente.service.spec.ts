@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 import { PacienteService } from './paciente.service';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import { Page, PacienteRequestDTO, PacienteResponseDTO, PacienteUpdateDTO } from '../models/paciente';
 
 const mockPaciente: PacienteResponseDTO = {
@@ -203,6 +205,41 @@ describe('PacienteService', () => {
       const req = httpMock.expectOne('/api/pacientes/1/inativar');
       expect(req.request.method).toBe('PATCH');
       req.flush(null);
+    });
+  });
+
+  describe('exportarProntuarioPdf', () => {
+    it('should GET the full record PDF without period params, handling the 403 locally', () => {
+      const blob = new Blob(['%PDF'], { type: 'application/pdf' });
+      let recebido: HttpResponse<Blob> | undefined;
+      service.exportarProntuarioPdf(7).subscribe(resposta => (recebido = resposta));
+
+      const req = httpMock.expectOne(r => r.url === '/api/pacientes/7/prontuario/pdf');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys()).toEqual([]);
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+      req.flush(blob, {
+        headers: { 'Content-Disposition': 'attachment; filename="prontuario-ana-silva-completo.pdf"' }
+      });
+
+      expect(recebido?.body).toEqual(blob);
+      expect(recebido?.headers.get('Content-Disposition')).toContain('prontuario-ana-silva-completo.pdf');
+    });
+
+    it('should send only the informed sides of the period', () => {
+      service.exportarProntuarioPdf(7, { inicio: '2026-01-01', fim: '2026-06-30' }).subscribe();
+      service.exportarProntuarioPdf(8, { inicio: '2026-01-01', fim: null }).subscribe();
+      service.exportarProntuarioPdf(9, { inicio: '', fim: '2026-06-30' }).subscribe();
+
+      const ambos = httpMock.expectOne(r => r.url === '/api/pacientes/7/prontuario/pdf');
+      expect(ambos.request.params.get('inicio')).toBe('2026-01-01');
+      expect(ambos.request.params.get('fim')).toBe('2026-06-30');
+      const soInicio = httpMock.expectOne(r => r.url === '/api/pacientes/8/prontuario/pdf');
+      expect(soInicio.request.params.keys()).toEqual(['inicio']);
+      const soFim = httpMock.expectOne(r => r.url === '/api/pacientes/9/prontuario/pdf');
+      expect(soFim.request.params.keys()).toEqual(['fim']);
+      [ambos, soInicio, soFim].forEach(req => req.flush(new Blob(['%PDF'])));
     });
   });
 });

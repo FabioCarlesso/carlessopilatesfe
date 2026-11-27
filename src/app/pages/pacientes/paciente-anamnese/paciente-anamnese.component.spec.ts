@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -64,6 +65,7 @@ describe('PacienteAnamneseComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteAnamneseComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: AnamneseService, useValue: anamneseServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
@@ -234,5 +236,155 @@ describe('PacienteAnamneseComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar anamnese do paciente.');
     expect(component.loading).toBeFalse();
+  });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(anamnese: AnamneseResponseDTO | null) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      anamneseServiceSpy = jasmine.createSpyObj('AnamneseService', ['buscarPorPaciente', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      anamneseServiceSpy.buscarPorPaciente.and.returnValue(
+        anamnese === null ? throwError(() => new HttpErrorResponse({ status: 404 })) : of(anamnese)
+      );
+      await TestBed.configureTestingModule({
+        imports: [PacienteAnamneseComponent, RouterTestingModule],
+        providers: [
+          provideOpcoesAvaliacaoFake(),
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: AnamneseService, useValue: anamneseServiceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteAnamneseComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should hide the page header, the breadcrumb and the exit links', async () => {
+      await setupEmbutido(mockAnamnese);
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('app-breadcrumb')).toBeNull();
+      expect(el().querySelector('.form-actions a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+    });
+
+    it('should keep the same fields as the standalone screen', async () => {
+      await setupEmbutido(mockAnamnese);
+      expect(el().querySelector('#queixaPrincipal')).not.toBeNull();
+      expect(component.form.get('queixaPrincipal')?.value).toBe('Dor lombar');
+    });
+
+    it('should emit salvo with the created anamnese', async () => {
+      await setupEmbutido(null);
+      const emitidos: AnamneseResponseDTO[] = [];
+      component.salvo.subscribe(a => emitidos.push(a));
+      anamneseServiceSpy.criar.and.returnValue(of(mockAnamnese));
+      component.form.patchValue({ queixaPrincipal: 'Dor lombar', objetivos: 'Fortalecimento' });
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.criar).toHaveBeenCalled();
+      expect(emitidos).toEqual([mockAnamnese]);
+    });
+
+    it('should not emit salvo when saving fails', async () => {
+      await setupEmbutido(mockAnamnese);
+      const emitido = jasmine.createSpy('salvo');
+      component.salvo.subscribe(emitido);
+      anamneseServiceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));
+
+      component.salvar();
+
+      expect(emitido).not.toHaveBeenCalled();
+      expect(component.erro).toBe('Erro ao salvar anamnese.');
+    });
+  });
+
+  it('should keep the standalone header and labels outside the flow', async () => {
+    await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('h1')?.textContent).toContain('Anamnese');
+    expect(el.querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Atualizar');
+  });
+
+  describe('opções pré-definidas (issue #306)', () => {
+    const comOpcoes: AnamneseResponseDTO = {
+      ...mockAnamnese,
+      regioesDor: ['CERVICAL', 'CEFALEIA_ANTIGA'],
+      regioesDorComplemento: 'Irradia para o ombro',
+      condicoesSaude: [],
+      nivelAtividadeFisicaOpcao: 'ATIVO',
+      objetivosOpcoes: ['POSTURA']
+    };
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('abre o registro com as opções marcadas, inclusive a aposentada', async () => {
+      await setup(comOpcoes);
+      expect(component.form.get('regioesDor')?.value).toEqual(['CERVICAL', 'CEFALEIA_ANTIGA']);
+      expect(component.form.get('regioesDorComplemento')?.value).toBe('Irradia para o ombro');
+      const antiga = el().querySelector('[data-campo="regioesDor"] [data-valor="CEFALEIA_ANTIGA"]');
+      expect(antiga?.textContent).toContain('(opção antiga)');
+      expect((antiga?.querySelector('input') as HTMLInputElement).checked).toBeTrue();
+      // O nível em texto livre continua no formulário, ao lado da opção.
+      expect(component.form.get('nivelAtividadeFisica')?.value).toBe('Leve');
+      expect(component.form.get('nivelAtividadeFisicaOpcao')?.value).toBe('ATIVO');
+    });
+
+    it('envia as opções na edição, com "" para limpar a seleção única', async () => {
+      await setup(comOpcoes);
+      anamneseServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({ nivelAtividadeFisicaOpcao: null, objetivosOpcoes: ['ALIVIO_DE_DOR', 'POSTURA'] });
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.atualizar).toHaveBeenCalledWith(10, jasmine.objectContaining({
+        regioesDor: ['CERVICAL', 'CEFALEIA_ANTIGA'],
+        regioesDorComplemento: 'Irradia para o ombro',
+        condicoesSaude: [],
+        condicoesSaudeComplemento: '',
+        nivelAtividadeFisicaOpcao: '',
+        objetivosOpcoes: ['ALIVIO_DE_DOR', 'POSTURA'],
+        objetivos: 'Fortalecimento'
+      }));
+    });
+
+    it('envia as opções escolhidas no cadastro', async () => {
+      await setup(null);
+      anamneseServiceSpy.criar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({ queixaPrincipal: 'Dor', objetivos: 'Melhorar' });
+      (el().querySelector('[data-campo="regioesDor"] [data-valor="LOMBAR"] input') as HTMLInputElement).click();
+      (el().querySelector('[data-campo="nivelAtividadeFisicaOpcao"] [data-valor="SEDENTARIO"] input') as HTMLInputElement).click();
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 1,
+        regioesDor: ['LOMBAR'],
+        nivelAtividadeFisicaOpcao: 'SEDENTARIO',
+        objetivosOpcoes: [],
+        regioesDorComplemento: null
+      }));
+    });
+
+    it('registro antigo, sem os campos, abre e salva com listas vazias', async () => {
+      await setup(mockAnamnese);
+      anamneseServiceSpy.atualizar.and.returnValue(of(mockAnamnese));
+      expect(component.form.get('regioesDor')?.value).toEqual([]);
+      expect(el().querySelector('[data-campo="regioesDor"]')).toBeTruthy();
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.atualizar).toHaveBeenCalledWith(10, jasmine.objectContaining({
+        queixaPrincipal: 'Dor lombar', regioesDor: [], nivelAtividadeFisicaOpcao: ''
+      }));
+    });
   });
 });

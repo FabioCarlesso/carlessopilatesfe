@@ -1,0 +1,23 @@
+@if (carregando) {
+  <app-carregando mensagem="Carregando opções..." />
+} @else if (erro) {
+  <div class="alert alert-warning opcoes-erro" role="status">
+    <span>Não foi possível carregar as opções pré-definidas. O restante do formulário pode ser salvo normalmente.</span>
+    <button type="button" class="btn btn-outline btn-sm" (click)="carregar()">Tentar de novo</button>
+  </div>
+} @else {
+  <div class="opcoes-campos" [formGroup]="form">
+    @for (grupo of grupos; track grupo.def.campo) {
+      <div class="opcoes-grupo" [attr.data-campo]="grupo.def.campo">
+        <app-seletor-opcoes [formControlName]="grupo.def.campo" [campo]="grupo.campo" />
+        <div class="form-group">
+          <label [for]="grupo.def.complemento">
+            Outros / observações<span class="visualmente-oculto"> — {{ grupo.campo.rotulo }}</span>
+          </label>
+          <textarea [id]="grupo.def.complemento" [formControlName]="grupo.def.complemento"
+            class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+    }
+  </div>
+}

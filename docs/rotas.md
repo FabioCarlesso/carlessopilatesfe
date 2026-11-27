@@ -34,16 +34,17 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes`            | Lista de pacientes com filtros e paginação (_equipe_) |
 | `/pacientes/novo`       | Formulário de cadastro (_equipe_) |
 | `/pacientes/:id/editar` | Formulário de edição (_equipe_) |
+| `/pacientes/:pacienteId/avaliacao` | Fluxo único de avaliação (issue #305): stepper da anamnese ao plano de tratamento, com a etapa pendente derivada dos registros, e linha do tempo da avaliação inicial e das reavaliações. `?etapa=` (`anamnese`, `avaliacao`, `postural`, `plano`, `reavaliacao`) guarda a etapa aberta; `?fluxo=reavaliacao` abre o fluxo de reavaliação e `?reavaliacao=:id` a reavaliação em andamento. As telas avulsas abaixo continuam valendo (_clínica_) |
 | `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | Cadastro e edição da avaliação fisioterapêutica do paciente (_clínica_) |
-| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Listagem das análises posturais da avaliação fisioterapêutica do paciente (_clínica_) |
-| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova` | Nova análise postural: seleção de vista e upload de foto comprimida (_clínica_) |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Análise Postural: todas as análises do paciente — soltas e vinculadas a avaliação ou reavaliação —, com vincular/alterar/remover o vínculo; não exige avaliação (_clínica_) |
+| `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova` | Nova análise postural: vínculo opcional (pré-selecionável por `?avaliacaoFisioterapeuticaId=` ou `?reavaliacaoId=`), seleção de vista e upload de foto comprimida (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/:id/marcar` | Editor de marcação postural (grade, prumo, marcação guiada e zoom) e resultados: medidas calculadas, observações e conclusão (_clínica_) |
 | `/pacientes/:pacienteId/sessoes` | Atendimentos (sessões de pilates/fisioterapia) do paciente, avulsos ou vinculados a uma aula, com link para o atendimento da aula (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de atendimento avulso (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | Edição de atendimento (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | Cadastro e edição da evolução clínica do atendimento (_clínica_) |
-| `/pacientes/:pacienteId/evolucoes` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor e filtros de período/tipo (somente leitura) (_clínica_) |
+| `/pacientes/:pacienteId/evolucoes` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor, filtros de período/tipo e exportação do prontuário e de cada evolução em PDF (_clínica_) |
 | `/pacientes/:pacienteId/calendario` | Calendário mensal/semanal das sessões e aulas do paciente (somente leitura) (_agenda_) |
 | `/pacientes/:pacienteId/plano-tratamento` | Lista de planos de tratamento do paciente (_clínica_) |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | Cadastro de plano de tratamento (_clínica_) |

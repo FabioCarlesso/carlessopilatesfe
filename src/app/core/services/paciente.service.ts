@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import {
   Page,
   PacienteRequestDTO,
@@ -69,5 +70,24 @@ export class PacienteService {
 
   inativar(id: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/inativar`, {});
+  }
+
+  /**
+   * Prontuário em PDF (carlessopilatesapi#250), só para os papéis clínicos.
+   * `inicio` e `fim` são opcionais e independentes: o lado vazio não vai na URL,
+   * e sem nenhum dos dois a API exporta o prontuário completo. O `403` é tratado
+   * pela tela, que mostra a mensagem em vez de levar a `/403`.
+   */
+  exportarProntuarioPdf(id: number, periodo: { inicio?: string | null; fim?: string | null } = {}): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams();
+    if (periodo.inicio) params = params.set('inicio', periodo.inicio);
+    if (periodo.fim) params = params.set('fim', periodo.fim);
+
+    return this.http.get(`${this.apiUrl}/${id}/prontuario/pdf`, {
+      params,
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 }

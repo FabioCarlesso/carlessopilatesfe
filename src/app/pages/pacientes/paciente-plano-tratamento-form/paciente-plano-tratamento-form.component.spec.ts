@@ -318,4 +318,90 @@ describe('PacientePlanoTratamentoFormComponent', () => {
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
     expect(planoTratamentoServiceSpy.buscar).not.toHaveBeenCalled();
   });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(planoId: number | null) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      planoTratamentoServiceSpy = jasmine.createSpyObj('PlanoTratamentoService', ['listarPorPaciente', 'buscar', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      planoTratamentoServiceSpy.buscar.and.returnValue(of(mockPlano));
+      await TestBed.configureTestingModule({
+        imports: [PacientePlanoTratamentoFormComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: PlanoTratamentoService, useValue: planoTratamentoServiceSpy },
+          // A rota do fluxo de avaliação tem só o `:pacienteId`.
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '10' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacientePlanoTratamentoFormComponent);
+      component = fixture.componentInstance;
+      router = TestBed.inject(Router);
+      fixture.componentRef.setInput('embutido', true);
+      fixture.componentRef.setInput('planoIdEmbutido', planoId);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should edit the plan given by the input instead of the route', async () => {
+      await setupEmbutido(1);
+      expect(planoTratamentoServiceSpy.buscar).toHaveBeenCalledWith(1);
+      expect(component.modoEdicao).toBeTrue();
+      expect(component.form.get('objetivosTratamento')?.value).toBe('Redução de dor lombar');
+    });
+
+    it('should hide the page header and the exit links', async () => {
+      await setupEmbutido(1);
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('app-breadcrumb')).toBeNull();
+      expect(el().querySelector('.form-actions a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+    });
+
+    it('should stay on the form after creating, switching to edit and emitting salvo', async () => {
+      await setupEmbutido(null);
+      const navigate = spyOn(router, 'navigate');
+      const emitidos: PlanoTratamentoResponseDTO[] = [];
+      component.salvo.subscribe(p => emitidos.push(p));
+      planoTratamentoServiceSpy.criar.and.returnValue(of(mockPlano));
+      component.form.patchValue({ dataInicio: '2026-05-01', objetivosTratamento: 'Redução de dor lombar' });
+
+      component.salvar();
+
+      expect(planoTratamentoServiceSpy.criar).toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+      expect(emitidos).toEqual([mockPlano]);
+      expect(component.planoId).toBe(1);
+      expect(component.modoEdicao).toBeTrue();
+      expect(component.sucesso).toBe('Plano de tratamento cadastrado com sucesso.');
+    });
+
+    it('should emit salvo after an update', async () => {
+      await setupEmbutido(1);
+      const emitido = jasmine.createSpy('salvo');
+      component.salvo.subscribe(emitido);
+      planoTratamentoServiceSpy.atualizar.and.returnValue(of({ ...mockPlano, version: 1 }));
+
+      component.salvar();
+
+      expect(emitido).toHaveBeenCalledWith(jasmine.objectContaining({ id: 1, version: 1 }));
+    });
+  });
+
+  it('should keep navigating to the list after creating in the standalone screen', async () => {
+    await setup({ pacienteId: '10' });
+    const navigate = spyOn(router, 'navigate');
+    const emitido = jasmine.createSpy('salvo');
+    component.salvo.subscribe(emitido);
+    planoTratamentoServiceSpy.criar.and.returnValue(of(mockPlano));
+    component.form.patchValue({ dataInicio: '2026-05-01', objetivosTratamento: 'Redução de dor lombar' });
+
+    component.salvar();
+
+    expect(navigate).toHaveBeenCalledWith(['/pacientes', 10, 'plano-tratamento']);
+    expect(emitido).toHaveBeenCalled();
+  });
 });

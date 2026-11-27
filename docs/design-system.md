@@ -25,6 +25,10 @@ O primeiro `input[type="checkbox"]` da aplicação nasceu no formulário de bloq
 
 Dia bloqueado na agenda usa a família âmbar: `--c-warning-bg` no fundo da célula e `--c-warning-text` no texto do motivo. O fundo sinaliza a célula inteira sem competir com as cores de situação dos chips — o bloqueio é uma condição do dia, não um evento dele —, e o motivo é escrito na célula porque cor sozinha não é sinal suficiente (WCAG 1.4.1); a frase completa fica no `title` e no `aria-label` da célula.
 
+### Seletor de opções em chips
+
+As opções pré-definidas da avaliação (issue #306) usam o componente `app-seletor-opcoes` (`shared/components/seletor-opcoes/`), e não um padrão novo de controle: o chip é o `<label>` que envolve o **input nativo**, que continua visível — checkbox na seleção múltipla, radio (mesmo `name` por grupo, com **Não informado** para limpar) na única. Assim teclado (Tab, Espaço, setas no grupo de radios), foco visível e leitor de tela vêm do navegador, sem `role` nem `tabindex` próprios. O grupo é um `fieldset` com `legend` no caption de `.form-group label`; o resultado do teste funcional é um `fieldset` aninhado com legenda visualmente oculta ("Resultado do teste Schober"). O chip segue a regra do checkbox: `18px`, `accent-color: var(--text-brand)` e alvo de `44px`; marcado, troca a borda para `--text-brand` e o fundo para `--bg-sunken` — o input marcado continua sendo o sinal principal, a cor só reforça (WCAG 1.4.1). Opção aposentada leva o texto "(opção antiga)" em `--text-secondary`, nunca só uma cor. Na leitura (`app-opcoes-avaliacao-resumo`), os valores são tags com borda `--border-default` e raio `--r-pill`, e o comparativo fica num bloco `--bg-sunken` com filete `--text-brand`.
+
 ### Faixas de largura total e cor de rótulo sobre fundo fixo
 
 Telas que montam o próprio layout de ponta a ponta declaram `data: { layoutFluido: true }`
@@ -75,6 +79,10 @@ A situação do atendimento (issue #303) usa as variantes globais de `.badge`, s
 Partes de um todo — pagamentos por status, aulas realizadas × agendadas, pacientes ativos × inativos — usam o componente compartilhado `app-grafico-proporcao` (`shared/components/grafico-proporcao/`), criado para o dashboard (issue #120). Ele desenha uma **rosca** (`tipo="rosca"`, SVG inline com um `<circle>` por fatia e `pathLength="100"`) ou uma **barra empilhada** (`tipo="barra"`, o padrão, feita em CSS), e recebe as partes como `SegmentoProporcao` (`chave`, `rotulo`, `valor`, `variante`). Os percentuais e a posição de cada fatia saem de `calcularProporcao`, em `shared/utils/grafico-proporcao.ts`, que arredonda pelo maior resto para a legenda sempre somar 100%.
 
 A cor vem da **variante**, nunca de um literal: `marca` (`--text-brand`), `sucesso` (`--c-success-text`), `alerta` (`--c-warning-text`), `perigo` (`--c-danger-text`) e `neutro` (`--text-muted`) — todos com versão no tema escuro, onde `--c-success`/`--c-danger` ficariam em ~2:1 sobre `--bg-elev`. O trilho vazio é `--border-default`. O desenho é `aria-hidden`: o `figure` tem o `titulo` como nome acessível, e a legenda em `<ul>` escreve rótulo, valor e percentual de cada parte, inclusive as zeradas, porque cor sozinha não é informação (WCAG 1.4.1). Com total zero o trilho continua visível, sem fatia, e a frase de `textoVazio` explica o vazio. Na barra, um vão de 2px entre as partes deixa o trilho aparecer na fronteira, para partes vizinhas continuarem separáveis sem depender da cor.
+
+### Mapa corporal de dor
+
+O desenho do `app-mapa-corporal` (issue #307) tem cores próprias e fica claro nos dois temas, como a foto do simetrógrafo: o contêiner usa `--c-branco` e o SVG não muda com o tema. Por isso o ponto usa `--c-danger` — que não é clareado no tema escuro — com borda `--c-branco`, e a intensidade aparece no **tamanho** (raio de 6 a 12 unidades do `viewBox`, sem intensidade = 8) e na **opacidade** do vermelho (`color-mix` de 55% a 100% por faixa: leve 0–3, moderada 4–6, intensa 7–10). A cor não é o único sinal: a intensidade está também no `aria-label` do ponto e na lista textual. Como o ponto fica sobre esse fundo claro fixo, ele redefine `--focus-ring-color` para `--c-horizonte`. Os pontos são botões posicionados em porcentagem sobre o desenho, com área de toque ampliada por um pseudo-elemento; em `≤768px` as vistas ficam em duas colunas.
 
 ### Estado de carregamento
 

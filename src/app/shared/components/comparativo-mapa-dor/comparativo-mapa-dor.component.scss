@@ -1,0 +1,51 @@
+.comparativo {
+  margin-bottom: var(--sp-7);
+}
+
+.comparativo__titulo {
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  margin: 0 0 var(--sp-4);
+}
+
+.comparativo__vistas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+/* Registros lado a lado; quando não cabem, a faixa rola na horizontal (com teclado, pelo tabindex). */
+.comparativo__registros {
+  display: flex;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0 0 var(--sp-2);
+  list-style: none;
+  overflow-x: auto;
+}
+
+.comparativo__registro {
+  flex: 0 0 220px;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  background-color: var(--bg-elev);
+  box-shadow: var(--shadow-1);
+}
+
+.comparativo__registro-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .comparativo__registro {
+    flex-basis: 70%;
+  }
+
+  .comparativo__vistas .btn {
+    min-height: 44px;
+  }
+}

@@ -1,16 +1,29 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { TIPO_CONTRATO_LABEL, TipoContrato } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
-import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { cpfValidator } from '../../../core/validators/cpf.validator';
 import { MascaraDirective } from '../../../shared/directives/mascara.directive';
 import { somenteDigitos } from '../../../shared/utils/mascara';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+
+/** `Validators.required` aceita "   "; a API recusa o registro em branco com `400`. */
+function naoEmBranco(control: AbstractControl): ValidationErrors | null {
+  const valor = control.value;
+  return typeof valor === 'string' && valor.length > 0 && valor.trim().length === 0 ? { emBranco: true } : null;
+}
 
 @Component({
   selector: 'app-profissional-form',
@@ -51,9 +64,10 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
       email: ['', [Validators.required, Validators.email]],
       cpf: ['', [Validators.required, cpfValidator]],
       telefone: [''],
-      // Opcional e sem máscara: o formato do registro varia por conselho
-      // (CREFITO, CREF etc.) e nem todo profissional do estúdio tem um.
-      numeroRegistro: ['', Validators.maxLength(30)],
+      // Obrigatório desde a issue #308 (carlessopilatesapi#250): todo profissional
+      // do estúdio é fisioterapeuta, e o prontuário identifica cada evolução pelo
+      // número no CREFITO. Sem máscara: o formato varia entre os regionais.
+      numeroRegistro: ['', [Validators.required, naoEmBranco, Validators.maxLength(30)]],
       tipoContrato: ['', Validators.required],
       percentualPagamentoAula: [null, [Validators.required, Validators.min(0.01), Validators.max(100)]],
       dataInicio: ['', Validators.required]
@@ -76,6 +90,8 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
         this.form.patchValue(profissional);
         this.version = profissional.version;
         this.form.get('cpf')?.disable();
+        // Cadastro antigo sem CREFITO (issue #308): a pendência aparece já na abertura.
+        if (!profissional.numeroRegistro?.trim()) this.form.get('numeroRegistro')?.markAsTouched();
         this.loading = false;
       },
       error: () => {
@@ -105,13 +121,8 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
           nome: valor.nome,
           email: valor.email,
           telefone: valor.telefone,
-          // Vai como veio do formulário — em branco é `''`, e **não** `null`.
-          // O `PUT` distingue os dois: `null` (ou campo omitido) significa "não
-          // altere" e preserva o valor no servidor, enquanto string vazia ou
-          // só com espaços limpa o registro. Sanitizar `''` para `null` aqui
-          // pareceria higiene de payload e tiraria do usuário a única forma
-          // de apagar um número digitado errado.
-          numeroRegistro: valor.numeroRegistro,
+          // O formulário já não deixa o registro em branco (issue #308).
+          numeroRegistro: (valor.numeroRegistro ?? '').trim(),
           tipoContrato: valor.tipoContrato,
           percentualPagamentoAula: valor.percentualPagamentoAula,
           dataInicio: valor.dataInicio,
@@ -119,6 +130,7 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
         })
       : this.service.cadastrar({
           ...valor,
+          numeroRegistro: (valor.numeroRegistro ?? '').trim(),
           // Só dígitos, o formato único de envio (ver `shared/utils/mascara.ts`).
           cpf: somenteDigitos(valor.cpf),
           telefone: somenteDigitos(valor.telefone)
@@ -127,7 +139,8 @@ export class ProfissionalFormComponent implements OnInit, AfterViewInit {
     request$.subscribe({
       next: () => this.router.navigate(['/profissionais']),
       error: (err: unknown) => {
-        this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar profissional.';
+        // Explica o `409` de concorrência e traz o `detail` do `400` (ex.: CREFITO ausente).
+        this.erro = extrairMensagemErro(err, 'Erro ao salvar profissional.');
         this.salvando = false;
       }
     });

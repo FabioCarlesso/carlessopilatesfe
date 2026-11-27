@@ -1,4 +1,6 @@
-export interface AnamneseRequestDTO {
+import { CamposOpcoesAnamnese } from './opcoes-avaliacao';
+
+export interface AnamneseRequestDTO extends CamposOpcoesAnamnese {
   pacienteId: number;
   queixaPrincipal: string;
   historicoDoencas?: string | null;
@@ -12,7 +14,7 @@ export interface AnamneseRequestDTO {
   observacoes?: string | null;
 }
 
-export interface AnamneseUpdateDTO {
+export interface AnamneseUpdateDTO extends CamposOpcoesAnamnese {
   queixaPrincipal: string;
   objetivos: string;
   historicoDoencas?: string | null;
@@ -27,7 +29,7 @@ export interface AnamneseUpdateDTO {
   version?: number | null;
 }
 
-export interface AnamneseResponseDTO {
+export interface AnamneseResponseDTO extends CamposOpcoesAnamnese {
   id: number;
   pacienteId: number;
   nomePaciente: string;

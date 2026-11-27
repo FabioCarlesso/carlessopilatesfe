@@ -78,6 +78,16 @@
   }
 }
 
+<!-- Pendência do CREFITO (issue #308): sem ele o profissional não pode ser
+ativado nem identificar as evoluções no prontuário. A contagem é da página
+exibida, porque a API não filtra por registro ausente. -->
+@if (!loading && semCrefito > 0) {
+  <div class="alert alert-warning aviso-crefito" role="status">
+    {{ semCrefito === 1 ? '1 profissional nesta página está' : semCrefito + ' profissionais nesta página estão' }}
+    sem número no CREFITO. Edite o cadastro para completar — ele é exigido no prontuário.
+  </div>
+}
+
 @if (profissionais.length > 0) {
   <app-pagination-summary
     [currentPage]="currentPage"
@@ -94,6 +104,7 @@
           <th app-sortable campo="email" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">E-mail</th>
           <th app-sortable campo="tipoContrato" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">Contrato</th>
           <th app-sortable campo="percentualPagamentoAula" [ordenacao]="ordenacao" (ordenar)="ordenar($event)">% por Aula</th>
+          <th>CREFITO</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -104,6 +115,14 @@
             <td>{{ p.email }}</td>
             <td>{{ tipoContratoLabel[p.tipoContrato] }}</td>
             <td>{{ p.percentualPagamentoAula }}%</td>
+            <td>
+              @if (p.numeroRegistro?.trim()) {
+                {{ p.numeroRegistro }}
+              } @else {
+                <span class="badge badge--warning" data-sem-crefito
+                  title="Sem número no CREFITO: edite o cadastro para completar">Sem CREFITO</span>
+              }
+            </td>
             <td class="acoes">
               <a [routerLink]="['/profissionais', p.id]" class="btn btn-sm btn-outline">Ver</a>
               <a [routerLink]="['/profissionais', p.id, 'editar']" class="btn btn-sm btn-secondary">Editar</a>

@@ -1,0 +1,223 @@
+.page-subtitle {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fluxo,
+.linha-do-tempo {
+  margin-bottom: var(--sp-7);
+}
+
+.fluxo-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.fluxo-titulo {
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  margin: 0;
+}
+
+// Stepper: no desktop as etapas ficam lado a lado; em ≤768px viram uma coluna,
+// para os rótulos longos ("Avaliação fisioterapêutica") não espremerem.
+.stepper-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+}
+
+.stepper-botao {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-3);
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--text-brand);
+  }
+}
+
+.stepper-item--atual .stepper-botao {
+  border-color: var(--text-brand);
+  box-shadow: inset 0 -3px 0 var(--text-brand);
+}
+
+.stepper-numero {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--text-brand);
+  color: var(--text-brand);
+  font-weight: 600;
+}
+
+// O número preenchido marca a etapa aberta, além da borda e do `aria-current`.
+.stepper-item--atual .stepper-numero {
+  background-color: var(--text-brand);
+  color: var(--bg-elev);
+}
+
+.stepper-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.stepper-rotulo {
+  font-weight: 500;
+}
+
+.aviso-pendente {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.etapa-titulo {
+  font-size: var(--fs-h3);
+  font-weight: 500;
+  margin: 0 0 var(--sp-4);
+}
+
+.etapa-opcional,
+.etapa-dica {
+  color: var(--text-secondary);
+}
+
+.etapa-dica {
+  margin: 0 0 var(--sp-3);
+}
+
+.etapa-postural,
+.etapa-concluida {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.etapa-postural p,
+.etapa-concluida p {
+  margin: 0;
+}
+
+.etapa-pular,
+.etapa-navegacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.referencia {
+  background-color: var(--bg-sunken);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.referencia-titulo {
+  margin: 0;
+}
+
+.destaques {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+}
+
+.destaque {
+  min-width: 0;
+
+  dt {
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--sp-4);
+  border-left: 2px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.timeline-card {
+  background-color: var(--bg-elev);
+  border: 1px solid var(--border);
+  /* `--text-brand` é o único token de marca com versão própria no tema escuro. */
+  border-left: 4px solid var(--text-brand);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+}
+
+.timeline-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.timeline-titulo {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  margin: 0;
+}
+
+.timeline-data {
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .stepper-lista {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+  }
+}

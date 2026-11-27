@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProfissionalService } from '../../../core/services/profissional.service';
 import { ProfissionalResponseDTO, TIPO_CONTRATO_LABEL } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
+import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { ProfissionalDisponibilidadeComponent } from '../profissional-disponibilidade/profissional-disponibilidade.component';
@@ -70,8 +71,9 @@ export class ProfissionalDetailComponent implements OnInit {
     this.acaoEmAndamento = true;
     this.service.ativar(this.profissional.id).subscribe({
       next: () => this.router.navigate(['/profissionais']),
-      error: () => {
-        this.erro = 'Erro ao ativar profissional.';
+      // O `422` de quem está sem CREFITO (carlessopilatesapi#250) traz o motivo no `detail`.
+      error: (err: unknown) => {
+        this.erro = extrairMensagemErro(err, 'Erro ao ativar profissional.');
         this.acaoEmAndamento = false;
         this.confirmarAtivar = false;
       }

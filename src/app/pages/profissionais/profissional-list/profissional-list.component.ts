@@ -58,6 +58,11 @@ export class ProfissionalListComponent implements OnInit {
     status: 'ativos'
   };
 
+  /** Profissionais da página exibida sem número no CREFITO (issue #308). */
+  get semCrefito(): number {
+    return this.profissionais.filter(p => !p.numeroRegistro?.trim()).length;
+  }
+
   readonly tipoContratoLabel = TIPO_CONTRATO_LABEL;
   readonly tiposContrato: TipoContrato[] = ['CLT', 'PJ', 'AUTONOMO'];
 

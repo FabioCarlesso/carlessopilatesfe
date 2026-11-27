@@ -16,7 +16,7 @@
 }
 
 @if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
 @if (loading) {
   <app-carregando />
@@ -77,8 +77,12 @@
             <span>{{ profissional.telefone || '-' }}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Nr. de Registro</span>
-            <span>{{ profissional.numeroRegistro || '-' }}</span>
+            <span class="label">Número no CREFITO</span>
+            @if (profissional.numeroRegistro?.trim()) {
+              <span>{{ profissional.numeroRegistro }}</span>
+            } @else {
+              <span><span class="badge badge--warning" data-sem-crefito>Sem CREFITO</span></span>
+            }
           </div>
           <div class="detail-item">
             <span class="label">Contrato</span>

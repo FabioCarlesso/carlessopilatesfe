@@ -3,12 +3,27 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb.component';
-import { forkJoin } from 'rxjs';
-import { VISTA_POSTURAL_OPTIONS, VistaPostural } from '../../../core/models/avaliacao-postural';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
+import {
+  AvaliacaoPosturalResponseDTO,
+  VISTA_POSTURAL_OPTIONS,
+  VistaPostural
+} from '../../../core/models/avaliacao-postural';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
 import { AvaliacaoPosturalService } from '../../../core/services/avaliacao-postural.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
+import {
+  CHAVE_SEM_VINCULO,
+  OpcaoVinculoPostural,
+  TipoVinculoPostural,
+  chaveDaAnalise,
+  chaveDoVinculo,
+  montarOpcoesVinculo,
+  rotuloDoVinculo,
+  vinculoDaChave
+} from '../../../shared/utils/vinculo-postural';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
@@ -24,12 +39,16 @@ import { CarregandoComponent } from '../../../shared/components/carregando/carre
 })
 export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy {
   readonly vistaOptions = VISTA_POSTURAL_OPTIONS;
+  readonly chaveSemVinculo = CHAVE_SEM_VINCULO;
 
   form!: FormGroup;
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
-  avaliacaoFisioterapeuticaId: number | null = null;
+  /** Avaliações e reavaliações do paciente que podem receber a análise; a solta é a opção padrão. */
+  opcoesVinculo: OpcaoVinculoPostural[] = [];
+  opcoesVinculoIncompletas = false;
   vistasIndisponiveis = new Set<VistaPostural>();
+  private analisesDoPaciente: AvaliacaoPosturalResponseDTO[] = [];
 
   loading = false;
   parametroInvalido = false;
@@ -47,6 +66,7 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
     private pacienteService: PacienteService,
     private avaliacaoFisioterapeuticaService: AvaliacaoFisioterapeuticaService,
     private posturalService: AvaliacaoPosturalService,
+    private reavaliacaoService: ReavaliacaoService,
     private imageCompressorService: ImageCompressorService,
     private route: ActivatedRoute,
     private router: Router,
@@ -56,8 +76,12 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
 
   ngOnInit(): void {
     this.form = this.fb.group({
+      vinculo: [CHAVE_SEM_VINCULO],
       vista: [null, Validators.required]
     });
+    this.form.get('vinculo')!.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.atualizarVistasIndisponiveis());
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
     if (this.pacienteId === null) {
@@ -81,18 +105,22 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
     this.loading = true;
     this.erro = null;
 
+    // Sem avaliação nem reavaliação a análise sai solta; uma falha nessas listas só
+    // empobrece o seletor de vínculo, sem impedir a análise.
     forkJoin({
       paciente: this.pacienteService.buscar(this.pacienteId),
-      avaliacoes: this.avaliacaoFisioterapeuticaService.listarPorPaciente(this.pacienteId)
+      analises: this.posturalService.listarPorPaciente(this.pacienteId),
+      avaliacoes: this.opcional(this.avaliacaoFisioterapeuticaService.listarPorPaciente(this.pacienteId)),
+      reavaliacoes: this.opcional(this.reavaliacaoService.listarPorPaciente(this.pacienteId))
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ paciente, avaliacoes }) => {
+      next: ({ paciente, analises, avaliacoes, reavaliacoes }) => {
         this.paciente = paciente;
-        this.avaliacaoFisioterapeuticaId = avaliacoes[0]?.id ?? null;
-        if (this.avaliacaoFisioterapeuticaId === null) {
-          this.loading = false;
-          return;
-        }
-        this.carregarAnalisesExistentes(this.avaliacaoFisioterapeuticaId);
+        this.analisesDoPaciente = analises;
+        this.opcoesVinculo = montarOpcoesVinculo(avaliacoes ?? [], reavaliacoes ?? []);
+        this.opcoesVinculoIncompletas = avaliacoes === null || reavaliacoes === null;
+        this.preSelecionarVinculo();
+        this.atualizarVistasIndisponiveis();
+        this.loading = false;
       },
       error: () => {
         this.erro = 'Erro ao carregar dados do paciente.';
@@ -101,19 +129,51 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
     });
   }
 
-  private carregarAnalisesExistentes(avaliacaoFisioterapeuticaId: number): void {
-    this.posturalService.listarPorAvaliacaoFisioterapeutica(avaliacaoFisioterapeuticaId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: analises => {
-          this.vistasIndisponiveis = new Set(analises.map(a => a.vista));
-          this.loading = false;
-        },
-        error: () => {
-          this.erro = 'Erro ao carregar análises posturais existentes.';
-          this.loading = false;
-        }
-      });
+  private opcional<T>(fonte: Observable<T[]>): Observable<T[] | null> {
+    return fonte.pipe(catchError(() => of(null)));
+  }
+
+  /**
+   * `?avaliacaoFisioterapeuticaId=` ou `?reavaliacaoId=` pré-selecionam o vínculo — é
+   * assim que o fluxo da avaliação abre a análise postural já ligada a ela. Um id que não
+   * é do paciente é ignorado; se as listas falharam, o vínculo entra com o rótulo genérico
+   * e a API, que confere o paciente, decide.
+   */
+  private preSelecionarVinculo(): void {
+    const query = this.route.snapshot.queryParamMap;
+    const candidatos: [TipoVinculoPostural, string][] = [
+      ['avaliacao', 'avaliacaoFisioterapeuticaId'],
+      ['reavaliacao', 'reavaliacaoId']
+    ];
+    for (const [tipo, parametro] of candidatos) {
+      const id = parseRouteNumberParam(query, parametro);
+      if (id === null) continue;
+
+      const chave = chaveDoVinculo(tipo, id);
+      if (!this.opcoesVinculo.some(o => o.chave === chave)) {
+        if (!this.opcoesVinculoIncompletas) continue;
+        const vinculo = vinculoDaChave(chave);
+        this.opcoesVinculo = [
+          { chave, tipo, id, data: '', label: rotuloDoVinculo(vinculo, []) },
+          ...this.opcoesVinculo
+        ];
+      }
+      this.form.patchValue({ vinculo: chave }, { emitEvent: false });
+      return;
+    }
+  }
+
+  /** A API aceita uma análise ativa por vista em cada avaliação/reavaliação; a solta não tem esse limite. */
+  private atualizarVistasIndisponiveis(): void {
+    const chave = this.form.getRawValue().vinculo as string;
+    this.vistasIndisponiveis = chave === CHAVE_SEM_VINCULO
+      ? new Set()
+      : new Set(this.analisesDoPaciente.filter(a => chaveDaAnalise(a) === chave).map(a => a.vista));
+
+    const vista = this.form.value.vista as VistaPostural | null;
+    if (vista !== null && this.vistasIndisponiveis.has(vista)) {
+      this.form.patchValue({ vista: null });
+    }
   }
 
   vistaIndisponivel(vista: VistaPostural): boolean {
@@ -186,7 +246,7 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
   }
 
   continuar(): void {
-    if (this.parametroInvalido || this.avaliacaoFisioterapeuticaId === null) return;
+    if (this.parametroInvalido || this.pacienteId === null) return;
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -204,11 +264,13 @@ export class PacienteAvaliacaoPosturalFormComponent implements OnInit, OnDestroy
 
     if (this.analiseCriadaId === null) {
       const vista = this.form.value.vista as VistaPostural;
-      this.posturalService.criar({ avaliacaoFisioterapeuticaId: this.avaliacaoFisioterapeuticaId, vista })
+      const vinculo = vinculoDaChave(this.form.getRawValue().vinculo as string);
+      this.posturalService.criar({ pacienteId: this.pacienteId, ...vinculo, vista })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: analise => {
             this.analiseCriadaId = analise.id;
+            this.form.get('vinculo')!.disable({ emitEvent: false });
             this.enviarFoto();
           },
           error: err => {

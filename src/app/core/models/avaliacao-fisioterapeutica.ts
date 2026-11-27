@@ -1,4 +1,6 @@
-export interface AvaliacaoFisioterapeuticaRequestDTO {
+import { CamposOpcoesExameFisico } from './opcoes-avaliacao';
+
+export interface AvaliacaoFisioterapeuticaRequestDTO extends CamposOpcoesExameFisico {
   pacienteId: number;
   dataAvaliacao: string;
   queixaFuncional: string;
@@ -15,7 +17,7 @@ export interface AvaliacaoFisioterapeuticaRequestDTO {
   observacoesGerais?: string | null;
 }
 
-export interface AvaliacaoFisioterapeuticaUpdateDTO {
+export interface AvaliacaoFisioterapeuticaUpdateDTO extends CamposOpcoesExameFisico {
   dataAvaliacao?: string | null;
   queixaFuncional?: string | null;
   avaliacaoPostural?: string | null;
@@ -33,7 +35,7 @@ export interface AvaliacaoFisioterapeuticaUpdateDTO {
   version?: number | null;
 }
 
-export interface AvaliacaoFisioterapeuticaResponseDTO {
+export interface AvaliacaoFisioterapeuticaResponseDTO extends CamposOpcoesExameFisico {
   id: number;
   pacienteId: number;
   nomePaciente: string;

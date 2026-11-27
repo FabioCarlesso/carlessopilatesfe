@@ -1,0 +1,44 @@
+:host {
+  display: block;
+}
+
+.exportar-texto {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+/* Datas e botão na mesma linha no desktop; no mobile cada um ocupa a largura
+   toda, um embaixo do outro, para o alvo de toque do botão não encolher. */
+.exportar-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+
+  .form-group {
+    flex: 1 1 160px;
+  }
+}
+
+.exportar-botao {
+  flex: none;
+}
+
+.exportar-erro-periodo {
+  margin-top: var(--sp-2);
+}
+
+.exportar-erro {
+  margin: var(--sp-3) 0 0;
+}
+
+@media (max-width: 768px) {
+  .exportar-campos .form-group {
+    flex-basis: 100%;
+  }
+
+  .exportar-botao {
+    width: 100%;
+  }
+}

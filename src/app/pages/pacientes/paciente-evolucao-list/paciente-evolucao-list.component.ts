@@ -12,10 +12,15 @@ import { SessaoResponseDTO, SessaoTipo, SESSAO_TIPO_LABEL } from '../../../core/
 import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
-import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { extrairMensagemErro, extrairMensagemErroBlob } from '../../../shared/utils/api-error';
+import { baixarBlob } from '../../../shared/utils/file-download';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import {
+  ExportarProntuarioComponent,
+  MENSAGEM_SEM_PERMISSAO_PRONTUARIO
+} from '../../../shared/components/exportar-prontuario/exportar-prontuario.component';
 
 /** Tendência da dor entre o início e o fim da sessão. */
 export type TendenciaDor = 'melhora' | 'piora' | 'estavel';
@@ -339,7 +344,15 @@ export function filtrarItens(itens: EvolucaoTimelineItem[], filtro: FiltroEvoluc
 
 @Component({
   selector: 'app-paciente-evolucao-list',
-  imports: [DatePipe, FormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, EmptyStateComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    BreadcrumbComponent,
+    CarregandoComponent,
+    EmptyStateComponent,
+    ExportarProntuarioComponent
+  ],
   templateUrl: './paciente-evolucao-list.component.html',
   styleUrl: './paciente-evolucao-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -364,6 +377,10 @@ export class PacienteEvolucaoListComponent implements OnInit {
   filtrosAbertos = false;
   loading = false;
   erro: string | null = null;
+  /** Evolução cujo PDF está sendo gerado; enquanto houver uma, os demais botões esperam. */
+  baixandoPdfId: number | null = null;
+  /** Falha do PDF de uma evolução, separada de `erro` para não esconder a linha do tempo. */
+  erroPdf: string | null = null;
 
   readonly tipoLabel = SESSAO_TIPO_LABEL;
   readonly tendenciaLabel = TENDENCIA_DOR_LABEL;
@@ -407,6 +424,42 @@ export class PacienteEvolucaoListComponent implements OnInit {
           this.erro = extrairMensagemErro(err, 'Erro ao carregar dados do paciente.');
           this.loading = false;
           this.cdr.markForCheck();
+        }
+      });
+  }
+
+  /** PDF de uma evolução (`GET /evolucoes-sessao/{id}/pdf`), com o nome do `Content-Disposition`. */
+  baixarPdf(evolucaoId: number): void {
+    if (this.baixandoPdfId !== null) return;
+
+    const fallback = 'Erro ao gerar o PDF da evolução.';
+    this.baixandoPdfId = evolucaoId;
+    this.erroPdf = null;
+    this.evolucaoSessaoService.exportarPdf(evolucaoId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: response => {
+          try {
+            baixarBlob(response, `evolucao-${evolucaoId}.pdf`);
+          } catch {
+            this.erroPdf = fallback;
+          } finally {
+            this.baixandoPdfId = null;
+            this.cdr.markForCheck();
+          }
+        },
+        error: (err: unknown) => {
+          if (err instanceof HttpErrorResponse && err.status === 403) {
+            this.erroPdf = MENSAGEM_SEM_PERMISSAO_PRONTUARIO;
+            this.baixandoPdfId = null;
+            this.cdr.markForCheck();
+            return;
+          }
+          void extrairMensagemErroBlob(err, fallback).then(mensagem => {
+            this.erroPdf = mensagem;
+            this.baixandoPdfId = null;
+            this.cdr.markForCheck();
+          });
         }
       });
   }

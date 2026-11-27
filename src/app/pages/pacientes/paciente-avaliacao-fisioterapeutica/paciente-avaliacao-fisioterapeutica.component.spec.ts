@@ -1,4 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { PontoDor } from '../../../core/models/ponto-dor';
+import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -7,6 +11,7 @@ import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avali
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
 import { PacienteService } from '../../../core/services/paciente.service';
+import { PontoDorService } from '../../../core/services/ponto-dor.service';
 import { PacienteAvaliacaoFisioterapeuticaComponent } from './paciente-avaliacao-fisioterapeutica.component';
 import { MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { conflitoConcorrencia } from '../../../../testing/conflito';
@@ -54,6 +59,14 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
   let fixture: ComponentFixture<PacienteAvaliacaoFisioterapeuticaComponent>;
   let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
   let avaliacaoServiceSpy: jasmine.SpyObj<AvaliacaoFisioterapeuticaService>;
+  let pontoDorServiceSpy: jasmine.SpyObj<PontoDorService>;
+
+  function criarPontoDorSpy(): jasmine.SpyObj<PontoDorService> {
+    pontoDorServiceSpy = jasmine.createSpyObj('PontoDorService', ['listar', 'salvar', 'historicoDoPaciente']);
+    pontoDorServiceSpy.listar.and.returnValue(of([]));
+    pontoDorServiceSpy.salvar.and.callFake((_o, _id, pontos) => of(pontos.map((p, i) => ({ ...p, id: i + 1 }))));
+    return pontoDorServiceSpy;
+  }
 
   async function setup(
     avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[] = [mockAvaliacao],
@@ -72,8 +85,10 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+        { provide: PontoDorService, useValue: criarPontoDorSpy() },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
       ]
     }).compileComponents();
@@ -247,5 +262,271 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
 
     expect(component.erro).toBe('Erro ao carregar avaliação fisioterapêutica do paciente.');
     expect(component.loading).toBeFalse();
+  });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[]) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      avaliacaoServiceSpy = jasmine.createSpyObj('AvaliacaoFisioterapeuticaService', ['listarPorPaciente', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      avaliacaoServiceSpy.listarPorPaciente.and.returnValue(of(avaliacoes));
+      await TestBed.configureTestingModule({
+        imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
+        providers: [
+          provideOpcoesAvaliacaoFake(),
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+          { provide: PontoDorService, useValue: criarPontoDorSpy() },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteAvaliacaoFisioterapeuticaComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should hide the page header, the Postural shortcut and the exit links', async () => {
+      await setupEmbutido([mockAvaliacao]);
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('app-breadcrumb')).toBeNull();
+      expect(el().querySelector('a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+      expect(component.form.get('diagnosticoFisioterapeutico')?.value).toBe('Gonartrose');
+    });
+
+    it('should emit salvo with the updated assessment', async () => {
+      await setupEmbutido([mockAvaliacao]);
+      const emitidos: AvaliacaoFisioterapeuticaResponseDTO[] = [];
+      component.salvo.subscribe(a => emitidos.push(a));
+      const atualizada = { ...mockAvaliacao, version: 1 };
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(atualizada));
+
+      component.salvar();
+
+      expect(emitidos).toEqual([atualizada]);
+    });
+
+    it('should not emit salvo for an invalid form', async () => {
+      await setupEmbutido([]);
+      const emitido = jasmine.createSpy('salvo');
+      component.salvo.subscribe(emitido);
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.criar).not.toHaveBeenCalled();
+      expect(emitido).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mapa de dor (issue #307)', () => {
+    const ponto: PontoDor = { vista: 'FRENTE', x: 0.4, y: 0.3, desenhoVersao: 1, intensidade: 6, observacao: null };
+    const erro400 = new HttpErrorResponse({ status: 400, error: { detail: 'No máximo 50 pontos por registro.' } });
+
+    function preencherObrigatorios(): void {
+      component.form.patchValue({
+        dataAvaliacao: '2026-05-03',
+        queixaFuncional: 'Dor no joelho direito',
+        escalaDor: 7,
+        diagnosticoFisioterapeutico: 'Gonartrose'
+      });
+    }
+
+    function mapa(): MapaCorporalComponent {
+      return fixture.debugElement.query(By.directive(MapaCorporalComponent)).componentInstance as MapaCorporalComponent;
+    }
+
+    it('should load the points of the existing assessment into its own section', async () => {
+      await setup([mockAvaliacao]);
+      pontoDorServiceSpy.listar.and.returnValue(of([{ ...ponto, id: 9 }]));
+      component.carregar();
+      fixture.detectChanges();
+
+      expect(pontoDorServiceSpy.listar).toHaveBeenCalledWith('AVALIACAO', 5);
+      expect(component.mapaDor.pontos).toEqual([ponto]);
+      expect((fixture.nativeElement as HTMLElement).querySelector('#mapa-dor-titulo')?.textContent).toContain('Mapa de dor');
+      expect(mapa().lista).toEqual([ponto]);
+    });
+
+    it('should save the points with the id of a newly created assessment, after the POST', async () => {
+      await setup([]);
+      expect(pontoDorServiceSpy.listar).not.toHaveBeenCalled();
+      avaliacaoServiceSpy.criar.and.returnValue(of(mockAvaliacao));
+      mapa().pontosChange.emit([ponto]);
+      preencherObrigatorios();
+
+      component.salvar();
+
+      expect(pontoDorServiceSpy.salvar).toHaveBeenCalledOnceWith('AVALIACAO', 5, [ponto]);
+      expect(avaliacaoServiceSpy.criar).toHaveBeenCalledBefore(pontoDorServiceSpy.salvar);
+      expect(component.mapaDor.alterado).toBeFalse();
+      expect(component.sucesso).toBe('Avaliação fisioterapêutica cadastrada com sucesso.');
+    });
+
+    it('should not call the points endpoint when the map was not changed', async () => {
+      await setup([mockAvaliacao]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+
+      component.salvar();
+
+      expect(pontoDorServiceSpy.salvar).not.toHaveBeenCalled();
+    });
+
+    it('should keep the saved assessment and show the detail when the points are refused, retrying on the next save', async () => {
+      await setup([]);
+      avaliacaoServiceSpy.criar.and.returnValue(of(mockAvaliacao));
+      pontoDorServiceSpy.salvar.and.returnValue(throwError(() => erro400));
+      component.mapaDor.alterar([ponto]);
+      preencherObrigatorios();
+
+      component.salvar();
+
+      expect(component.avaliacao).toEqual(mockAvaliacao);
+      expect(component.erro).toBe('Avaliação fisioterapêutica salva, mas o mapa de dor não foi gravado: No máximo 50 pontos por registro.');
+      expect(component.sucesso).toBeNull();
+      expect(component.salvando).toBeFalse();
+
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+      pontoDorServiceSpy.salvar.and.returnValue(of([{ ...ponto, id: 1 }]));
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledTimes(1);
+      expect(pontoDorServiceSpy.salvar).toHaveBeenCalledTimes(2);
+      expect(component.erro).toBeNull();
+    });
+
+    it('should block the map and never send it when loading the points fails', async () => {
+      await setup([mockAvaliacao]);
+      pontoDorServiceSpy.listar.and.returnValue(throwError(() =>
+        new HttpErrorResponse({ status: 403, error: { detail: 'Acesso restrito à equipe clínica.' } })));
+      component.carregar();
+      fixture.detectChanges();
+
+      expect(component.mapaDor.erroCarga).toBe('Acesso restrito à equipe clínica.');
+      expect(fixture.debugElement.query(By.directive(MapaCorporalComponent))).toBeNull();
+      component.mapaDor.alterar([ponto]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+      component.salvar();
+      expect(pontoDorServiceSpy.salvar).not.toHaveBeenCalled();
+    });
+
+    it('should save the points before telling the embedding flow, and hold the flow when they fail', async () => {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      avaliacaoServiceSpy = jasmine.createSpyObj('AvaliacaoFisioterapeuticaService', ['listarPorPaciente', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      avaliacaoServiceSpy.listarPorPaciente.and.returnValue(of([mockAvaliacao]));
+      await TestBed.configureTestingModule({
+        imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+          provideOpcoesAvaliacaoFake(),
+          { provide: PontoDorService, useValue: criarPontoDorSpy() },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteAvaliacaoFisioterapeuticaComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.detectChanges();
+
+      const salvo = jasmine.createSpy('salvo');
+      component.salvo.subscribe(salvo);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+      component.mapaDor.alterar([ponto]);
+      pontoDorServiceSpy.salvar.and.returnValue(throwError(() => erro400));
+
+      component.salvar();
+      expect(salvo).not.toHaveBeenCalled();
+
+      pontoDorServiceSpy.salvar.and.returnValue(of([{ ...ponto, id: 1 }]));
+      component.salvar();
+      expect(pontoDorServiceSpy.salvar).toHaveBeenCalledBefore(salvo);
+      expect(salvo).toHaveBeenCalledOnceWith(mockAvaliacao);
+    });
+  });
+
+  describe('achados estruturados (issue #306)', () => {
+    const comOpcoes: AvaliacaoFisioterapeuticaResponseDTO = {
+      ...mockAvaliacao,
+      equilibrio: 'Oscila no apoio unipodal',
+      achadosPosturais: ['ESCOLIOSE'],
+      padraoRespiratorioOpcao: null,
+      equilibrioOpcao: 'ALTERACAO_LEVE',
+      coordenacaoMotoraOpcao: null,
+      testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }],
+      testesFuncionaisComplemento: 'Schober 3 cm'
+    };
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('fica numa seção própria e abre com os valores do registro', async () => {
+      await setup([comOpcoes]);
+      const titulos = Array.from(el().querySelectorAll('.form-section-title')).map(t => t.textContent?.trim());
+      expect(titulos).toContain('Achados estruturados');
+      expect(component.form.get('testesFuncionais')?.value).toEqual([{ teste: 'SCHOBER', resultado: 'POSITIVO' }]);
+      expect(component.form.get('equilibrio')?.value).toBe('Oscila no apoio unipodal');
+      expect(component.form.get('equilibrioOpcao')?.value).toBe('ALTERACAO_LEVE');
+    });
+
+    it('envia achados, seleções e testes na edição', async () => {
+      await setup([comOpcoes]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(5, jasmine.objectContaining({
+        equilibrio: 'Oscila no apoio unipodal',
+        achadosPosturais: ['ESCOLIOSE'],
+        equilibrioOpcao: 'ALTERACAO_LEVE',
+        padraoRespiratorioOpcao: '',
+        testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }],
+        testesFuncionaisComplemento: 'Schober 3 cm'
+      }));
+    });
+
+    it('não envia com teste marcado sem resultado', async () => {
+      await setup([comOpcoes]);
+      (el().querySelector('[data-campo="testesFuncionais"] [data-valor="ADAMS"] input') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      component.salvar();
+
+      expect(component.form.get('testesFuncionais')?.hasError('resultadoPendente')).toBeTrue();
+      expect(avaliacaoServiceSpy.atualizar).not.toHaveBeenCalled();
+    });
+
+    it('registro antigo abre e salva normalmente', async () => {
+      await setup([mockAvaliacao]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+      expect(component.form.get('achadosPosturais')?.value).toEqual([]);
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(5, jasmine.objectContaining({
+        queixaFuncional: 'Dor no joelho direito', achadosPosturais: [], testesFuncionais: []
+      }));
+    });
+
+    it('envia as opções no cadastro', async () => {
+      await setup([]);
+      avaliacaoServiceSpy.criar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({
+        dataAvaliacao: '2026-06-01', queixaFuncional: 'Dor', escalaDor: 5, diagnosticoFisioterapeutico: 'Lombalgia',
+        achadosPosturais: ['PE_PLANO']
+      });
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 1, achadosPosturais: ['PE_PLANO'], equilibrioOpcao: null, testesFuncionais: []
+      }));
+    });
   });
 });

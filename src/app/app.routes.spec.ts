@@ -6,6 +6,7 @@ import { UserRole } from './core/models/auth';
 import { routes } from './app.routes';
 import { authGuard } from './core/guards/auth.guard';
 import { visitanteGuard } from './core/guards/visitante.guard';
+import { PacienteAvaliacaoComponent } from './pages/pacientes/paciente-avaliacao/paciente-avaliacao.component';
 import { InadimplenciaComponent } from './pages/financeiro/inadimplencia/inadimplencia.component';
 import { FinanceiroRelatorioComponent } from './pages/relatorios/financeiro-relatorio/financeiro-relatorio.component';
 import { RecebimentosRelatorioComponent } from './pages/relatorios/recebimentos-relatorio/recebimentos-relatorio.component';
@@ -51,6 +52,7 @@ describe('app routes', () => {
       'pacientes',
       'pacientes/novo',
       'pacientes/:id/editar',
+      'pacientes/:pacienteId/avaliacao',
       'pacientes/:pacienteId/anamnese',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica',
       'pacientes/:pacienteId/avaliacao-fisioterapeutica/postural/nova',
@@ -231,6 +233,13 @@ describe('app routes', () => {
       expect(route).withContext(`route ${path} should exist`).toBeTruthy();
       expect(route!.canActivate).withContext(`route ${path} should be public`).toBeUndefined();
     }
+  });
+
+  it('should guard the patient assessment flow and lazy load its component', async () => {
+    const route = routes.find(r => r.path === 'pacientes/:pacienteId/avaliacao');
+    expect(route).toBeTruthy();
+    expect(route!.canActivate?.length).toBe(1);
+    expect(await (route!.loadComponent as () => Promise<unknown>)()).toBe(PacienteAvaliacaoComponent);
   });
 
   it('should guard the delinquency screen and lazy load its component', async () => {

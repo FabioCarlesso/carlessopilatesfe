@@ -1,0 +1,116 @@
+/* Grupo de opções do catálogo (issue #306). A legenda repete o caption de
+   `.form-group label`; o chip é o rótulo clicável do próprio input nativo, que
+   continua visível e focável (teclado e leitor de tela sem nada a mais). */
+.seletor {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.seletor-legenda {
+  padding: 0;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  letter-spacing: var(--ls-caps-tight);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.seletor-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background-color: var(--bg-elev);
+  color: var(--text-primary);
+  font-size: var(--fs-body-sm);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--text-brand);
+  }
+}
+
+.chip--marcado {
+  border-color: var(--text-brand);
+  background-color: var(--bg-sunken);
+}
+
+.chip-antiga {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.seletor-testes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.teste-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.teste-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  font-size: var(--fs-body-sm);
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--text-brand);
+  }
+}
+
+.teste-pendente {
+  color: var(--c-danger-text);
+  font-size: var(--fs-caption);
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

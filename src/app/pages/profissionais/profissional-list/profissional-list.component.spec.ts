@@ -632,4 +632,42 @@ describe('ProfissionalListComponent', () => {
       expect(el().querySelector('.empty-state--filtrado')).toBeNull();
     });
   });
+
+  describe('pendência do CREFITO (issue #308)', () => {
+    const comRegistro: ProfissionalResponseDTO = { ...mockProfissional, id: 2, nome: 'Bia Lopes', numeroRegistro: '350544-F' };
+    const emBranco: ProfissionalResponseDTO = { ...mockProfissional, id: 3, nome: 'Caio Reis', numeroRegistro: '  ' };
+
+    function carregarCom(content: ProfissionalResponseDTO[]): HTMLElement {
+      serviceSpy.listar.and.returnValue(of({ content, page: { totalElements: content.length, totalPages: 1, size: 10, number: 0 } }));
+      component.carregar();
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should flag each row without CREFITO and show the number of the others', () => {
+      const el = carregarCom([mockProfissional, comRegistro, emBranco]);
+
+      const linhas = Array.from(el.querySelectorAll('tbody tr'));
+      const crefito = (linha: Element) => linha.querySelectorAll('td')[4];
+      expect(crefito(linhas[0]).querySelector('[data-sem-crefito]')?.textContent?.trim()).toBe('Sem CREFITO');
+      expect(crefito(linhas[1]).textContent?.trim()).toBe('350544-F');
+      expect(crefito(linhas[1]).querySelector('[data-sem-crefito]')).toBeNull();
+      expect(crefito(linhas[2]).querySelector('[data-sem-crefito]')).not.toBeNull();
+      expect(el.querySelector('thead')?.textContent).toContain('CREFITO');
+    });
+
+    it('should count the professionals without CREFITO on the page', () => {
+      let el = carregarCom([mockProfissional, comRegistro, emBranco]);
+      expect(component.semCrefito).toBe(2);
+      expect(el.querySelector('.aviso-crefito')?.textContent?.replace(/\s+/g, ' ').trim())
+        .toBe('2 profissionais nesta página estão sem número no CREFITO. Edite o cadastro para completar — ele é exigido no prontuário.');
+
+      el = carregarCom([mockProfissional, comRegistro]);
+      expect(el.querySelector('.aviso-crefito')?.textContent).toContain('1 profissional nesta página está sem número no CREFITO');
+
+      el = carregarCom([comRegistro]);
+      expect(component.semCrefito).toBe(0);
+      expect(el.querySelector('.aviso-crefito')).toBeNull();
+    });
+  });
 });

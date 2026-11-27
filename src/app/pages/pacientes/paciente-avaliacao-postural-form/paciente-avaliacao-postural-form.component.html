@@ -2,7 +2,6 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
-  { label: 'Avaliação Fisioterapêutica', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica'] },
   { label: 'Análise Postural', link: ['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural'] },
   { label: 'Nova' }
 ]"></app-breadcrumb>
@@ -31,85 +30,92 @@
 
 @if (!loading && !parametroInvalido) {
   <div>
-    @if (avaliacaoFisioterapeuticaId === null) {
-      <div class="card sem-avaliacao">
-        <p>É necessário cadastrar a avaliação fisioterapêutica do paciente antes de iniciar uma análise postural.</p>
-        @if (pacienteId !== null) {
-          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica']" class="btn btn-primary">
-            Cadastrar avaliação fisioterapêutica
-          </a>
+    <form [formGroup]="form" (ngSubmit)="continuar()" class="form-card postural-form">
+      <h2 class="form-section-title">1. Vínculo (opcional)</h2>
+      <div class="form-group">
+        <label for="vinculo">Vincular a</label>
+        <select id="vinculo" formControlName="vinculo" class="form-control" aria-describedby="vinculoDica">
+          <option [ngValue]="chaveSemVinculo">Sem vínculo (análise solta)</option>
+          @for (opcao of opcoesVinculo; track opcao.chave) {
+            <option [ngValue]="opcao.chave">{{ opcao.label }}</option>
+          }
+        </select>
+        <div id="vinculoDica" class="field-hint">
+          @if (opcoesVinculoIncompletas) {
+            Não foi possível carregar todas as avaliações e reavaliações; a análise pode ser vinculada depois, na listagem.
+          } @else if (opcoesVinculo.length === 0) {
+            O paciente ainda não tem avaliação nem reavaliação: a análise fica solta e pode ser vinculada depois.
+          } @else {
+            A análise solta pode ser vinculada depois, na listagem.
+          }
+        </div>
+      </div>
+      <h2 class="form-section-title">2. Escolha a vista</h2>
+      <div class="vista-grid" role="group" aria-label="Escolha a vista da foto" aria-describedby="vistaError">
+        @for (opcao of vistaOptions; track opcao) {
+          <button
+            type="button"
+            class="vista-card"
+            [class.selecionada]="campo('vista')?.value === opcao.valor"
+            [disabled]="vistaIndisponivel(opcao.valor) || analiseCriadaId !== null"
+            [attr.aria-pressed]="campo('vista')?.value === opcao.valor"
+            (click)="selecionarVista(opcao.valor)">
+            <span>{{ opcao.label }}</span>
+            @if (vistaIndisponivel(opcao.valor)) {
+              <span class="vista-indisponivel">Já existe neste vínculo</span>
+            }
+          </button>
         }
       </div>
-    }
-    @if (avaliacaoFisioterapeuticaId !== null) {
-      <form [formGroup]="form" (ngSubmit)="continuar()" class="form-card postural-form">
-        <h2 class="form-section-title">1. Escolha a vista</h2>
-        <div class="vista-grid" role="group" aria-label="Escolha a vista da foto" aria-describedby="vistaError">
-          @for (opcao of vistaOptions; track opcao) {
-            <button
-              type="button"
-              class="vista-card"
-              [class.selecionada]="campo('vista')?.value === opcao.valor"
-              [disabled]="vistaIndisponivel(opcao.valor) || analiseCriadaId !== null"
-              [attr.aria-pressed]="campo('vista')?.value === opcao.valor"
-              (click)="selecionarVista(opcao.valor)">
-              <span>{{ opcao.label }}</span>
-              @if (vistaIndisponivel(opcao.valor)) {
-                <span class="vista-indisponivel">Já existe análise</span>
-              }
-            </button>
-          }
+      @if (campo('vista')?.touched && campo('vista')?.invalid) {
+        <div id="vistaError" class="invalid-feedback">
+          Selecione a vista da foto.
         </div>
-        @if (campo('vista')?.touched && campo('vista')?.invalid) {
-          <div id="vistaError" class="invalid-feedback">
-            Selecione a vista da foto.
+      }
+      @if (analiseCriadaId !== null) {
+        <p class="field-hint">
+          Análise já criada para esta vista. Para trocar a foto, remova a foto atual e envie outra; para escolher outra vista, cancele esta análise na
+          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']">listagem</a>.
+        </p>
+      }
+      <h2 class="form-section-title">3. Envie a foto</h2>
+      <div
+        class="dropzone"
+        [class.tem-foto]="!!previewUrl"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event)">
+        @if (!previewUrl) {
+          <p>Arraste a foto aqui ou</p>
+          <button type="button" class="btn btn-secondary" (click)="inputArquivo.click()" [disabled]="comprimindo">
+            {{ comprimindo ? 'Processando...' : 'Tirar foto / Escolher arquivo' }}
+          </button>
+        }
+        @if (previewUrl) {
+          <div class="preview">
+            <img [src]="previewUrl" alt="Pré-visualização da foto comprimida" />
+            <p class="tamanho-info">Foto comprimida: {{ tamanhoComprimidoKb }} KB</p>
+            <button type="button" class="btn btn-outline btn-sm" (click)="removerFoto()" [disabled]="enviando">Remover foto</button>
           </div>
         }
-        @if (analiseCriadaId !== null) {
-          <p class="field-hint">
-            Análise já criada para esta vista. Para trocar a foto, remova a foto atual e envie outra; para escolher outra vista, cancele esta análise na
-            <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']">listagem</a>.
-          </p>
-        }
-        <h2 class="form-section-title">2. Envie a foto</h2>
-        <div
-          class="dropzone"
-          [class.tem-foto]="!!previewUrl"
-          (dragover)="onDragOver($event)"
-          (drop)="onDrop($event)">
-          @if (!previewUrl) {
-            <p>Arraste a foto aqui ou</p>
-            <button type="button" class="btn btn-secondary" (click)="inputArquivo.click()" [disabled]="comprimindo">
-              {{ comprimindo ? 'Processando...' : 'Tirar foto / Escolher arquivo' }}
-            </button>
-          }
-          @if (previewUrl) {
-            <div class="preview">
-              <img [src]="previewUrl" alt="Pré-visualização da foto comprimida" />
-              <p class="tamanho-info">Foto comprimida: {{ tamanhoComprimidoKb }} KB</p>
-              <button type="button" class="btn btn-outline btn-sm" (click)="removerFoto()" [disabled]="enviando">Remover foto</button>
-            </div>
-          }
-          <input
-            #inputArquivo
-            type="file"
-            accept="image/*"
-            capture="environment"
-            class="input-arquivo-oculto"
-            tabindex="-1"
-            aria-label="Foto da análise postural"
-            (change)="onArquivoSelecionado($event)" />
-        </div>
-        <p class="dica-posicionamento">
-          Oriente o paciente: em pé, parede lisa ao fundo, celular na vertical e nivelado.
-        </p>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="enviando || comprimindo">
-            {{ enviando ? 'Enviando...' : 'Continuar' }}
-          </button>
-          <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">Cancelar</a>
-        </div>
-      </form>
-    }
+        <input
+          #inputArquivo
+          type="file"
+          accept="image/*"
+          capture="environment"
+          class="input-arquivo-oculto"
+          tabindex="-1"
+          aria-label="Foto da análise postural"
+          (change)="onArquivoSelecionado($event)" />
+      </div>
+      <p class="dica-posicionamento">
+        Oriente o paciente: em pé, parede lisa ao fundo, celular na vertical e nivelado.
+      </p>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="enviando || comprimindo">
+          {{ enviando ? 'Enviando...' : 'Continuar' }}
+        </button>
+        <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
   </div>
 }

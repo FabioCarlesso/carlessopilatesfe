@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
@@ -78,14 +79,14 @@ describe('ProfissionalDetailComponent', () => {
   });
 
   it('should render numeroRegistro', () => {
-    expect(textoDoItem('Nr. de Registro')).toBe('350544-F');
+    expect(textoDoItem('Número no CREFITO')).toBe('350544-F');
   });
 
-  it('should fall back to a dash when the profissional has no numeroRegistro', () => {
+  it('should flag a profissional without CREFITO with a badge', () => {
     component.profissional = { ...mockProfissional, numeroRegistro: null };
     fixture.detectChanges();
 
-    expect(textoDoItem('Nr. de Registro')).toBe('-');
+    expect(textoDoItem('Número no CREFITO')).toBe('Sem CREFITO');
   });
 
   it('should navigate after ativar succeeds', () => {
@@ -114,6 +115,23 @@ describe('ProfissionalDetailComponent', () => {
     serviceSpy.ativar.and.returnValue(throwError(() => new Error('fail')));
     component.ativar();
     expect(component.erro).toBe('Erro ao ativar profissional.');
+  });
+
+  it('should show the API detail when activation is refused for a missing CREFITO (422)', () => {
+    component.profissional = { ...mockProfissional, ativo: false, numeroRegistro: null };
+    serviceSpy.ativar.and.returnValue(throwError(() => new HttpErrorResponse({
+      status: 422,
+      error: { detail: 'Informe o número no CREFITO antes de ativar o profissional' }
+    })));
+    component.ativar();
+    fixture.detectChanges();
+
+    expect(component.erro).toBe('Informe o número no CREFITO antes de ativar o profissional');
+    expect(component.acaoEmAndamento).toBeFalse();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.alert-danger[role="alert"]')?.textContent?.trim())
+      .toBe('Informe o número no CREFITO antes de ativar o profissional');
+    expect(el.querySelector('[data-sem-crefito]')?.textContent?.trim()).toBe('Sem CREFITO');
   });
 
   it('should set erro when inativar fails', () => {

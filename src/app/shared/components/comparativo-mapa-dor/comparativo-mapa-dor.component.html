@@ -1,0 +1,32 @@
+<section class="comparativo" aria-labelledby="comparativo-dor-titulo">
+  <h2 id="comparativo-dor-titulo" class="comparativo__titulo">Comparativo do mapa de dor</h2>
+
+  @if (loading) {
+    <app-carregando mensagem="Carregando mapa de dor..." />
+  } @else if (erro) {
+    <div class="alert alert-danger">{{ erro }}</div>
+  } @else if (registros.length === 0) {
+    <app-empty-state mensagem="Nenhum ponto de dor registrado."
+      texto="Os pontos marcados no mapa de dor da avaliação e das reavaliações aparecem aqui, lado a lado." />
+  } @else {
+    <div class="comparativo__vistas" role="group" aria-label="Vista do comparativo">
+      @for (v of vistas; track v) {
+        <button type="button" class="btn btn-sm" [class.btn-primary]="vista === v" [class.btn-outline]="vista !== v"
+          [attr.aria-pressed]="vista === v" (click)="selecionarVista(v)">
+          {{ vistaLabel[v] }} ({{ totalNaVista(v) }})
+        </button>
+      }
+    </div>
+
+    <ol class="comparativo__registros" tabindex="0" role="region" aria-label="Registros do comparativo, do mais antigo ao mais recente">
+      @for (r of registros; track r.origem + r.registroId) {
+        <li class="comparativo__registro" [attr.data-origem]="r.origem">
+          <h3 class="comparativo__registro-titulo">{{ r.titulo }} · {{ r.data | localDate }}</h3>
+          <app-mapa-corporal [pontos]="r.pontos" [somenteLeitura]="true" [vistas]="[vista]"
+            [rotulo]="'Mapa de dor — ' + r.titulo + ' de ' + (r.data | localDate)"
+            mensagemVazia="Sem pontos nesta vista." />
+        </li>
+      }
+    </ol>
+  }
+</section>
