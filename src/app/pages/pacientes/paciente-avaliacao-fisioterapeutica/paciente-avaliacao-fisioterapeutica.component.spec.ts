@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { PontoDor } from '../../../core/models/ponto-dor';
 import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -84,6 +85,7 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
         { provide: PontoDorService, useValue: criarPontoDorSpy() },
@@ -271,6 +273,7 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
       await TestBed.configureTestingModule({
         imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
         providers: [
+          provideOpcoesAvaliacaoFake(),
           { provide: PacienteService, useValue: pacienteServiceSpy },
           { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
           { provide: PontoDorService, useValue: criarPontoDorSpy() },
@@ -421,6 +424,7 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
         providers: [
           { provide: PacienteService, useValue: pacienteServiceSpy },
           { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+          provideOpcoesAvaliacaoFake(),
           { provide: PontoDorService, useValue: criarPontoDorSpy() },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
         ]
@@ -443,6 +447,86 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
       component.salvar();
       expect(pontoDorServiceSpy.salvar).toHaveBeenCalledBefore(salvo);
       expect(salvo).toHaveBeenCalledOnceWith(mockAvaliacao);
+    });
+  });
+
+  describe('achados estruturados (issue #306)', () => {
+    const comOpcoes: AvaliacaoFisioterapeuticaResponseDTO = {
+      ...mockAvaliacao,
+      equilibrio: 'Oscila no apoio unipodal',
+      achadosPosturais: ['ESCOLIOSE'],
+      padraoRespiratorioOpcao: null,
+      equilibrioOpcao: 'ALTERACAO_LEVE',
+      coordenacaoMotoraOpcao: null,
+      testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }],
+      testesFuncionaisComplemento: 'Schober 3 cm'
+    };
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('fica numa seção própria e abre com os valores do registro', async () => {
+      await setup([comOpcoes]);
+      const titulos = Array.from(el().querySelectorAll('.form-section-title')).map(t => t.textContent?.trim());
+      expect(titulos).toContain('Achados estruturados');
+      expect(component.form.get('testesFuncionais')?.value).toEqual([{ teste: 'SCHOBER', resultado: 'POSITIVO' }]);
+      expect(component.form.get('equilibrio')?.value).toBe('Oscila no apoio unipodal');
+      expect(component.form.get('equilibrioOpcao')?.value).toBe('ALTERACAO_LEVE');
+    });
+
+    it('envia achados, seleções e testes na edição', async () => {
+      await setup([comOpcoes]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(5, jasmine.objectContaining({
+        equilibrio: 'Oscila no apoio unipodal',
+        achadosPosturais: ['ESCOLIOSE'],
+        equilibrioOpcao: 'ALTERACAO_LEVE',
+        padraoRespiratorioOpcao: '',
+        testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }],
+        testesFuncionaisComplemento: 'Schober 3 cm'
+      }));
+    });
+
+    it('não envia com teste marcado sem resultado', async () => {
+      await setup([comOpcoes]);
+      (el().querySelector('[data-campo="testesFuncionais"] [data-valor="ADAMS"] input') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      component.salvar();
+
+      expect(component.form.get('testesFuncionais')?.hasError('resultadoPendente')).toBeTrue();
+      expect(avaliacaoServiceSpy.atualizar).not.toHaveBeenCalled();
+    });
+
+    it('registro antigo abre e salva normalmente', async () => {
+      await setup([mockAvaliacao]);
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(mockAvaliacao));
+      expect(component.form.get('achadosPosturais')?.value).toEqual([]);
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(5, jasmine.objectContaining({
+        queixaFuncional: 'Dor no joelho direito', achadosPosturais: [], testesFuncionais: []
+      }));
+    });
+
+    it('envia as opções no cadastro', async () => {
+      await setup([]);
+      avaliacaoServiceSpy.criar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({
+        dataAvaliacao: '2026-06-01', queixaFuncional: 'Dor', escalaDor: 5, diagnosticoFisioterapeutico: 'Lombalgia',
+        achadosPosturais: ['PE_PLANO']
+      });
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 1, achadosPosturais: ['PE_PLANO'], equilibrioOpcao: null, testesFuncionais: []
+      }));
     });
   });
 });

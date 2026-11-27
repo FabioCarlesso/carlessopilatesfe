@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
@@ -7,6 +8,11 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { ReavaliacaoService } from '../../../core/services/reavaliacao.service';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PacienteReavaliacaoListComponent } from './paciente-reavaliacao-list.component';
+import { AvaliacaoFisioterapeuticaService } from '../../../core/services/avaliacao-fisioterapeutica.service';
+import { AnamneseService } from '../../../core/services/anamnese.service';
+import { AvaliacaoFisioterapeuticaResponseDTO } from '../../../core/models/avaliacao-fisioterapeutica';
+import { AnamneseResponseDTO } from '../../../core/models/anamnese';
+import { HttpErrorResponse } from '@angular/common/http';
 
 const mockPaciente: PacienteResponseDTO = {
   version: 0,
@@ -56,10 +62,21 @@ describe('PacienteReavaliacaoListComponent', () => {
   let pacienteServiceSpy: jasmine.SpyObj<PacienteService>;
   let reavaliacaoServiceSpy: jasmine.SpyObj<ReavaliacaoService>;
 
+  let avaliacaoServiceSpy: jasmine.SpyObj<AvaliacaoFisioterapeuticaService>;
+  let anamneseServiceSpy: jasmine.SpyObj<AnamneseService>;
+
   async function setup(
     reavaliacoes: ReavaliacaoResponseDTO[] = [mockReavaliacao],
-    pacienteId = '10'
+    pacienteId = '10',
+    avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[] = [],
+    anamnese: Partial<AnamneseResponseDTO> | null = null
   ) {
+    avaliacaoServiceSpy = jasmine.createSpyObj('AvaliacaoFisioterapeuticaService', ['listarPorPaciente']);
+    avaliacaoServiceSpy.listarPorPaciente.and.returnValue(of(avaliacoes));
+    anamneseServiceSpy = jasmine.createSpyObj('AnamneseService', ['buscarPorPaciente']);
+    anamneseServiceSpy.buscarPorPaciente.and.returnValue(
+      anamnese ? of(anamnese as AnamneseResponseDTO) : throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
     pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
     reavaliacaoServiceSpy = jasmine.createSpyObj('ReavaliacaoService', [
       'listarPorPaciente',
@@ -74,8 +91,11 @@ describe('PacienteReavaliacaoListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteReavaliacaoListComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
+        { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+        { provide: AnamneseService, useValue: anamneseServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
       ]
     }).compileComponents();
@@ -185,5 +205,63 @@ describe('PacienteReavaliacaoListComponent', () => {
     const cta = el.querySelector('.empty-state__acoes a');
     expect(cta?.textContent?.trim()).toBe('Nova Reavaliação');
     expect(cta?.getAttribute('href')).toBe('/pacientes/10/reavaliacoes/nova');
+  });
+
+  describe('opções pré-definidas (issue #306)', () => {
+    const avaliacao = {
+      id: 7, pacienteId: 10, dataAvaliacao: '2026-03-01',
+      achadosPosturais: ['ESCOLIOSE'], testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }],
+      equilibrioOpcao: 'ALTERACAO_LEVE', padraoRespiratorioOpcao: null, coordenacaoMotoraOpcao: null
+    } as unknown as AvaliacaoFisioterapeuticaResponseDTO;
+    const comOpcoes: ReavaliacaoResponseDTO = {
+      ...mockReavaliacao,
+      regioesDor: ['LOMBAR'],
+      achadosPosturais: ['ESCOLIOSE', 'PE_PLANO'],
+      equilibrioOpcao: 'PRESERVADO',
+      padraoRespiratorioOpcao: null,
+      coordenacaoMotoraOpcao: null,
+      testesFuncionais: [{ teste: 'SCHOBER', resultado: 'NEGATIVO' }],
+      achadosPosturaisComplemento: 'Leve'
+    };
+
+    it('mostra as opções selecionadas com os rótulos do catálogo', async () => {
+      await setup([comOpcoes], '10', [avaliacao], { regioesDor: ['CERVICAL'] });
+      const el = fixture.nativeElement as HTMLElement;
+      const achados = el.querySelector('.opcoes-item[data-campo="achadosPosturais"]');
+      expect(achados?.textContent).toContain('Escoliose');
+      expect(achados?.textContent).toContain('Pé plano');
+      expect(achados?.textContent).toContain('Leve');
+    });
+
+    it('compara com a avaliação anterior e com as regiões de dor da anamnese', async () => {
+      await setup([comOpcoes], '10', [avaliacao], { regioesDor: ['CERVICAL'] });
+      const comparativo = (fixture.nativeElement as HTMLElement).querySelector('[data-comparativo]');
+      expect(comparativo?.textContent).toContain('à avaliação inicial de 01/03/2026');
+      expect(comparativo?.querySelector('[data-campo="regioesDor"]')?.textContent)
+        .toContain('incluído: Lombar; removido: Cervical');
+      expect(comparativo?.querySelector('[data-campo="equilibrioOpcao"]')?.textContent)
+        .toContain('de Alteração leve para Preservado');
+      expect(comparativo?.querySelector('[data-campo="testesFuncionais"]')?.textContent)
+        .toContain('Schober: de Positivo para Negativo');
+      expect(component.anteriores.get(1)?.referencia).toBe('à avaliação inicial de 01/03/2026');
+    });
+
+    it('lista normalmente quando avaliações e anamnese falham', async () => {
+      await setup([comOpcoes]);
+      avaliacaoServiceSpy.listarPorPaciente.and.returnValue(throwError(() => new Error('fail')));
+
+      component['carregarReavaliacoes']();
+
+      expect(component.erro).toBeNull();
+      expect(component.reavaliacoes).toEqual([comOpcoes]);
+      expect(component.anteriores.size).toBe(0);
+    });
+
+    it('registro antigo, sem os campos, não mostra resumo nem comparativo', async () => {
+      await setup([mockReavaliacao], '10', [avaliacao]);
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.opcoes-resumo')).toBeNull();
+      expect(el.querySelector('[data-comparativo]')).toBeNull();
+    });
   });
 });

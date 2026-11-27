@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PontoDor } from '../../../core/models/ponto-dor';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
@@ -87,6 +88,7 @@ describe('PacienteReavaliacaoFormComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteReavaliacaoFormComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
         { provide: PontoDorService, useValue: criarPontoDorSpy() },
@@ -289,6 +291,7 @@ describe('PacienteReavaliacaoFormComponent', () => {
       await TestBed.configureTestingModule({
         imports: [PacienteReavaliacaoFormComponent, RouterTestingModule],
         providers: [
+          provideOpcoesAvaliacaoFake(),
           { provide: PacienteService, useValue: pacienteServiceSpy },
           { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
           { provide: PontoDorService, useValue: criarPontoDorSpy() },
@@ -384,6 +387,7 @@ describe('PacienteReavaliacaoFormComponent', () => {
         providers: [
           { provide: PacienteService, useValue: pacienteServiceSpy },
           { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
+          provideOpcoesAvaliacaoFake(),
           { provide: PontoDorService, useValue: criarPontoDorSpy() },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '10' }) } } }
         ]
@@ -411,6 +415,84 @@ describe('PacienteReavaliacaoFormComponent', () => {
       expect(reavaliacaoServiceSpy.criar).toHaveBeenCalledTimes(1);
       expect(reavaliacaoServiceSpy.atualizar).toHaveBeenCalledTimes(1);
       expect(salvo).toHaveBeenCalledOnceWith(mockReavaliacao);
+    });
+  });
+
+  describe('achados estruturados (issue #306)', () => {
+    const comOpcoes: ReavaliacaoResponseDTO = {
+      ...mockReavaliacao,
+      regioesDor: ['LOMBAR'],
+      achadosPosturais: [],
+      padraoRespiratorioOpcao: 'MISTO',
+      equilibrioOpcao: null,
+      coordenacaoMotoraOpcao: null,
+      testesFuncionais: []
+    };
+
+    it('abre a reavaliação com as opções e envia na edição', async () => {
+      await setup({ pacienteId: '10', id: '1' }, comOpcoes);
+      reavaliacaoServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+      expect(component.form.get('regioesDor')?.value).toEqual(['LOMBAR']);
+      component.form.patchValue({ padraoRespiratorioOpcao: null });
+
+      component.salvar();
+
+      expect(reavaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({
+        regioesDor: ['LOMBAR'], padraoRespiratorioOpcao: '', achadosPosturais: [], evolucaoDor: 'Redução de 7 para 3.'
+      }));
+    });
+
+    it('registro antigo abre com as opções vazias', async () => {
+      await setup({ pacienteId: '10', id: '1' }, mockReavaliacao);
+      expect(component.form.get('regioesDor')?.value).toEqual([]);
+      expect(component.form.get('equilibrioOpcao')?.value).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-campo="regioesDor"]')).toBeTruthy();
+    });
+
+    it('envia as opções no cadastro', async () => {
+      await setup({ pacienteId: '10' });
+      reavaliacaoServiceSpy.criar.and.returnValue(of(comOpcoes));
+      spyOn(router, 'navigate').and.resolveTo(true);
+      component.form.patchValue({ dataReavaliacao: '2026-06-01', regioesDor: ['CERVICAL'] });
+
+      component.salvar();
+
+      expect(reavaliacaoServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 10, regioesDor: ['CERVICAL'], padraoRespiratorioOpcao: null, regioesDorComplemento: null
+      }));
+    });
+
+    it('funciona no modo embutido do fluxo de avaliação', async () => {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      reavaliacaoServiceSpy = jasmine.createSpyObj('ReavaliacaoService', ['listarPorPaciente', 'buscar', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      reavaliacaoServiceSpy.buscar.and.returnValue(of(comOpcoes));
+      reavaliacaoServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+      await TestBed.configureTestingModule({
+        imports: [PacienteReavaliacaoFormComponent, RouterTestingModule],
+        providers: [
+          provideOpcoesAvaliacaoFake(),
+          { provide: PontoDorService, useValue: criarPontoDorSpy() },
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '10' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteReavaliacaoFormComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.componentRef.setInput('reavaliacaoIdEmbutido', 1);
+      fixture.detectChanges();
+      const salvos: ReavaliacaoResponseDTO[] = [];
+      component.salvo.subscribe(r => salvos.push(r));
+
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('[data-campo="regioesDor"] [data-valor="LOMBAR"] input:checked')).toBeTruthy();
+      (el.querySelector('[data-campo="regioesDor"] [data-valor="CERVICAL"] input') as HTMLInputElement).click();
+      component.salvar();
+
+      expect(reavaliacaoServiceSpy.atualizar).toHaveBeenCalledWith(1, jasmine.objectContaining({ regioesDor: ['CERVICAL', 'LOMBAR'] }));
+      expect(salvos).toEqual([comOpcoes]);
     });
   });
 });

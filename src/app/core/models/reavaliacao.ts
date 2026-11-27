@@ -1,4 +1,6 @@
-export interface ReavaliacaoRequestDTO {
+import { CamposOpcoesReavaliacao } from './opcoes-avaliacao';
+
+export interface ReavaliacaoRequestDTO extends CamposOpcoesReavaliacao {
   pacienteId: number;
   dataReavaliacao: string;
   comparativoAvaliacaoAnterior?: string | null;
@@ -12,7 +14,7 @@ export interface ReavaliacaoRequestDTO {
   observacoesGerais?: string | null;
 }
 
-export interface ReavaliacaoUpdateDTO {
+export interface ReavaliacaoUpdateDTO extends CamposOpcoesReavaliacao {
   dataReavaliacao?: string | null;
   comparativoAvaliacaoAnterior?: string | null;
   evolucaoDor?: string | null;
@@ -27,7 +29,7 @@ export interface ReavaliacaoUpdateDTO {
   version?: number | null;
 }
 
-export interface ReavaliacaoResponseDTO {
+export interface ReavaliacaoResponseDTO extends CamposOpcoesReavaliacao {
   id: number;
   pacienteId: number;
   nomePaciente: string;

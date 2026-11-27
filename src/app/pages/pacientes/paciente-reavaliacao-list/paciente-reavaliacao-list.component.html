@@ -108,6 +108,9 @@
               </div>
             }
           </div>
+          <app-opcoes-avaliacao-resumo class="reavaliacao-opcoes" [registro]="reavaliacao" [campos]="camposOpcoes"
+            [anterior]="anteriores.get(reavaliacao.id)?.registro ?? null"
+            [referencia]="anteriores.get(reavaliacao.id)?.referencia ?? null" />
         </div>
       </div>
     }

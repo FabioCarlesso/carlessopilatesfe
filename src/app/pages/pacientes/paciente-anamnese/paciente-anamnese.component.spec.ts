@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -64,6 +65,7 @@ describe('PacienteAnamneseComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PacienteAnamneseComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: AnamneseService, useValue: anamneseServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
@@ -247,6 +249,7 @@ describe('PacienteAnamneseComponent', () => {
       await TestBed.configureTestingModule({
         imports: [PacienteAnamneseComponent, RouterTestingModule],
         providers: [
+          provideOpcoesAvaliacaoFake(),
           { provide: PacienteService, useValue: pacienteServiceSpy },
           { provide: AnamneseService, useValue: anamneseServiceSpy },
           { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
@@ -307,5 +310,81 @@ describe('PacienteAnamneseComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('h1')?.textContent).toContain('Anamnese');
     expect(el.querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Atualizar');
+  });
+
+  describe('opções pré-definidas (issue #306)', () => {
+    const comOpcoes: AnamneseResponseDTO = {
+      ...mockAnamnese,
+      regioesDor: ['CERVICAL', 'CEFALEIA_ANTIGA'],
+      regioesDorComplemento: 'Irradia para o ombro',
+      condicoesSaude: [],
+      nivelAtividadeFisicaOpcao: 'ATIVO',
+      objetivosOpcoes: ['POSTURA']
+    };
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('abre o registro com as opções marcadas, inclusive a aposentada', async () => {
+      await setup(comOpcoes);
+      expect(component.form.get('regioesDor')?.value).toEqual(['CERVICAL', 'CEFALEIA_ANTIGA']);
+      expect(component.form.get('regioesDorComplemento')?.value).toBe('Irradia para o ombro');
+      const antiga = el().querySelector('[data-campo="regioesDor"] [data-valor="CEFALEIA_ANTIGA"]');
+      expect(antiga?.textContent).toContain('(opção antiga)');
+      expect((antiga?.querySelector('input') as HTMLInputElement).checked).toBeTrue();
+      // O nível em texto livre continua no formulário, ao lado da opção.
+      expect(component.form.get('nivelAtividadeFisica')?.value).toBe('Leve');
+      expect(component.form.get('nivelAtividadeFisicaOpcao')?.value).toBe('ATIVO');
+    });
+
+    it('envia as opções na edição, com "" para limpar a seleção única', async () => {
+      await setup(comOpcoes);
+      anamneseServiceSpy.atualizar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({ nivelAtividadeFisicaOpcao: null, objetivosOpcoes: ['ALIVIO_DE_DOR', 'POSTURA'] });
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.atualizar).toHaveBeenCalledWith(10, jasmine.objectContaining({
+        regioesDor: ['CERVICAL', 'CEFALEIA_ANTIGA'],
+        regioesDorComplemento: 'Irradia para o ombro',
+        condicoesSaude: [],
+        condicoesSaudeComplemento: '',
+        nivelAtividadeFisicaOpcao: '',
+        objetivosOpcoes: ['ALIVIO_DE_DOR', 'POSTURA'],
+        objetivos: 'Fortalecimento'
+      }));
+    });
+
+    it('envia as opções escolhidas no cadastro', async () => {
+      await setup(null);
+      anamneseServiceSpy.criar.and.returnValue(of(comOpcoes));
+      component.form.patchValue({ queixaPrincipal: 'Dor', objetivos: 'Melhorar' });
+      (el().querySelector('[data-campo="regioesDor"] [data-valor="LOMBAR"] input') as HTMLInputElement).click();
+      (el().querySelector('[data-campo="nivelAtividadeFisicaOpcao"] [data-valor="SEDENTARIO"] input') as HTMLInputElement).click();
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.criar).toHaveBeenCalledWith(jasmine.objectContaining({
+        pacienteId: 1,
+        regioesDor: ['LOMBAR'],
+        nivelAtividadeFisicaOpcao: 'SEDENTARIO',
+        objetivosOpcoes: [],
+        regioesDorComplemento: null
+      }));
+    });
+
+    it('registro antigo, sem os campos, abre e salva com listas vazias', async () => {
+      await setup(mockAnamnese);
+      anamneseServiceSpy.atualizar.and.returnValue(of(mockAnamnese));
+      expect(component.form.get('regioesDor')?.value).toEqual([]);
+      expect(el().querySelector('[data-campo="regioesDor"]')).toBeTruthy();
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.atualizar).toHaveBeenCalledWith(10, jasmine.objectContaining({
+        queixaPrincipal: 'Dor lombar', regioesDor: [], nivelAtividadeFisicaOpcao: ''
+      }));
+    });
   });
 });

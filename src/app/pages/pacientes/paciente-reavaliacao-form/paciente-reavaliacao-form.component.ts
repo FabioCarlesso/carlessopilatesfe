@@ -19,6 +19,9 @@ import { CarregandoComponent } from '../../../shared/components/carregando/carre
 import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
 import { PontoDorService } from '../../../core/services/ponto-dor.service';
 import { MapaDorRegistro } from '../../../shared/utils/mapa-dor-registro';
+import { OpcoesAvaliacaoCamposComponent } from '../../../shared/components/opcoes-avaliacao-campos/opcoes-avaliacao-campos.component';
+import { CAMPOS_OPCOES_REAVALIACAO } from '../../../core/models/opcoes-avaliacao';
+import { controlesOpcoes, dtoOpcoes, valoresFormularioOpcoes } from '../../../shared/utils/opcoes-avaliacao';
 
 /** Campos opcionais de texto: o `PUT` só os limpa recebendo `""` (ver `salvar`). */
 type CampoTexto =
@@ -34,7 +37,7 @@ type CampoTexto =
 
 @Component({
   selector: 'app-paciente-reavaliacao-form',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, MapaCorporalComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, OpcoesAvaliacaoCamposComponent, MapaCorporalComponent],
   templateUrl: './paciente-reavaliacao-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-reavaliacao-form.component.scss'
@@ -51,6 +54,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
   @Input() reavaliacaoIdEmbutido: number | null = null;
   /** Emite a reavaliação gravada, no cadastro e na edição; o fluxo usa para avançar. */
   @Output() salvo = new EventEmitter<ReavaliacaoResponseDTO>();
+  /** Achados estruturados da reavaliação (issue #306). */
+  readonly camposOpcoes = CAMPOS_OPCOES_REAVALIACAO;
   form!: FormGroup;
   pacienteId: number | null = null;
   reavaliacaoId: number | null = null;
@@ -88,7 +93,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
       objetivosAlcancados: [''],
       pontosAtencao: [''],
       ajustesRecomendados: [''],
-      observacoesGerais: ['']
+      observacoesGerais: [''],
+      ...controlesOpcoes(CAMPOS_OPCOES_REAVALIACAO)
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -152,7 +158,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
               objetivosAlcancados: formFields.objetivosAlcancados ?? '',
               pontosAtencao: formFields.pontosAtencao ?? '',
               ajustesRecomendados: formFields.ajustesRecomendados ?? '',
-              observacoesGerais: formFields.observacoesGerais ?? ''
+              observacoesGerais: formFields.observacoesGerais ?? '',
+              ...valoresFormularioOpcoes(CAMPOS_OPCOES_REAVALIACAO, reavaliacao)
             });
           } else {
             this.reavaliacao = null;
@@ -196,6 +203,7 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
     // salvo exige mandar `""`, senão a API devolve o valor antigo junto com o sucesso.
     const texto = (campo: CampoTexto): string | null => opt(valor[campo]) ?? (this.reavaliacao?.[campo] ? '' : null);
 
+    const criando = this.reavaliacao === null;
     const baseDto = {
       dataReavaliacao: valor.dataReavaliacao,
       comparativoAvaliacaoAnterior: texto('comparativoAvaliacaoAnterior'),
@@ -206,15 +214,15 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
       objetivosAlcancados: texto('objetivosAlcancados'),
       pontosAtencao: texto('pontosAtencao'),
       ajustesRecomendados: texto('ajustesRecomendados'),
-      observacoesGerais: texto('observacoesGerais')
+      observacoesGerais: texto('observacoesGerais'),
+      ...dtoOpcoes(CAMPOS_OPCOES_REAVALIACAO, valor, criando)
     };
 
     const updateDto: ReavaliacaoUpdateDTO = { ...baseDto };
     const createDto: ReavaliacaoRequestDTO = { pacienteId: this.pacienteId, ...baseDto };
 
     const reavaliacaoAtual = this.reavaliacao;
-    const criando = reavaliacaoAtual === null;
-    const obs = criando
+    const obs = reavaliacaoAtual === null
       ? this.reavaliacaoService.criar(createDto)
       : this.reavaliacaoService.atualizar(reavaliacaoAtual.id, { ...updateDto, version: reavaliacaoAtual.version });
 
@@ -241,7 +249,8 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
             objetivosAlcancados: formFields.objetivosAlcancados ?? '',
             pontosAtencao: formFields.pontosAtencao ?? '',
             ajustesRecomendados: formFields.ajustesRecomendados ?? '',
-            observacoesGerais: formFields.observacoesGerais ?? ''
+            observacoesGerais: formFields.observacoesGerais ?? '',
+            ...valoresFormularioOpcoes(CAMPOS_OPCOES_REAVALIACAO, response)
           });
           if (this.successTimer !== null) {
             clearTimeout(this.successTimer);

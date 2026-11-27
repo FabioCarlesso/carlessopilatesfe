@@ -169,4 +169,38 @@ describe('fluxo-avaliacao', () => {
       expect(avaliacaoDeReferencia(montarLinhaDoTempo([], [reavaliacao(5, '2026-06-01')]), 5)).toBeNull();
     });
   });
+
+  describe('comparativo das opções na linha do tempo (issue #306)', () => {
+    it('liga cada reavaliação ao registro anterior, com a referência para a tela', () => {
+      const linha = montarLinhaDoTempo(
+        [avaliacao(1, '2026-03-01', { achadosPosturais: ['ESCOLIOSE'] })],
+        [reavaliacao(5, '2026-06-01'), reavaliacao(6, '2026-09-01')]
+      );
+      expect(linha[0].anterior).toBeNull();
+      expect(linha[1].anterior?.referencia).toBe('à avaliação inicial de 01/03/2026');
+      expect(linha[1].anterior?.registro).toBe(linha[0].registro);
+      expect(linha[2].anterior?.referencia).toBe('à reavaliação de 01/06/2026');
+      expect(linha[1].camposOpcoes.map(c => c.campo)).toContain('regioesDor');
+      expect(linha[0].camposOpcoes.map(c => c.campo)).not.toContain('regioesDor');
+    });
+
+    it('a reavaliação depois da avaliação compara as regiões de dor com as da anamnese', () => {
+      const linha = montarLinhaDoTempo(
+        [avaliacao(1, '2026-03-01', { achadosPosturais: ['ESCOLIOSE'] })],
+        [reavaliacao(5, '2026-06-01')],
+        { regioesDor: ['CERVICAL'] }
+      );
+      expect(linha[1].anterior?.registro).toEqual(jasmine.objectContaining({ achadosPosturais: ['ESCOLIOSE'], regioesDor: ['CERVICAL'] }));
+    });
+
+    it('sem regiões na anamnese (API antiga) usa a avaliação como está', () => {
+      const linha = montarLinhaDoTempo([avaliacao(1, '2026-03-01')], [reavaliacao(5, '2026-06-01')], {});
+      expect(linha[1].anterior?.registro).toBe(linha[0].registro);
+    });
+
+    it('reavaliação sem registro anterior não compara', () => {
+      const [item] = montarLinhaDoTempo([], [reavaliacao(5, '2026-06-01')]);
+      expect(item.anterior).toBeNull();
+    });
+  });
 });

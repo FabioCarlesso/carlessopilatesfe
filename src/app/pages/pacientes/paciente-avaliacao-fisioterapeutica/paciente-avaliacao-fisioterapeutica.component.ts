@@ -15,10 +15,13 @@ import { CarregandoComponent } from '../../../shared/components/carregando/carre
 import { MapaCorporalComponent } from '../../../shared/components/mapa-corporal/mapa-corporal.component';
 import { PontoDorService } from '../../../core/services/ponto-dor.service';
 import { MapaDorRegistro } from '../../../shared/utils/mapa-dor-registro';
+import { OpcoesAvaliacaoCamposComponent } from '../../../shared/components/opcoes-avaliacao-campos/opcoes-avaliacao-campos.component';
+import { CAMPOS_OPCOES_EXAME_FISICO } from '../../../core/models/opcoes-avaliacao';
+import { controlesOpcoes, dtoOpcoes, valoresFormularioOpcoes } from '../../../shared/utils/opcoes-avaliacao';
 
 @Component({
   selector: 'app-paciente-avaliacao-fisioterapeutica',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, MapaCorporalComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, OpcoesAvaliacaoCamposComponent, MapaCorporalComponent],
   templateUrl: './paciente-avaliacao-fisioterapeutica.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-avaliacao-fisioterapeutica.component.scss'
@@ -32,6 +35,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
   @Input() embutido = false;
   /** Emite o registro gravado, no cadastro e na edição; o fluxo usa para avançar. */
   @Output() salvo = new EventEmitter<AvaliacaoFisioterapeuticaResponseDTO>();
+  /** Achados estruturados do exame físico (issue #306). */
+  readonly camposOpcoes = CAMPOS_OPCOES_EXAME_FISICO;
   form!: FormGroup;
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
@@ -70,7 +75,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
       escalaDor: [null, [Validators.required, Validators.min(0), Validators.max(10)]],
       testesFuncionaisRealizados: [''],
       diagnosticoFisioterapeutico: ['', [Validators.required, Validators.pattern(/\S/)]],
-      observacoesGerais: ['']
+      observacoesGerais: [''],
+      ...controlesOpcoes(CAMPOS_OPCOES_EXAME_FISICO)
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -104,7 +110,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
         this.avaliacao = avaliacoes[0] ?? null;
         if (this.avaliacao) {
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = this.avaliacao;
-          this.form.patchValue(formFields);
+          this.form.patchValue({ ...formFields, ...valoresFormularioOpcoes(CAMPOS_OPCOES_EXAME_FISICO, this.avaliacao) });
           this.mapaDor.carregar(this.avaliacao.id);
         } else {
           // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.
@@ -136,6 +142,8 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
     this.sucesso = null;
 
     const valor = this.form.value;
+    const avaliacaoAtual = this.avaliacao;
+    const criando = avaliacaoAtual === null;
     const opt = (v: string | null | undefined): string | null => (v?.trim() ? v.trim() : null);
     const dto = {
       dataAvaliacao: valor.dataAvaliacao,
@@ -150,11 +158,10 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
       escalaDor: Number(valor.escalaDor),
       testesFuncionaisRealizados: opt(valor.testesFuncionaisRealizados),
       diagnosticoFisioterapeutico: valor.diagnosticoFisioterapeutico,
-      observacoesGerais: opt(valor.observacoesGerais)
+      observacoesGerais: opt(valor.observacoesGerais),
+      ...dtoOpcoes(CAMPOS_OPCOES_EXAME_FISICO, valor, criando)
     };
 
-    const avaliacaoAtual = this.avaliacao;
-    const criando = avaliacaoAtual === null;
     const obs = criando
       ? this.avaliacaoService.criar({ pacienteId: this.pacienteId, ...dto })
       : this.avaliacaoService.atualizar(avaliacaoAtual.id, { ...dto, version: avaliacaoAtual.version });
@@ -167,7 +174,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
       next: ({ response, erroMapa }) => {
         this.avaliacao = response;
         const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
-        this.form.patchValue(formFields);
+        this.form.patchValue({ ...formFields, ...valoresFormularioOpcoes(CAMPOS_OPCOES_EXAME_FISICO, response) });
         if (erroMapa) {
           // O registro foi salvo e a tela já o edita; sem avisar o fluxo, para o mapa poder ser reenviado.
           this.erro = `Avaliação fisioterapêutica salva, mas o mapa de dor não foi gravado: ${erroMapa}`;

@@ -102,6 +102,7 @@
                     }
                   </dl>
                 }
+                <app-opcoes-avaliacao-resumo [registro]="ref.registro" [campos]="ref.camposOpcoes" />
               } @else {
                 <p class="referencia-titulo">Nenhuma avaliação anterior registrada para comparar.</p>
               }
@@ -202,6 +203,8 @@
                   }
                 </dl>
               }
+              <app-opcoes-avaliacao-resumo [registro]="item.registro" [campos]="item.camposOpcoes"
+                [anterior]="item.anterior?.registro ?? null" [referencia]="item.anterior?.referencia ?? null" />
             </article>
           </li>
         }

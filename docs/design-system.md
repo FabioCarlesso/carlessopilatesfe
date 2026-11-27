@@ -25,6 +25,10 @@ O primeiro `input[type="checkbox"]` da aplicação nasceu no formulário de bloq
 
 Dia bloqueado na agenda usa a família âmbar: `--c-warning-bg` no fundo da célula e `--c-warning-text` no texto do motivo. O fundo sinaliza a célula inteira sem competir com as cores de situação dos chips — o bloqueio é uma condição do dia, não um evento dele —, e o motivo é escrito na célula porque cor sozinha não é sinal suficiente (WCAG 1.4.1); a frase completa fica no `title` e no `aria-label` da célula.
 
+### Seletor de opções em chips
+
+As opções pré-definidas da avaliação (issue #306) usam o componente `app-seletor-opcoes` (`shared/components/seletor-opcoes/`), e não um padrão novo de controle: o chip é o `<label>` que envolve o **input nativo**, que continua visível — checkbox na seleção múltipla, radio (mesmo `name` por grupo, com **Não informado** para limpar) na única. Assim teclado (Tab, Espaço, setas no grupo de radios), foco visível e leitor de tela vêm do navegador, sem `role` nem `tabindex` próprios. O grupo é um `fieldset` com `legend` no caption de `.form-group label`; o resultado do teste funcional é um `fieldset` aninhado com legenda visualmente oculta ("Resultado do teste Schober"). O chip segue a regra do checkbox: `18px`, `accent-color: var(--text-brand)` e alvo de `44px`; marcado, troca a borda para `--text-brand` e o fundo para `--bg-sunken` — o input marcado continua sendo o sinal principal, a cor só reforça (WCAG 1.4.1). Opção aposentada leva o texto "(opção antiga)" em `--text-secondary`, nunca só uma cor. Na leitura (`app-opcoes-avaliacao-resumo`), os valores são tags com borda `--border-default` e raio `--r-pill`, e o comparativo fica num bloco `--bg-sunken` com filete `--text-brand`.
+
 ### Faixas de largura total e cor de rótulo sobre fundo fixo
 
 Telas que montam o próprio layout de ponta a ponta declaram `data: { layoutFluido: true }`

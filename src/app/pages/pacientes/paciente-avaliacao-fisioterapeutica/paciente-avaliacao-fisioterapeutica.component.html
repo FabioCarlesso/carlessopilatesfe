@@ -109,6 +109,8 @@
       <label for="padraoRespiratorio">Padrão respiratório</label>
       <textarea id="padraoRespiratorio" formControlName="padraoRespiratorio" class="form-control"></textarea>
     </div>
+    <h2 class="form-section-title">Achados estruturados</h2>
+    <app-opcoes-avaliacao-campos [form]="form" [campos]="camposOpcoes" />
     <h2 class="form-section-title">Diagnóstico e testes</h2>
     <div class="form-group">
       <label for="testesFuncionaisRealizados">Testes funcionais realizados</label>

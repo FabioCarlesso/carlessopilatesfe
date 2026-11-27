@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideOpcoesAvaliacaoFake } from '../../../../testing/opcoes-avaliacao';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap } from '@angular/router';
@@ -111,6 +112,7 @@ describe('PacienteAvaliacaoComponent', () => {
     TestBed.configureTestingModule({
       imports: [PacienteAvaliacaoComponent, RouterTestingModule],
       providers: [
+        provideOpcoesAvaliacaoFake(),
         { provide: PacienteService, useValue: pacienteSpy },
         { provide: AnamneseService, useValue: anamneseSpy },
         { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoSpy },
@@ -512,6 +514,70 @@ describe('PacienteAvaliacaoComponent', () => {
       expect(component.erro).toBe('Erro ao carregar a avaliação do paciente.');
       expect(component.loading).toBeFalse();
       expect(el().querySelector('.stepper')).toBeNull();
+    });
+  });
+
+  describe('opções pré-definidas (issue #306)', () => {
+    const avaliacaoComOpcoes = {
+      ...mockAvaliacao(1, '2026-03-01'),
+      achadosPosturais: ['ESCOLIOSE'],
+      equilibrioOpcao: 'ALTERACAO_LEVE',
+      testesFuncionais: [{ teste: 'SCHOBER', resultado: 'POSITIVO' }]
+    } as AvaliacaoFisioterapeuticaResponseDTO;
+    const reavaliacaoComOpcoes = {
+      ...mockReavaliacao(5, '2026-06-01'),
+      regioesDor: ['LOMBAR'],
+      achadosPosturais: ['ESCOLIOSE', 'PE_PLANO'],
+      equilibrioOpcao: 'PRESERVADO',
+      testesFuncionais: [{ teste: 'SCHOBER', resultado: 'NEGATIVO' }]
+    } as ReavaliacaoResponseDTO;
+    const anamneseComOpcoes = { ...mockAnamnese, regioesDor: ['CERVICAL'] } as AnamneseResponseDTO;
+
+    function cenarioCompleto(query: Params = {}) {
+      setup({
+        anamnese: anamneseComOpcoes,
+        avaliacoes: [avaliacaoComOpcoes],
+        planos: [mockPlano(3, '2026-03-02')],
+        reavaliacoes: [reavaliacaoComOpcoes],
+        query
+      });
+    }
+
+    it('mostra as opções selecionadas em cada item da linha do tempo', () => {
+      cenarioCompleto();
+      const [inicial, reav] = Array.from(el().querySelectorAll('.timeline-item'));
+      expect(inicial.querySelector('.opcoes-item[data-campo="achadosPosturais"]')?.textContent).toContain('Escoliose');
+      expect(inicial.querySelector('.opcoes-item[data-campo="testesFuncionais"]')?.textContent).toContain('Schober: Positivo');
+      expect(inicial.querySelector('[data-comparativo]')).toBeNull();
+      expect(reav.querySelector('.opcoes-item[data-campo="regioesDor"]')?.textContent).toContain('Lombar');
+    });
+
+    it('mostra na reavaliação o que mudou em relação à avaliação anterior', () => {
+      cenarioCompleto();
+      const comparativo = el().querySelectorAll('.timeline-item')[1].querySelector('[data-comparativo]') as HTMLElement;
+      expect(comparativo.textContent).toContain('à avaliação inicial de 01/03/2026');
+      expect(comparativo.querySelector('[data-campo="achadosPosturais"]')?.textContent).toContain('incluído: Pé plano');
+      expect(comparativo.querySelector('[data-campo="regioesDor"]')?.textContent).toContain('incluído: Lombar; removido: Cervical');
+      expect(comparativo.querySelector('[data-campo="equilibrioOpcao"]')?.textContent).toContain('de Alteração leve para Preservado');
+      expect(comparativo.querySelector('[data-campo="testesFuncionais"]')?.textContent).toContain('Schober: de Positivo para Negativo');
+    });
+
+    it('mostra as opções do ponto de partida na etapa de reavaliação', () => {
+      cenarioCompleto({ fluxo: 'reavaliacao', etapa: 'reavaliacao' });
+      const referencia = el().querySelector('[data-referencia]') as HTMLElement;
+      expect(referencia.querySelector('.opcoes-item[data-campo="achadosPosturais"]')?.textContent).toContain('Pé plano');
+      // O formulário embutido também traz o bloco de achados estruturados.
+      expect(el().querySelector('app-paciente-reavaliacao-form [data-campo="regioesDor"]')).toBeTruthy();
+    });
+
+    it('a anamnese salva no fluxo entra no comparativo', () => {
+      setup({ avaliacoes: [avaliacaoComOpcoes], planos: [mockPlano(3, '2026-03-02')], reavaliacoes: [reavaliacaoComOpcoes] });
+      expect(el().querySelector('[data-comparativo] [data-campo="regioesDor"]')).toBeNull();
+
+      component.aoSalvarAnamnese(anamneseComOpcoes);
+      fixture.detectChanges();
+
+      expect(el().querySelector('[data-comparativo] [data-campo="regioesDor"]')?.textContent).toContain('removido: Cervical');
     });
   });
 });

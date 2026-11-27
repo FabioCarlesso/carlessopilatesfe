@@ -13,10 +13,13 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { focarPrimeiroCampo, focarPrimeiroInvalido } from '../../../shared/utils/form-focus';
 import { ehConflitoConcorrencia, MENSAGEM_CONFLITO_CONCORRENCIA } from '../../../shared/utils/api-error';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { OpcoesAvaliacaoCamposComponent } from '../../../shared/components/opcoes-avaliacao-campos/opcoes-avaliacao-campos.component';
+import { CAMPOS_OPCOES_ANAMNESE } from '../../../core/models/opcoes-avaliacao';
+import { controlesOpcoes, dtoOpcoes, valoresFormularioOpcoes } from '../../../shared/utils/opcoes-avaliacao';
 
 @Component({
   selector: 'app-paciente-anamnese',
-  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent],
+  imports: [ReactiveFormsModule, RouterLink, BreadcrumbComponent, CarregandoComponent, OpcoesAvaliacaoCamposComponent],
   templateUrl: './paciente-anamnese.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-anamnese.component.scss'
@@ -30,6 +33,8 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
   @Input() embutido = false;
   /** Emite o registro gravado, no cadastro e na edição; o fluxo usa para avançar. */
   @Output() salvo = new EventEmitter<AnamneseResponseDTO>();
+  /** Opções pré-definidas da anamnese (issue #306). */
+  readonly camposOpcoes = CAMPOS_OPCOES_ANAMNESE;
   form!: FormGroup;
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
@@ -61,7 +66,8 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
       nivelAtividadeFisica: [''],
       restricoesMedicas: [''],
       objetivos: ['', [Validators.required, Validators.pattern(/\S/)]],
-      observacoes: ['']
+      observacoes: [''],
+      ...controlesOpcoes(CAMPOS_OPCOES_ANAMNESE)
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
@@ -102,7 +108,7 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
         this.anamnese = anamnese;
         if (anamnese) {
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = anamnese;
-          this.form.patchValue(formFields);
+          this.form.patchValue({ ...formFields, ...valoresFormularioOpcoes(CAMPOS_OPCOES_ANAMNESE, anamnese) });
         } else {
           // Só há campo para focar depois que o *ngIf="!loading" renderiza o
           // formulário, por isso o foco é adiado para o próximo ciclo.
@@ -134,6 +140,8 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
     this.sucesso = null;
 
     const valor = this.form.value;
+    const anamneseAtual = this.anamnese;
+    const criando = anamneseAtual === null;
     const opt = (v: string): string | null => (v?.trim() ? v : null);
     const dto = {
       queixaPrincipal: valor.queixaPrincipal,
@@ -145,11 +153,10 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
       nivelAtividadeFisica: opt(valor.nivelAtividadeFisica),
       restricoesMedicas: opt(valor.restricoesMedicas),
       objetivos: valor.objetivos,
-      observacoes: opt(valor.observacoes)
+      observacoes: opt(valor.observacoes),
+      ...dtoOpcoes(CAMPOS_OPCOES_ANAMNESE, valor, criando)
     };
 
-    const anamneseAtual = this.anamnese;
-    const criando = anamneseAtual === null;
     const obs = criando
       ? this.anamneseService.criar({ pacienteId: this.pacienteId, ...dto })
       : this.anamneseService.atualizar(anamneseAtual.id, { ...dto, version: anamneseAtual.version });
@@ -158,7 +165,7 @@ export class PacienteAnamneseComponent implements OnInit, OnDestroy {
       next: response => {
         this.anamnese = response;
         const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
-        this.form.patchValue(formFields);
+        this.form.patchValue({ ...formFields, ...valoresFormularioOpcoes(CAMPOS_OPCOES_ANAMNESE, response) });
         if (this.successTimer !== null) {
           clearTimeout(this.successTimer);
         }

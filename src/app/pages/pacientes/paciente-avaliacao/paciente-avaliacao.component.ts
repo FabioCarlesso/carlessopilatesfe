@@ -18,6 +18,7 @@ import { CarregandoComponent } from '../../../shared/components/carregando/carre
 import { ComparativoMapaDorComponent } from '../../../shared/components/comparativo-mapa-dor/comparativo-mapa-dor.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+import { OpcoesAvaliacaoResumoComponent } from '../../../shared/components/opcoes-avaliacao-resumo/opcoes-avaliacao-resumo.component';
 import {
   DefinicaoEtapa,
   ETAPAS_FLUXO,
@@ -66,7 +67,8 @@ import { PacienteReavaliacaoFormComponent } from '../paciente-reavaliacao-form/p
     PacienteAnamneseComponent,
     PacienteAvaliacaoFisioterapeuticaComponent,
     PacientePlanoTratamentoFormComponent,
-    PacienteReavaliacaoFormComponent
+    PacienteReavaliacaoFormComponent,
+    OpcoesAvaliacaoResumoComponent
   ],
   templateUrl: './paciente-avaliacao.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -261,6 +263,7 @@ export class PacienteAvaliacaoComponent implements OnInit, OnDestroy {
 
   aoSalvarAnamnese(anamnese: AnamneseResponseDTO): void {
     this.anamnese = anamnese;
+    this.atualizarLinhaDoTempo();
     this.avancar('anamnese', 'Anamnese salva.');
   }
 
@@ -316,7 +319,7 @@ export class PacienteAvaliacaoComponent implements OnInit, OnDestroy {
   }
 
   private atualizarLinhaDoTempo(): void {
-    this.linhaDoTempo = montarLinhaDoTempo(this.avaliacoes, this.reavaliacoes);
+    this.linhaDoTempo = montarLinhaDoTempo(this.avaliacoes, this.reavaliacoes, this.anamnese);
   }
 
   private mostrarSucesso(mensagem: string): void {

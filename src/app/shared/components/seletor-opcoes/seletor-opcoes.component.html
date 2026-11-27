@@ -1,0 +1,74 @@
+<fieldset class="seletor" [attr.aria-describedby]="descricaoId">
+  <legend class="seletor-legenda">{{ campo.rotulo }}</legend>
+
+  @switch (modo) {
+    @case ('unica') {
+      <div class="seletor-opcoes">
+        <label class="chip" [class.chip--marcado]="unico === null">
+          <input type="radio" [name]="uid" [checked]="unico === null" [disabled]="desabilitado"
+            (change)="escolherUnica(null)" (blur)="tocar()" />
+          Não informado
+        </label>
+        @for (opcao of opcoes; track opcao.valor) {
+          <label class="chip" [class.chip--marcado]="marcado(opcao.valor)" [attr.data-valor]="opcao.valor">
+            <input type="radio" [name]="uid" [checked]="marcado(opcao.valor)" [disabled]="desabilitado"
+              (change)="escolherUnica(opcao.valor)" (blur)="tocar()" />
+            {{ opcao.rotulo }}
+            @if (opcao.antiga) {
+              <span class="chip-antiga">(opção antiga)</span>
+            }
+          </label>
+        }
+      </div>
+    }
+    @case ('multipla') {
+      <div class="seletor-opcoes">
+        @for (opcao of opcoes; track opcao.valor) {
+          <label class="chip" [class.chip--marcado]="marcado(opcao.valor)" [attr.data-valor]="opcao.valor">
+            <input type="checkbox" [name]="uid + '-' + opcao.valor" [checked]="marcado(opcao.valor)"
+              [disabled]="desabilitado" (change)="alternar(opcao.valor)" (blur)="tocar()" />
+            {{ opcao.rotulo }}
+            @if (opcao.antiga) {
+              <span class="chip-antiga">(opção antiga)</span>
+            }
+          </label>
+        }
+      </div>
+    }
+    @case ('testes') {
+      <ul class="seletor-testes">
+        @for (opcao of opcoes; track opcao.valor) {
+          <li class="teste" [attr.data-valor]="opcao.valor">
+            <label class="chip" [class.chip--marcado]="marcado(opcao.valor)">
+              <input type="checkbox" [name]="uid + '-' + opcao.valor" [checked]="marcado(opcao.valor)"
+                [disabled]="desabilitado" (change)="alternar(opcao.valor)" (blur)="tocar()" />
+              {{ opcao.rotulo }}
+              @if (opcao.antiga) {
+                <span class="chip-antiga">(opção antiga)</span>
+              }
+            </label>
+            @if (marcado(opcao.valor)) {
+              <fieldset class="teste-resultado" [attr.aria-describedby]="resultadoDe(opcao.valor) ? null : uid + '-' + opcao.valor + '-pendente'">
+                <legend class="visualmente-oculto">Resultado do teste {{ opcao.rotulo }}</legend>
+                @for (resultado of resultados; track resultado) {
+                  <!-- `ng-invalid` manual: é o que leva o focarPrimeiroInvalido do formulário até aqui. -->
+                  <label class="teste-opcao">
+                    <input type="radio" [name]="uid + '-' + opcao.valor + '-resultado'"
+                      [checked]="resultadoDe(opcao.valor) === resultado" [disabled]="desabilitado"
+                      [class.ng-invalid]="resultadoDe(opcao.valor) === null"
+                      [attr.aria-invalid]="resultadoDe(opcao.valor) === null ? 'true' : null"
+                      (change)="escolherResultado(opcao.valor, resultado)" (blur)="tocar()" />
+                    {{ resultadoLabel[resultado] }}
+                  </label>
+                }
+                @if (!resultadoDe(opcao.valor)) {
+                  <span class="teste-pendente" [id]="uid + '-' + opcao.valor + '-pendente'">Informe o resultado.</span>
+                }
+              </fieldset>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</fieldset>

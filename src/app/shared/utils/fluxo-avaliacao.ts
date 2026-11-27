@@ -1,6 +1,12 @@
 import { AvaliacaoFisioterapeuticaResponseDTO } from '../../core/models/avaliacao-fisioterapeutica';
 import { PlanoTratamentoResponseDTO } from '../../core/models/plano-tratamento';
 import { ReavaliacaoResponseDTO } from '../../core/models/reavaliacao';
+import {
+  CAMPOS_OPCOES_EXAME_FISICO,
+  CAMPOS_OPCOES_REAVALIACAO,
+  CamposOpcoesAnamnese,
+  DefinicaoCampoOpcoes
+} from '../../core/models/opcoes-avaliacao';
 
 /**
  * Regras puras do fluxo único de avaliação do paciente (issue #305): as etapas de
@@ -134,6 +140,22 @@ export interface ItemLinhaDoTempo {
   data: string;
   titulo: string;
   destaques: DestaqueAvaliacao[];
+  /** Registro da API, para o resumo das opções pré-definidas (issue #306). */
+  registro: object;
+  camposOpcoes: readonly DefinicaoCampoOpcoes[];
+  /** Só na reavaliação: o registro anterior com que as opções são comparadas. */
+  anterior: ComparacaoAnterior | null;
+}
+
+export interface ComparacaoAnterior {
+  registro: object;
+  /** Como a tela cita o anterior: "à avaliação inicial de 01/03/2026". */
+  referencia: string;
+}
+
+function dataBr(iso: string): string {
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
 }
 
 function destaques(pares: [string, string | number | null | undefined][]): DestaqueAvaliacao[] {
@@ -149,7 +171,8 @@ function destaques(pares: [string, string | number | null | undefined][]): Desta
  */
 export function montarLinhaDoTempo(
   avaliacoes: readonly AvaliacaoFisioterapeuticaResponseDTO[],
-  reavaliacoes: readonly ReavaliacaoResponseDTO[]
+  reavaliacoes: readonly ReavaliacaoResponseDTO[],
+  anamnese: CamposOpcoesAnamnese | null = null
 ): ItemLinhaDoTempo[] {
   const ordemTipo = { avaliacao: 0, reavaliacao: 1 };
   const itens: ItemLinhaDoTempo[] = [
@@ -162,7 +185,10 @@ export function montarLinhaDoTempo(
         ['Queixa funcional', a.queixaFuncional],
         ['Escala de dor', a.escalaDor === null || a.escalaDor === undefined ? null : `${a.escalaDor}/10`],
         ['Diagnóstico fisioterapêutico', a.diagnosticoFisioterapeutico]
-      ])
+      ]),
+      registro: a,
+      camposOpcoes: CAMPOS_OPCOES_EXAME_FISICO,
+      anterior: null
     })),
     ...reavaliacoes.map(r => ({
       tipo: 'reavaliacao' as const,
@@ -174,7 +200,10 @@ export function montarLinhaDoTempo(
         ['Objetivos alcançados', r.objetivosAlcancados],
         ['Pontos de atenção', r.pontosAtencao],
         ['Ajustes recomendados', r.ajustesRecomendados]
-      ])
+      ]),
+      registro: r,
+      camposOpcoes: CAMPOS_OPCOES_REAVALIACAO,
+      anterior: null
     }))
   ];
 
@@ -184,7 +213,25 @@ export function montarLinhaDoTempo(
 
   const inicial = itens.find(item => item.tipo === 'avaliacao');
   if (inicial) inicial.titulo = 'Avaliação inicial';
+
+  itens.forEach((item, indice) => {
+    const previo = itens[indice - 1];
+    if (item.tipo === 'reavaliacao' && previo) {
+      item.anterior = { registro: registroComparavel(previo, anamnese), referencia: `à ${previo.titulo.toLowerCase()} de ${dataBr(previo.data)}` };
+    }
+  });
   return itens;
+}
+
+/**
+ * A avaliação fisioterapêutica não tem regiões de dor: a reavaliação que vem logo
+ * depois dela compara as suas com as da anamnese, quando há.
+ */
+function registroComparavel(previo: ItemLinhaDoTempo, anamnese: CamposOpcoesAnamnese | null): object {
+  if (previo.tipo === 'avaliacao' && anamnese?.regioesDor !== undefined) {
+    return { ...previo.registro, regioesDor: anamnese.regioesDor };
+  }
+  return previo.registro;
 }
 
 /**

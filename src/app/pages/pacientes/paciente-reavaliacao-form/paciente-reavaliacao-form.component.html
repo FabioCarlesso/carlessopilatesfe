@@ -70,6 +70,8 @@
       <label for="evolucaoFuncional">Evolução funcional</label>
       <textarea id="evolucaoFuncional" formControlName="evolucaoFuncional" class="form-control" rows="2"></textarea>
     </div>
+    <h2 class="form-section-title">Achados estruturados</h2>
+    <app-opcoes-avaliacao-campos [form]="form" [campos]="camposOpcoes" />
     <h2 class="form-section-title">Resultados e ajustes</h2>
     <div class="form-group">
       <label for="objetivosAlcancados">Objetivos alcançados</label>

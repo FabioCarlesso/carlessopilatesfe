@@ -1,0 +1,45 @@
+@if (itens.length) {
+  <dl class="opcoes-resumo">
+    @for (item of itens; track item.campo) {
+      <div class="opcoes-item" [attr.data-campo]="item.campo">
+        <dt>{{ item.rotulo }}</dt>
+        <dd>
+          @if (item.valores.length) {
+            <ul class="opcoes-valores">
+              @for (v of item.valores; track v.valor) {
+                <li class="opcao-tag">
+                  {{ v.rotulo }}{{ v.resultado ? ': ' + v.resultado : '' }}
+                  @if (v.antiga) {
+                    <span class="opcao-antiga">(opção antiga)</span>
+                  }
+                </li>
+              }
+            </ul>
+          }
+          @if (item.complemento) {
+            <p class="opcoes-complemento">{{ item.complemento }}</p>
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+}
+
+@if (comparativo.comparados > 0) {
+  <div class="opcoes-mudancas" data-comparativo>
+    <p class="opcoes-mudancas-titulo">
+      O que mudou em relação {{ referencia || 'ao registro anterior' }}
+    </p>
+    @if (comparativo.mudancas.length === 0) {
+      <p class="opcoes-sem-mudanca">Nenhuma mudança nas opções.</p>
+    } @else {
+      <ul class="opcoes-mudancas-lista">
+        @for (m of comparativo.mudancas; track m.campo) {
+          <li [attr.data-campo]="m.campo">
+            <strong>{{ m.rotulo }}:</strong> {{ descrever(m) }}
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
