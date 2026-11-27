@@ -2,6 +2,7 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: pacienteNome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Financeiro', link: ['/pacientes', pacienteId, 'financeiro'] },
   { label: 'Planos' }
 ]"></app-breadcrumb>
 }
@@ -15,7 +16,7 @@
   </div>
   <div class="acoes">
     <a [routerLink]="['/planos/novo', pacienteId]" class="btn btn-primary">Novo Plano</a>
-    <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+    <a [routerLink]="['/pacientes', pacienteId, 'financeiro']" class="btn btn-outline">Voltar ao financeiro</a>
   </div>
 </div>
 

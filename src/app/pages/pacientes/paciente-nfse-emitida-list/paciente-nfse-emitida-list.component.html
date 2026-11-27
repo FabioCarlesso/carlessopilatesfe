@@ -2,6 +2,7 @@
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
   { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Financeiro', link: ['/pacientes', pacienteId, 'financeiro'] },
   { label: 'NFSEs Emitidas' }
 ]"></app-breadcrumb>
 }
@@ -18,7 +19,7 @@
       <a [routerLink]="['/pacientes', pacienteId, 'nfse-emitidas', 'nova']" class="btn btn-primary">Registrar NFSE</a>
     }
     @if (pacienteId) {
-      <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline">Voltar</a>
+      <a [routerLink]="['/pacientes', pacienteId, 'financeiro']" class="btn btn-outline">Voltar ao financeiro</a>
     }
   </div>
 </div>

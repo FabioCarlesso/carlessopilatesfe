@@ -166,7 +166,7 @@
                 Cobrança
               </button>
               <a
-                [routerLink]="['/pagamentos/paciente', linha.pagamento.pacienteId]"
+                [routerLink]="['/pacientes', linha.pagamento.pacienteId, 'financeiro']"
                 class="btn btn-sm btn-outline"
                 [attr.aria-label]="'Financeiro de ' + linha.pagamento.pacienteNome">
                 Financeiro
@@ -215,94 +215,9 @@
 <a routerLink="/admin" class="btn btn-outline back-link">Voltar à Administração</a>
 
 @if (cobranca; as pagamento) {
-  <app-confirmar-dialog
-    [titulo]="'Cobrança — ' + pagamento.pacienteNome"
-    textoConfirmar="Registrar contato"
-    textoCancelar="Fechar"
-    variante="primaria"
-    [exibirConfirmar]="podeRegistrarContato"
-    [processando]="registrando"
-    [fecharAoClicarFora]="false"
-    (confirmar)="registrarContato()"
-    (cancelar)="fecharCobranca()">
-    <p class="cobranca-resumo">
-      {{ pagamento.valor | currency:'BRL' }} · vencimento {{ pagamento.dataVencimento | localDate }}
-      · {{ statusLabel[pagamento.status] }}
-      @if (cobrancaDiasAtraso > 0) {
-        · {{ descreverAtraso(cobrancaDiasAtraso) }} em atraso
-      }
-    </p>
-
-    @if (erroCobranca) {
-      <div class="alert alert-danger" role="alert">{{ erroCobranca }}</div>
-    }
-    @if (sucessoCobranca) {
-      <div class="alert alert-success" role="status">{{ sucessoCobranca }}</div>
-    }
-
-    @if (podeRegistrarContato) {
-      <form [formGroup]="cobrancaForm" (ngSubmit)="registrarContato()" class="cobranca-form">
-        <div class="form-group">
-          <label for="dataContato">Data do contato *</label>
-          <input
-            id="dataContato"
-            type="date"
-            class="form-control"
-            formControlName="dataContato"
-            [max]="hoje"
-            [class.is-invalid]="campoCobranca('dataContato').touched && campoCobranca('dataContato').invalid" />
-          @if (campoCobranca('dataContato').touched && campoCobranca('dataContato').hasError('required')) {
-            <div class="invalid-feedback">Informe a data do contato.</div>
-          }
-          @if (campoCobranca('dataContato').touched && campoCobranca('dataContato').hasError('dataFutura')) {
-            <div class="invalid-feedback">A data do contato não pode ser futura.</div>
-          }
-        </div>
-        <div class="form-group">
-          <label for="observacaoCobranca">Observação *</label>
-          <textarea
-            id="observacaoCobranca"
-            class="form-control"
-            formControlName="observacao"
-            rows="3"
-            [maxlength]="observacaoMax"
-            aria-describedby="observacaoCobrancaHint"
-            placeholder="Ex.: ligação, prometeu pagar na sexta"
-            [class.is-invalid]="campoCobranca('observacao').touched && campoCobranca('observacao').invalid"></textarea>
-          <div id="observacaoCobrancaHint" class="field-hint">{{ tamanhoObservacao }}/{{ observacaoMax }} caracteres.</div>
-          @if (campoCobranca('observacao').touched && (campoCobranca('observacao').hasError('required') || campoCobranca('observacao').hasError('emBranco'))) {
-            <div class="invalid-feedback">Descreva o contato.</div>
-          }
-          @if (campoCobranca('observacao').touched && campoCobranca('observacao').hasError('maxlength')) {
-            <div class="invalid-feedback">A observação deve ter no máximo {{ observacaoMax }} caracteres.</div>
-          }
-        </div>
-      </form>
-    } @else {
-      <p class="cobranca-aviso">
-        Pagamento quitado: o histórico continua disponível, mas não aceita novos contatos.
-      </p>
-    }
-
-    <h3 class="cobranca-historico-titulo">Contatos registrados</h3>
-    @if (carregandoContatos) {
-      <p class="cobranca-historico-status">Carregando contatos...</p>
-    } @else if (erroContatos) {
-      <p class="cobranca-historico-status" role="alert">{{ erroContatos }}</p>
-    } @else if (contatos.length === 0) {
-      <p class="cobranca-historico-status">Nenhum contato registrado para este pagamento.</p>
-    } @else {
-      <ol class="cobranca-historico">
-        @for (contato of contatos; track contato.id) {
-          <li class="cobranca-contato">
-            <strong class="cobranca-contato-data">{{ contato.dataContato | localDate }}</strong>
-            <span class="cobranca-contato-observacao">{{ contato.observacao }}</span>
-            <small class="cobranca-contato-registro">
-              Registrado por {{ contato.registradoPor }} em {{ formatarDataHora(contato.registradoEm) }}
-            </small>
-          </li>
-        }
-      </ol>
-    }
-  </app-confirmar-dialog>
+  <app-cobranca-dialog
+    [pagamento]="pagamento"
+    [diasAtraso]="cobrancaDiasAtraso"
+    (fechar)="fecharCobranca()"
+    (listaDesatualizada)="carregar()" />
 }

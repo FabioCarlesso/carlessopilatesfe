@@ -1,14 +1,15 @@
-import { ChangeDetectorRef, DestroyRef, ElementRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { FormBuilder } from '@angular/forms';
-import { Subject, of, throwError } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
 import { isOnPush } from '../../../../testing/onpush';
 import { PagamentoListComponent } from './pagamento-list.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { FORMA_PAGAMENTO_LABEL, FORMA_PAGAMENTO_OPCOES, PagamentoResponseDTO } from '../../../core/models/plano';
+import { PagamentoResponseDTO } from '../../../core/models/plano';
+import { PagarPagamentoDialogComponent } from '../../../shared/components/pagar-pagamento-dialog/pagar-pagamento-dialog.component';
 import { normalizarEspacos, provideLocalePtBr } from '../../../../testing/locale';
 
 const mockPagamento: PagamentoResponseDTO = {
@@ -44,6 +45,19 @@ describe('PagamentoListComponent', () => {
     const botao = Array.from(fixture.nativeElement.querySelectorAll('tbody button') as NodeListOf<HTMLButtonElement>)
       .find(b => b.textContent?.trim() === 'Confirmar Pagamento')!;
     botao.click();
+    fixture.detectChanges();
+  }
+
+  /** Instância do diálogo extraído (issue #302), onde moram o formulário e a chamada à API. */
+  function dialogo(): PagarPagamentoDialogComponent {
+    return fixture.debugElement.query(By.directive(PagarPagamentoDialogComponent)).componentInstance;
+  }
+
+  /** Abre o diálogo da linha, preenche e confirma pela própria tela. */
+  function confirmarPeloDialogo(valor: { dataPagamento: string; formaPagamento: 'DINHEIRO' | 'PIX' }): void {
+    abrirDialogoPagar();
+    dialogo().form.setValue(valor);
+    (fixture.nativeElement.querySelector('.dialog-actions .btn:not(.btn-outline)') as HTMLButtonElement).click();
     fixture.detectChanges();
   }
 
@@ -104,31 +118,6 @@ describe('PagamentoListComponent', () => {
     expect(component.erro).toBe('Erro ao carregar pagamentos.');
   });
 
-  it('abrirPagar should set pagarId and reset form', () => {
-    component.abrirPagar(1);
-    expect(component.pagarId).toBe(1);
-    expect(component.pagarForm.value.dataPagamento).toBeFalsy();
-    expect(component.pagarForm.value.formaPagamento).toBeNull();
-  });
-
-  it('should call pagar with a null formaPagamento when it is not informed', () => {
-    serviceSpy.pagar.and.returnValue(of({ ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' }));
-    abrirDialogoPagar();
-    component.pagarForm.patchValue({ dataPagamento: '2026-05-05' });
-    (fixture.nativeElement.querySelector('.dialog-actions .btn:not(.btn-outline)') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05', null);
-  });
-
-  it('should offer every forma de pagamento with its centralized label in the confirmation dialog', () => {
-    abrirDialogoPagar();
-
-    const opcoes = Array.from(fixture.nativeElement.querySelectorAll('select#formaPagamento option') as NodeListOf<HTMLOptionElement>)
-      .map(o => o.textContent?.trim());
-    expect(opcoes).toEqual(['Não informada', ...FORMA_PAGAMENTO_OPCOES.map(f => FORMA_PAGAMENTO_LABEL[f])]);
-  });
-
   it('should show the forma de pagamento label in the list and a dash when it is missing', () => {
     const antigo = { ...mockPagamento, id: 2, status: 'PAGO' as const, dataPagamento: '2026-04-05', formaPagamento: null };
     const semCampo = { ...mockPagamento, id: 3 };
@@ -162,24 +151,22 @@ describe('PagamentoListComponent', () => {
     expect(avisos).toEqual(['2 aulas sem profissional', '1 aula sem profissional', null, null]);
   });
 
-  it('cancelarPagar should clear pagarId', () => {
-    component.pagarId = 1;
-    component.cancelarPagar();
-    expect(component.pagarId).toBeNull();
-  });
+  it('should open the confirmation dialog for a pending payment and close it on cancel', () => {
+    abrirDialogoPagar();
+    expect(component.pagarId).toBe(1);
+    expect(fixture.nativeElement.querySelector('app-pagar-pagamento-dialog')).toBeTruthy();
 
-  it('should not call pagar when form is invalid', () => {
-    component.pagarId = 1;
-    component.confirmarPagar();
-    expect(serviceSpy.pagar).not.toHaveBeenCalled();
+    (fixture.nativeElement.querySelector('.dialog-actions .btn-outline') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(component.pagarId).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-pagar-pagamento-dialog')).toBeNull();
   });
 
   it('should call pagar and reload on success', () => {
     const pago = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
     serviceSpy.pagar.and.returnValue(of(pago));
-    component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
-    component.confirmarPagar();
+    confirmarPeloDialogo({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     expect(serviceSpy.pagar).toHaveBeenCalledWith(1, '2026-05-05', 'DINHEIRO');
     expect(component.pagarId).toBeNull();
     expect(serviceSpy.listar).toHaveBeenCalledTimes(2);
@@ -188,9 +175,7 @@ describe('PagamentoListComponent', () => {
   it('should show sucesso with role status after pagar and clear it after timeout', fakeAsync(() => {
     const pago = { ...mockPagamento, status: 'PAGO' as const, dataPagamento: '2026-05-05' };
     serviceSpy.pagar.and.returnValue(of(pago));
-    component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
-    component.confirmarPagar();
+    confirmarPeloDialogo({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     expect(component.sucesso).toBe('Pagamento confirmado com sucesso.');
     fixture.detectChanges();
     const alert = fixture.nativeElement.querySelector('.alert-success');
@@ -202,42 +187,21 @@ describe('PagamentoListComponent', () => {
 
   it('should set erro when pagar fails', () => {
     serviceSpy.pagar.and.returnValue(throwError(() => new Error('fail')));
-    component.pagarId = 1;
-    component.pagarForm.setValue({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
-    component.confirmarPagar();
+    confirmarPeloDialogo({ dataPagamento: '2026-05-05', formaPagamento: 'DINHEIRO' });
     expect(component.erro).toBe('Erro ao confirmar pagamento.');
+    expect(component.pagarId).toBeNull();
   });
 
   it('should not load pagamentos when pacienteId route param is invalid', () => {
     const invalidServiceSpy = jasmine.createSpyObj('PagamentoService', ['listar', 'pagar']);
     const invalidRoute = { snapshot: { paramMap: convertToParamMap({ pacienteId: 'abc' }) } } as ActivatedRoute;
-    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, TestBed.inject(AuthService), invalidRoute, TestBed.inject(FormBuilder), { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef, new ElementRef(document.createElement('div')));
+    const invalidComponent = new PagamentoListComponent(invalidServiceSpy, TestBed.inject(AuthService), invalidRoute, { markForCheck: () => {} } as ChangeDetectorRef, { onDestroy: () => () => {} } as unknown as DestroyRef);
 
     invalidComponent.ngOnInit();
 
     expect(invalidComponent.erro).toBe('Identificador inválido.');
     expect(invalidServiceSpy.listar).not.toHaveBeenCalled();
   });
-
-  it('should not fire a second pagar request while the action is in progress', () => {
-    const pending = new Subject<PagamentoResponseDTO>();
-    serviceSpy.pagar.and.returnValue(pending.asObservable());
-
-    component.abrirPagar(1);
-    component.pagarForm.setValue({ dataPagamento: '2026-05-10', formaPagamento: 'PIX' });
-    component.confirmarPagar();
-    component.confirmarPagar();
-
-    expect(serviceSpy.pagar).toHaveBeenCalledTimes(1);
-    expect(component.acaoEmAndamento).toBeTrue();
-
-    pending.next(mockPagamento);
-    pending.complete();
-
-    expect(component.acaoEmAndamento).toBeFalse();
-    expect(component.pagarId).toBeNull();
-  });
-
 
   it('should offer the create CTA in the empty state (issue #146)', async () => {
     serviceSpy.listar.and.returnValue(of([]));

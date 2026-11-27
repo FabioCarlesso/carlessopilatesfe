@@ -1,0 +1,47 @@
+/* Conteúdo projetado no diálogo: o histórico rola dentro dele, para que um
+   pagamento com muitos contatos não empurre os botões para fora da tela. */
+.cobranca-resumo,
+.cobranca-aviso {
+  color: var(--text-secondary);
+}
+
+.field-hint {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.cobranca-historico-titulo {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-body);
+}
+
+.cobranca-historico-status {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.cobranca-historico {
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.cobranca-contato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.cobranca-contato-registro {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

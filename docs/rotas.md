@@ -51,10 +51,10 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:pacienteId/reavaliacoes` | Lista de reavaliações do paciente (_clínica_) |
 | `/pacientes/:pacienteId/reavaliacoes/nova` | Cadastro de reavaliação (_clínica_) |
 | `/pacientes/:pacienteId/reavaliacoes/:id/editar` | Edição de reavaliação (_clínica_) |
-| `/pacientes/:pacienteId/nfse-emitidas` | Lista de NFSEs emitidas do paciente, com destaque para a última (_fiscal_) |
+| `/pacientes/:pacienteId/nfse-emitidas` | Lista de NFSEs emitidas do paciente, com destaque para a última; subtela do financeiro do paciente (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/nova` | Registro de NFSE emitida (_fiscal_) |
 | `/pacientes/:pacienteId/nfse-emitidas/:id/editar` | Edição de NFSE emitida (_fiscal_) |
-| `/pacientes/:pacienteId/financeiro` | Histórico financeiro consolidado do paciente: plano, pagamentos com totais e vencidos, aulas e última NFSE; os blocos de aulas e NFSE só aparecem para _agenda_ e _fiscal_ (_cobrança_) |
+| `/pacientes/:pacienteId/financeiro` | Financeiro do paciente (issue #302): plano ativo com troca, pacote atual ("X de N aulas"), pagamentos em aberto e vigentes com confirmação e contato de cobrança, NFSEs e histórico. NFSE só para _fiscal_, cobrança só para `ADMIN` e "Ver aulas" só para _agenda_; as listas de planos, pagamentos e NFSEs continuam acessíveis como subtelas, sem redirecionamento (_cobrança_) |
 | `/pacientes/:id`        | Detalhes do paciente (ativo ou inativo), com as áreas Clínico, Agenda e Financeiro; `?aba=clinico\|agenda\|financeiro` escolhe a área aberta, e cada área só aparece para o grupo das telas dela (_equipe_) |
 | `/profissionais`        | Lista de profissionais com filtros e paginação (`ADMIN`) |
 | `/profissionais/novo`   | Formulário de cadastro de profissional (`ADMIN`) |
@@ -89,9 +89,9 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 
 | Caminho | Função |
 |---------|--------|
-| `/planos/paciente/:pacienteId` | Lista de planos do paciente (_cobrança_) |
+| `/planos/paciente/:pacienteId` | Lista de planos do paciente, com a inativação; subtela do financeiro do paciente (_cobrança_) |
 | `/planos/novo/:pacienteId` | Criar novo plano (_cobrança_) |
-| `/pagamentos/paciente/:pacienteId` | Lista de pagamentos (_cobrança_) |
+| `/pagamentos/paciente/:pacienteId` | Lista completa de pagamentos do paciente; subtela do financeiro do paciente (_cobrança_) |
 | `/pagamentos/novo/:pacienteId` | Registrar novo pagamento (_cobrança_); aceita `planoId`, `valor`, `periodoInicio` e `dataVencimento` na query string para a renovação (issue #133) |
 | `/aulas/paciente/:pacienteId` | Lista de aulas geradas (_agenda_) |
 | `/aulas/pagamento/:pagamentoId` | Lista de aulas por pagamento (_agenda + cobrança_) |

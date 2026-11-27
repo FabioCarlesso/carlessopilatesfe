@@ -9,6 +9,7 @@ import { NfseEmitidaService } from '../../../core/services/nfse-emitida.service'
 import { PacienteService } from '../../../core/services/paciente.service';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
+import { ordenarNfsesRecentesPrimeiro } from '../../../shared/utils/historico-financeiro';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -74,9 +75,7 @@ export class PacienteNfseEmitidaListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: notas => {
-          this.notas = [...notas].sort((a, b) =>
-            b.dataEmissao.localeCompare(a.dataEmissao) || b.id - a.id
-          );
+          this.notas = ordenarNfsesRecentesPrimeiro(notas);
           this.loading = false;
         },
         error: err => {

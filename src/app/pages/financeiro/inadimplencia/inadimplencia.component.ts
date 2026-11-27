@@ -1,25 +1,12 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { PageMetadata } from '../../../core/models/common';
 import {
-  COBRANCA_OBSERVACAO_MAX,
-  ContatoCobrancaDTO,
   PagamentoFiltro,
   STATUS_INADIMPLENCIA_PADRAO,
   STATUS_PAGAMENTO_OPCOES
@@ -29,7 +16,7 @@ import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { PagamentoResponseDTO, STATUS_PAGAMENTO_LABEL, StatusPagamento } from '../../../core/models/plano';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
-import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
+import { CobrancaDialogComponent } from '../../../shared/components/cobranca-dialog/cobranca-dialog.component';
 import { PaginationSummaryComponent } from '../../../shared/components/pagination-summary/pagination-summary.component';
 import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
@@ -43,7 +30,6 @@ import {
   descreverAtraso,
   diasEmAtraso,
   filtroDoAtalho,
-  formatarDataHora,
   sortDaInadimplencia,
   validarFaixaVencimento
 } from '../../../shared/utils/inadimplencia';
@@ -76,20 +62,6 @@ function filtroPadrao(): FiltroUI {
   };
 }
 
-/** A API recusa com `400` um contato com data futura. */
-function naoFutura(hoje: () => string): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const valor = control.value as string | null;
-    return valor && valor > hoje() ? { dataFutura: true } : null;
-  };
-}
-
-/** `Validators.required` aceita "   "; a API, não. */
-function naoEmBranco(control: AbstractControl): ValidationErrors | null {
-  const valor = control.value;
-  return typeof valor === 'string' && valor.length > 0 && valor.trim().length === 0 ? { emBranco: true } : null;
-}
-
 /**
  * Gestão de inadimplência (issue #127, só `ADMIN`).
  *
@@ -102,7 +74,8 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
  * exibida.
  *
  * Cada pagamento abre um diálogo de cobrança com o histórico de contatos e,
- * enquanto não estiver `PAGO`, o registro de um novo contato.
+ * enquanto não estiver `PAGO`, o registro de um novo contato — o
+ * `app-cobranca-dialog`, compartilhado com o financeiro do paciente (#302).
  *
  * A issue #290 acrescentou os atalhos de filtro (vencidas, vencem em 7 dias e
  * todas em aberto) e a exportação em Excel do último filtro aplicado.
@@ -114,7 +87,7 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
     FormsModule,
     ReactiveFormsModule,
     RouterLink,
-    ConfirmarDialogComponent,
+    CobrancaDialogComponent,
     PaginationSummaryComponent,
     SortableHeaderComponent,
     LocalDatePipe,
@@ -127,7 +100,6 @@ function naoEmBranco(control: AbstractControl): ValidationErrors | null {
 export class InadimplenciaComponent implements OnInit {
   private readonly service = inject(PagamentoService);
   private readonly pacienteService = inject(PacienteService);
-  private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
   linhas: LinhaInadimplencia[] = [];
@@ -190,22 +162,8 @@ export class InadimplenciaComponent implements OnInit {
   /** Pagamento com o diálogo de cobrança aberto; `null` com ele fechado. */
   cobranca: PagamentoResponseDTO | null = null;
   cobrancaDiasAtraso = 0;
-  contatos: ContatoCobrancaDTO[] = [];
-  carregandoContatos = false;
-  erroContatos: string | null = null;
-  registrando = false;
-  erroCobranca: string | null = null;
-  sucessoCobranca: string | null = null;
-  readonly observacaoMax = COBRANCA_OBSERVACAO_MAX;
-  /** Teto do campo de data; recalculado a cada abertura do diálogo. */
-  hoje = hojeIso();
-  readonly cobrancaForm: FormGroup = this.fb.group({
-    dataContato: ['', [Validators.required, naoFutura(() => this.hoje)]],
-    observacao: ['', [Validators.required, naoEmBranco, Validators.maxLength(COBRANCA_OBSERVACAO_MAX)]]
-  });
 
   private listaSub: Subscription | null = null;
-  private contatosSub: Subscription | null = null;
 
   ngOnInit(): void {
     this.observarBusca();
@@ -420,114 +378,15 @@ export class InadimplenciaComponent implements OnInit {
     return descreverAtraso(dias);
   }
 
-  formatarDataHora(valor: string): string {
-    return formatarDataHora(valor);
-  }
-
   // ----- Diálogo de cobrança -----
 
   abrirCobranca(linha: LinhaInadimplencia): void {
     this.cobranca = linha.pagamento;
     this.cobrancaDiasAtraso = linha.diasAtraso;
-    this.erroCobranca = null;
-    this.sucessoCobranca = null;
-    this.hoje = hojeIso();
-    // O contato costuma ser registrado logo depois de acontecer.
-    this.cobrancaForm.reset({ dataContato: this.hoje, observacao: '' });
-    this.carregarContatos();
   }
 
+  /** O diálogo só pede para fechar quando não há registro em andamento. */
   fecharCobranca(): void {
-    if (this.registrando) return;
-    // Resposta atrasada do histórico não pode cair no diálogo do próximo pagamento.
-    this.contatosSub?.unsubscribe();
-    this.contatosSub = null;
     this.cobranca = null;
-    this.contatos = [];
-    this.carregandoContatos = false;
-    this.erroContatos = null;
-  }
-
-  get podeRegistrarContato(): boolean {
-    return this.cobranca !== null && this.cobranca.status !== 'PAGO';
-  }
-
-  campoCobranca(nome: 'dataContato' | 'observacao'): AbstractControl {
-    return this.cobrancaForm.get(nome) as AbstractControl;
-  }
-
-  get tamanhoObservacao(): number {
-    return ((this.campoCobranca('observacao').value as string | null) ?? '').length;
-  }
-
-  private carregarContatos(): void {
-    const pagamento = this.cobranca;
-    if (pagamento === null) return;
-
-    this.contatosSub?.unsubscribe();
-    this.carregandoContatos = true;
-    this.erroContatos = null;
-    this.contatosSub = this.service
-      .listarCobrancas(pagamento.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: contatos => {
-          this.contatos = contatos;
-          this.carregandoContatos = false;
-        },
-        error: err => {
-          this.contatos = [];
-          this.erroContatos = extrairMensagemErro(err, 'Não foi possível carregar os contatos de cobrança.');
-          this.carregandoContatos = false;
-        }
-      });
-  }
-
-  registrarContato(): void {
-    const pagamento = this.cobranca;
-    if (pagamento === null || this.registrando || !this.podeRegistrarContato) return;
-
-    this.sucessoCobranca = null;
-    if (this.cobrancaForm.invalid) {
-      this.cobrancaForm.markAllAsTouched();
-      return;
-    }
-
-    const { dataContato, observacao } = this.cobrancaForm.getRawValue() as { dataContato: string; observacao: string };
-    this.registrando = true;
-    this.erroCobranca = null;
-    this.service
-      .registrarCobranca(pagamento.id, { dataContato, observacao: observacao.trim() })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.registrando = false;
-          this.sucessoCobranca = 'Contato de cobrança registrado.';
-          this.cobrancaForm.reset({ dataContato: this.hoje, observacao: '' });
-          // Recarrega em vez de inserir no topo: a ordem é do servidor, e um
-          // contato com data retroativa não necessariamente é o primeiro.
-          this.carregarContatos();
-        },
-        error: (err: HttpErrorResponse) => {
-          this.registrando = false;
-          if (err.status === 422) {
-            // O pagamento foi quitado depois que a lista foi carregada: o
-            // diálogo passa a refletir isso e a lista é atualizada.
-            this.cobranca = { ...pagamento, status: 'PAGO' };
-            this.erroCobranca = extrairMensagemErro(
-              err,
-              'Este pagamento já foi quitado e não aceita novos contatos de cobrança.'
-            );
-            this.carregar();
-            return;
-          }
-          if (err.status === 404) {
-            this.erroCobranca = extrairMensagemErro(err, 'Pagamento não encontrado.');
-            this.carregar();
-            return;
-          }
-          this.erroCobranca = extrairMensagemErro(err, 'Erro ao registrar contato de cobrança.');
-        }
-      });
   }
 }

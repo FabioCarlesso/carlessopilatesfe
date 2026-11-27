@@ -1,12 +1,15 @@
 import { NotaFiscalEmitidaResponseDTO } from '../../core/models/nfse-emitida';
 import { PagamentoResponseDTO, PlanoResponseDTO } from '../../core/models/plano';
 import {
-  contarAulas,
+  contagemDoPacote,
   historicoDePlanos,
+  ordenarNfsesRecentesPrimeiro,
   ordenarPagamentosRecentesPrimeiro,
+  pacoteAtual,
+  pagamentoEncerrado,
   resumirPagamentos,
-  situacaoPagamento,
-  ultimaNfseEmitida
+  separarPagamentos,
+  situacaoPagamento
 } from './historico-financeiro';
 
 function pagamento(parcial: Partial<PagamentoResponseDTO>): PagamentoResponseDTO {
@@ -127,33 +130,109 @@ describe('historico-financeiro utils', () => {
     });
   });
 
-  describe('contarAulas', () => {
-    it('should split done and pending classes', () => {
-      expect(contarAulas([{ realizada: true }, { realizada: false }, { realizada: true }]))
-        .toEqual({ realizadas: 2, pendentes: 1, total: 3 });
+  describe('pagamentoEncerrado e separarPagamentos', () => {
+    it('should send to the history only paid payments whose period already ended', () => {
+      expect(pagamentoEncerrado({ status: 'PAGO', periodoFim: '2026-10-28' }, hoje)).toBeTrue();
+      expect(pagamentoEncerrado({ status: 'PAGO', periodoFim: hoje }, hoje)).toBeFalse();
+      expect(pagamentoEncerrado({ status: 'PAGO', periodoFim: '2026-11-30' }, hoje)).toBeFalse();
     });
 
-    it('should be zero without classes', () => {
-      expect(contarAulas([])).toEqual({ realizadas: 0, pendentes: 0, total: 0 });
+    it('should never send an open payment to the history, however old', () => {
+      expect(pagamentoEncerrado({ status: 'VENCIDO', periodoFim: '2025-01-31' }, hoje)).toBeFalse();
+      expect(pagamentoEncerrado({ status: 'PENDENTE', periodoFim: '2025-01-31' }, hoje)).toBeFalse();
+    });
+
+    it('should split current and previous payments, latest due date first', () => {
+      const { vigentes, anteriores } = separarPagamentos([
+        pagamento({ id: 1, status: 'PAGO', dataVencimento: '2026-08-10', periodoFim: '2026-08-31' }),
+        pagamento({ id: 2, status: 'PAGO', dataVencimento: '2026-09-10', periodoFim: '2026-09-30' }),
+        pagamento({ id: 3, status: 'VENCIDO', dataVencimento: '2026-07-10', periodoFim: '2026-07-31' }),
+        pagamento({ id: 4, status: 'PAGO', dataVencimento: '2026-10-10', periodoFim: '2026-11-02' }),
+        pagamento({ id: 5, status: 'PENDENTE', dataVencimento: '2026-11-03', periodoFim: '2026-11-30' })
+      ], hoje);
+
+      expect(vigentes.map(p => p.id)).toEqual([5, 4, 3]);
+      expect(anteriores.map(p => p.id)).toEqual([2, 1]);
     });
   });
 
-  describe('ultimaNfseEmitida', () => {
-    it('should pick the most recent issue date regardless of list order', () => {
+  describe('pacoteAtual', () => {
+    it('should pick the payment whose period covers today', () => {
+      const atual = pacoteAtual([
+        pagamento({ id: 1, periodoInicio: '2026-09-01', periodoFim: '2026-09-28' }),
+        pagamento({ id: 2, periodoInicio: '2026-09-29', periodoFim: '2026-10-29' }),
+        pagamento({ id: 3, periodoInicio: '2026-10-30', periodoFim: '2026-11-27' })
+      ], hoje);
+
+      expect(atual?.pagamento.id).toBe(2);
+      expect(atual?.situacao).toBe('EM_CURSO');
+    });
+
+    it('should prefer the latest start when more than one period covers today', () => {
+      const atual = pacoteAtual([
+        pagamento({ id: 7, periodoInicio: '2026-10-01', periodoFim: '2026-10-31' }),
+        pagamento({ id: 8, periodoInicio: '2026-10-20', periodoFim: '2026-11-20' })
+      ], hoje);
+
+      expect(atual?.pagamento.id).toBe(8);
+    });
+
+    it('should fall back to the latest package already started when none covers today', () => {
+      const atual = pacoteAtual([
+        pagamento({ id: 1, periodoInicio: '2026-07-01', periodoFim: '2026-07-28' }),
+        pagamento({ id: 2, periodoInicio: '2026-08-01', periodoFim: '2026-08-27' })
+      ], hoje);
+
+      expect(atual?.pagamento.id).toBe(2);
+      expect(atual?.situacao).toBe('ENCERRADO');
+    });
+
+    it('should fall back to the next package when none started yet', () => {
+      const atual = pacoteAtual([
+        pagamento({ id: 6, periodoInicio: '2026-12-01', periodoFim: '2026-12-28' }),
+        pagamento({ id: 5, periodoInicio: '2026-11-03', periodoFim: '2026-11-30' })
+      ], hoje);
+
+      expect(atual?.pagamento.id).toBe(5);
+      expect(atual?.situacao).toBe('FUTURO');
+    });
+
+    it('should be null without payments', () => {
+      expect(pacoteAtual([], hoje)).toBeNull();
+    });
+  });
+
+  describe('contagemDoPacote', () => {
+    it('should use the numbers from the API', () => {
+      expect(contagemDoPacote({ aulasPacote: 8, aulasRealizadas: 3 })).toEqual({ realizadas: 3, total: 8, restantes: 5 });
+    });
+
+    it('should never report negative remaining classes', () => {
+      expect(contagemDoPacote({ aulasPacote: 4, aulasRealizadas: 5 })?.restantes).toBe(0);
+    });
+
+    it('should be null when the API does not send the fields or the package has no size', () => {
+      expect(contagemDoPacote({})).toBeNull();
+      expect(contagemDoPacote({ aulasPacote: 8 })).toBeNull();
+      expect(contagemDoPacote({ aulasRealizadas: 2 })).toBeNull();
+      expect(contagemDoPacote({ aulasPacote: 0, aulasRealizadas: 0 })).toBeNull();
+    });
+  });
+
+  describe('ordenarNfsesRecentesPrimeiro', () => {
+    it('should sort by the most recent issue date regardless of list order', () => {
       const notas = [
         nota({ id: 1, dataEmissao: '2026-08-05' }),
         nota({ id: 2, dataEmissao: '2026-10-05' }),
         nota({ id: 3, dataEmissao: '2026-09-05' })
       ];
-      expect(ultimaNfseEmitida(notas)?.id).toBe(2);
+      expect(ordenarNfsesRecentesPrimeiro(notas).map(n => n.id)).toEqual([2, 3, 1]);
+      expect(notas.map(n => n.id)).toEqual([1, 2, 3]);
     });
 
     it('should break same-day ties by id', () => {
-      expect(ultimaNfseEmitida([nota({ id: 4 }), nota({ id: 7 }), nota({ id: 5 })])?.id).toBe(7);
-    });
-
-    it('should be null without notes', () => {
-      expect(ultimaNfseEmitida([])).toBeNull();
+      expect(ordenarNfsesRecentesPrimeiro([nota({ id: 4 }), nota({ id: 7 }), nota({ id: 5 })]).map(n => n.id))
+        .toEqual([7, 5, 4]);
     });
   });
 });
