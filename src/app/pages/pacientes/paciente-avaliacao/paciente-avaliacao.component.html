@@ -113,17 +113,23 @@
           @case ('postural') {
             <div class="form-card etapa-postural">
               <p>
-                A análise postural com o simetrógrafo é feita na tela própria, sobre a avaliação
-                fisioterapêutica mais recente. Ao terminar, volte aqui para seguir ao plano de tratamento.
+                A análise postural com o simetrógrafo é feita na tela própria. A nova análise já sai vinculada
+                {{ fluxo === 'reavaliacao' ? 'a esta reavaliação' : 'à avaliação fisioterapêutica mais recente' }}.
+                Ao terminar, volte aqui para seguir ao plano de tratamento.
               </p>
-              @if (!registros.avaliacao) {
+              <!-- Desde a #304 a análise pode ficar solta: sem avaliação ainda, ela nasce sem vínculo e pode ser
+              vinculada depois, na lista de análises. -->
+              @if (!vinculoPostural) {
                 <p class="etapa-dica" data-dica="sem-avaliacao">
-                  Registre a avaliação fisioterapêutica antes: a análise postural fica vinculada a ela.
+                  Ainda não há {{ fluxo === 'reavaliacao' ? 'reavaliação salva' : 'avaliação fisioterapêutica' }}: a
+                  análise fica solta e pode ser vinculada depois, na lista de análises posturais.
                 </p>
               }
               <div class="form-actions">
+                <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural', 'nova']"
+                  [queryParams]="vinculoPostural ?? {}" class="btn btn-primary">Nova análise postural</a>
                 <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']"
-                  class="btn btn-primary">Abrir análise postural</a>
+                  class="btn btn-secondary">Ver análises do paciente</a>
                 <button type="button" class="btn btn-outline" (click)="pular()">Pular esta etapa</button>
               </div>
             </div>

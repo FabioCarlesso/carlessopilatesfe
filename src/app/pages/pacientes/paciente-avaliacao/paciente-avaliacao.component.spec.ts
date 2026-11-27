@@ -315,17 +315,28 @@ describe('PacienteAvaliacaoComponent', () => {
   describe('análise postural (opcional)', () => {
     it('should lead to the postural screen and allow skipping it', () => {
       setup({ ...completo, query: { etapa: 'postural' } });
-      const link = el().querySelector<HTMLAnchorElement>('.etapa-postural a');
-      expect(link?.getAttribute('href')).toBe('/pacientes/1/avaliacao-fisioterapeutica/postural');
+      const [nova, lista] = Array.from(el().querySelectorAll<HTMLAnchorElement>('.etapa-postural a'));
+      // A nova análise já sai vinculada à avaliação mais recente (issue #304).
+      expect(nova.getAttribute('href')).toBe(
+        `/pacientes/1/avaliacao-fisioterapeutica/postural/nova?avaliacaoFisioterapeuticaId=${(component.vinculoPostural as { avaliacaoFisioterapeuticaId: number }).avaliacaoFisioterapeuticaId}`);
+      expect(component.vinculoPostural).toEqual({ avaliacaoFisioterapeuticaId: jasmine.any(Number) as unknown as number });
+      expect(lista.getAttribute('href')).toBe('/pacientes/1/avaliacao-fisioterapeutica/postural');
       expect(el().querySelector('[data-dica="sem-avaliacao"]')).toBeNull();
 
       botao('Pular esta etapa').click();
       expect(ultimaNavegacao()).toEqual({ etapa: 'plano' });
     });
 
-    it('should explain that the postural analysis needs an assessment first', () => {
+    it('should open a loose analysis when there is no assessment yet', () => {
       setup({ query: { etapa: 'postural' } });
-      expect(el().querySelector('[data-dica="sem-avaliacao"]')).not.toBeNull();
+      expect(el().querySelector('[data-dica="sem-avaliacao"]')?.textContent).toContain('fica solta');
+      expect(el().querySelector<HTMLAnchorElement>('.etapa-postural a')?.getAttribute('href'))
+        .toBe('/pacientes/1/avaliacao-fisioterapeutica/postural/nova');
+    });
+
+    it('should link the new analysis to the reassessment open in the reassessment flow', () => {
+      setup({ ...completo, query: { fluxo: 'reavaliacao', etapa: 'postural', reavaliacao: '7' } });
+      expect(component.vinculoPostural).toEqual({ reavaliacaoId: 7 });
     });
   });
 

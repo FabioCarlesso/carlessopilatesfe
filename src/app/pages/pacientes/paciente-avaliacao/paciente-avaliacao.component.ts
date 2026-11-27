@@ -93,6 +93,21 @@ export class PacienteAvaliacaoComponent implements OnInit, OnDestroy {
   /** Reavaliação em andamento no fluxo de reavaliação (`?reavaliacao=`); `null` é uma nova. */
   reavaliacaoId: number | null = null;
 
+  /**
+   * Vínculo com que a etapa postural abre a nova análise (`?avaliacaoFisioterapeuticaId=`/`?reavaliacaoId=`, issue
+   * #304): a reavaliação aberta no fluxo de reavaliação, senão a avaliação mais recente. `null` = análise solta.
+   */
+  get vinculoPostural(): { avaliacaoFisioterapeuticaId: number } | { reavaliacaoId: number } | null {
+    if (this.fluxo === 'reavaliacao') {
+      return this.reavaliacaoId !== null ? { reavaliacaoId: this.reavaliacaoId } : null;
+    }
+    // A mesma que o formulário de avaliação edita: a de data mais recente (desempate pelo id).
+    const avaliacao = [...this.avaliacoes].sort(
+      (a, b) => b.dataAvaliacao.localeCompare(a.dataAvaliacao) || b.id - a.id
+    )[0];
+    return avaliacao ? { avaliacaoFisioterapeuticaId: avaliacao.id } : null;
+  }
+
   readonly situacaoLabel = SITUACAO_ETAPA_LABEL;
   readonly situacaoClasse = SITUACAO_ETAPA_CLASSE;
 
