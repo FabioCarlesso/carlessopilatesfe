@@ -146,6 +146,12 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
     return this.sessaoId !== null;
   }
 
+  /** Sessão de uma aula (carlessopilatesapi#246): data e horário seguem a aula. */
+  get vinculadaAAula(): boolean {
+    return this.sessao?.aulaId != null;
+  }
+
+
   /**
    * Pré-preenchimento vindo da lista de espera (issue #137): a conversão de uma
    * entrada da fila abre esta tela com `?dataHora=`, já na próxima ocorrência do
@@ -293,6 +299,10 @@ export class PacienteSessaoFormComponent implements OnInit, OnDestroy {
               profissionalId: formFields.profissionalId ?? null,
               observacoes: formFields.observacoes ?? ''
             });
+            // A sessão vinculada (carlessopilatesapi#246) tem a data e o horário
+            // da aula: a API recusa mudá-los aqui, e a remarcação é pela aula.
+            // `getRawValue()` ainda envia o valor atual, que a API aceita.
+            if (this.vinculadaAAula) this.form.get('dataHora')?.disable();
           } else {
             this.sessao = null;
             // O formulário só existe no DOM após o *ngIf="!loading"; adia o foco.

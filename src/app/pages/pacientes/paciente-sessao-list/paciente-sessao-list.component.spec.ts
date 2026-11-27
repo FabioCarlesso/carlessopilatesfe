@@ -387,6 +387,14 @@ describe('PacienteSessaoListComponent', () => {
       expect(textosDosBotoes()).toContain('Reagendar');
     });
 
+    it('should not offer Reagendar nor Cancelar for a session linked to an aula', async () => {
+      await setup([{ ...mockSessaoAgendada, aulaId: 7 }]);
+
+      expect(textosDosBotoes()).not.toContain('Reagendar');
+      expect(textosDosBotoes()).not.toContain('Cancelar');
+      expect(textosDosBotoes()).toContain('Realizar');
+    });
+
     it('should not offer Reagendar for sessions already realizada or cancelada', async () => {
       await setup([mockSessaoRealizada, mockSessaoCancelada]);
 

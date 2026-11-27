@@ -82,6 +82,10 @@
             Data e hora são obrigatórias.
           </div>
         }
+        @if (vinculadaAAula) {
+          <div id="dataHoraAula" class="field-hint">Este atendimento é de uma aula: a data e o horário seguem a aula.
+            Para mudá-los, remarque a aula.</div>
+        }
         <!-- Aviso, não impedimento: o bloqueio é informativo na API, e travar o
         formulário inventaria uma regra que o backend não tem. `role="status"`
         porque ele aparece enquanto se preenche, sem interromper a digitação. -->

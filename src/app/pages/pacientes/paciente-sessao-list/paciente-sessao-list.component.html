@@ -83,7 +83,9 @@
               <a [routerLink]="['/pacientes', pacienteId, 'sessoes', sessao.id, 'evolucao']"
               class="btn btn-secondary btn-sm">Evolução</a>
             }
-            @if (sessao.status === 'AGENDADA') {
+            <!-- A sessão vinculada (carlessopilatesapi#246) segue a aula: reagendar e
+            cancelar são pela aula, e a API recusa os dois aqui. -->
+            @if (sessao.status === 'AGENDADA' && !sessao.aulaId) {
               <button class="btn btn-secondary btn-sm"
                 [disabled]="acaoEmAndamentoId !== null"
               (click)="abrirReagendar(sessao)">Reagendar</button>
@@ -93,7 +95,7 @@
                 [disabled]="acaoEmAndamentoId !== null"
               (click)="confirmarAcao(sessao.id, 'realizar')">Realizar</button>
             }
-            @if (sessao.status === 'AGENDADA') {
+            @if (sessao.status === 'AGENDADA' && !sessao.aulaId) {
               <button class="btn btn-danger btn-sm"
                 [disabled]="acaoEmAndamentoId !== null"
               (click)="confirmarAcao(sessao.id, 'cancelar')">Cancelar</button>
