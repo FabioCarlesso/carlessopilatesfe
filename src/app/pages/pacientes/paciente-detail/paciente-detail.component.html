@@ -196,6 +196,9 @@
                 </a>
               </div>
             </section>
+            <!-- Bloco próprio da exportação do prontuário (issue #308); o componente
+            só aparece para os papéis clínicos. -->
+            <app-exportar-prontuario [pacienteId]="paciente.id" />
           </div>
         }
         @case ('agenda') {

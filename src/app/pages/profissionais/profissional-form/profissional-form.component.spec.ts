@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -60,8 +61,8 @@ describe('ProfissionalFormComponent', () => {
         });
     });
 
-    // Nem todo profissional do estúdio tem registro em conselho.
-    it('should keep the form valid without a numeroRegistro', () => {
+    // Issue #308: o prontuário identifica cada evolução pelo número no CREFITO.
+    it('should require the CREFITO number with a clear message, rejecting blanks, without calling the API', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
@@ -70,9 +71,48 @@ describe('ProfissionalFormComponent', () => {
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
       });
+      const campo = component.form.get('numeroRegistro');
+      expect(campo?.errors?.['required']).toBeTrue();
 
-      expect(component.form.get('numeroRegistro')?.errors).toBeNull();
-      expect(component.form.valid).toBeTrue();
+      component.salvar();
+      fixture.detectChanges();
+
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+      const el = fixture.nativeElement as HTMLElement;
+      const input = el.querySelector<HTMLInputElement>('#numeroRegistro')!;
+      expect(el.querySelector('label[for="numeroRegistro"]')?.textContent?.trim()).toBe('Número no CREFITO *');
+      expect(input.getAttribute('aria-required')).toBe('true');
+      expect(input.getAttribute('aria-describedby')).toBe('numeroRegistroErro');
+      expect(el.querySelector('#numeroRegistroErro')?.textContent?.trim())
+        .toBe('Número no CREFITO é obrigatório: ele identifica o fisioterapeuta no prontuário.');
+
+      campo?.setValue('   ');
+      expect(campo?.errors?.['emBranco']).toBeTrue();
+      component.salvar();
+      expect(serviceSpy.cadastrar).not.toHaveBeenCalled();
+    });
+
+    it('should show the API detail when the create is refused with 400', () => {
+      serviceSpy.cadastrar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400,
+        error: { title: 'Bad Request', detail: 'Número de registro no CREFITO é obrigatório' }
+      })));
+      component.form.patchValue({
+        nome: 'Paula Mendes',
+        email: 'paula@carlessopilates.com',
+        cpf: '123.456.111-54',
+        numeroRegistro: '350544-F',
+        tipoContrato: 'PJ',
+        percentualPagamentoAula: 45,
+        dataInicio: '2024-01-15'
+      });
+
+      component.salvar();
+      fixture.detectChanges();
+
+      expect(component.erro).toBe('Número de registro no CREFITO é obrigatório');
+      expect((fixture.nativeElement as HTMLElement).querySelector('.alert-danger')?.getAttribute('role')).toBe('alert');
+      expect(component.salvando).toBeFalse();
     });
 
     // Só alcançável por `setValue`: o `maxlength="30"` do template trunca a
@@ -87,7 +127,7 @@ describe('ProfissionalFormComponent', () => {
       expect(campo?.errors?.['maxlength']).toBeTruthy();
       const grupo = (fixture.nativeElement as HTMLElement).querySelector('#numeroRegistro')?.closest('.form-group');
       expect(grupo?.querySelector('.invalid-feedback')?.textContent?.trim())
-        .toBe('Nr. de Registro deve ter no máximo 30 caracteres.');
+        .toBe('Número no CREFITO deve ter no máximo 30 caracteres.');
     });
 
     it('should send numeroRegistro in the create payload', () => {
@@ -97,7 +137,7 @@ describe('ProfissionalFormComponent', () => {
         email: 'paula@carlessopilates.com',
         cpf: '123.456.111-54',
         telefone: '(11) 98888-1111',
-        numeroRegistro: '350544-F',
+        numeroRegistro: '  350544-F ',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -116,6 +156,7 @@ describe('ProfissionalFormComponent', () => {
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
         cpf: '123.456.111-54',
+        numeroRegistro: '350544-F',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -136,6 +177,7 @@ describe('ProfissionalFormComponent', () => {
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
         cpf: '123.456.111-54',
+        numeroRegistro: '350544-F',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -185,6 +227,7 @@ describe('ProfissionalFormComponent', () => {
       component.form.patchValue({
         nome: 'Paula Mendes',
         email: 'paula@carlessopilates.com',
+        numeroRegistro: '350544-F',
         tipoContrato: 'PJ',
         percentualPagamentoAula: 45,
         dataInicio: '2024-01-15'
@@ -295,19 +338,15 @@ describe('ProfissionalFormComponent', () => {
       );
     });
 
-    // Regressão do review do PR #230: `''` é o que limpa o registro no
-    // servidor — `null` e campo omitido significam "não altere" e preservam o
-    // valor. Sanitizar o vazio para `null` aqui pareceria higiene de payload e
-    // tiraria do usuário a única forma de apagar um número digitado errado.
-    it('should send an empty numeroRegistro when the field is cleared', () => {
-      serviceSpy.atualizar.and.returnValue(of(mockProfissional));
+    // Antes da issue #308 limpar o campo apagava o registro no servidor; agora
+    // o formulário recusa o vazio antes de chegar à API.
+    it('should not save when the CREFITO number is cleared', () => {
       component.form.patchValue({ numeroRegistro: '' });
 
       component.salvar();
 
-      const payload = serviceSpy.atualizar.calls.mostRecent().args[1];
-      expect(payload.numeroRegistro).toBe('');
-      expect(payload.numeroRegistro).not.toBeNull();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
+      expect(component.form.get('numeroRegistro')?.errors?.['required']).toBeTrue();
     });
 
     it('should send the edited numeroRegistro in the update payload', () => {
@@ -337,6 +376,26 @@ describe('ProfissionalFormComponent', () => {
       component.salvar();
       expect(component.erro).toBe('Erro ao salvar profissional.');
       expect(component.salvando).toBeFalse();
+    });
+
+    it('should show the API detail on a 400 from the update', () => {
+      serviceSpy.atualizar.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400,
+        error: { detail: 'Número de registro no CREFITO é obrigatório' }
+      })));
+      component.salvar();
+      expect(component.erro).toBe('Número de registro no CREFITO é obrigatório');
+    });
+
+    it('should flag a legacy record without CREFITO as soon as it loads', () => {
+      serviceSpy.buscar.and.returnValue(of({ ...mockProfissional, numeroRegistro: null }));
+      component.ngOnInit();
+      fixture.detectChanges();
+
+      expect(component.form.get('numeroRegistro')?.touched).toBeTrue();
+      expect((fixture.nativeElement as HTMLElement).querySelector('#numeroRegistroErro')).not.toBeNull();
+      component.salvar();
+      expect(serviceSpy.atualizar).not.toHaveBeenCalled();
     });
 
     it('should set erro when buscar fails', () => {

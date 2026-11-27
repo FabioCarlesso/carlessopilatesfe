@@ -31,6 +31,7 @@ import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { exibirValorGravado } from '../../../shared/utils/mascara';
 import { ConfirmarDialogComponent } from '../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { CarregandoComponent } from '../../../shared/components/carregando/carregando.component';
+import { ExportarProntuarioComponent } from '../../../shared/components/exportar-prontuario/exportar-prontuario.component';
 
 /** Estado do resumo de uma área: carregado uma vez, na primeira abertura da aba. */
 interface EstadoResumo<T> {
@@ -56,7 +57,7 @@ const PAPEIS_DA_AREA: Record<AreaPaciente, readonly UserRole[]> = {
 
 @Component({
   selector: 'app-paciente-detail',
-  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent],
+  imports: [CurrencyPipe, DatePipe, RouterLink, ConfirmarDialogComponent, CarregandoComponent, ExportarProntuarioComponent],
   templateUrl: './paciente-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './paciente-detail.component.scss'

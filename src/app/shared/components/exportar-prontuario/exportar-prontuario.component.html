@@ -1,0 +1,36 @@
+@if (podeExportar) {
+  <section class="detail-section exportar-prontuario" [class.card]="cartao()" [attr.aria-labelledby]="ids.titulo">
+    <h2 [id]="ids.titulo">Prontuário em PDF</h2>
+    <p class="exportar-texto">
+      Evoluções com o fisioterapeuta responsável e o número no CREFITO. Sem período, sai o prontuário completo.
+    </p>
+
+    <form class="exportar-form" [formGroup]="form" (ngSubmit)="exportar()" novalidate>
+      <div class="exportar-campos">
+        <div class="form-group">
+          <label [for]="ids.inicio">Início</label>
+          <input [id]="ids.inicio" type="date" formControlName="inicio" class="form-control"
+            [class.is-invalid]="!!erroPeriodo()"
+            [attr.aria-describedby]="erroPeriodo() ? ids.erroPeriodo : null" />
+        </div>
+        <div class="form-group">
+          <label [for]="ids.fim">Fim</label>
+          <input [id]="ids.fim" type="date" formControlName="fim" class="form-control"
+            [class.is-invalid]="!!erroPeriodo()"
+            [attr.aria-describedby]="erroPeriodo() ? ids.erroPeriodo : null" />
+        </div>
+        <button type="submit" class="btn btn-secondary exportar-botao" [disabled]="exportando()">
+          {{ exportando() ? 'Gerando PDF...' : 'Exportar prontuário (PDF)' }}
+        </button>
+      </div>
+
+      @if (erroPeriodo()) {
+        <div [id]="ids.erroPeriodo" class="invalid-feedback exportar-erro-periodo" role="alert">{{ erroPeriodo() }}</div>
+      }
+    </form>
+
+    @if (erro()) {
+      <div class="alert alert-danger exportar-erro" role="alert">{{ erro() }}</div>
+    }
+  </section>
+}

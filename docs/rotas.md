@@ -44,7 +44,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes/:pacienteId/sessoes/nova` | Cadastro de atendimento avulso (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/:id/editar` | Edição de atendimento (_agenda_) |
 | `/pacientes/:pacienteId/sessoes/:sessaoId/evolucao` | Cadastro e edição da evolução clínica do atendimento (_clínica_) |
-| `/pacientes/:pacienteId/evolucoes` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor e filtros de período/tipo (somente leitura) (_clínica_) |
+| `/pacientes/:pacienteId/evolucoes` | Histórico de evoluções do paciente em linha do tempo, com gráfico de dor, filtros de período/tipo e exportação do prontuário e de cada evolução em PDF (_clínica_) |
 | `/pacientes/:pacienteId/calendario` | Calendário mensal/semanal das sessões e aulas do paciente (somente leitura) (_agenda_) |
 | `/pacientes/:pacienteId/plano-tratamento` | Lista de planos de tratamento do paciente (_clínica_) |
 | `/pacientes/:pacienteId/plano-tratamento/novo` | Cadastro de plano de tratamento (_clínica_) |

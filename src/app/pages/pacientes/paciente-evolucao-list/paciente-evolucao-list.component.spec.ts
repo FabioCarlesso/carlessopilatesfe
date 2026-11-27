@@ -1,12 +1,15 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { EvolucaoSessaoResponseDTO } from '../../../core/models/evolucao-sessao';
 import { PacienteResponseDTO } from '../../../core/models/paciente';
 import { SessaoResponseDTO } from '../../../core/models/sessao';
 import { EvolucaoSessaoService } from '../../../core/services/evolucao-sessao.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models/auth';
+import { MENSAGEM_SEM_PERMISSAO_PRONTUARIO } from '../../../shared/components/exportar-prontuario/exportar-prontuario.component';
 import { PacienteService } from '../../../core/services/paciente.service';
 import { SessaoService } from '../../../core/services/sessao.service';
 import { isOnPush } from '../../../../testing/onpush';
@@ -99,9 +102,9 @@ describe('PacienteEvolucaoListComponent', () => {
     evolucoes: EvolucaoSessaoResponseDTO[] = [evolucaoAntiga, evolucaoRecente],
     pacienteId = '10'
   ) {
-    pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+    pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'exportarProntuarioPdf']);
     sessaoServiceSpy = jasmine.createSpyObj('SessaoService', ['listarPorPaciente']);
-    evolucaoServiceSpy = jasmine.createSpyObj('EvolucaoSessaoService', ['listarPorPaciente']);
+    evolucaoServiceSpy = jasmine.createSpyObj('EvolucaoSessaoService', ['listarPorPaciente', 'exportarPdf']);
 
     pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
     sessaoServiceSpy.listarPorPaciente.and.returnValue(of(sessoes));
@@ -113,6 +116,7 @@ describe('PacienteEvolucaoListComponent', () => {
         { provide: PacienteService, useValue: pacienteServiceSpy },
         { provide: SessaoService, useValue: sessaoServiceSpy },
         { provide: EvolucaoSessaoService, useValue: evolucaoServiceSpy },
+        { provide: AuthService, useValue: { hasAnyRole: (aceitos: readonly UserRole[]) => aceitos.includes('PROFISSIONAL') } },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId }) } } }
       ]
     }).compileComponents();
@@ -1264,5 +1268,86 @@ describe('PacienteEvolucaoListComponent', () => {
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
     expect(sessaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
     expect(evolucaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
+  });
+
+  describe('PDF (issue #308)', () => {
+    let downloads: string[];
+
+    beforeEach(() => {
+      // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+      downloads = [];
+      spyOn(window.URL, 'createObjectURL').and.returnValue('blob:evolucao');
+      spyOn(window.URL, 'revokeObjectURL');
+      spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) {
+        downloads.push(this.download);
+      });
+    });
+
+    const pdf = (nome: string) => new HttpResponse({
+      body: new Blob(['%PDF']),
+      headers: new HttpHeaders({ 'Content-Disposition': `attachment; filename="${nome}"` })
+    });
+    const el = () => fixture.nativeElement as HTMLElement;
+    const botoesPdf = () => Array.from(el().querySelectorAll<HTMLButtonElement>('.evolucao-pdf'));
+
+    it('should offer the record export for the whole patient above the timeline', async () => {
+      await setup();
+      const bloco = el().querySelector('app-exportar-prontuario');
+      expect(bloco?.querySelector('section.card')).not.toBeNull();
+      pacienteServiceSpy.exportarProntuarioPdf.and.returnValue(of(pdf('prontuario-ana-silva-completo.pdf')));
+
+      bloco?.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+
+      expect(pacienteServiceSpy.exportarProntuarioPdf).toHaveBeenCalledOnceWith(10, { inicio: null, fim: null });
+      expect(downloads).toEqual(['prontuario-ana-silva-completo.pdf']);
+    });
+
+    it('should offer a PDF only for sessions with an evolution, downloading with the API file name', async () => {
+      await setup([sessaoAntiga, sessaoRecente, sessao({ id: 3, dataHora: '2026-05-25T09:00' })]);
+      expect(botoesPdf().length).toBe(2);
+      expect(botoesPdf()[0].getAttribute('aria-label')).toBe('Baixar em PDF a evolução de 20/05/2026');
+
+      const resposta$ = new Subject<HttpResponse<Blob>>();
+      evolucaoServiceSpy.exportarPdf.and.returnValue(resposta$);
+      botoesPdf()[0].click();
+      fixture.detectChanges();
+
+      expect(evolucaoServiceSpy.exportarPdf).toHaveBeenCalledOnceWith(200);
+      expect(botoesPdf().every(b => b.disabled)).toBeTrue();
+      expect(botoesPdf()[0].textContent?.trim()).toBe('Gerando PDF...');
+      component.baixarPdf(100);
+      expect(evolucaoServiceSpy.exportarPdf).toHaveBeenCalledTimes(1);
+
+      resposta$.next(pdf('evolucao-ana-silva-2026-05-20.pdf'));
+      resposta$.complete();
+      fixture.detectChanges();
+
+      expect(downloads).toEqual(['evolucao-ana-silva-2026-05-20.pdf']);
+      expect(botoesPdf().every(b => !b.disabled)).toBeTrue();
+    });
+
+    it('should show the 403, the API detail and the fallback without hiding the timeline', async () => {
+      await setup();
+      evolucaoServiceSpy.exportarPdf.and.returnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+      component.baixarPdf(200);
+      fixture.detectChanges();
+      expect(component.erroPdf).toBe(MENSAGEM_SEM_PERMISSAO_PRONTUARIO);
+      expect(el().querySelector('.alert-danger[role="alert"]')?.textContent?.trim()).toBe(MENSAGEM_SEM_PERMISSAO_PRONTUARIO);
+      expect(el().querySelectorAll('.evolucao-card').length).toBe(2);
+
+      const corpo = new Blob([JSON.stringify({ detail: 'Evolução não encontrada' })], { type: 'application/problem+json' });
+      evolucaoServiceSpy.exportarPdf.and.returnValue(throwError(() => new HttpErrorResponse({ status: 404, error: corpo })));
+      component.baixarPdf(200);
+      for (let i = 0; i < 50 && component.baixandoPdfId !== null; i++) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      expect(component.erroPdf).toBe('Evolução não encontrada');
+
+      evolucaoServiceSpy.exportarPdf.and.returnValue(of(pdf('evolucao.pdf')));
+      (window.URL.createObjectURL as jasmine.Spy).and.throwError('falha');
+      component.baixarPdf(200);
+      expect(component.erroPdf).toBe('Erro ao gerar o PDF da evolução.');
+      expect(component.baixandoPdfId).toBeNull();
+    });
   });
 });

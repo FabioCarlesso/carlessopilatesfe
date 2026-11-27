@@ -4,7 +4,7 @@
 </div>
 
 @if (erro) {
-  <div class="alert alert-danger">{{ erro }}</div>
+  <div class="alert alert-danger" role="alert">{{ erro }}</div>
 }
 @if (loading) {
   <app-carregando />
@@ -63,12 +63,19 @@
           placeholder="(00) 00000-0000" class="form-control" />
       </div>
       <div class="form-group">
-        <label for="numeroRegistro">Nr. de Registro</label>
+        <label for="numeroRegistro">Número no CREFITO *</label>
         <input id="numeroRegistro" formControlName="numeroRegistro" type="text" maxlength="30" class="form-control"
+          placeholder="Ex.: 123456-F" aria-required="true"
+          [attr.aria-describedby]="campo('numeroRegistro')?.invalid && campo('numeroRegistro')?.touched ? 'numeroRegistroErro' : null"
           [class.is-invalid]="campo('numeroRegistro')?.invalid && campo('numeroRegistro')?.touched" />
+        @if (campo('numeroRegistro')?.touched && (campo('numeroRegistro')?.errors?.['required'] || campo('numeroRegistro')?.errors?.['emBranco'])) {
+          <div id="numeroRegistroErro" class="invalid-feedback">
+            Número no CREFITO é obrigatório: ele identifica o fisioterapeuta no prontuário.
+          </div>
+        }
         @if (campo('numeroRegistro')?.errors?.['maxlength'] && campo('numeroRegistro')?.touched) {
-          <div class="invalid-feedback">
-            Nr. de Registro deve ter no máximo 30 caracteres.
+          <div id="numeroRegistroErro" class="invalid-feedback">
+            Número no CREFITO deve ter no máximo 30 caracteres.
           </div>
         }
       </div>

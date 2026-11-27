@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 import { EvolucaoSessaoService } from './evolucao-sessao.service';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import {
   EvolucaoSessaoRequestDTO,
   EvolucaoSessaoResponseDTO,
@@ -95,5 +97,20 @@ describe('EvolucaoSessaoService', () => {
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual(dto);
     req.flush(mockEvolucao);
+  });
+
+  it('should GET the PDF of one evolution as a blob, handling the 403 locally', () => {
+    const blob = new Blob(['%PDF'], { type: 'application/pdf' });
+    let recebido: HttpResponse<Blob> | undefined;
+    service.exportarPdf(3).subscribe(resposta => (recebido = resposta));
+
+    const req = httpMock.expectOne('/api/evolucoes-sessao/3/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    expect(req.request.context.get(TRATA_403_LOCALMENTE)).toBeTrue();
+    req.flush(blob, { headers: { 'Content-Disposition': 'attachment; filename="evolucao-ana-silva-2026-05-10.pdf"' } });
+
+    expect(recebido?.body).toEqual(blob);
+    expect(recebido?.headers.get('Content-Disposition')).toContain('evolucao-ana-silva-2026-05-10.pdf');
   });
 });

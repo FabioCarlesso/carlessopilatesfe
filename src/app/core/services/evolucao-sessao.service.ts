@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TRATA_403_LOCALMENTE } from '../interceptors/forbidden.interceptor';
 import {
   EvolucaoSessaoRequestDTO,
   EvolucaoSessaoResponseDTO,
@@ -29,5 +30,14 @@ export class EvolucaoSessaoService {
 
   atualizar(id: number, dto: EvolucaoSessaoUpdateDTO): Observable<EvolucaoSessaoResponseDTO> {
     return this.http.put<EvolucaoSessaoResponseDTO>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  /** PDF de uma evolução (carlessopilatesapi#250); o `403` fica com a tela, como no prontuário. */
+  exportarPdf(id: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.apiUrl}/${id}/pdf`, {
+      context: new HttpContext().set(TRATA_403_LOCALMENTE, true),
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 }

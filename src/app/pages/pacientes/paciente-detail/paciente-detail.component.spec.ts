@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -104,7 +105,7 @@ describe('PacienteDetailComponent', () => {
   }
 
   function criarSpies(cenario: Cenario) {
-    serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar']);
+    serviceSpy = jasmine.createSpyObj('PacienteService', ['buscar', 'ativar', 'inativar', 'exportarProntuarioPdf']);
     serviceSpy.buscar.and.returnValue(of(cenario.paciente ?? mockPacienteAtivo));
     planoServiceSpy = jasmine.createSpyObj('PlanoService', ['buscarAtivo']);
     planoServiceSpy.buscarAtivo.and.returnValue(of(cenario.plano ?? null));
@@ -513,6 +514,39 @@ describe('PacienteDetailComponent', () => {
         irParaUrl('clinico');
         expect(el().querySelector('[role="tabpanel"] .alert-danger')?.textContent).toContain('Erro ao carregar o resumo clínico.');
         expect(component.resumoClinico.carregando).toBeFalse();
+      });
+    });
+
+    describe('prontuário em PDF (issue #308)', () => {
+      beforeEach(() => {
+        // Sem os stubs, o clique de download é real e grava o Blob falso em ~/Downloads.
+        spyOn(window.URL, 'createObjectURL').and.returnValue('blob:prontuario');
+        spyOn(window.URL, 'revokeObjectURL');
+        spyOn(HTMLAnchorElement.prototype, 'click');
+      });
+
+      it('should offer the export in its own block of the Clínico area, for this patient', () => {
+        setup({ roles: ['PROFISSIONAL'] });
+        serviceSpy.exportarProntuarioPdf.and.returnValue(of(new HttpResponse({ body: new Blob(['%PDF']) })));
+
+        const bloco = painel()?.querySelector('app-exportar-prontuario');
+        expect(bloco).not.toBeNull();
+        expect(bloco?.querySelector('h2')?.textContent?.trim()).toBe('Prontuário em PDF');
+        // Os atalhos da área não mudam.
+        expect(atalhos()).toContain('Histórico de Evoluções');
+
+        bloco?.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+        expect(serviceSpy.exportarProntuarioPdf).toHaveBeenCalledOnceWith(1, { inicio: null, fim: null });
+      });
+
+      it('should not render the export outside the Clínico area', () => {
+        setup({ roles: ['ADMIN'], aba: 'agenda' });
+        expect(el().querySelector('app-exportar-prontuario')).toBeNull();
+      });
+
+      it('should not offer the export to non-clinical roles', () => {
+        setup({ roles: ['RECEPCAO'] });
+        expect(el().textContent).not.toContain('Exportar prontuário');
       });
     });
 
