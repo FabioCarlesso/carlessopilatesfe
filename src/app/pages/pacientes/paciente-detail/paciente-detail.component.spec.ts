@@ -361,7 +361,7 @@ describe('PacienteDetailComponent', () => {
         'Anamnese', 'Avaliação Fisioterapêutica', 'Análise Postural', 'Plano de Tratamento', 'Reavaliações',
         'Histórico de Evoluções',
         'Aulas', 'Sessões', 'Calendário',
-        'Histórico Financeiro', 'Planos', 'Pagamentos', 'NFSEs Emitidas'
+        'Financeiro do paciente', 'Planos', 'Pagamentos', 'NFSEs Emitidas'
       ]);
       expect(el().querySelector('.links-section')).toBeNull();
     });
@@ -465,13 +465,13 @@ describe('PacienteDetailComponent', () => {
         expect(abaSelecionada()).toBe('Agenda');
         expect(atalhos()).toEqual(['Aulas', 'Sessões', 'Calendário']);
         irParaUrl('financeiro');
-        expect(atalhos()).toEqual(['Histórico Financeiro', 'Planos', 'Pagamentos']);
+        expect(atalhos()).toEqual(['Financeiro do paciente', 'Planos', 'Pagamentos']);
       });
 
       it('should show only Financeiro, with NFSE, for FINANCEIRO', () => {
         setup({ roles: ['FINANCEIRO'] });
         expect(rotulosDasAbas()).toEqual(['Financeiro']);
-        expect(atalhos()).toEqual(['Histórico Financeiro', 'Planos', 'Pagamentos', 'NFSEs Emitidas']);
+        expect(atalhos()).toEqual(['Financeiro do paciente', 'Planos', 'Pagamentos', 'NFSEs Emitidas']);
         expect(aulaServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
         expect(avaliacaoServiceSpy.listarPorPaciente).not.toHaveBeenCalled();
       });
@@ -485,7 +485,7 @@ describe('PacienteDetailComponent', () => {
       it('should point the main Financeiro shortcut to the consolidated screen', () => {
         setup({ roles: ['RECEPCAO'], aba: 'financeiro' });
         const link = el().querySelector<HTMLAnchorElement>('a.link-card--principal');
-        expect(link?.textContent).toContain('Histórico Financeiro');
+        expect(link?.textContent).toContain('Financeiro do paciente');
         expect(link?.getAttribute('href')).toBe('/pacientes/1/financeiro');
       });
     });
