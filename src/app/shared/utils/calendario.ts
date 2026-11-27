@@ -357,9 +357,20 @@ function eventoDaAula(aula: AulaResponseDTO, comPaciente: boolean): CalendarioEv
  * aula, que não tem tela individual, cai na listagem de aulas do paciente,
  * onde a presença é confirmada.
  */
+/**
+ * A sessão vinculada a uma aula do período é o atendimento dessa aula
+ * (carlessopilatesapi#246): a aula já aparece, com a situação do atendimento, e
+ * mostrar as duas duplicaria o compromisso na grade e nos contadores. Sem a
+ * aula no período (filtrada ou de paciente inativo), a sessão continua visível.
+ */
+function semAtendimentoDeAula(sessoes: SessaoResponseDTO[], aulas: AulaResponseDTO[]): SessaoResponseDTO[] {
+  const aulasNoPeriodo = new Set(aulas.map(aula => aula.id));
+  return sessoes.filter(sessao => sessao.aulaId == null || !aulasNoPeriodo.has(sessao.aulaId));
+}
+
 export function mapearEventos(sessoes: SessaoResponseDTO[], aulas: AulaResponseDTO[]): CalendarioEvento[] {
   return ordenarEventos([
-    ...sessoes.map(sessao => eventoDaSessao(sessao, false)),
+    ...semAtendimentoDeAula(sessoes, aulas).map(sessao => eventoDaSessao(sessao, false)),
     ...aulas.map(aula => eventoDaAula(aula, false))
   ]);
 }
@@ -376,7 +387,7 @@ export function mapearEventosComPaciente(
   aulas: AulaResponseDTO[]
 ): CalendarioEvento[] {
   return ordenarEventos([
-    ...sessoes.map(sessao => eventoDaSessao(sessao, true)),
+    ...semAtendimentoDeAula(sessoes, aulas).map(sessao => eventoDaSessao(sessao, true)),
     ...aulas.map(aula => eventoDaAula(aula, true))
   ]);
 }
