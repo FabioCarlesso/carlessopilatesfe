@@ -85,6 +85,12 @@ export const routes: Routes = [
       import('./pages/pacientes/paciente-form/paciente-form.component').then(m => m.PacienteFormComponent)
   },
   {
+    path: 'pacientes/:pacienteId/avaliacao',
+    canActivate: [roleGuard(PAPEIS.clinica)],
+    loadComponent: () =>
+      import('./pages/pacientes/paciente-avaliacao/paciente-avaliacao.component').then(m => m.PacienteAvaliacaoComponent)
+  },
+  {
     path: 'pacientes/:pacienteId/anamnese',
     canActivate: [roleGuard(PAPEIS.clinica)],
     loadComponent: () =>

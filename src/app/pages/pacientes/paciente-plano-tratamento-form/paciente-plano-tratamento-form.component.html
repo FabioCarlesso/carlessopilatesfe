@@ -1,3 +1,4 @@
+@if (!embutido) {
 @if (pacienteId) {
 <app-breadcrumb [items]="[
   { label: 'Pacientes', link: '/pacientes' },
@@ -20,6 +21,7 @@
     }
   </div>
 </div>
+}
 
 @if (erro) {
   <div class="alert alert-danger">{{ erro }}</div>
@@ -113,9 +115,9 @@
     </div>
     <div class="form-actions">
       <button type="submit" class="btn btn-primary" [disabled]="salvando">
-        {{ salvando ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Cadastrar') }}
+        {{ salvando ? 'Salvando...' : (embutido ? 'Salvar e continuar' : (modoEdicao ? 'Atualizar' : 'Cadastrar')) }}
       </button>
-      @if (pacienteId) {
+      @if (pacienteId && !embutido) {
         <a [routerLink]="['/pacientes', pacienteId, 'plano-tratamento']" class="btn btn-outline">Cancelar</a>
       }
     </div>

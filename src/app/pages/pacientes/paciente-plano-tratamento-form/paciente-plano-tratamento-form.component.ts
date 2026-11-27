@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -43,6 +43,17 @@ function periodoCoerente(control: AbstractControl): ValidationErrors | null {
   styleUrl: './paciente-plano-tratamento-form.component.scss'
 })
 export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
+  /**
+   * Modo embutido (issue #305): o formulário vira a etapa do plano no fluxo de
+   * avaliação. Some o cabeçalho da página e os links de saída, e o cadastro não
+   * navega para a listagem: o formulário passa a editar o plano recém-criado. O
+   * paciente continua vindo do `:pacienteId` da rota, que o fluxo também tem.
+   */
+  @Input() embutido = false;
+  /** No modo embutido, o plano a editar (no avulso ele vem do `:id` da rota); `null` cadastra um novo. */
+  @Input() planoIdEmbutido: number | null = null;
+  /** Emite o plano gravado, no cadastro e na edição; o fluxo usa para avançar. */
+  @Output() salvo = new EventEmitter<PlanoTratamentoResponseDTO>();
   form!: FormGroup;
   pacienteId: number | null = null;
   planoId: number | null = null;
@@ -81,9 +92,10 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
       .subscribe(() => this.form.get('dataFimPrevista')?.updateValueAndValidity({ emitEvent: false }));
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    this.planoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    this.planoId = this.embutido ? this.planoIdEmbutido : parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    const idRotaInvalido = !this.embutido && this.route.snapshot.paramMap.has('id') && this.planoId === null;
 
-    if (this.pacienteId === null || (this.route.snapshot.paramMap.has('id') && this.planoId === null)) {
+    if (this.pacienteId === null || idRotaInvalido) {
       this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
@@ -186,18 +198,20 @@ export class PacientePlanoTratamentoFormComponent implements OnInit, OnDestroy {
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
-        if (criando) {
+        if (criando && !this.embutido) {
           this.router.navigate(['/pacientes', this.pacienteId, 'plano-tratamento']);
         } else {
+          this.planoId = response.id;
           this.plano = response;
           this.preencherFormulario(response);
           if (this.successTimer !== null) {
             clearTimeout(this.successTimer);
           }
-          this.sucesso = 'Plano de tratamento atualizado com sucesso.';
+          this.sucesso = criando ? 'Plano de tratamento cadastrado com sucesso.' : 'Plano de tratamento atualizado com sucesso.';
           this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
           this.salvando = false;
         }
+        this.salvo.emit(response);
       },
       error: (err: unknown) => {
         this.erro = extrairMensagemErro(err, 'Erro ao salvar plano de tratamento.');

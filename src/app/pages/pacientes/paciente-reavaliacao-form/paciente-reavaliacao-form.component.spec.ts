@@ -267,4 +267,57 @@ describe('PacienteReavaliacaoFormComponent', () => {
     expect(pacienteServiceSpy.buscar).not.toHaveBeenCalled();
     expect(reavaliacaoServiceSpy.buscar).not.toHaveBeenCalled();
   });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(reavaliacaoId: number | null) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      reavaliacaoServiceSpy = jasmine.createSpyObj('ReavaliacaoService', ['listarPorPaciente', 'buscar', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      reavaliacaoServiceSpy.buscar.and.returnValue(of(mockReavaliacao));
+      await TestBed.configureTestingModule({
+        imports: [PacienteReavaliacaoFormComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: ReavaliacaoService, useValue: reavaliacaoServiceSpy },
+          // A rota do fluxo de avaliação tem só o `:pacienteId`.
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '10' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteReavaliacaoFormComponent);
+      component = fixture.componentInstance;
+      router = TestBed.inject(Router);
+      fixture.componentRef.setInput('embutido', true);
+      fixture.componentRef.setInput('reavaliacaoIdEmbutido', reavaliacaoId);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should edit the reassessment given by the input', async () => {
+      await setupEmbutido(1);
+      expect(reavaliacaoServiceSpy.buscar).toHaveBeenCalledWith(1);
+      expect(component.form.get('evolucaoDor')?.value).toBe('Redução de 7 para 3.');
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('.form-actions a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+    });
+
+    it('should stay on the form after creating, switching to edit and emitting salvo', async () => {
+      await setupEmbutido(null);
+      const navigate = spyOn(router, 'navigate');
+      const emitidos: ReavaliacaoResponseDTO[] = [];
+      component.salvo.subscribe(r => emitidos.push(r));
+      reavaliacaoServiceSpy.criar.and.returnValue(of(mockReavaliacao));
+      component.form.patchValue({ dataReavaliacao: '2026-05-10' });
+
+      component.salvar();
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(emitidos).toEqual([mockReavaliacao]);
+      expect(component.modoEdicao).toBeTrue();
+      expect(component.sucesso).toBe('Reavaliação cadastrada com sucesso.');
+    });
+  });
 });

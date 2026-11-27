@@ -34,6 +34,7 @@ lê o pagamento e depois as aulas, então exige agenda **e** cobrança.
 | `/pacientes`            | Lista de pacientes com filtros e paginação (_equipe_) |
 | `/pacientes/novo`       | Formulário de cadastro (_equipe_) |
 | `/pacientes/:id/editar` | Formulário de edição (_equipe_) |
+| `/pacientes/:pacienteId/avaliacao` | Fluxo único de avaliação (issue #305): stepper da anamnese ao plano de tratamento, com a etapa pendente derivada dos registros, e linha do tempo da avaliação inicial e das reavaliações. `?etapa=` (`anamnese`, `avaliacao`, `postural`, `plano`, `reavaliacao`) guarda a etapa aberta; `?fluxo=reavaliacao` abre o fluxo de reavaliação e `?reavaliacao=:id` a reavaliação em andamento. As telas avulsas abaixo continuam valendo (_clínica_) |
 | `/pacientes/:pacienteId/anamnese` | Cadastro e edição da anamnese do paciente (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica` | Cadastro e edição da avaliação fisioterapêutica do paciente (_clínica_) |
 | `/pacientes/:pacienteId/avaliacao-fisioterapeutica/postural` | Listagem das análises posturais da avaliação fisioterapêutica do paciente (_clínica_) |

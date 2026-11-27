@@ -166,6 +166,10 @@
             <section class="detail-section" aria-labelledby="atalhos-clinico-titulo">
               <h2 id="atalhos-clinico-titulo">Telas</h2>
               <div class="links-grid">
+                <a [routerLink]="['/pacientes', paciente.id, 'avaliacao']" class="link-card link-card--principal">
+                  <span class="link-icon" aria-hidden="true">🩺</span>
+                  <span>Avaliação</span>
+                </a>
                 <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
                   <span class="link-icon" aria-hidden="true">📝</span>
                   <span>Anamnese</span>

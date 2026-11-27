@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -21,6 +21,14 @@ import { CarregandoComponent } from '../../../shared/components/carregando/carre
   styleUrl: './paciente-avaliacao-fisioterapeutica.component.scss'
 })
 export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDestroy {
+  /**
+   * Modo embutido (issue #305): o formulário vira a etapa 2 do fluxo de avaliação.
+   * Some o cabeçalho da página e os links de saída; o paciente continua vindo do
+   * `:pacienteId` da rota, que o fluxo também tem.
+   */
+  @Input() embutido = false;
+  /** Emite o registro gravado, no cadastro e na edição; o fluxo usa para avançar. */
+  @Output() salvo = new EventEmitter<AvaliacaoFisioterapeuticaResponseDTO>();
   form!: FormGroup;
   pacienteId: number | null = null;
   paciente: PacienteResponseDTO | null = null;
@@ -156,6 +164,7 @@ export class PacienteAvaliacaoFisioterapeuticaComponent implements OnInit, OnDes
           : 'Avaliação fisioterapêutica atualizada com sucesso.';
         this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
         this.salvando = false;
+        this.salvo.emit(response);
       },
       error: (err: unknown) => {
         this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar avaliação fisioterapêutica.';

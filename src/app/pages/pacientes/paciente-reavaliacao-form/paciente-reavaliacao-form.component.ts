@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -37,6 +37,17 @@ type CampoTexto =
   styleUrl: './paciente-reavaliacao-form.component.scss'
 })
 export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
+  /**
+   * Modo embutido (issue #305): o formulário vira a primeira etapa do fluxo de
+   * reavaliação. Some o cabeçalho da página e os links de saída, e o cadastro não
+   * navega para a listagem: o formulário passa a editar a reavaliação recém-criada.
+   * O paciente continua vindo do `:pacienteId` da rota, que o fluxo também tem.
+   */
+  @Input() embutido = false;
+  /** No modo embutido, a reavaliação a editar (no avulso ela vem do `:id` da rota); `null` cadastra uma nova. */
+  @Input() reavaliacaoIdEmbutido: number | null = null;
+  /** Emite a reavaliação gravada, no cadastro e na edição; o fluxo usa para avançar. */
+  @Output() salvo = new EventEmitter<ReavaliacaoResponseDTO>();
   form!: FormGroup;
   pacienteId: number | null = null;
   reavaliacaoId: number | null = null;
@@ -74,9 +85,12 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
     });
 
     this.pacienteId = parseRouteNumberParam(this.route.snapshot.paramMap, 'pacienteId');
-    this.reavaliacaoId = parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    this.reavaliacaoId = this.embutido
+      ? this.reavaliacaoIdEmbutido
+      : parseRouteNumberParam(this.route.snapshot.paramMap, 'id');
+    const idRotaInvalido = !this.embutido && this.route.snapshot.paramMap.has('id') && this.reavaliacaoId === null;
 
-    if (this.pacienteId === null || (this.route.snapshot.paramMap.has('id') && this.reavaliacaoId === null)) {
+    if (this.pacienteId === null || idRotaInvalido) {
       this.parametroInvalido = true;
       this.erro = 'Identificador inválido.';
       return;
@@ -198,9 +212,10 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
 
     obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
-        if (criando) {
+        if (criando && !this.embutido) {
           this.router.navigate(['/pacientes', this.pacienteId, 'reavaliacoes']);
         } else {
+          this.reavaliacaoId = response.id;
           this.reavaliacao = response;
           const { id, pacienteId, nomePaciente, dataCriacao, dataAtualizacao, ...formFields } = response;
           this.form.patchValue({
@@ -218,10 +233,11 @@ export class PacienteReavaliacaoFormComponent implements OnInit, OnDestroy {
           if (this.successTimer !== null) {
             clearTimeout(this.successTimer);
           }
-          this.sucesso = 'Reavaliação atualizada com sucesso.';
+          this.sucesso = criando ? 'Reavaliação cadastrada com sucesso.' : 'Reavaliação atualizada com sucesso.';
           this.successTimer = setTimeout(() => { this.sucesso = null; }, 4000);
           this.salvando = false;
         }
+        this.salvo.emit(response);
       },
       error: (err: unknown) => {
         this.erro = ehConflitoConcorrencia(err) ? MENSAGEM_CONFLITO_CONCORRENCIA : 'Erro ao salvar reavaliação.';

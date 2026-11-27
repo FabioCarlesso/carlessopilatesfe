@@ -235,4 +235,77 @@ describe('PacienteAnamneseComponent', () => {
     expect(component.erro).toBe('Erro ao carregar anamnese do paciente.');
     expect(component.loading).toBeFalse();
   });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(anamnese: AnamneseResponseDTO | null) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      anamneseServiceSpy = jasmine.createSpyObj('AnamneseService', ['buscarPorPaciente', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      anamneseServiceSpy.buscarPorPaciente.and.returnValue(
+        anamnese === null ? throwError(() => new HttpErrorResponse({ status: 404 })) : of(anamnese)
+      );
+      await TestBed.configureTestingModule({
+        imports: [PacienteAnamneseComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: AnamneseService, useValue: anamneseServiceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteAnamneseComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should hide the page header, the breadcrumb and the exit links', async () => {
+      await setupEmbutido(mockAnamnese);
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('app-breadcrumb')).toBeNull();
+      expect(el().querySelector('.form-actions a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+    });
+
+    it('should keep the same fields as the standalone screen', async () => {
+      await setupEmbutido(mockAnamnese);
+      expect(el().querySelector('#queixaPrincipal')).not.toBeNull();
+      expect(component.form.get('queixaPrincipal')?.value).toBe('Dor lombar');
+    });
+
+    it('should emit salvo with the created anamnese', async () => {
+      await setupEmbutido(null);
+      const emitidos: AnamneseResponseDTO[] = [];
+      component.salvo.subscribe(a => emitidos.push(a));
+      anamneseServiceSpy.criar.and.returnValue(of(mockAnamnese));
+      component.form.patchValue({ queixaPrincipal: 'Dor lombar', objetivos: 'Fortalecimento' });
+
+      component.salvar();
+
+      expect(anamneseServiceSpy.criar).toHaveBeenCalled();
+      expect(emitidos).toEqual([mockAnamnese]);
+    });
+
+    it('should not emit salvo when saving fails', async () => {
+      await setupEmbutido(mockAnamnese);
+      const emitido = jasmine.createSpy('salvo');
+      component.salvo.subscribe(emitido);
+      anamneseServiceSpy.atualizar.and.returnValue(throwError(() => new Error('fail')));
+
+      component.salvar();
+
+      expect(emitido).not.toHaveBeenCalled();
+      expect(component.erro).toBe('Erro ao salvar anamnese.');
+    });
+  });
+
+  it('should keep the standalone header and labels outside the flow', async () => {
+    await setup();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('h1')?.textContent).toContain('Anamnese');
+    expect(el.querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Atualizar');
+  });
 });

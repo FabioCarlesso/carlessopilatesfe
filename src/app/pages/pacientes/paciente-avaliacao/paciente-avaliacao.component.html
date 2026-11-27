@@ -1,0 +1,211 @@
+@if (pacienteId) {
+<app-breadcrumb [items]="[
+  { label: 'Pacientes', link: '/pacientes' },
+  { label: paciente?.nome || 'Paciente', link: ['/pacientes', pacienteId] },
+  { label: 'Avaliação' }
+]"></app-breadcrumb>
+}
+
+<div class="page-header">
+  <div>
+    <h1>Avaliação</h1>
+    @if (paciente) {
+      <p class="page-subtitle">{{ paciente.nome }}</p>
+    }
+  </div>
+  <div class="acoes">
+    @if (pacienteId) {
+      <a [routerLink]="['/pacientes', pacienteId]" [queryParams]="{ aba: 'clinico' }" class="btn btn-outline">Voltar</a>
+    }
+  </div>
+</div>
+
+@if (erro) {
+  <div class="alert alert-danger">{{ erro }}</div>
+}
+@if (sucesso) {
+  <div class="alert alert-success" role="status">{{ sucesso }}</div>
+}
+@if (loading) {
+  <app-carregando mensagem="Carregando avaliação..." />
+}
+
+@if (carregado && pacienteId) {
+  <section class="fluxo" aria-labelledby="fluxo-titulo">
+    <div class="fluxo-cabecalho">
+      <h2 id="fluxo-titulo" class="fluxo-titulo">
+        {{ fluxo === 'reavaliacao' ? 'Reavaliação' : 'Avaliação inicial' }}
+      </h2>
+      @if (fluxo === 'reavaliacao') {
+        <button type="button" class="btn btn-outline btn-sm" (click)="sairDaReavaliacao()">Sair da reavaliação</button>
+      }
+    </div>
+
+    <nav class="stepper" [attr.aria-label]="fluxo === 'reavaliacao' ? 'Etapas da reavaliação' : 'Etapas da avaliação inicial'">
+      <ol class="stepper-lista">
+        @for (def of etapas; track def.chave; let i = $index) {
+          <li class="stepper-item" [class.stepper-item--atual]="def.chave === etapaAtual"
+            [attr.data-etapa]="def.chave" [attr.data-situacao]="situacao(def.chave)">
+            <button type="button" class="stepper-botao" [id]="'passo-' + def.chave"
+              [attr.aria-current]="def.chave === etapaAtual ? 'step' : null"
+              (click)="irPara(def.chave)">
+              <span class="stepper-numero" aria-hidden="true">{{ i + 1 }}</span>
+              <span class="stepper-texto">
+                <span class="visualmente-oculto">Etapa {{ i + 1 }} de {{ etapas.length }}: </span>
+                <span class="stepper-rotulo">{{ def.rotulo }}</span>
+                <span class="badge stepper-situacao {{ situacaoClasse[situacao(def.chave)] }}">
+                  {{ situacaoLabel[situacao(def.chave)] }}
+                </span>
+              </span>
+            </button>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    @if (pendente && etapaAtual !== pendente) {
+      <div class="alert alert-warning aviso-pendente" data-aviso="pendente">
+        <span>Etapa pendente: <strong>{{ rotulo(pendente) }}</strong></span>
+        <button type="button" class="btn btn-outline btn-sm" (click)="irPara(pendente)">Ir para a etapa pendente</button>
+      </div>
+    }
+
+    <div class="etapa-painel">
+      @if (definicaoAtual; as def) {
+        <h3 id="etapa-titulo" class="etapa-titulo" tabindex="-1">
+          Etapa {{ numeroEtapaAtual }} de {{ etapas.length }} · {{ def.rotulo }}
+          @if (def.opcional) {
+            <span class="etapa-opcional">(opcional)</span>
+          }
+        </h3>
+
+        @switch (def.chave) {
+          @case ('anamnese') {
+            <app-paciente-anamnese [embutido]="true" (salvo)="aoSalvarAnamnese($event)" />
+          }
+          @case ('avaliacao') {
+            <app-paciente-avaliacao-fisioterapeutica [embutido]="true" (salvo)="aoSalvarAvaliacao($event)" />
+          }
+          @case ('reavaliacao') {
+            <div class="referencia" data-referencia>
+              @if (referencia; as ref) {
+                <p class="referencia-titulo">
+                  Partindo da última avaliação: <strong>{{ ref.titulo }}</strong> de {{ ref.data | localDate }}
+                </p>
+                @if (ref.destaques.length) {
+                  <dl class="destaques">
+                    @for (d of ref.destaques; track d.rotulo) {
+                      <div class="destaque">
+                        <dt>{{ d.rotulo }}</dt>
+                        <dd>{{ d.valor }}</dd>
+                      </div>
+                    }
+                  </dl>
+                }
+              } @else {
+                <p class="referencia-titulo">Nenhuma avaliação anterior registrada para comparar.</p>
+              }
+            </div>
+            <app-paciente-reavaliacao-form [embutido]="true" [reavaliacaoIdEmbutido]="reavaliacaoId"
+              (salvo)="aoSalvarReavaliacao($event)" />
+          }
+          @case ('postural') {
+            <div class="form-card etapa-postural">
+              <p>
+                A análise postural com o simetrógrafo é feita na tela própria, sobre a avaliação
+                fisioterapêutica mais recente. Ao terminar, volte aqui para seguir ao plano de tratamento.
+              </p>
+              @if (!registros.avaliacao) {
+                <p class="etapa-dica" data-dica="sem-avaliacao">
+                  Registre a avaliação fisioterapêutica antes: a análise postural fica vinculada a ela.
+                </p>
+              }
+              <div class="form-actions">
+                <a [routerLink]="['/pacientes', pacienteId, 'avaliacao-fisioterapeutica', 'postural']"
+                  class="btn btn-primary">Abrir análise postural</a>
+                <button type="button" class="btn btn-outline" (click)="pular()">Pular esta etapa</button>
+              </div>
+            </div>
+          }
+          @case ('plano') {
+            @if (fluxo === 'reavaliacao') {
+              <p class="etapa-dica">
+                {{ planoAtual ? 'Ajuste o plano de tratamento atual, se a reavaliação pedir.' : 'O paciente ainda não tem plano de tratamento: cadastre um, se for o caso.' }}
+              </p>
+            }
+            <app-paciente-plano-tratamento-form [embutido]="true" [planoIdEmbutido]="planoAtual?.id ?? null"
+              (salvo)="aoSalvarPlano($event)" />
+            @if (def.opcional) {
+              <div class="etapa-pular">
+                <button type="button" class="btn btn-outline" (click)="pular()">Concluir sem alterar o plano</button>
+              </div>
+            }
+          }
+        }
+
+        @if (anterior) {
+          <div class="etapa-navegacao">
+            <button type="button" class="btn btn-outline" (click)="voltarEtapa()">Etapa anterior</button>
+          </div>
+        }
+      } @else {
+        <div class="form-card etapa-concluida" data-etapa-concluida>
+          <h3 id="etapa-titulo" class="etapa-titulo" tabindex="-1">
+            {{ fluxo === 'reavaliacao' ? 'Reavaliação registrada' : 'Avaliação inicial completa' }}
+          </h3>
+          <p>Todas as etapas obrigatórias estão registradas. Escolha uma etapa acima para revisá-la.</p>
+          <div class="form-actions">
+            @if (fluxo === 'inicial') {
+              <button type="button" class="btn btn-primary" (click)="iniciarReavaliacao()">Nova reavaliação</button>
+            } @else {
+              <button type="button" class="btn btn-primary" (click)="sairDaReavaliacao()">Voltar à visão geral</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="linha-do-tempo" aria-labelledby="linha-titulo">
+    <div class="fluxo-cabecalho">
+      <h2 id="linha-titulo" class="fluxo-titulo">Linha do tempo</h2>
+      @if (linhaDoTempo.length > 0) {
+        <button type="button" class="btn btn-secondary btn-sm" (click)="iniciarReavaliacao()">Nova reavaliação</button>
+      }
+    </div>
+
+    @if (linhaDoTempo.length === 0) {
+      <app-empty-state mensagem="Nenhuma avaliação registrada."
+        texto="A avaliação inicial e as reavaliações aparecem aqui, em ordem cronológica." />
+    } @else {
+      <ol class="timeline">
+        @for (item of linhaDoTempo; track item.tipo + item.id) {
+          <li class="timeline-item" [attr.data-tipo]="item.tipo">
+            <article class="timeline-card" [attr.aria-labelledby]="'item-' + item.tipo + '-' + item.id">
+              <header class="timeline-cabecalho">
+                <h3 class="timeline-titulo" [id]="'item-' + item.tipo + '-' + item.id">
+                  <span class="timeline-data">{{ item.data | localDate }}</span> · {{ item.titulo }}
+                </h3>
+                @if (linkDoItem(item); as params) {
+                  <a [routerLink]="['/pacientes', pacienteId, 'avaliacao']" [queryParams]="params"
+                    class="btn btn-secondary btn-sm"
+                    [attr.aria-label]="'Abrir ' + item.titulo + ' de ' + (item.data | localDate)">Abrir</a>
+                }
+              </header>
+              @if (item.destaques.length) {
+                <dl class="destaques">
+                  @for (d of item.destaques; track d.rotulo) {
+                    <div class="destaque">
+                      <dt>{{ d.rotulo }}</dt>
+                      <dd>{{ d.valor }}</dd>
+                    </div>
+                  }
+                </dl>
+              }
+            </article>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

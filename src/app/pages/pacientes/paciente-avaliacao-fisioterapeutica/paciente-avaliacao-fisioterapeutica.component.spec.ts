@@ -248,4 +248,61 @@ describe('PacienteAvaliacaoFisioterapeuticaComponent', () => {
     expect(component.erro).toBe('Erro ao carregar avaliação fisioterapêutica do paciente.');
     expect(component.loading).toBeFalse();
   });
+
+  describe('modo embutido (issue #305)', () => {
+    async function setupEmbutido(avaliacoes: AvaliacaoFisioterapeuticaResponseDTO[]) {
+      pacienteServiceSpy = jasmine.createSpyObj('PacienteService', ['buscar']);
+      avaliacaoServiceSpy = jasmine.createSpyObj('AvaliacaoFisioterapeuticaService', ['listarPorPaciente', 'criar', 'atualizar']);
+      pacienteServiceSpy.buscar.and.returnValue(of(mockPaciente));
+      avaliacaoServiceSpy.listarPorPaciente.and.returnValue(of(avaliacoes));
+      await TestBed.configureTestingModule({
+        imports: [PacienteAvaliacaoFisioterapeuticaComponent, RouterTestingModule],
+        providers: [
+          { provide: PacienteService, useValue: pacienteServiceSpy },
+          { provide: AvaliacaoFisioterapeuticaService, useValue: avaliacaoServiceSpy },
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ pacienteId: '1' }) } } }
+        ]
+      }).compileComponents();
+      fixture = TestBed.createComponent(PacienteAvaliacaoFisioterapeuticaComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('embutido', true);
+      fixture.detectChanges();
+    }
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('should hide the page header, the Postural shortcut and the exit links', async () => {
+      await setupEmbutido([mockAvaliacao]);
+      expect(el().querySelector('h1')).toBeNull();
+      expect(el().querySelector('app-breadcrumb')).toBeNull();
+      expect(el().querySelector('a')).toBeNull();
+      expect(el().querySelector('button[type="submit"]')?.textContent?.trim()).toBe('Salvar e continuar');
+      expect(component.form.get('diagnosticoFisioterapeutico')?.value).toBe('Gonartrose');
+    });
+
+    it('should emit salvo with the updated assessment', async () => {
+      await setupEmbutido([mockAvaliacao]);
+      const emitidos: AvaliacaoFisioterapeuticaResponseDTO[] = [];
+      component.salvo.subscribe(a => emitidos.push(a));
+      const atualizada = { ...mockAvaliacao, version: 1 };
+      avaliacaoServiceSpy.atualizar.and.returnValue(of(atualizada));
+
+      component.salvar();
+
+      expect(emitidos).toEqual([atualizada]);
+    });
+
+    it('should not emit salvo for an invalid form', async () => {
+      await setupEmbutido([]);
+      const emitido = jasmine.createSpy('salvo');
+      component.salvo.subscribe(emitido);
+
+      component.salvar();
+
+      expect(avaliacaoServiceSpy.criar).not.toHaveBeenCalled();
+      expect(emitido).not.toHaveBeenCalled();
+    });
+  });
 });

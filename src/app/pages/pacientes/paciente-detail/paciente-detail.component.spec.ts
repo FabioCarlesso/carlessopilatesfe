@@ -348,7 +348,7 @@ describe('PacienteDetailComponent', () => {
       expect(abas[0].getAttribute('aria-controls')).toBeNull();
     });
 
-    it('should keep every shortcut inside an area, 13 in all for ADMIN', () => {
+    it('should keep every shortcut inside an area, 14 in all for ADMIN', () => {
       setup({ roles: ['ADMIN'] });
       const vistos: string[] = [];
       for (const aba of ['clinico', 'agenda', 'financeiro']) {
@@ -358,7 +358,7 @@ describe('PacienteDetailComponent', () => {
         vistos.push(...atalhos());
       }
       expect(vistos).toEqual([
-        'Anamnese', 'Avaliação Fisioterapêutica', 'Análise Postural', 'Plano de Tratamento', 'Reavaliações',
+        'Avaliação', 'Anamnese', 'Avaliação Fisioterapêutica', 'Análise Postural', 'Plano de Tratamento', 'Reavaliações',
         'Histórico de Evoluções',
         'Aulas', 'Atendimentos', 'Calendário',
         'Financeiro do paciente', 'Planos', 'Pagamentos', 'NFSEs Emitidas'
