@@ -1,35 +1,84 @@
-.links-section { margin-top: 1.5rem; }
+// Áreas Clínico, Agenda e Financeiro (issue #301).
+.areas { margin-top: var(--sp-6); }
+
+/* Mesmo desenho das abas do detalhe do profissional (issue #134): o sublinhado
+   em `--text-brand` (com versão no tema escuro) marca a aba ativa, e a cor não é
+   o único sinal — o peso da fonte também muda (WCAG 1.4.1). No mobile a lista
+   rola na horizontal em vez de quebrar. */
+.abas {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+  overflow-x: auto;
+}
+
+.aba {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    border-bottom-color: var(--text-brand);
+    color: var(--text-brand);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: -2px;
+  }
+}
 
 .links-grid {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
 }
 
 .link-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 16px 28px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 88px;
+  padding: var(--sp-4) var(--sp-3);
+  border: 2px solid var(--border-default);
+  border-radius: var(--r-md);
+  text-align: center;
   text-decoration: none;
-  color: var(--text);
+  color: var(--text-primary);
   font-weight: 600;
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
 
   .link-icon { font-size: 1.5rem; }
 
   &:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--bg-sunken);
+    border-color: var(--text-brand);
+    color: var(--text-brand);
+    background-color: var(--bg-sunken);
   }
 }
 
-// Bloco "Plano e renovação" (issue #133).
+// Atalho principal da área Financeiro: a tela consolidada do paciente.
+.link-card--principal { border-color: var(--text-brand); }
+
+@media (max-width: 480px) {
+  .links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// Bloco de renovação dentro do resumo financeiro (issue #133).
+.plano-renovacao { margin-top: var(--sp-4); }
+
 .plano-renovacao__info {
   color: var(--text-secondary);
 
@@ -46,3 +95,6 @@
   gap: var(--sp-3);
   margin-bottom: 0;
 }
+
+[data-resumo='pendencias'] .badge,
+[data-resumo='faltas-recentes'] .badge { margin-right: var(--sp-1); }

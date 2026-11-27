@@ -121,148 +121,261 @@
         </div>
       </section>
     }
-    <!-- Renovação assistida (issue #133): só a cobrança acessa planos e
-    pagamentos na API, e só para ela o componente faz as chamadas. -->
-    @if (authService.hasAnyRole(papeis.cobranca)) {
-      <section class="detail-section plano-renovacao" aria-labelledby="plano-renovacao-titulo">
-        <h2 id="plano-renovacao-titulo">Plano e renovação</h2>
-        @if (carregandoSituacao) {
-          <p class="plano-renovacao__info">Carregando situação do plano...</p>
-        }
-        @if (erroSituacao) {
-          <div class="alert alert-danger">{{ erroSituacao }}</div>
-        }
-        @if (situacaoPlano; as situacao) {
-          @if (situacao.tipo === 'SEM_PLANO') {
-            <p class="plano-renovacao__info" data-situacao="SEM_PLANO">
-              Sem plano ativo.
-              <a [routerLink]="['/planos/novo', paciente.id]">Criar plano</a>
-            </p>
-          } @else if (situacao.tipo === 'SEM_PAGAMENTO') {
-            <p class="plano-renovacao__info" data-situacao="SEM_PAGAMENTO">
-              Plano {{ tipoLabel[situacao.plano.tipo] }} — {{ situacao.plano.valor | currency:'BRL' }}.
-              Nenhuma cobrança registrada.
-              <a [routerLink]="['/pagamentos/novo', paciente.id]">Registrar pagamento</a>
-            </p>
-          } @else if (situacao.tipo === 'EM_ABERTO') {
-            <div class="plano-renovacao__info" data-situacao="EM_ABERTO">
-              <p>
-                <strong>Cobrança em aberto</strong>
-                <span [class]="'badge badge-' + situacao.ultimo.status.toLowerCase()">
-                  {{ statusPagamentoLabel[situacao.ultimo.status] }}
-                </span>
-              </p>
-              <p>
-                Período de {{ situacao.ultimo.periodoInicio | date:'dd/MM/yyyy' }}
-                a {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }},
-                vencimento em {{ situacao.ultimo.dataVencimento | date:'dd/MM/yyyy' }}.
-                <a [routerLink]="['/pagamentos/paciente', paciente.id]">Ver pagamentos</a>
-              </p>
-            </div>
-          } @else if (situacao.tipo === 'PAGO') {
-            <p class="plano-renovacao__info" data-situacao="PAGO">
-              Plano {{ tipoLabel[situacao.plano.tipo] }} pago até
-              <strong>{{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}</strong>.
-            </p>
-          } @else {
-            <div class="alert alert-warning plano-renovacao__alerta" data-situacao="RENOVAR">
-              <span>
-                <strong>{{ descreverPrazo(situacao.diasRestantes) }}</strong>
-                — pago até {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}, sem cobrança seguinte.
-              </span>
-              <a [routerLink]="['/pagamentos/novo', paciente.id]" [queryParams]="situacao.renovacao"
-                class="btn btn-primary btn-sm">Renovar</a>
-            </div>
-          }
-        }
-      </section>
-    }
-    <!-- Cada atalho só aparece para quem acessa a área: sem isso a recepção
-    abriria o prontuário e cairia no /403. -->
-    <section class="detail-section links-section">
-      <h2>Gestão</h2>
-      <div class="links-grid">
-        @if (authService.hasAnyRole(papeis.cobranca)) {
-          <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
-            <span class="link-icon" aria-hidden="true">📋</span>
-            <span>Planos</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.cobranca)) {
-          <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
-            <span class="link-icon" aria-hidden="true">💳</span>
-            <span>Pagamentos</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.cobranca)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'financeiro']" class="link-card">
-            <span class="link-icon" aria-hidden="true">💰</span>
-            <span>Histórico Financeiro</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.agenda)) {
-          <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
-            <span class="link-icon" aria-hidden="true">🗓</span>
-            <span>Aulas</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📝</span>
-            <span>Anamnese</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
-            <span class="link-icon" aria-hidden="true">🦴</span>
-            <span>Avaliação Fisioterapêutica</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📐</span>
-            <span>Análise Postural</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📄</span>
-            <span>Plano de Tratamento</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.agenda)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
-            <span class="link-icon" aria-hidden="true">🏃</span>
-            <span>Sessões</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📈</span>
-            <span>Histórico de Evoluções</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.agenda)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'calendario']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📅</span>
-            <span>Calendário</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.clinica)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
-            <span class="link-icon" aria-hidden="true">📊</span>
-            <span>Reavaliações</span>
-          </a>
-        }
-        @if (authService.hasAnyRole(papeis.fiscal)) {
-          <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
-            <span class="link-icon" aria-hidden="true">🧾</span>
-            <span>NFSEs Emitidas</span>
-          </a>
+  </div>
+
+  <!-- Áreas do paciente (issue #301). Cada aba só aparece para quem acessa as
+  telas dela, e cada atalho mantém o recorte de papel da própria rota: sem isso
+  a recepção abriria o prontuário e cairia no /403. -->
+  @if (aba) {
+    <div class="areas">
+      <div class="abas" role="tablist" aria-label="Áreas do paciente">
+        @for (area of abas; track area) {
+          <button type="button" role="tab" class="aba" [id]="'aba-' + area"
+            [attr.aria-controls]="aba === area ? 'painel-' + area : null"
+            [attr.aria-selected]="aba === area"
+            [attr.tabindex]="aba === area ? 0 : -1"
+            (click)="selecionarAba(area)"
+            (keydown)="navegarAbas($event)">{{ areaLabel[area] }}</button>
         }
       </div>
-    </section>
-  </div>
+
+      @switch (aba) {
+        @case ('clinico') {
+          <div class="detail-card area" role="tabpanel" id="painel-clinico" aria-labelledby="aba-clinico">
+            <section class="detail-section" aria-labelledby="resumo-clinico-titulo">
+              <h2 id="resumo-clinico-titulo">Resumo clínico</h2>
+              @if (resumoClinico.carregando) {
+                <app-carregando mensagem="Carregando resumo clínico..." />
+              }
+              @if (resumoClinico.erro) {
+                <div class="alert alert-danger">{{ resumoClinico.erro }}</div>
+              }
+              @if (resumoClinico.dados; as resumo) {
+                <div class="detail-grid">
+                  <div class="detail-item" data-resumo="ultima-avaliacao">
+                    <span class="label">Última avaliação</span>
+                    <span>{{ resumo.ultimaAvaliacao ? (resumo.ultimaAvaliacao | date:'dd/MM/yyyy') : 'Nenhuma avaliação registrada' }}</span>
+                  </div>
+                  <div class="detail-item" data-resumo="ultima-evolucao">
+                    <span class="label">Última evolução</span>
+                    <span>{{ resumo.ultimaEvolucao ? (resumo.ultimaEvolucao | date:'dd/MM/yyyy') : 'Nenhuma evolução registrada' }}</span>
+                  </div>
+                </div>
+              }
+            </section>
+            <section class="detail-section" aria-labelledby="atalhos-clinico-titulo">
+              <h2 id="atalhos-clinico-titulo">Telas</h2>
+              <div class="links-grid">
+                <a [routerLink]="['/pacientes', paciente.id, 'anamnese']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📝</span>
+                  <span>Anamnese</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">🦴</span>
+                  <span>Avaliação Fisioterapêutica</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'avaliacao-fisioterapeutica', 'postural']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📐</span>
+                  <span>Análise Postural</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'plano-tratamento']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📄</span>
+                  <span>Plano de Tratamento</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'reavaliacoes']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📊</span>
+                  <span>Reavaliações</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'evolucoes']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📈</span>
+                  <span>Histórico de Evoluções</span>
+                </a>
+              </div>
+            </section>
+          </div>
+        }
+        @case ('agenda') {
+          <div class="detail-card area" role="tabpanel" id="painel-agenda" aria-labelledby="aba-agenda">
+            <section class="detail-section" aria-labelledby="resumo-agenda-titulo">
+              <h2 id="resumo-agenda-titulo">Resumo da agenda</h2>
+              @if (resumoAgenda.carregando) {
+                <app-carregando mensagem="Carregando resumo da agenda..." />
+              }
+              @if (resumoAgenda.erro) {
+                <div class="alert alert-danger">{{ resumoAgenda.erro }}</div>
+              }
+              @if (resumoAgenda.dados; as resumo) {
+                <div class="detail-grid">
+                  <div class="detail-item" data-resumo="proxima-aula">
+                    <span class="label">Próxima aula</span>
+                    @if (resumo.proximaAula; as proxima) {
+                      <span>
+                        {{ proxima.data | date:'dd/MM/yyyy' }}
+                        @if (proxima.horario) {
+                          às {{ proxima.horario.slice(0, 5) }}
+                        }
+                        @if (proxima.profissionalNome) {
+                          — {{ proxima.profissionalNome }}
+                        }
+                      </span>
+                    } @else {
+                      <span>Nenhuma aula agendada</span>
+                    }
+                  </div>
+                  <div class="detail-item" data-resumo="faltas-recentes">
+                    <span class="label">Faltas nos últimos {{ diasFaltasRecentes }} dias</span>
+                    @if (resumo.faltasRecentes.length) {
+                      <span>
+                        <span class="badge badge--warning">{{ resumo.faltasRecentes.length }}</span>
+                        @for (falta of resumo.faltasRecentes; track falta.id; let ultima = $last) {
+                          {{ falta.data | date:'dd/MM/yyyy' }}{{ ultima ? '' : ',' }}
+                        }
+                      </span>
+                    } @else {
+                      <span>Nenhuma falta</span>
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+            <section class="detail-section" aria-labelledby="atalhos-agenda-titulo">
+              <h2 id="atalhos-agenda-titulo">Telas</h2>
+              <div class="links-grid">
+                <a [routerLink]="['/aulas/paciente', paciente.id]" class="link-card">
+                  <span class="link-icon" aria-hidden="true">🗓</span>
+                  <span>Aulas</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'sessoes']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">🏃</span>
+                  <span>Sessões</span>
+                </a>
+                <a [routerLink]="['/pacientes', paciente.id, 'calendario']" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📅</span>
+                  <span>Calendário</span>
+                </a>
+              </div>
+            </section>
+          </div>
+        }
+        @case ('financeiro') {
+          <div class="detail-card area" role="tabpanel" id="painel-financeiro" aria-labelledby="aba-financeiro">
+            <section class="detail-section" aria-labelledby="resumo-financeiro-titulo">
+              <h2 id="resumo-financeiro-titulo">Resumo financeiro</h2>
+              @if (resumoFinanceiro.carregando) {
+                <app-carregando mensagem="Carregando resumo financeiro..." />
+              }
+              @if (resumoFinanceiro.erro) {
+                <div class="alert alert-danger">{{ resumoFinanceiro.erro }}</div>
+              }
+              @if (resumoFinanceiro.dados; as resumo) {
+                <div class="detail-grid">
+                  <div class="detail-item" data-resumo="plano-ativo">
+                    <span class="label">Plano ativo</span>
+                    <span>{{ resumo.plano ? tipoLabel[resumo.plano.tipo] + ' — ' + (resumo.plano.valor | currency:'BRL') : 'Sem plano ativo' }}</span>
+                  </div>
+                  <div class="detail-item" data-resumo="proximo-vencimento">
+                    <span class="label">Próximo vencimento</span>
+                    <span>
+                      @if (resumo.proximoVencimento; as proximo) {
+                        {{ proximo.dataVencimento | date:'dd/MM/yyyy' }} — {{ proximo.valor | currency:'BRL' }}
+                      } @else {
+                        Nenhuma cobrança a vencer
+                      }
+                    </span>
+                  </div>
+                  <div class="detail-item" data-resumo="pendencias">
+                    <span class="label">Pendências</span>
+                    <span>
+                      @if (resumo.pendentes.quantidade || resumo.vencidos.quantidade) {
+                        @if (resumo.vencidos.quantidade) {
+                          <span class="badge badge-vencido">{{ resumo.vencidos.quantidade }} vencida(s)</span>
+                          {{ resumo.vencidos.valor | currency:'BRL' }}
+                        }
+                        @if (resumo.pendentes.quantidade) {
+                          <span class="badge badge-pendente">{{ resumo.pendentes.quantidade }} em aberto</span>
+                          {{ resumo.pendentes.valor | currency:'BRL' }}
+                        }
+                      } @else {
+                        Nenhuma
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Renovação assistida (issue #133), sobre o plano ativo. -->
+                <div class="plano-renovacao">
+                  @if (resumo.situacao; as situacao) {
+                    @if (situacao.tipo === 'SEM_PLANO') {
+                      <p class="plano-renovacao__info" data-situacao="SEM_PLANO">
+                        <a [routerLink]="['/planos/novo', paciente.id]">Criar plano</a>
+                      </p>
+                    } @else if (situacao.tipo === 'SEM_PAGAMENTO') {
+                      <p class="plano-renovacao__info" data-situacao="SEM_PAGAMENTO">
+                        Nenhuma cobrança registrada para o plano ativo.
+                        <a [routerLink]="['/pagamentos/novo', paciente.id]">Registrar pagamento</a>
+                      </p>
+                    } @else if (situacao.tipo === 'EM_ABERTO') {
+                      <div class="plano-renovacao__info" data-situacao="EM_ABERTO">
+                        <p>
+                          <strong>Cobrança em aberto</strong>
+                          <span [class]="'badge badge-' + situacao.ultimo.status.toLowerCase()">
+                            {{ statusPagamentoLabel[situacao.ultimo.status] }}
+                          </span>
+                        </p>
+                        <p>
+                          Período de {{ situacao.ultimo.periodoInicio | date:'dd/MM/yyyy' }}
+                          a {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }},
+                          vencimento em {{ situacao.ultimo.dataVencimento | date:'dd/MM/yyyy' }}.
+                          <a [routerLink]="['/pagamentos/paciente', paciente.id]">Ver pagamentos</a>
+                        </p>
+                      </div>
+                    } @else if (situacao.tipo === 'PAGO') {
+                      <p class="plano-renovacao__info" data-situacao="PAGO">
+                        Plano {{ tipoLabel[situacao.plano.tipo] }} pago até
+                        <strong>{{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}</strong>.
+                      </p>
+                    } @else if (situacao.tipo === 'RENOVAR') {
+                      <div class="alert alert-warning plano-renovacao__alerta" data-situacao="RENOVAR">
+                        <span>
+                          <strong>{{ descreverPrazo(situacao.diasRestantes) }}</strong>
+                          — pago até {{ situacao.ultimo.periodoFim | date:'dd/MM/yyyy' }}, sem cobrança seguinte.
+                        </span>
+                        <a [routerLink]="['/pagamentos/novo', paciente.id]" [queryParams]="situacao.renovacao"
+                          class="btn btn-primary btn-sm">Renovar</a>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </section>
+            <section class="detail-section" aria-labelledby="atalhos-financeiro-titulo">
+              <h2 id="atalhos-financeiro-titulo">Telas</h2>
+              <div class="links-grid">
+                <a [routerLink]="['/pacientes', paciente.id, 'financeiro']" class="link-card link-card--principal">
+                  <span class="link-icon" aria-hidden="true">💰</span>
+                  <span>Histórico Financeiro</span>
+                </a>
+                <a [routerLink]="['/planos/paciente', paciente.id]" class="link-card">
+                  <span class="link-icon" aria-hidden="true">📋</span>
+                  <span>Planos</span>
+                </a>
+                <a [routerLink]="['/pagamentos/paciente', paciente.id]" class="link-card">
+                  <span class="link-icon" aria-hidden="true">💳</span>
+                  <span>Pagamentos</span>
+                </a>
+                @if (authService.hasAnyRole(papeis.fiscal)) {
+                  <a [routerLink]="['/pacientes', paciente.id, 'nfse-emitidas']" class="link-card">
+                    <span class="link-icon" aria-hidden="true">🧾</span>
+                    <span>NFSEs Emitidas</span>
+                  </a>
+                }
+              </div>
+            </section>
+          </div>
+        }
+      }
+    </div>
+  }
 }
 
 @if (confirmarAtivar) {
