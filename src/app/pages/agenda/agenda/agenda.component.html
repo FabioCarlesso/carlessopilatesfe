@@ -154,7 +154,12 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
         </div>
         <div class="detail-item">
           <span class="label">Situação</span>
-          <span>{{ evento.statusLabel }}</span>
+          <span>
+            {{ evento.statusLabel }}
+            @if (evento.feriado) {
+              <span class="badge badge--info badge-feriado">Feriado</span>
+            }
+          </span>
         </div>
         <div class="detail-item">
           <span class="label">Profissional</span>
@@ -172,6 +177,7 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
         <div class="filtro-campo detalhe-profissional">
           <label for="profissionalDaAcao">Profissional que ministrou</label>
           <select id="profissionalDaAcao" class="form-control" name="profissionalDaAcao"
+            aria-describedby="profissionalDaAcaoDica"
             [class.is-invalid]="profissionalInvalido" [(ngModel)]="profissionalDaAcao"
             (ngModelChange)="aoSelecionarProfissional()" [disabled]="acaoEmAndamento">
             <option [ngValue]="null">Selecione…</option>
@@ -179,6 +185,11 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
               <option [ngValue]="profissional.id">{{ profissional.nome }}</option>
             }
           </select>
+          <!-- Issue #300: a troca é a exceção (folga, ausência) e não deve ser
+          lida como mudança do vínculo do paciente. -->
+          <p id="profissionalDaAcaoDica" class="detalhe-dica">
+            Vale só para esta aula: o fisioterapeuta padrão do paciente não muda.
+          </p>
         </div>
       }
 
@@ -245,6 +256,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
                     <span class="evento-hora" aria-hidden="true">{{ evento.horario }}</span>
                   }
                   <span class="evento-titulo" aria-hidden="true">{{ evento.titulo }}</span>
+                  @if (evento.feriado) {
+                    <span class="evento-feriado" aria-hidden="true">Feriado</span>
+                  }
                 </button>
               }
             </div>
@@ -281,6 +295,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
               <span class="agenda-titulo">{{ evento.paciente }}</span>
               <span class="agenda-rotulo">{{ evento.rotulo }}</span>
               <span class="agenda-status">{{ evento.statusLabel }}</span>
+              @if (evento.feriado) {
+                <span class="badge badge--info badge-feriado">Feriado</span>
+              }
               @if (evento.profissional) {
                 <span class="agenda-profissional">{{ evento.profissional }}</span>
               }
@@ -343,6 +360,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
                     @for (evento of celula; track evento.chave) {
                       <div class="impressao-evento" [class.impressao-cancelado]="evento.status === 'CANCELADA'">
                         <span class="impressao-paciente">{{ evento.paciente }}</span>
+                        @if (evento.feriado) {
+                          <span class="impressao-detalhe impressao-feriado">Feriado</span>
+                        }
                         @if (filtro.profissionalId === 'todos' && evento.profissional) {
                           <span class="impressao-detalhe">{{ evento.profissional }}</span>
                         }
@@ -384,6 +404,9 @@ leitor de tela não teria nenhum retorno do que passou a estar na tela. -->
                     {{ evento.rotulo }}
                     @if (evento.status === 'CANCELADA') {
                       ({{ evento.statusLabel }})
+                    }
+                    @if (evento.feriado) {
+                      <span class="impressao-feriado">(Feriado)</span>
                     }
                   </td>
                   <td>{{ evento.profissional || 'Não atribuído' }}</td>

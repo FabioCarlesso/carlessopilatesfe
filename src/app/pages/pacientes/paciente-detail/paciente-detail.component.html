@@ -52,6 +52,27 @@
       </div>
     </section>
     <section class="detail-section">
+      <h2>Atendimento</h2>
+      <div class="detail-grid">
+        <div class="detail-item" data-campo="profissional-padrao">
+          <span class="label">Fisioterapeuta padrão</span>
+          <span>
+            @if (paciente.profissionalPadraoId) {
+              <!-- O detalhe do profissional é só do ADMIN (roleGuard da rota):
+              para os demais o nome vai sem link, em vez de levar ao 403. -->
+              @if (authService.hasAnyRole(papeis.admin)) {
+                <a [routerLink]="['/profissionais', paciente.profissionalPadraoId]">{{ paciente.profissionalPadraoNome }}</a>
+              } @else {
+                {{ paciente.profissionalPadraoNome }}
+              }
+            } @else {
+              Sem padrão
+            }
+          </span>
+        </div>
+      </div>
+    </section>
+    <section class="detail-section">
       <h2>Nota fiscal</h2>
       <div class="detail-grid">
         <div class="detail-item">

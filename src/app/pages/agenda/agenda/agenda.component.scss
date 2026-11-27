@@ -213,6 +213,12 @@
   margin: var(--sp-4) 0 0;
 }
 
+.detalhe-dica {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
 .detalhe-acoes {
   display: flex;
   flex-wrap: wrap;
@@ -383,6 +389,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Aula de feriado (issue #299): marca escrita no chip, porque o status é o
+   mesmo da realizada comum e não há cor que o distinga. Herda a cor do chip
+   (com variante no tema escuro) e não encolhe: quem corta com reticências é o
+   nome. */
+.evento-feriado {
+  flex: none;
+  margin-left: auto;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Só espaçamento externo: o `.badge` global monta o interior. */
+.badge-feriado {
+  margin-left: var(--sp-1);
 }
 
 /* Cancelada continua legível, mas riscada: a cor sozinha não é sinal suficiente

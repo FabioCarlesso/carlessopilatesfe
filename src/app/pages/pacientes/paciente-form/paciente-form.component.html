@@ -62,6 +62,25 @@
         <input id="dataNascimento" formControlName="dataNascimento" type="date" class="form-control" />
       </div>
     </div>
+    <h2 class="form-section-title">Atendimento</h2>
+    <div class="form-group">
+      <label for="profissionalPadraoId">Fisioterapeuta padrão</label>
+      <select id="profissionalPadraoId" formControlName="profissionalPadraoId" class="form-control"
+        aria-describedby="profissionalPadraoId-hint">
+        <option [ngValue]="null">Sem padrão</option>
+        @for (p of profissionais; track p.id) {
+          <option [ngValue]="p.id">{{ p.nome }}{{ p.inativo ? ' (inativo)' : '' }}</option>
+        }
+      </select>
+      <div id="profissionalPadraoId-hint" class="field-hint">
+        Atribuído automaticamente às aulas geradas pelos pagamentos. Trocar o profissional de uma aula
+        específica, numa folga ou ausência, não muda o padrão.
+        @if (erroProfissionais) {
+          Não foi possível carregar os profissionais agora.
+        }
+      </div>
+    </div>
+
     <h2 class="form-section-title">Endereço</h2>
     <div formGroupName="endereco">
       <div class="form-row">

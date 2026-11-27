@@ -5,6 +5,8 @@ import {
   bloqueiosDoHorario,
   cobreDia,
   descreverBloqueio,
+  rotuloTipoBloqueio,
+  tipoDoBloqueio,
   ehDiaInteiro,
   formatarFaixaHoraria,
   formatarPeriodo
@@ -177,6 +179,27 @@ describe('bloqueio-agenda utils', () => {
       expect(descreverBloqueio(manutencao)).toBe(
         'Manutenção dos equipamentos — 28/12/2026 a 30/12/2026, das 08:00 às 12:00'
       );
+    });
+    it('should flag a holiday in the description (issue #299)', () => {
+      const natal = bloqueio({ id: 1, dataInicio: '2026-12-25', motivo: 'Natal', tipo: 'FERIADO' });
+
+      expect(descreverBloqueio(natal)).toBe('Natal (feriado) — 25/12/2026, dia inteiro');
+    });
+  });
+
+  describe('type', () => {
+    it('should default a block without type to OUTRO', () => {
+      const antigo = bloqueio({ id: 1, dataInicio: '2026-12-25', motivo: 'Natal' });
+
+      expect(tipoDoBloqueio(antigo)).toBe('OUTRO');
+      expect(rotuloTipoBloqueio(antigo)).toBe('Outro');
+    });
+
+    it('should label a holiday', () => {
+      const natal = bloqueio({ id: 1, dataInicio: '2026-12-25', motivo: 'Natal', tipo: 'FERIADO' });
+
+      expect(tipoDoBloqueio(natal)).toBe('FERIADO');
+      expect(rotuloTipoBloqueio(natal)).toBe('Feriado');
     });
   });
 });

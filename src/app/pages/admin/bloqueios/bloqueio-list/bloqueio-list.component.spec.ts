@@ -17,6 +17,7 @@ const natal: BloqueioAgendaResponseDTO = {
   horaFim: null,
   diaInteiro: true,
   motivo: 'Natal',
+  tipo: 'FERIADO',
   dataCriacao: '2026-01-02T09:00:00',
   dataAtualizacao: null
 };
@@ -86,9 +87,22 @@ describe('BloqueioListComponent', () => {
     const linhas = todos('.table tbody tr');
     expect(linhas.length).toBe(2);
     const celulas = Array.from(linhas[0].querySelectorAll('td')).map(td => td.textContent?.trim());
-    expect(celulas.slice(0, 3)).toEqual(['01/06/2026 a 03/06/2026', 'Das 08:00 às 12:00', 'Manutenção dos equipamentos']);
-    expect(Array.from(linhas[1].querySelectorAll('td')).map(td => td.textContent?.trim()).slice(0, 3))
-      .toEqual(['25/12/2026', 'Dia inteiro', 'Natal']);
+    expect(celulas.slice(0, 4))
+      .toEqual(['01/06/2026 a 03/06/2026', 'Outro', 'Das 08:00 às 12:00', 'Manutenção dos equipamentos']);
+    expect(Array.from(linhas[1].querySelectorAll('td')).map(td => td.textContent?.trim()).slice(0, 4))
+      .toEqual(['25/12/2026', 'Feriado', 'Dia inteiro', 'Natal']);
+  });
+
+  // Bloqueio sem tipo (API anterior à #244) é "Outro"; o feriado ganha a cor
+  // de destaque para não se perder entre manutenções (issue #299).
+  it('should show the block type, highlighting holidays', async () => {
+    await setup();
+
+    const badges = todos('.table tbody .coluna-tipo .badge');
+    expect(badges.map(b => b.textContent?.trim())).toEqual(['Outro', 'Feriado']);
+    expect(badges[0].classList).not.toContain('badge--info');
+    expect(badges[1].classList).toContain('badge--info');
+    expect(texto('.bloqueio-intro')).toContain('feriado de dia inteiro');
   });
 
   it('should show the empty state when the period has no blocks', async () => {

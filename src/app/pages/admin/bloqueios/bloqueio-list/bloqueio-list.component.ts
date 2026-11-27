@@ -10,7 +10,7 @@ import { BloqueioAgendaService } from '../../../../core/services/bloqueio-agenda
 import { ConfirmarDialogComponent } from '../../../../shared/components/confirmar-dialog/confirmar-dialog.component';
 import { LocalDatePipe } from '../../../../shared/pipes/local-date.pipe';
 import { extrairMensagemErro } from '../../../../shared/utils/api-error';
-import { formatarFaixaHoraria, formatarPeriodo } from '../../../../shared/utils/bloqueio-agenda';
+import { formatarFaixaHoraria, formatarPeriodo, rotuloTipoBloqueio } from '../../../../shared/utils/bloqueio-agenda';
 import { diasEntre, hojeIso } from '../../../../shared/utils/calendario';
 import { CarregandoComponent } from '../../../../shared/components/carregando/carregando.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -121,6 +121,10 @@ export class BloqueioListComponent implements OnInit, OnDestroy {
 
   periodoDoBloqueio(bloqueio: BloqueioAgendaResponseDTO): string {
     return formatarPeriodo(bloqueio);
+  }
+
+  rotuloTipo(bloqueio: BloqueioAgendaResponseDTO): string {
+    return rotuloTipoBloqueio(bloqueio);
   }
 
   confirmarExclusao(bloqueio: BloqueioAgendaResponseDTO): void {

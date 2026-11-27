@@ -175,6 +175,26 @@ describe('PacientesRelatorioComponent', () => {
     expect(linhas[0].querySelectorAll('.coluna-pendencias .badge').length).toBe(0);
   });
 
+  it('should keep the wide table scrollable with the name column frozen (issue #298)', () => {
+    const regiao = el().querySelector('.table-responsive');
+    const tabela = regiao?.querySelector('table');
+
+    expect(regiao?.getAttribute('tabindex')).toBe('0');
+    expect(tabela?.classList).toContain('table-sticky-first-col');
+    expect(tabela?.classList).toContain('tabela-pacientes');
+    expect(el().querySelector('.table-scroll-hint')).not.toBeNull();
+    expect(el().querySelectorAll('thead th').length).toBe(9);
+    expect(el().querySelectorAll('tbody tr')[0].querySelector('td')?.classList).toContain('coluna-nome');
+  });
+
+  it('should group the pendency badges in a wrapping container only when there are pendencies', () => {
+    const linhas = el().querySelectorAll('tbody tr');
+
+    expect(linhas[1].querySelectorAll('.coluna-pendencias .pendencias .badge').length).toBe(4);
+    expect(linhas[0].querySelector('.coluna-pendencias .pendencias')).toBeNull();
+    expect(linhas[0].querySelector('.coluna-pendencias')?.textContent?.trim()).toBe('-');
+  });
+
   it('should describe the active plan in Portuguese', () => {
     const linha = normalizarEspacos(el().querySelectorAll('tbody tr')[0].textContent);
 
@@ -182,6 +202,30 @@ describe('PacientesRelatorioComponent', () => {
     expect(linha).toContain('R$');
     expect(linha).toContain('Paula Mendes');
     expect(linha).toContain('35 anos');
+  });
+
+  // carlessopilatesapi#245: o filtro casa pelo padrão ou pelas próximas aulas,
+  // então a coluna mostra os dois quando diferem.
+  it('should show the default physiotherapist, and the next classes one when it differs', () => {
+    const [ana, bruno] = relatorio.pacientes;
+    serviceSpy.relatorioPacientes.and.returnValue(of({
+      ...relatorio,
+      pacientes: [
+        { ...ana, profissionalPadrao: { id: 6, nome: 'Bruno Costa' } },
+        { ...bruno, profissional: { id: 5, nome: 'Paula Mendes' }, profissionalPadrao: null },
+        { ...ana, id: 9, profissionalPadrao: { id: 5, nome: 'Paula Mendes' } }
+      ]
+    }));
+    component.consultar();
+    fixture.detectChanges();
+
+    const colunas = Array.from(el().querySelectorAll('tbody .coluna-profissional'))
+      .map(td => Array.from(td.querySelectorAll('span')).map(span => normalizarEspacos(span.textContent).trim()));
+    expect(colunas).toEqual([
+      ['Bruno Costa', 'Próximas aulas: Paula Mendes'],
+      ['Paula Mendes', 'Próximas aulas, sem padrão'],
+      ['Paula Mendes']
+    ]);
   });
 
   it('should show an empty state when no patient matches', () => {
@@ -262,6 +306,11 @@ describe('PacientesRelatorioComponent', () => {
   }
 
   it('should export the filters of the table, not a filter changed without querying', () => {
+    // Sem os stubs, o clique de download é real: o Chrome dos testes gravava o
+    // Blob falso em ~/Downloads a cada execução.
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:relatorio');
+    spyOn(window.URL, 'revokeObjectURL');
+    spyOn(HTMLAnchorElement.prototype, 'click');
     component.form.patchValue({ situacao: 'ATIVOS', cadastroIncompleto: true });
     component.consultar();
     component.form.patchValue({ situacao: 'INATIVOS', mesNascimento: 12 });

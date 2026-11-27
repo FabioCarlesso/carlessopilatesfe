@@ -682,6 +682,26 @@ describe('AulaListComponent', () => {
       });
     });
 
+    describe('feriado (issue #299)', () => {
+      function statusDasLinhas(): string[][] {
+        return Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tbody td[data-label="Status"]'))
+          .map(td => Array.from(td.querySelectorAll('.badge')).map(b => b.textContent?.trim() ?? ''));
+      }
+
+      it('should add the holiday badge next to the done status, only on holiday classes', () => {
+        serviceSpy.listarPorPaciente.and.returnValue(of([
+          { ...mockAula, id: 1, realizada: true, feriado: true, profissionalId: 5, profissionalNome: 'Paula Mendes' },
+          { ...mockAula, id: 2, realizada: true, feriado: false, profissionalId: 5, profissionalNome: 'Paula Mendes' },
+          { ...mockAula, id: 3 }
+        ]));
+        component.carregar();
+        fixture.detectChanges();
+
+        expect(statusDasLinhas()).toEqual([['Realizada', 'Feriado'], ['Realizada'], ['Pendente']]);
+        expect(fixture.nativeElement.querySelector('.badge-feriado').classList).toContain('badge--info');
+      });
+    });
+
     describe('atribuir profissional (issue #266)', () => {
       function botaoAtribuir(): HTMLButtonElement | null {
         return fixture.nativeElement.querySelector('.atribuir-btn');
@@ -859,6 +879,80 @@ describe('AulaListComponent', () => {
       const subtitle: HTMLElement = fixture.nativeElement.querySelector('.page-header .page-subtitle');
       expect(subtitle).toBeTruthy();
       expect(subtitle.textContent?.trim()).toBe('Pagamento #1 · Ana Silva');
+    });
+
+    function recarregar(pagamento: PagamentoResponseDTO, aulas: AulaResponseDTO[]): void {
+      pagamentoServiceSpy.buscar.and.returnValue(of(pagamento));
+      serviceSpy.listarPorPagamento.and.returnValue(of(aulas));
+      component.ngOnInit();
+      fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+    }
+
+    // Pacote do pagamento (carlessopilatesapi#243): realizadas contadas na lista.
+    it('should show how many classes of the package were done', () => {
+      recarregar({ ...mockPagamento, aulasPacote: 8, aulasRealizadas: 1 }, [
+        { ...mockAula, id: 1, realizada: true, profissionalId: 5 },
+        { ...mockAula, id: 2, realizada: true, feriado: true, profissionalId: 5 },
+        { ...mockAula, id: 3 }
+      ]);
+
+      expect(fixture.nativeElement.querySelector('.pacote-resumo')?.textContent?.trim())
+        .toBe('2 de 8 aulas realizadas no pacote deste pagamento.');
+    });
+
+    it('should not show the package summary with the older API', () => {
+      expect(component.resumoPacote).toBeNull();
+      expect(fixture.nativeElement.querySelector('.pacote-resumo')).toBeNull();
+    });
+
+    // Issue #300: aula gerada sem profissional por lotação ou indisponibilidade.
+    it('should warn about the classes generated without a professional, counting the list', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 2 }, [
+        { ...mockAula, id: 1 },
+        { ...mockAula, id: 2 },
+        { ...mockAula, id: 3, profissionalId: 5, profissionalNome: 'Paula Mendes' }
+      ]);
+
+      const aviso = fixture.nativeElement.querySelector('.alert-warning') as HTMLElement;
+      expect(aviso.textContent).toContain('2 aulas deste pagamento ficaram sem profissional');
+
+      // Atribuir na própria tela faz o aviso diminuir sem buscar o pagamento de novo.
+      component.aulas = component.aulas.map(aula => aula.id === 1 ? { ...aula, profissionalId: 5 } : aula);
+      expect(component.aulasSemProfissional).toBe(1);
+      component.aulas = component.aulas.map(aula => ({ ...aula, profissionalId: 5 }));
+      expect(component.aulasSemProfissional).toBe(0);
+    });
+
+    // carlessopilatesapi#244: a aula de feriado é realizada, mas o profissional
+    // só define o repasse, então ela aceita a atribuição e entra no aviso.
+    it('should let a holiday class without a professional be assigned, unlike a regular done class', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 1 }, [
+        { ...mockAula, id: 1, realizada: true, feriado: true },
+        { ...mockAula, id: 2, realizada: true, feriado: false, profissionalNome: 'Paula Mendes', profissionalId: 5 }
+      ]);
+
+      expect(component.aulasSemProfissional).toBe(1);
+      const linhas = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>;
+      expect(linhas[0].querySelector('td[data-label="Profissional"] select')).not.toBeNull();
+      expect(linhas[1].querySelector('td[data-label="Profissional"] select')).toBeNull();
+      expect(linhas[1].querySelector('td[data-label="Profissional"]')?.textContent?.trim()).toBe('Paula Mendes');
+      // Sem as ações da aula pendente: a de feriado não é remarcada nem realizada de novo.
+      expect(linhas[0].querySelector('.acoes')).toBeNull();
+    });
+
+    // Pagamento anterior ao fisioterapeuta padrão: todas as aulas nasceram sem
+    // profissional, e isso não é sobra de lotação.
+    it('should not warn when the API does not report classes without a professional', () => {
+      recarregar({ ...mockPagamento, aulasSemProfissional: 0 }, [{ ...mockAula, id: 1 }]);
+
+      expect(component.aulasSemProfissional).toBe(0);
+      expect(fixture.nativeElement.querySelector('.alert-warning')).toBeNull();
+    });
+
+    it('should explain that changing the professional of a class does not change the default', () => {
+      expect(fixture.nativeElement.querySelector('.aviso-troca-profissional')?.textContent)
+        .toContain('o fisioterapeuta padrão do paciente não muda');
     });
 
     it('should set erro when buscar payment fails', () => {

@@ -8,3 +8,10 @@
 // em vez de estourar a página no celular.
 .table { min-width: 900px; }
 .table td { white-space: nowrap; }
+
+// Abaixo das ações, para não alargar a coluna; cor e fundo do `.badge--warning`
+// global (issue #300).
+.aviso-sem-profissional {
+  display: table;
+  margin-top: var(--sp-1);
+}

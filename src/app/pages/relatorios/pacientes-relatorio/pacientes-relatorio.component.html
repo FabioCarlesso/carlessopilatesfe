@@ -4,7 +4,8 @@
 </div>
 
 <p class="page-subtitle">
-  Pacientes por situação, com plano ativo, profissional das próximas aulas e pendências de cadastro.
+  Pacientes por situação, com plano ativo, fisioterapeuta padrão (e o das próximas aulas, quando é outro) e
+  pendências de cadastro.
   O filtro <strong>Sem plano ativo</strong> considera só pacientes ativos.
 </p>
 
@@ -112,7 +113,7 @@
         Arraste a tabela para o lado para ver todas as colunas <span aria-hidden="true">→</span>
       </p>
       <div class="table-responsive" tabindex="0" role="region" aria-label="Pacientes">
-        <table class="table table-sticky-first-col">
+        <table class="table table-sticky-first-col tabela-pacientes">
           <thead>
             <tr>
               <th>Nome</th>
@@ -129,14 +130,14 @@
           <tbody>
             @for (paciente of relatorio.pacientes; track paciente.id) {
               <tr>
-                <td>
+                <td class="coluna-nome">
                   <a [routerLink]="['/pacientes', paciente.id]">{{ paciente.nome }}</a>
                 </td>
                 <td class="coluna-contato">
                   <span>{{ paciente.telefone || '-' }}</span>
                   <span class="texto-secundario">{{ paciente.email || '-' }}</span>
                 </td>
-                <td>
+                <td class="coluna-data">
                   @if (paciente.dataNascimento) {
                     {{ paciente.dataNascimento | date:'dd/MM/yyyy' }}
                     @if (paciente.idade !== null) {
@@ -151,9 +152,9 @@
                     {{ paciente.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
-                <td>{{ paciente.dataCadastro ? (paciente.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
-                <td>{{ paciente.dataInativacao ? (paciente.dataInativacao | date:'dd/MM/yyyy') : '-' }}</td>
-                <td>
+                <td class="coluna-data">{{ paciente.dataCadastro ? (paciente.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
+                <td class="coluna-data">{{ paciente.dataInativacao ? (paciente.dataInativacao | date:'dd/MM/yyyy') : '-' }}</td>
+                <td class="coluna-plano">
                   @if (paciente.planoAtivo; as plano) {
                     <span>{{ descricaoPlano(plano) }}</span>
                     <span class="texto-secundario">{{ plano.valor | currency:'BRL' }}</span>
@@ -161,11 +162,30 @@
                     -
                   }
                 </td>
-                <td>{{ paciente.profissional?.nome || '-' }}</td>
+                <!-- O filtro de profissional casa pelo padrão ou pelas próximas
+                aulas (carlessopilatesapi#245): a coluna mostra os dois para a
+                linha filtrada explicar por que está ali. -->
+                <td class="coluna-profissional">
+                  @if (paciente.profissionalPadrao; as padrao) {
+                    <span>{{ padrao.nome }}</span>
+                    @if (paciente.profissional && paciente.profissional.id !== padrao.id) {
+                      <span class="texto-secundario">Próximas aulas: {{ paciente.profissional.nome }}</span>
+                    }
+                  } @else if (paciente.profissional) {
+                    <span>{{ paciente.profissional.nome }}</span>
+                    <span class="texto-secundario">Próximas aulas, sem padrão</span>
+                  } @else {
+                    -
+                  }
+                </td>
                 <td class="coluna-pendencias">
-                  @for (pendencia of paciente.pendencias; track pendencia) {
-                    <span class="badge badge--warning">{{ rotuloPendencia(pendencia) }}</span>
-                  } @empty {
+                  @if (paciente.pendencias.length > 0) {
+                    <span class="pendencias">
+                      @for (pendencia of paciente.pendencias; track pendencia) {
+                        <span class="badge badge--warning">{{ rotuloPendencia(pendencia) }}</span>
+                      }
+                    </span>
+                  } @else {
                     -
                   }
                 </td>

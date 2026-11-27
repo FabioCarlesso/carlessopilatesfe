@@ -48,6 +48,8 @@ export interface RelatorioPacientesLinha {
   planoAtivo: RelatorioPacientesPlanoAtivo | null;
   /** Profissional da próxima aula não realizada do paciente. */
   profissional: { id: number; nome: string } | null;
+  /** Fisioterapeuta padrão do paciente (carlessopilatesapi#245). Ausente com a API anterior. */
+  profissionalPadrao?: { id: number; nome: string } | null;
   pendencias: PendenciaCadastroPaciente[];
 }
 

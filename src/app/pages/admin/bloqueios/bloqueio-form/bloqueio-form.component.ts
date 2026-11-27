@@ -21,7 +21,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   BLOQUEIO_MOTIVO_MAX,
   BloqueioAgendaRequestDTO,
-  BloqueioAgendaResponseDTO
+  BloqueioAgendaResponseDTO,
+  TIPO_BLOQUEIO_LABEL,
+  TipoBloqueio
 } from '../../../../core/models/bloqueio-agenda';
 import { BloqueioAgendaService } from '../../../../core/services/bloqueio-agenda.service';
 import { extrairMensagemErro } from '../../../../shared/utils/api-error';
@@ -105,9 +107,13 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
   erro: string | null = null;
 
   readonly motivoMax = BLOQUEIO_MOTIVO_MAX;
+  readonly tipos = Object.entries(TIPO_BLOQUEIO_LABEL) as [TipoBloqueio, string][];
 
   ngOnInit(): void {
     this.form = this.fb.group({
+      // `OUTRO` é o padrão da API para o campo ausente: manutenção e evento
+      // são a maioria dos bloqueios, e feriado tem efeito nas aulas.
+      tipo: ['OUTRO' as TipoBloqueio, Validators.required],
       dataInicio: ['', Validators.required],
       dataFim: ['', Validators.required],
       diaInteiro: [true],
@@ -138,6 +144,10 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
 
   get diaInteiro(): boolean {
     return this.form.get('diaInteiro')?.value === true;
+  }
+
+  get feriado(): boolean {
+    return this.form.get('tipo')?.value === 'FERIADO';
   }
 
   /**
@@ -181,6 +191,7 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
   private preencher(bloqueio: BloqueioAgendaResponseDTO): void {
     const diaInteiro = ehDiaInteiro(bloqueio);
     this.form.patchValue({
+      tipo: bloqueio.tipo ?? 'OUTRO',
       dataInicio: bloqueio.dataInicio,
       dataFim: bloqueio.dataFim,
       diaInteiro,
@@ -215,6 +226,7 @@ export class BloqueioFormComponent implements OnInit, AfterViewInit {
 
     const valor = this.form.getRawValue();
     const dto: BloqueioAgendaRequestDTO = {
+      tipo: valor.tipo,
       dataInicio: valor.dataInicio,
       dataFim: valor.dataFim,
       // As duas ausentes é o que a API lê como dia inteiro; no `PUT`, que é

@@ -7,7 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AulaService } from '../../../core/services/aula.service';
 import { PagamentoService } from '../../../core/services/pagamento.service';
 import { ProfissionalService } from '../../../core/services/profissional.service';
-import { AulaResponseDTO } from '../../../core/models/plano';
+import { AulaResponseDTO, PagamentoResponseDTO } from '../../../core/models/plano';
 import { ProfissionalResponseDTO } from '../../../core/models/profissional';
 import { parseRouteNumberParam } from '../../../shared/utils/route-param';
 import { extrairMensagemErro } from '../../../shared/utils/api-error';
@@ -65,6 +65,8 @@ export class AulaListComponent implements OnInit, OnDestroy {
   sucesso: string | null = null;
   titulo = 'Aulas';
   subtitulo: string | null = null;
+  /** Pagamento da rota por pagamento, para o pacote e o aviso de aulas sem profissional. */
+  pagamento: PagamentoResponseDTO | null = null;
   modoCard = false;
   private successTimer: ReturnType<typeof setTimeout> | null = null;
   private atribuicaoTimer: ReturnType<typeof setTimeout> | null = null;
@@ -113,6 +115,7 @@ export class AulaListComponent implements OnInit, OnDestroy {
       this.erro = null;
       this.pagamentoService.buscar(this.pagamentoId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: pagamento => {
+          this.pagamento = pagamento;
           this.pacienteId = pagamento.pacienteId;
           // Referência do pagamento + nome do paciente no cabeçalho (issue #143).
           this.subtitulo = pagamento.pacienteNome
@@ -187,6 +190,45 @@ export class AulaListComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  /**
+   * "3 de 8 aulas realizadas" (carlessopilatesapi#243). O tamanho do pacote vem
+   * do pagamento; as realizadas são contadas na lista carregada, e não lidas de
+   * `aulasRealizadas`, para acompanhar o "Marcar como Realizada" feito aqui sem
+   * buscar o pagamento de novo. `null` sem pagamento ou com a API anterior.
+   */
+  get resumoPacote(): string | null {
+    const pacote = this.pagamento?.aulasPacote;
+    if (pacote === undefined || pacote === null) return null;
+    const realizadas = this.aulas.filter(aula => aula.realizada).length;
+    return `${realizadas} de ${pacote} ${pacote === 1 ? 'aula realizada' : 'aulas realizadas'}`;
+  }
+
+  /**
+   * Aulas pendentes sem profissional, para o aviso do pagamento (issue #300).
+   * Quem liga o aviso é o `aulasSemProfissional` da API — pagamentos anteriores
+   * ao fisioterapeuta padrão nasceram todos sem profissional e não são "sobra"
+   * de lotação —, mas a contagem é da lista, para o aviso diminuir e sumir à
+   * medida que a recepção atribui nesta mesma tela.
+   */
+  get aulasSemProfissional(): number {
+    if ((this.pagamento?.aulasSemProfissional ?? 0) <= 0) return 0;
+    return this.aulas.filter(aula => this.aceitaAtribuicao(aula) && (aula.profissionalId ?? null) === null).length;
+  }
+
+  /**
+   * A aula pendente e a de feriado aceitam a atribuição. A de feriado é
+   * realizada sem atendimento: o profissional só define quem recebe o repasse,
+   * e a API não confere vaga nela (carlessopilatesapi#244).
+   */
+  aceitaAtribuicao(aula: AulaResponseDTO): boolean {
+    return !aula.realizada || aula.feriado === true;
+  }
+
+  /** Há aula pendente, e com ela o select de profissional por aula. */
+  get temAulaPendente(): boolean {
+    return this.aulas.some(aula => !aula.realizada);
   }
 
   trackByAula(_: number, aula: AulaResponseDTO): number {

@@ -164,6 +164,30 @@ describe('calendario', () => {
       expect(eventos.map(evento => evento.statusLabel)).toEqual(['Agendada', 'Realizada']);
     });
 
+    // A aula de feriado é realizada para a API (repasse, sem falta), mas não
+    // foi dada: o evento mantém o status e ganha o flag e a situação própria.
+    it('should flag a holiday class without changing its status (issue #299)', () => {
+      const [comum, feriado, semFlag] = mapearEventos([], [
+        aula({ id: 1, data: '2026-05-21', realizada: true, feriado: false }),
+        aula({ id: 2, data: '2026-05-22', realizada: true, feriado: true }),
+        aula({ id: 3, data: '2026-05-23', realizada: true })
+      ]);
+
+      expect(feriado.status).toBe('REALIZADA');
+      expect(feriado.feriado).toBeTrue();
+      expect(feriado.statusLabel).toBe('Realizada (feriado)');
+      expect(feriado.descricao).toContain('realizada (feriado)');
+      expect(comum.feriado).toBeFalse();
+      expect(comum.statusLabel).toBe('Realizada');
+      expect(semFlag.feriado).toBeFalse();
+    });
+
+    it('should never flag a session as holiday', () => {
+      const [evento] = mapearEventos([sessao({ id: 1, dataHora: '2026-05-20T08:00' })], []);
+
+      expect(evento.feriado).toBeFalse();
+    });
+
     it('should order events chronologically, leaving the timeless class last in the day', () => {
       const eventos = mapearEventos(
         [

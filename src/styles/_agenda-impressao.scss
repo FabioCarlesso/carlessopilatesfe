@@ -126,6 +126,13 @@
     color: var(--c-grafite);
   }
 
+  /* Aula de feriado (issue #299): realizada para a API, mas não dada. Escrita,
+     e não só destacada, porque a folha costuma sair em preto e branco. */
+  .impressao-feriado {
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
   .impressao-bloqueio {
     display: block;
     font-weight: 400;

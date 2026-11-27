@@ -436,6 +436,15 @@ describe('AgendaComponent', () => {
         .toEqual(['Sessão: Pilates', '20 de maio de 2026 às 14:00', 'Agendada', 'Carla Fisio']);
     });
 
+    it('should say that choosing the professional of a class does not change the default (issue #300)', async () => {
+      await setup({ sessoes: [], aulas: [aula({ id: 3, data: '2026-05-21' })] });
+
+      clicar('.calendario-grade .evento');
+
+      expect(texto('#profissionalDaAcaoDica')).toContain('o fisioterapeuta padrão do paciente não muda');
+      expect(document.getElementById('profissionalDaAcao')?.getAttribute('aria-describedby')).toBe('profissionalDaAcaoDica');
+    });
+
     it('should close the detail panel', async () => {
       await setup();
       abrirPrimeiroEvento();
@@ -817,6 +826,56 @@ describe('AgendaComponent', () => {
       expect(todos('.calendario-celula .celula-bloqueio').length).toBe(1);
     });
   });
+  describe('holiday classes (issue #299)', () => {
+    const aulaDeFeriado = aula({
+      id: 11,
+      data: '2026-05-20',
+      horario: '08:00:00',
+      realizada: true,
+      feriado: true,
+      profissionalId: 3,
+      profissionalNome: 'Carla Fisio'
+    });
+
+    it('should mark the holiday class in the weekly grid and keep the done status', async () => {
+      await setup({ sessoes: [], aulas: [aulaDeFeriado, aula({ id: 12, data: '2026-05-21', realizada: true })] });
+
+      const chips = todos('.calendario-grade .evento');
+      expect(chips[0].classList).toContain('evento-realizada');
+      expect(chips[0].querySelector('.evento-feriado')?.textContent?.trim()).toBe('Feriado');
+      expect(chips[0].getAttribute('aria-label')).toContain('realizada (feriado)');
+      expect(chips[1].querySelector('.evento-feriado')).toBeNull();
+    });
+
+    it('should show the holiday badge in the list and in the detail panel', async () => {
+      await setup({ sessoes: [], aulas: [aulaDeFeriado] });
+
+      expect(todos('.calendario-lista .badge-feriado').map(b => b.textContent?.trim())).toEqual(['Feriado']);
+
+      clicar('.calendario-grade .evento');
+
+      expect(texto('.detalhe-painel .badge-feriado')).toBe('Feriado');
+      // Realizada: o painel não oferece "Marcar como realizada".
+      expect(todos('.detalhe-acoes .btn-primary').length).toBe(0);
+    });
+
+    it('should print the holiday mark in the week grid and in the day list', async () => {
+      await setup({ sessoes: [], aulas: [aulaDeFeriado] });
+
+      expect(todos('.impressao-grade .impressao-feriado').map(e => e.textContent?.trim())).toEqual(['Feriado']);
+
+      clicar('.calendario-visoes button:nth-child(2)');
+
+      expect(todos('.impressao-lista .impressao-feriado').map(e => e.textContent?.trim())).toEqual(['(Feriado)']);
+    });
+
+    it('should flag a holiday block in the day description', async () => {
+      await setup({ bloqueios: [{ ...bloqueioDaQuinta, tipo: 'FERIADO' }] });
+
+      expect(component.rotuloBloqueios(component.grade.dias[4])).toContain('Feriado municipal (feriado)');
+    });
+  });
+
   describe('print (issue #291)', () => {
     function botaoImprimir(): HTMLButtonElement {
       return todos('.page-header button').find(b => b.textContent?.trim() === 'Imprimir') as HTMLButtonElement;

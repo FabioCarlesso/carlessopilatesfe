@@ -1,0 +1,17 @@
+/* Aba "Pacientes" do detalhe do profissional (issue #300). Tabela, badges e
+   paginação vêm das classes globais; aqui só texto de apoio e espaçamento. */
+
+.pacientes-intro,
+.pacientes-total {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+/* Fora do `.page-status` global, que só aparece no mobile: aqui o "Página X de
+   N" é a única indicação de posição, sem a janela de números. */
+.pagina-atual {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}

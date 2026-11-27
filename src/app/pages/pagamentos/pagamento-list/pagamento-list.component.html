@@ -73,6 +73,14 @@
               @if (authService.hasAnyRole(papeis.agenda)) {
                 <a [routerLink]="['/aulas/pagamento', p.id]" class="btn btn-sm btn-outline">Ver Aulas</a>
               }
+              <!-- Aulas geradas sem profissional (horário lotado ou fora da
+              disponibilidade do fisioterapeuta padrão, issue #300): a recepção
+              precisa atribuir à mão, na tela de aulas do pagamento. -->
+              @if ((p.aulasSemProfissional ?? 0) > 0) {
+                <span class="badge badge--warning aviso-sem-profissional">
+                  {{ p.aulasSemProfissional }} {{ p.aulasSemProfissional === 1 ? 'aula sem profissional' : 'aulas sem profissional' }}
+                </span>
+              }
             </td>
           </tr>
         }

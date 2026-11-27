@@ -145,6 +145,23 @@ describe('PagamentoListComponent', () => {
     expect(formas).toEqual(['—', '—', 'Cartão de crédito']);
   });
 
+  // Aula gerada sem profissional (lotação ou indisponibilidade do padrão):
+  // a recepção precisa atribuir à mão (issue #300).
+  it('should warn about classes generated without a professional', () => {
+    serviceSpy.listar.and.returnValue(of([
+      { ...mockPagamento, id: 2, aulasSemProfissional: 2 },
+      { ...mockPagamento, id: 3, aulasSemProfissional: 1 },
+      { ...mockPagamento, id: 4, aulasSemProfissional: 0 },
+      { ...mockPagamento, id: 5 }
+    ]));
+    component.carregar();
+    fixture.detectChanges();
+
+    const avisos = Array.from(fixture.nativeElement.querySelectorAll('table.table tbody tr') as NodeListOf<HTMLElement>)
+      .map(tr => tr.querySelector('.aviso-sem-profissional')?.textContent?.trim() ?? null);
+    expect(avisos).toEqual(['2 aulas sem profissional', '1 aula sem profissional', null, null]);
+  });
+
   it('cancelarPagar should clear pagarId', () => {
     component.pagarId = 1;
     component.cancelarPagar();

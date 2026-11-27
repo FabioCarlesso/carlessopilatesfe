@@ -14,6 +14,8 @@ export interface PacienteFiltro {
   cpf?: string;
   telefone?: string;
   ativo?: boolean;
+  /** Só os pacientes com esse fisioterapeuta padrão (issue #300). */
+  profissionalId?: number;
 }
 
 @Injectable({
@@ -55,6 +57,14 @@ export class PacienteService {
   /** Vincula (`tomadorId`) ou desvincula (`null`) o tomador da nota fiscal. */
   vincularTomador(id: number, tomadorId: number | null): Observable<PacienteResponseDTO> {
     return this.http.patch<PacienteResponseDTO>(`${this.apiUrl}/${id}/tomador`, { tomadorId });
+  }
+
+  /**
+   * Define (`profissionalId`) ou remove (`null`) o fisioterapeuta padrão
+   * (issue #300). O campo vai sempre no corpo: é o `null` explícito que remove.
+   */
+  definirProfissionalPadrao(id: number, profissionalId: number | null): Observable<PacienteResponseDTO> {
+    return this.http.patch<PacienteResponseDTO>(`${this.apiUrl}/${id}/profissional-padrao`, { profissionalId });
   }
 
   inativar(id: number): Observable<void> {

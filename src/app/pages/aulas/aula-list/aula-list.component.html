@@ -50,6 +50,22 @@
 }
 
 @if (aulas.length > 0) {
+  @if (resumoPacote; as resumo) {
+    <p class="pacote-resumo">{{ resumo }} no pacote deste pagamento.</p>
+  }
+  @if (aulasSemProfissional > 0) {
+    <div class="alert alert-warning" role="status">
+      {{ aulasSemProfissional === 1 ? '1 aula deste pagamento ficou' : aulasSemProfissional + ' aulas deste pagamento ficaram' }}
+      sem profissional: o horário estava lotado, fora da disponibilidade do fisioterapeuta padrão, ou a aula
+      é de feriado e o paciente não tem padrão. Escolha o profissional na coluna Profissional e clique em Atribuir.
+    </div>
+  }
+  @if (temAulaPendente) {
+    <p class="aviso-troca-profissional">
+      Trocar o profissional de uma aula vale só para ela, numa folga ou ausência: o fisioterapeuta padrão
+      do paciente não muda.
+    </p>
+  }
   <div class="table-wrap" [attr.tabindex]="modoCard ? null : 0"
     [attr.role]="modoCard ? null : 'region'" [attr.aria-label]="modoCard ? null : 'Lista de aulas'">
     <table class="table">
@@ -77,12 +93,17 @@
               <span class="badge" [class.badge-realizada]="aula.realizada" [class.badge-pendente]="!aula.realizada">
                 {{ aula.realizada ? 'Realizada' : 'Pendente' }}
               </span>
+              <!-- Aula de feriado (issue #299): realizada para a API — repasse,
+              sem falta —, mas não dada. A badge a separa da realizada comum. -->
+              @if (aula.feriado) {
+                <span class="badge badge--info badge-feriado">Feriado</span>
+              }
             </td>
             <td data-label="Profissional">
-              @if (aula.realizada) {
+              @if (!aceitaAtribuicao(aula)) {
                 <span>{{ aula.profissionalNome || '-' }}</span>
               }
-              @if (!aula.realizada) {
+              @if (aceitaAtribuicao(aula)) {
                 <select class="form-control form-control-sm"
                   [class.is-invalid]="selectInvalidoPorAula[aula.id] || feedbackDaAtribuicao(aula)?.erro"
                   [attr.aria-label]="rotuloSelectProfissional(aula)"
